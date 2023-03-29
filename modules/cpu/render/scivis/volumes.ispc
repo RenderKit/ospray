@@ -38,7 +38,7 @@ static void sampleVolume(SciVisRenderContext &rc,
     const uniform FeatureFlags &ff)
 {
   // We have to iterate till we get a valid sample value
-  float dt;
+  float dt = 0.f;
   float sampleVal = nan;
   vec3f p; // in volume local coords
   while (isnan(sampleVal)) {
@@ -116,14 +116,8 @@ static void sampleVolume(SciVisRenderContext &rc,
       dg.Ns = dg.Ng =
           normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
       dg.P = ray.org + vc.distance * ray.dir;
-      SSI shading = SciVis_computeShading(rc.renderer,
-          rc.fb,
-          rc.world,
-          dg,
-          rc.sample,
-          rc.ldSampler,
-          ray.dir,
-          ff);
+      SSI shading = SciVis_computeShading(
+          rc.renderer, rc.world, dg, rc.sample, rc.ldSampler, ray.dir, ff);
       vec4f shadedColor = make_vec4f(
           shading.shadedColor, 1.f - luminance(shading.transmission));
       vc.sample = lerp(m->gradientShadingScale, vc.sample, shadedColor);
@@ -145,7 +139,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
   // Look for the closest sample across all volumes
   float minDist = inf;
   int usedSampleId = -1;
-  for (uniform int i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
+  for (uniform uint32 i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
        i++) {
     if (i >= volumeIntervals.numVolumeIntervals)
       break;
@@ -214,7 +208,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
 
   // Iterate through all volumes and initialize its contexts with data that
   // do not change across ray intervals
-  for (uniform int i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
+  for (uniform uint32 i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
        i++) {
     if (i >= volumeIntervals.numVolumeIntervals)
       break;
@@ -236,14 +230,15 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
   float transmission = 1.f;
 
   // Iterate through all ray intervals
-  for (uniform int i = 0;
+  for (uniform uint32 i = 0;
        i < reduce_max(rayIntervals.count) && (transmission > 0.f);
        i++) {
     if (i >= rayIntervals.count)
       break;
 
     // Iterate through all volumes
-    for (uniform int j = 0; j < reduce_max(volumeIntervals.numVolumeIntervals);
+    for (uniform uint32 j = 0;
+         j < reduce_max(volumeIntervals.numVolumeIntervals);
          j++) {
       if (j >= volumeIntervals.numVolumeIntervals)
         break;

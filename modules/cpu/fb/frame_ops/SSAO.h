@@ -24,7 +24,7 @@ void LiveSSAOFrameOp_getOcclusion(const void *_self,
     float *occlusionBuffer,
     const float radius,
     const float checkRadius,
-    int kernelSize,
+    unsigned int kernelSize,
     int programID);
 void LiveSSAOFrameOp_applyOcclusion(
     void *_self, void *_fb, void *_color, float *occlusionBuffer);

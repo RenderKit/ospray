@@ -122,7 +122,6 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
     float F = fresnelDielectric(cosThetaOH, self->eta) * self->weight;
 
     // Evaluate the coating reflection
-    float cosThetaH = dot(wh, getN(super));
     float cosThetaIH = dot(wi, wh);
 
     linear3f toLocal = transposed(getFrame(super));
@@ -299,7 +298,6 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
     float F = fresnelDielectric(cosThetaOH, self->eta) * self->weight;
 
     // Evaluate the coating reflection
-    float cosThetaH = dot(wh, getN(super));
     float cosThetaIH = dot(res.wi, wh);
     vec3f wi0 = toLocal * res.wi;
     vec3f wh0 = toLocal * wh;
@@ -409,7 +407,7 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(
     vec3f transmittance,
     float thickness,
     float roughness,
-    float anisotropy,
+    float,
     float weight)
 {
   if (eta > 1.f)

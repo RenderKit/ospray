@@ -31,7 +31,7 @@ struct MicrofacetConductor
 inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsOther)
 {
   const varying MicrofacetConductor *uniform self =
       (const varying MicrofacetConductor *uniform)super;
@@ -44,7 +44,6 @@ inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF *uniform super,
 
   // Compute the microfacet normal
   vec3f wh = normalize(wi + wo);
-  float cosThetaH = dot(wh, getN(super));
   float cosThetaOH = dot(wo, wh);
   float cosThetaIH = dot(wi, wh);
 
@@ -76,8 +75,8 @@ inline BSDF_SampleRes MicrofacetConductor_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss,
-    const uniform FeatureFlagsOther ffo)
+    float,
+    const uniform FeatureFlagsOther)
 {
   const varying MicrofacetConductor *uniform self =
       (const varying MicrofacetConductor *uniform)super;

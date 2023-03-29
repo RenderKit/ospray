@@ -13,7 +13,7 @@ struct PathTracer
 {
   Renderer super;
 
-  int32 rouletteDepth; // path depth from which on RR is used
+  uint32 rouletteDepth; // path depth from which on RR is used
   float maxRadiance;
   // coefficients of plane equation defining geometry to catch shadows for
   // compositing; disabled if normal is zero-length

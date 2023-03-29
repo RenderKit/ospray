@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "render/bsdfs/BeckmannDistribution.ih"
 #include "Noise.ih"
+#include "render/bsdfs/BeckmannDistribution.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -33,7 +33,6 @@ inline vec3f Flakes_eval(const Flakes &self, vec3f P, int &mask)
   // Pictures", pp. 255-261]
   const vec3f thisCell = floor(P) + 0.5f;
   float f1 = 1000.f;
-  vec3f cellPos;
   unsigned int cellRnd;
 
   for (int i = -1; i <= 1; i++) {

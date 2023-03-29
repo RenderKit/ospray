@@ -33,9 +33,6 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
     const World *uniform world,
-    FrameBuffer *uniform fb,
-    const uint32 ix,
-    const uint32 iy,
     const vec2f &pixel, // normalized, i.e. in [0..1]
     Ray &ray,
     varying LDSampler *uniform ldSampler,
@@ -53,9 +50,9 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
 
   uniform PathTracerData &pathtracerData =
       *((uniform PathTracerData *)world->pathtracerData);
-  const uniform int numLights =
+  const uniform uint32 numLights =
       pathtracerData.lights ? min(MAX_LIGHTS, pathtracerData.numLights) : 0;
-  const uniform int numLightSamples =
+  const uniform uint32 numLightSamples =
       self->numLightSamples >= 0 && numLights > 0 ? self->numLightSamples
                                                   : numLights;
   PathContext pathContext;
@@ -159,9 +156,6 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
 
     ScreenSample sample = PathTraceIntegrator_Li(self,
         world,
-        fb,
-        ix,
-        iy,
         cameraSample.screen,
         screenSample.ray,
         ldSampler,
@@ -198,7 +192,6 @@ task
         FrameBuffer *uniform fb,
         Camera *uniform camera,
         World *uniform world,
-        void *uniform perFrameData,
         const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
         const int taskIndex0,
@@ -214,8 +207,11 @@ task
   }
 
 #ifdef OSPRAY_TARGET_SYCL
-  for (uint32 y = taskDesc.region.lower.y; y < taskDesc.region.upper.y; ++y)
-    for (uint32 x = taskDesc.region.lower.x; x < taskDesc.region.upper.x; ++x) {
+  for (uint32 y = taskDesc.region.lower.y; y < (uint32)taskDesc.region.upper.y;
+       ++y)
+    for (uint32 x = taskDesc.region.lower.x;
+         x < (uint32)taskDesc.region.upper.x;
+         ++x) {
 #else
   foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
@@ -236,7 +232,6 @@ export void PathTracer_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,
     void *uniform _world,
-    void *uniform perFrameData,
     void *uniform _taskIDs,
     uniform uint32 numTasks)
 {
@@ -247,7 +242,7 @@ export void PathTracer_renderTasks(void *uniform _self,
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
 
   launch[numTasks] PathTracer_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, ffAll());
+      self, fb, camera, world, taskIDs, ffAll());
 }
 #endif
 

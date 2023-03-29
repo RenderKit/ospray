@@ -4,8 +4,8 @@
 
 #include "math/random.ih"
 #include "math/sampling.ih"
-#include "volume/Volume.ih"
 #include "render/util.ih"
+#include "volume/Volume.ih"
 #include "volume/VolumetricModel.ih"
 #include "volume/transferFunction/TransferFunctionDispatch.ih"
 #include "volumes.ih"
@@ -32,7 +32,7 @@ static void sampleVolume(VolumeContext &vc,
     const uniform float samplingRate)
 {
   // We have to iterate till we get a valid sample value
-  float dt;
+  float dt = 0.f;
   float sampleVal = nan;
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
@@ -101,7 +101,7 @@ static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
   // Look for the closest sample across all volumes
   float minDist = inf;
   int usedSampleId = -1;
-  for (uniform int i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
+  for (uniform uint32 i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
        i++) {
     if (i >= volumeIntervals.numVolumeIntervals)
       break;
@@ -162,7 +162,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
 
   // Iterate through all volumes and initialize its contexts with data that
   // do not change across ray intervals
-  for (uniform int i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
+  for (uniform uint32 i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
        i++) {
     if (i >= volumeIntervals.numVolumeIntervals)
       break;
@@ -184,13 +184,15 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
   float alpha = 0.f;
 
   // Iterate through all ray intervals
-  for (uniform int i = 0; i < reduce_max(rayIntervals.count) && (alpha < .99f);
+  for (uniform uint32 i = 0;
+       i < reduce_max(rayIntervals.count) && (alpha < .99f);
        i++) {
     if (i >= rayIntervals.count)
       break;
 
     // Iterate through all volumes
-    for (uniform int j = 0; j < reduce_max(volumeIntervals.numVolumeIntervals);
+    for (uniform uint32 j = 0;
+         j < reduce_max(volumeIntervals.numVolumeIntervals);
          j++) {
       if (j >= volumeIntervals.numVolumeIntervals)
         break;

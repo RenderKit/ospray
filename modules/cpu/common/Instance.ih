@@ -23,6 +23,7 @@ inline uniform AffineSpace3f Instance_getTransform(
   // TODO: rtcGetGeometryTransform is not callable on the device yet
   return getInterpolatedTransform(self->geom, time);
 #else
+  (void)time;
   return self->xfm;
 #endif
 }

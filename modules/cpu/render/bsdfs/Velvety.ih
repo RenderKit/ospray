@@ -19,7 +19,7 @@ struct Velvety
 inline BSDF_EvalRes Velvety_eval(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsOther)
 {
   const varying Velvety *uniform self = (const varying Velvety *uniform)super;
   BSDF_EvalRes res;
@@ -37,10 +37,9 @@ inline BSDF_EvalRes Velvety_eval(const varying BSDF *uniform super,
 inline BSDF_SampleRes Velvety_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss,
+    float,
     const uniform FeatureFlagsOther ffo)
 {
-  const varying Velvety *uniform self = (const varying Velvety *uniform)super;
   BSDF_SampleRes res;
 
   const vec3f localDir = cosineSampleHemisphere(s);

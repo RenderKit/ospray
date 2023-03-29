@@ -7,9 +7,9 @@
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
-#include "volume/Volume.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
+#include "volume/Volume.ih"
 #include "volume/VolumetricModel.ih"
 #include "volume/transferFunction/TransferFunctionDispatch.ih"
 // c++ shared
@@ -40,7 +40,6 @@ export void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   uniform Isosurfaces *uniform self =
       (uniform Isosurfaces * uniform) args->geometryUserPtr;
-  uniform int primID = args->primID;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
   Volume *uniform volume = Isosurfaces_getVolume(self);
@@ -81,7 +80,6 @@ SYCL_EXTERNAL void unmasked Isosurfaces_intersect_kernel(
   args->valid[programIndex] = 0;
 
   Isosurfaces *uniform self = (Isosurfaces * uniform) args->geometryUserPtr;
-  uniform unsigned int primID = args->primID;
 
   // this assumes that the args->rayhit is actually a pointer to a varying ray!
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;

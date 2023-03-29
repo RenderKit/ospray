@@ -133,7 +133,6 @@ set(OSPRAY_CPP_SOURCES
 set(OSPRAY_ISPC_SOURCES
   ISPCDevice.ispc
 
-  common/OSPCommon.ispc
   common/World.ispc
 
   fb/FrameBuffer.ispc
@@ -261,7 +260,6 @@ if (WIN32)
     string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512skx-i32x16
     if (NUM_TARGETS EQUAL 1)
       set(isa "") # for single target no suffix
-      string(REPLACE "delete_uniform_," "delete_uniform," OSPRAY_ISPC_SYMBOLS_IN ${OSPRAY_ISPC_SYMBOLS_IN})
     endif()
     # add isa suffix
     string(REPLACE "," "${isa}" OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
@@ -459,6 +457,11 @@ if (OSPRAY_MODULE_GPU)
   target_compile_options(ospray_module_gpu_kernels
   PRIVATE
     -x c++
+  )
+
+  # catch implicit float to double promotions in kernels only
+  target_compile_options(ospray_module_gpu_kernels PRIVATE
+    -Wdouble-promotion
   )
 
   target_compile_options(ospray_module_gpu_kernels PUBLIC

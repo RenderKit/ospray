@@ -36,7 +36,7 @@ inline BSDF_EvalRes MicrofacetDielectric_evalSingle(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsOther)
 {
   const varying MicrofacetDielectric *uniform self =
       (const varying MicrofacetDielectric *uniform)super;

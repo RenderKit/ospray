@@ -19,8 +19,8 @@ SYCL_EXTERNAL const varying BSDF *varying MetallicPaint_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium)
+    const Ray &,
+    const Medium &)
 {
   const uniform MetallicPaint *uniform self =
       (const uniform MetallicPaint *uniform)super;

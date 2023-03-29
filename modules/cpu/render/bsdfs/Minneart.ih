@@ -19,7 +19,7 @@ struct Minneart
 inline BSDF_EvalRes Minneart_eval(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsOther)
 {
   const varying Minneart *uniform self = (const varying Minneart *uniform)super;
   BSDF_EvalRes res;
@@ -35,10 +35,9 @@ inline BSDF_EvalRes Minneart_eval(const varying BSDF *uniform super,
 inline BSDF_SampleRes Minneart_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss,
+    float,
     const uniform FeatureFlagsOther ffo)
 {
-  const varying Minneart *uniform self = (const varying Minneart *uniform)super;
   BSDF_SampleRes res;
 
   const vec3f localDir = cosineSampleHemisphere(s);

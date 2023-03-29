@@ -32,7 +32,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
   const World *uniform world = pathContext.world;
   const uniform PathTracerData &pathtracerData =
       *((const uniform PathTracerData *)world->pathtracerData);
-  for (uniform int i = 0; i < pathContext.numLightSamples; i++) {
+  for (uniform uint32 i = 0; i < pathContext.numLightSamples; i++) {
     // select a random light source from the list
     const float s1 = LDSampler_getFloat(
         pathContext.ldSampler, pathState.sampleDim + 4 + i * 3);
@@ -129,22 +129,18 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     if (reduce_max(lightContrib) > 0) {
 #ifdef OSPRAY_ENABLE_VOLUMES
       if (ff.volume & FFV_VOLUME) {
-        const float T = volumeTransmittance(pathState,
-            pathContext.world,
+        const float T = volumeTransmittance(pathContext.world,
             shadowRay,
             rayIntervals,
-            pathContext.ldSampler,
             pathContext.randomSampler);
         if (reduce_max(T) > 0) {
           // we have to use an independent transmittance estimate for MIS to get
           // a correct result
           const float T_mis = pathState.disableFWD || pathState.disableNEE
               ? 1.f
-              : volumeTransmittance(pathState,
-                  pathContext.world,
+              : volumeTransmittance(pathContext.world,
                   shadowRay,
                   rayIntervals,
-                  pathContext.ldSampler,
                   pathContext.randomSampler);
           L = L
               + T * lightContrib

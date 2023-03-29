@@ -13,7 +13,6 @@ task
         FrameBuffer *uniform fb,
         Camera *uniform camera,
         World *uniform world,
-        void *uniform perFrameData,
         const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
         const int taskIndex0,
@@ -109,7 +108,7 @@ task
 #endif
 #endif
 
-        renderSampleFn(self, fb, world, perFrameData, screenSample, ff);
+        renderSampleFn(self, fb, world, screenSample, ff);
 
         col = col + screenSample.rgb;
         alpha += screenSample.alpha;

@@ -22,7 +22,6 @@ struct SurfaceShadingInfo
 typedef SurfaceShadingInfo SSI;
 
 SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
     ScreenSample &sample,

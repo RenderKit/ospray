@@ -300,7 +300,7 @@ SYCL_EXTERNAL vec4f Texture2D_get(
 }
 
 static vec3f Texture2D_Normal_neutral(
-    const Texture2D *uniform self, const DifferentialGeometry &)
+    const Texture2D *uniform, const DifferentialGeometry &)
 {
   return make_vec3f(0.f, 0.f, 1.f);
 }

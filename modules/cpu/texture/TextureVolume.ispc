@@ -26,7 +26,7 @@ SYCL_EXTERNAL vec4f TextureVolume_get(
 }
 
 SYCL_EXTERNAL vec3f TextureVolume_getNormal(
-    const Texture *uniform self, const varying DifferentialGeometry &dg)
+    const Texture *uniform, const varying DifferentialGeometry &)
 {
   // TODO
   return make_vec3f(0.f, 0.0f, 1.0f);

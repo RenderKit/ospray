@@ -116,7 +116,7 @@ inline void traceVolumeRay(
       &intersectArgs);
 
   if (intervals.numVolumeIntervals > 0) {
-    for (uniform int i = 0; i < intervals.numVolumeIntervals; ++i) {
+    for (uniform uint32 i = 0; i < intervals.numVolumeIntervals; ++i) {
       Instance *instance = *(world->instances + intervals.intervals[i].instID);
       intervals.intervals[i].instance = instance;
       intervals.intervals[i].volumetricModel =
@@ -145,6 +145,7 @@ inline void traceClippingRay(const World *uniform world,
 {
   // Clipping disabled on GPU for now
 #ifdef OSPRAY_TARGET_SYCL
+  (void)world;
   rayIntervals.intervals[0] = make_box1f(ray.t0, ray.t);
   rayIntervals.count = 1;
   return;

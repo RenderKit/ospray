@@ -29,7 +29,7 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline void postIntersect(const PathContext &pathContext,
-    const PathState &pathState,
+    const PathState &,
     PathVertex &pathVertex,
     Ray &ray,
     const uniform FeatureFlags &ff)
@@ -52,7 +52,7 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.instID = ray.instID;
 #ifdef OSPRAY_TARGET_SYCL
     {
-      const int instID = ray.instID;
+      const uint32 instID = ray.instID;
 #else
     foreach_unique (instID in ray.instID) {
 #endif
@@ -87,7 +87,6 @@ inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
       LDSampler_getFloat(pathContext.ldSampler, pathState.sampleDim + 2);
   Scattering_SampleRes fs;
   if (pathVertex.type == SURFACE) {
-    vec3f Ns = pathVertex.dg.Ns;
 #ifdef OSPRAY_TARGET_SYCL
     {
       const BSDF *f = pathVertex.bsdf;
@@ -180,11 +179,9 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #ifdef OSPRAY_ENABLE_VOLUMES
     if (ff.volume & FFV_VOLUME) {
       float extinctionCoefficient;
-      float freePath = volumeSampleFreePath(pathState,
-          pathContext.world,
+      float freePath = volumeSampleFreePath(pathContext.world,
           ray,
           rayIntervals,
-          pathContext.ldSampler,
           pathContext.randomSampler,
           &pathVertex.volume,
           extinctionCoefficient,

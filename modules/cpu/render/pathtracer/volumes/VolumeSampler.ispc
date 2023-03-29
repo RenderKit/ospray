@@ -50,8 +50,6 @@ float delta_tracking(const VolumetricModel *uniform vModel,
   float t = 0.f;
   VKLInterval interval;
   while (vklIterateIntervalV(intervalIterator, &interval)) {
-    box1f subInterval =
-        make_box1f(interval.tRange.lower, interval.tRange.upper);
     t = interval.tRange.lower;
 
     const float maxOpacity =
@@ -94,11 +92,9 @@ float delta_tracking(const VolumetricModel *uniform vModel,
   return inf;
 }
 
-SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
-    const World *uniform world,
+SYCL_EXTERNAL float volumeSampleFreePath(const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
-    varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler,
     const VolumetricModel *varying *uniform sampledInstance,
     float &sampledExtinctionCoefficient,
@@ -126,7 +122,7 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
   {
     *sampledInstance = NULL;
   }
-  for (uniform int i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
+  for (uniform uint32 i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
        i++) {
     if (i >= volumeIntervals.numVolumeIntervals)
       break;
@@ -159,7 +155,7 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
 #else
     foreach_unique (inst in instance) {
 #endif
-      for (int j = 0; j < rayIntervals.count; j++) {
+      for (uint32 j = 0; j < rayIntervals.count; j++) {
         range1f rInterval = rayIntervals.intervals[j];
 
         // Skip ray intervals outside of the volume range
@@ -204,11 +200,9 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
   return min_dist;
 }
 
-SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
-    const World *uniform world,
+SYCL_EXTERNAL float volumeTransmittance(const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
-    varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler)
 {
 #ifdef OSPRAY_TARGET_SYCL
@@ -229,7 +223,8 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
 
   // Iterate through volume intervals
   float transmittance = 1.f;
-  for (int i = 0; i < volumeIntervals.numVolumeIntervals && transmittance > 0.f;
+  for (uint32 i = 0;
+       i < volumeIntervals.numVolumeIntervals && transmittance > 0.f;
        i++) {
     range1f vInterval = volumeIntervals.intervals[i].interval;
     vInterval.lower = max(ray.t0, vInterval.lower);
@@ -259,7 +254,7 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
 #else
     foreach_unique (inst in instance) {
 #endif
-      for (int j = 0; j < rayIntervals.count && transmittance > 0.f; j++) {
+      for (uint32 j = 0; j < rayIntervals.count && transmittance > 0.f; j++) {
         range1f rInterval = rayIntervals.intervals[j];
 
         // Skip ray intervals outside of the volume range

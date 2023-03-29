@@ -17,12 +17,9 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // Lighting functions //
 SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
-    ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     vec3f weight,
-    float rayOffset,
     uniform float quality,
     const uniform FeatureFlags &ff)
 {
@@ -66,8 +63,7 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
 
       // Sample volumes across volume intervals (in front of geometry hit)
       if (volumeIntervals.numVolumeIntervals > 0) {
-        vec4f volumeColor = integrateVolumeIntervals(
-            volumeIntervals,
+        vec4f volumeColor = integrateVolumeIntervals(volumeIntervals,
             rayIntervals,
             volumeRay,
             ldSampler,

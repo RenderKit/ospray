@@ -76,7 +76,7 @@ void DebugRenderer::commit()
 void DebugRenderer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
-    void *perFrameData,
+    void *,
     const utility::ArrayView<uint32_t> &taskIDs
 #ifdef OSPRAY_TARGET_SYCL
     ,
@@ -109,7 +109,6 @@ void DebugRenderer::renderTasks(FrameBuffer *fb,
                 fbSh,
                 cameraSh,
                 worldSh,
-                perFrameData,
                 taskIDsPtr,
                 taskIndex.get_global_id(0),
                 ff);
@@ -120,13 +119,8 @@ void DebugRenderer::renderTasks(FrameBuffer *fb,
   // For prints we have to flush the entire queue, because other stuff is queued
   syclQueue.wait_and_throw();
 #else
-  ispc::DebugRenderer_renderTasks(&rendererSh->super,
-      fbSh,
-      cameraSh,
-      worldSh,
-      perFrameData,
-      taskIDs.data(),
-      numTasks);
+  ispc::DebugRenderer_renderTasks(
+      &rendererSh->super, fbSh, cameraSh, worldSh, taskIDs.data(), numTasks);
 #endif
 }
 

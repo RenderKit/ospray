@@ -20,8 +20,8 @@ SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium,
+    const Ray &,
+    const Medium &,
     const uniform FeatureFlagsOther ffo)
 {
   uniform const OBJ *uniform self = (uniform const OBJ *uniform)super;
@@ -67,8 +67,8 @@ SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
 
 SYCL_EXTERNAL vec3f OBJ_getTransparency(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium,
+    const Ray &,
+    const Medium &,
     const uniform FeatureFlagsOther ffo)
 {
   uniform const OBJ *uniform self = (uniform const OBJ *uniform)super;

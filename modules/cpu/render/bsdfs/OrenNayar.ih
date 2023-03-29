@@ -20,7 +20,7 @@ struct OrenNayar
 inline BSDF_EvalRes OrenNayar_eval(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsOther)
 {
   const varying OrenNayar *uniform self =
       (const varying OrenNayar *uniform)super;
@@ -41,11 +41,9 @@ inline BSDF_EvalRes OrenNayar_eval(const varying BSDF *uniform super,
 inline BSDF_SampleRes OrenNayar_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss,
+    float,
     const uniform FeatureFlagsOther ffo)
 {
-  const varying OrenNayar *uniform self =
-      (const varying OrenNayar *uniform)super;
   const vec3f localDir = cosineSampleHemisphere(s);
   BSDF_SampleRes res;
   res.wi = getFrame(super) * localDir;

@@ -17,7 +17,7 @@ SYCL_EXTERNAL const varying BSDF *varying Glass_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
+    const Ray &,
     const Medium &currentMedium)
 {
   uniform const Glass *uniform self = (uniform const Glass *uniform)super;
@@ -47,7 +47,7 @@ SYCL_EXTERNAL vec3f Glass_getTransparency(
 }
 
 SYCL_EXTERNAL void Glass_selectNextMedium(const uniform Material *uniform super,
-    const DifferentialGeometry &dg,
+    const DifferentialGeometry &,
     Medium &currentMedium)
 {
   const uniform Glass *uniform self = (const uniform Glass *uniform)super;

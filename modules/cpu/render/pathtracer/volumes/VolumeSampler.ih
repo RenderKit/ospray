@@ -16,21 +16,17 @@ struct RandomSampler;
 struct Ray;
 struct RayIntervals;
 
-SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
-    const World *uniform world,
+SYCL_EXTERNAL float volumeSampleFreePath(const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
-    varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler,
     const VolumetricModel *varying *uniform sampledInstance,
     float &sampledExtinctionCoefficient,
     vec3f &sampledAlbedo);
 
-SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
-    const World *uniform world,
+SYCL_EXTERNAL float volumeTransmittance(const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
-    varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler);
 
 inline bool isSmoothVolumeVertex(const PathVertex &pathVertex)

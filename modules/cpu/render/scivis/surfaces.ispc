@@ -14,7 +14,6 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 vec3f directIllumination(const uniform SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
     const varying DifferentialGeometry &dg,
     ScreenSample &sample,
@@ -31,7 +30,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
     return color;
 
   // calculate shading for all lights
-  for (uniform int i = scivisData.numLightsVisibleOnly;
+  for (uniform uint32 i = scivisData.numLightsVisibleOnly;
        i < scivisData.numLights;
        i++) {
     const Light *uniform l = scivisData.lights[i];
@@ -60,16 +59,8 @@ vec3f directIllumination(const uniform SciVis *uniform self,
           Ray shadowRay;
           setRay(shadowRay, P, light.dir, 0.0f, light.dist);
 
-          vec3f light_alpha = lightAlpha(self,
-              shadowRay,
-              fb,
-              world,
-              sample,
-              ldSampler,
-              light_contrib,
-              dg.epsilon,
-              0.25f,
-              ff);
+          vec3f light_alpha = lightAlpha(
+              self, shadowRay, world, ldSampler, light_contrib, 0.25f, ff);
 
           color = color + light_alpha * light_contrib;
         }
@@ -83,7 +74,6 @@ vec3f directIllumination(const uniform SciVis *uniform self,
 }
 
 SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
     ScreenSample &sample,
@@ -96,8 +86,8 @@ SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
   const SciVisBSDF bsdf = evalMaterial(dg, ff.other);
   retval.albedo = bsdf.albedo;
 
-  vec3f color = directIllumination(
-      self, fb, world, dg, sample, ldSampler, bsdf, inDir, ff);
+  vec3f color =
+      directIllumination(self, world, dg, sample, ldSampler, bsdf, inDir, ff);
 
   vec3f ao = make_vec3f(1.f);
   const uniform SciVisData &scivisData =
@@ -105,9 +95,7 @@ SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
   if (self->aoSamples > 0
       && luminance(scivisData.aoColorPi) > self->super.minContribution)
     ao = SciVis_computeAO(self,
-        fb,
         world,
-        sample,
         ldSampler,
         dg,
         self->aoSamples,
@@ -133,7 +121,7 @@ SYCL_EXTERNAL vec3f evaluateLights(const World *uniform world,
   vec3f color = make_vec3f(0.f);
   const uniform SciVisData &scivisData =
       *((const uniform SciVisData *)world->scivisData);
-  for (uniform int i = 0; i < scivisData.numLights; i++) {
+  for (uniform uint32 i = 0; i < scivisData.numLights; i++) {
     // Skip lights with disabled visibility via parameter
     const Light *uniform l = scivisData.lights[i];
     if (!l->isVisible)

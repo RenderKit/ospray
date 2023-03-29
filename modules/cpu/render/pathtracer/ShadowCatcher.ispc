@@ -21,7 +21,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     PathState &pathState,
     PathVertex &pathVertex,
     const Ray &ray,
-    ScreenSample &sample,
+    ScreenSample &,
     const uniform FeatureFlags &ff)
 
 {
@@ -52,7 +52,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     const World *uniform world = pathContext.world;
     const uniform PathTracerData &pathtracerData =
         *((const uniform PathTracerData *)world->pathtracerData);
-    for (uniform int i = 0; i < pathContext.numLights; i++) {
+    for (uniform uint32 i = 0; i < pathContext.numLights; i++) {
       const Light *uniform light = pathtracerData.lights[i];
       const vec2f s = LDSampler_getFloat2(
           pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);

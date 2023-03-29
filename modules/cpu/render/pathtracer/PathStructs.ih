@@ -54,8 +54,8 @@ struct PathContext
   const varying vec2f *uniform pixel;
   varying LDSampler *uniform ldSampler;
   varying RandomSampler *uniform randomSampler;
-  uniform int numLights;
-  uniform int numLightSamples;
+  uniform uint32 numLights;
+  uniform uint32 numLightSamples;
   uniform float *uniform lightsCDF;
   uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light
                                       // samples (numLightSamples*(1D+2D))

@@ -45,7 +45,6 @@ inline vec4f getSurfaceColor(
 }
 
 SYCL_EXTERNAL SSI AORenderer_computeShading(const AORenderer *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
     ScreenSample &sample,

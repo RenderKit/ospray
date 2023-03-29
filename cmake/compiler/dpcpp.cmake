@@ -26,7 +26,6 @@ list(APPEND OSPRAY_CXX_FLAGS_SYCL
   -fsycl
   -fsycl-unnamed-lambda
   -Xclang=-fsycl-allow-func-ptr
-  -Wdouble-promotion
 )
 
 # FIXME: debug information generation takes forever in SYCL

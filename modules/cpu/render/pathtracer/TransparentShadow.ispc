@@ -23,7 +23,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     Medium medium,
     const uniform FeatureFlags &ff)
 {
-  uniform int maxDepth = self->super.maxDepth;
+  uniform uint32 maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
 
   while (1) {

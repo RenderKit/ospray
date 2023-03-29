@@ -21,7 +21,6 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 static void AORenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -106,8 +105,7 @@ static void AORenderer_renderSample(Renderer *uniform _self,
 
       // Shade geometry
       SSI surfaceShading;
-      surfaceShading =
-          AORenderer_computeShading(self, fb, world, dg, sample, ff);
+      surfaceShading = AORenderer_computeShading(self, world, dg, sample, ff);
 
       // Use shaded color for blending
       blendedColor = surfaceShading.shadedColor;
@@ -159,20 +157,17 @@ SYCL_EXTERNAL void AORenderer_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
-    void *uniform perFrameData,
     const uint32 *uniform taskIDs,
     const int taskIndex0,
     const uniform FeatureFlags &ff)
 {
-  Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, taskIndex0, ff);
+  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex0, ff);
 }
 #else
 export void AORenderer_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,
     void *uniform _world,
-    void *uniform perFrameData,
     void *uniform _taskIDs,
     uniform uint32 numTasks)
 {
@@ -182,7 +177,7 @@ export void AORenderer_renderTasks(void *uniform _self,
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, ffAll());
+      self, fb, camera, world, taskIDs, ffAll());
   sync;
 }
 #endif

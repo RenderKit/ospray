@@ -27,19 +27,14 @@ struct SciVisRenderContext
 
 SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
-    ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     vec3f weight,
-    float rayOffset,
     uniform float quality,
     const uniform FeatureFlags &ff);
 
 SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
-    ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,

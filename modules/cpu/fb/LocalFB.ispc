@@ -28,12 +28,12 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
     color += (uniform uint64)tile->region.lower.y * fb->super.size.x;          \
     VaryingTile *uniform varyTile = (VaryingTile * uniform) tile;              \
     for (uniform uint32 iiy = tile->region.lower.y;                            \
-         iiy < tile->region.upper.y;                                           \
+         iiy < (uniform uint32)tile->region.upper.y;                           \
          iiy++) {                                                              \
       uniform uint32 chunkID =                                                 \
           (iiy - tile->region.lower.y) * (TILE_SIZE / programCount);           \
       for (uint32 iix = tile->region.lower.x + programIndex;                   \
-           iix < tile->region.upper.x;                                         \
+           iix < (uniform uint32)tile->region.upper.x;                         \
            iix += programCount, chunkID++) {                                   \
         type cvtCol;                                                           \
         unmasked                                                               \
@@ -301,13 +301,14 @@ export void LocalFrameBuffer_writeDepthTile(
   uniform float *uniform depth = (uniform float *uniform)fb->depthBuffer;
   depth += (uniform uint64)tile->region.lower.y * fb->super.size.x;
 
-  for (uniform uint32 iiy = tile->region.lower.y; iiy < tile->region.upper.y;
+  for (uniform uint32 iiy = tile->region.lower.y;
+       iiy < (uniform uint32)tile->region.upper.y;
        iiy++) {
     uniform uint32 chunkID =
         (iiy - tile->region.lower.y) * (TILE_SIZE / programCount);
 
     for (uint32 iix = tile->region.lower.x + programIndex;
-         iix < tile->region.upper.x;
+         iix < (uniform uint32)tile->region.upper.x;
          iix += programCount, chunkID++) {
       depth[iix] = varyTile->z[chunkID];
     }
@@ -323,20 +324,20 @@ export void LocalFrameBuffer_writeIDTile(void *uniform _fb,
 {
   uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;
   const Tile *uniform tile = (const Tile *uniform)_tile;
-  VaryingTile *uniform varyTile = (VaryingTile * uniform) tile;
   uniform uint32 *uniform buffer =
       dst; //(uniform uint32 *uniform)fb->primitiveIDBuffer;
   buffer += (uniform uint64)tile->region.lower.y * fb->super.size.x;
   const void *uniform upid = src; //(const void* uniform)tile->pid;
   const varying int32 *uniform pid = (const varying int32 *uniform)upid;
 
-  for (uniform uint32 iiy = tile->region.lower.y; iiy < tile->region.upper.y;
+  for (uniform uint32 iiy = tile->region.lower.y;
+       iiy < (uniform uint32)tile->region.upper.y;
        iiy++) {
     uniform uint32 chunkID =
         (iiy - tile->region.lower.y) * (TILE_SIZE / programCount);
 
     for (uint32 iix = tile->region.lower.x + programIndex;
-         iix < tile->region.upper.x;
+         iix < (uniform uint32)tile->region.upper.x;
          iix += programCount, chunkID++) {
       if (tile->accumID == 0) {
         varying uint32 val = -1;
@@ -366,17 +367,16 @@ export void LocalFrameBuffer_writeAuxTile(void *uniform _fb,
   const varying float *uniform ay = (const varying float *uniform)_ay;
   const varying float *uniform az = (const varying float *uniform)_az;
 
-  const uniform float accumID = tile->accumID;
-  const uniform float accScale = rcpf(tile->accumID + 1);
   aux += (uniform uint64)tile->region.lower.y * fb->super.size.x;
 
-  for (uniform uint32 iiy = tile->region.lower.y; iiy < tile->region.upper.y;
+  for (uniform uint32 iiy = tile->region.lower.y;
+       iiy < (uniform uint32)tile->region.upper.y;
        iiy++) {
     uniform uint32 chunkID =
         (iiy - tile->region.lower.y) * (TILE_SIZE / programCount);
 
     for (uint32 iix = tile->region.lower.x + programIndex;
-         iix < tile->region.upper.x;
+         iix < (uint32)tile->region.upper.x;
          iix += programCount, chunkID++) {
       aux[iix] = make_vec3f(ax[chunkID], ay[chunkID], az[chunkID]);
     }

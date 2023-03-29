@@ -15,6 +15,10 @@ inline uniform AffineSpace3f getInterpolatedTransform(
 #ifndef OSPRAY_TARGET_SYCL
   // TODO: rtcGetGeometryTransform is not callable on the device yet
   rtcGetGeometryTransform(geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+#else
+  // Silence unused parameter warning
+  (void)geom;
+  (void)time;
 #endif
   return xfm;
 }

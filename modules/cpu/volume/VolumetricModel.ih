@@ -16,7 +16,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags)
+    uniform int64)
 {
   dg.Ng = make_vec3f(0.f);
   dg.Ns = make_vec3f(0.f);

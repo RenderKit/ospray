@@ -40,7 +40,7 @@ std::string Renderer::toString() const
 void Renderer::commit()
 {
   spp = std::max(1, getParam<int>("pixelSamples", 1));
-  const int32 maxDepth = std::max(0, getParam<int>("maxPathLength", 20));
+  const uint32_t maxDepth = std::max(0, getParam<int>("maxPathLength", 20));
   const float minContribution = getParam<float>("minContribution", 0.001f);
   errorThreshold = getParam<float>("varianceThreshold", 0.f);
 
@@ -146,6 +146,12 @@ OSPPickResult Renderer::pick(
     res.model = (OSPGeometricModel)model;
     res.primID = static_cast<uint32_t>(primID);
   }
+#else
+  // Silence unused parameter warning
+  (void)fb;
+  (void)camera;
+  (void)world;
+  (void)screenPos;
 #endif
 
   return res;

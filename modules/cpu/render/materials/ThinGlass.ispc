@@ -30,8 +30,8 @@ SYCL_EXTERNAL const varying BSDF *varying ThinGlass_getBSDF(
     const Material *uniform super,
     ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium)
+    const Ray &,
+    const Medium &)
 {
   const ThinGlass *uniform self = (const ThinGlass *uniform)super;
 
@@ -44,7 +44,7 @@ SYCL_EXTERNAL const varying BSDF *varying ThinGlass_getBSDF(
 SYCL_EXTERNAL vec3f ThinGlass_getTransparency(const Material *uniform material,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium)
+    const Medium &)
 {
   const ThinGlass *uniform self = (const ThinGlass *uniform)material;
 

@@ -31,7 +31,7 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
+    const Ray &,
     const Medium &currentMedium)
 {
   const uniform Principled *uniform self =

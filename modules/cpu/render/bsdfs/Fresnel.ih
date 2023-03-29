@@ -126,7 +126,7 @@ struct Fresnel
 #endif
 };
 
-inline vec3f Fresnel_evalAvg(const Fresnel *uniform self)
+inline vec3f Fresnel_evalAvg(const Fresnel *uniform)
 {
   return make_vec3f(0.f);
 }

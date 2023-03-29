@@ -18,7 +18,6 @@ SYCL_EXTERNAL void PathTracer_renderTask(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
-    void *uniform perFrameData,
     const uint32 *uniform taskIDs,
     const int taskIndex0,
     const uniform ospray::FeatureFlags &ff);
@@ -90,7 +89,7 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
 void PathTracer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
-    void *perFrameData,
+    void *,
     const utility::ArrayView<uint32_t> &taskIDs
 #ifdef OSPRAY_TARGET_SYCL
     ,
@@ -123,7 +122,6 @@ void PathTracer::renderTasks(FrameBuffer *fb,
                 fbSh,
                 cameraSh,
                 worldSh,
-                perFrameData,
                 taskIDsPtr,
                 taskIndex.get_global_id(0),
                 ff);
@@ -134,13 +132,8 @@ void PathTracer::renderTasks(FrameBuffer *fb,
   // For prints we have to flush the entire queue, because other stuff is queued
   syclQueue.wait_and_throw();
 #else
-  ispc::PathTracer_renderTasks(&rendererSh->super,
-      fbSh,
-      cameraSh,
-      worldSh,
-      perFrameData,
-      taskIDs.data(),
-      numTasks);
+  ispc::PathTracer_renderTasks(
+      &rendererSh->super, fbSh, cameraSh, worldSh, taskIDs.data(), numTasks);
 #endif
 }
 

@@ -34,11 +34,10 @@ inline BSDF_EvalRes ThinMicrofacetDielectric_eval(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsOther)
 {
   const varying ThinMicrofacetDielectric *uniform self =
       (const varying ThinMicrofacetDielectric *uniform)super;
-  BSDF_EvalRes res;
 
   float cosThetaO = dot(wo, getN(super));
   if (cosThetaO <= 0.f)
@@ -49,7 +48,6 @@ inline BSDF_EvalRes ThinMicrofacetDielectric_eval(
   if (isReflection) {
     // Compute the microfacet normal
     vec3f wh = normalize(wo + wi);
-    float cosThetaH = dot(wh, getN(super));
     float cosThetaOH = dot(wo, wh);
     float cosThetaIH = dot(wi, wh);
 
@@ -92,7 +90,7 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsOther)
 {
   const varying ThinMicrofacetDielectric *uniform self =
       (const varying ThinMicrofacetDielectric *uniform)super;

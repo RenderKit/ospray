@@ -22,7 +22,6 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 static void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -65,7 +64,6 @@ static void SciVis_renderSample(Renderer *uniform _self,
   // Iterate over all translucent geometry till we are fully opaque
   vec3f outColor = make_vec3f(0.f);
   vec3f outTransmission = make_vec3f(1.f);
-  int minVolIndex = 0; // interval index of closest volume
   while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
@@ -155,7 +153,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // Shade geometry
       SSI surfaceShading;
       surfaceShading = SciVis_computeShading(
-          self, fb, world, dg, sample, ldSampler, ray.dir, ff);
+          self, world, dg, sample, ldSampler, ray.dir, ff);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully
@@ -228,9 +226,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
 }
 
 SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
-    ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,
@@ -269,16 +265,8 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
 
     hits = hits
         + (1.f
-            - lightAlpha(self,
-                ao_ray,
-                fb,
-                world,
-                sample,
-                ldSampler,
-                make_vec3f(1.f),
-                dg.epsilon,
-                0.1f,
-                ff));
+            - lightAlpha(
+                self, ao_ray, world, ldSampler, make_vec3f(1.f), 0.1f, ff));
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
@@ -295,20 +283,17 @@ SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
-    void *uniform perFrameData,
     const uint32 *uniform taskIDs,
     const int taskIndex0,
     const uniform FeatureFlags &ff)
 {
-  Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, taskIndex0, ff);
+  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex0, ff);
 }
 #else
 export void SciVis_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,
     void *uniform _world,
-    void *uniform perFrameData,
     void *uniform _taskIDs,
     uniform uint32 numTasks)
 {
@@ -318,7 +303,7 @@ export void SciVis_renderTasks(void *uniform _self,
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, ffAll());
+      self, fb, camera, world, taskIDs, ffAll());
   sync;
 }
 #endif

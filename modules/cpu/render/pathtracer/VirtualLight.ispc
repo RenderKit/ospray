@@ -15,11 +15,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline box1f getMinMaxDistForVirtualLights(const PathContext &pathContext,
-    const PathState &pathState,
-    const PathVertex &lastVertex,
-    const PathVertex &pathVertex,
-    const Ray &ray)
+inline box1f getMinMaxDistForVirtualLights(
+    const PathVertex &lastVertex, const PathVertex &pathVertex, const Ray &ray)
 {
   box1f interval;
 
@@ -54,12 +51,13 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
   if (pathContext.numLights <= pathtracerData.numGeoLights)
     return L; // return if no virtual lights at all
 
-  box1f intervalLightDist = getMinMaxDistForVirtualLights(
-      pathContext, pathState, lastVertex, pathVertex, ray);
+  box1f intervalLightDist =
+      getMinMaxDistForVirtualLights(lastVertex, pathVertex, ray);
 
   const uniform float selectionPDF =
       rcp((uniform float)pathContext.numLights - pathtracerData.numGeoLights);
-  for (uniform int i = pathtracerData.numGeoLights; i < pathContext.numLights;
+  for (uniform uint32 i = pathtracerData.numGeoLights;
+       i < pathContext.numLights;
        i++) {
     const Light *uniform light = pathtracerData.lights[i];
     if (!pathState.straightPath || light->isVisible) {
@@ -90,11 +88,9 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
         float T = 1.f;
 #ifdef OSPRAY_ENABLE_VOLUMES
         if (ff.volume & FFV_VOLUME) {
-          T = volumeTransmittance(pathState,
-              pathContext.world,
+          T = volumeTransmittance(pathContext.world,
               shadowRay,
               rayIntervals,
-              pathContext.ldSampler,
               pathContext.randomSampler);
         }
 #endif

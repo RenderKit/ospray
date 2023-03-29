@@ -46,11 +46,8 @@ inline float eyeLight(varying ScreenSample &sample)
 /* a simple test-frame renderer that doesn't even trace a ray, just
   returns a well-defined test frame (mostly useful for debugging
   whether frame buffers are properly set up etcpp */
-static void DebugRenderer_testFrame(Renderer *uniform,
-    FrameBuffer *uniform fb,
-    World *uniform world,
-    void *uniform perFrameData,
-    varying ScreenSample &sample)
+static void DebugRenderer_testFrame(
+    Renderer *uniform, World *uniform, varying ScreenSample &sample)
 {
   sample.rgb.x = ((sample.sampleID.x) % 256) / 255.f;
   sample.rgb.y = ((sample.sampleID.y) % 256) / 255.f;
@@ -63,11 +60,8 @@ static void DebugRenderer_testFrame(Renderer *uniform,
 
 /* a simple test-frame renderer that doesn't even trace a ray, just
   returns the absolute of the ray direction */
-static void DebugRenderer_rayDir(Renderer *uniform,
-    FrameBuffer *uniform fb,
-    World *uniform world,
-    void *uniform perFrameData,
-    varying ScreenSample &sample)
+static void DebugRenderer_rayDir(
+    Renderer *uniform, World *uniform, varying ScreenSample &sample)
 {
   sample.rgb = absf(sample.ray.dir);
   sample.alpha = 1.f;
@@ -75,9 +69,7 @@ static void DebugRenderer_rayDir(Renderer *uniform,
 }
 
 static void DebugRenderer_eyeLight(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -88,9 +80,7 @@ static void DebugRenderer_eyeLight(Renderer *uniform self,
 }
 
 static void DebugRenderer_Ng(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -103,9 +93,7 @@ static void DebugRenderer_Ng(Renderer *uniform self,
 }
 
 static void DebugRenderer_Ns(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -118,9 +106,7 @@ static void DebugRenderer_Ns(Renderer *uniform self,
 }
 
 static void DebugRenderer_texCoord(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -132,9 +118,7 @@ static void DebugRenderer_texCoord(Renderer *uniform self,
 }
 
 static void DebugRenderer_dPds(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -152,9 +136,7 @@ static void DebugRenderer_dPds(Renderer *uniform self,
 }
 
 static void DebugRenderer_dPdt(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -173,9 +155,7 @@ static void DebugRenderer_dPdt(Renderer *uniform self,
 }
 
 static void DebugRenderer_vertexColor(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -189,9 +169,7 @@ static void DebugRenderer_vertexColor(Renderer *uniform self,
 }
 
 static void DebugRenderer_primID(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -202,9 +180,7 @@ static void DebugRenderer_primID(Renderer *uniform self,
 }
 
 static void DebugRenderer_instID(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -215,9 +191,7 @@ static void DebugRenderer_instID(Renderer *uniform self,
 }
 
 static void DebugRenderer_geomID(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -228,9 +202,7 @@ static void DebugRenderer_geomID(Renderer *uniform self,
 }
 
 static void DebugRenderer_backfacing_Ng(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -243,9 +215,7 @@ static void DebugRenderer_backfacing_Ng(Renderer *uniform self,
 }
 
 static void DebugRenderer_backfacing_Ns(Renderer *uniform self,
-    FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -263,7 +233,6 @@ static void DebugRenderer_backfacing_Ns(Renderer *uniform self,
 static void DebugRenderer_volume(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
@@ -308,7 +277,6 @@ static void DebugRenderer_volume(Renderer *uniform self,
   foreach_unique (m in model) {
 #endif
     Volume *uniform volume = m->volume;
-    TransferFunction *uniform tf = m->transferFunction;
 
     float time = 0.5f;
     VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
@@ -380,59 +348,58 @@ static void DebugRenderer_volume(Renderer *uniform self,
 static void DebugRenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
     varying ScreenSample &sample,
     const uniform FeatureFlags &ff)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
   switch (self->type) {
   case TEST_FRAME:
-    DebugRenderer_testFrame(_self, fb, world, perFrameData, sample);
+    DebugRenderer_testFrame(_self, world, sample);
     break;
   case RAY_DIR:
-    DebugRenderer_rayDir(_self, fb, world, perFrameData, sample);
+    DebugRenderer_rayDir(_self, world, sample);
     break;
   case EYE_LIGHT:
-    DebugRenderer_eyeLight(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_eyeLight(_self, world, sample, ff);
     break;
   case NG:
-    DebugRenderer_Ng(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_Ng(_self, world, sample, ff);
     break;
   case NS:
-    DebugRenderer_Ns(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_Ns(_self, world, sample, ff);
     break;
   case COLOR:
-    DebugRenderer_vertexColor(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_vertexColor(_self, world, sample, ff);
     break;
   case TEX_COORD:
-    DebugRenderer_texCoord(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_texCoord(_self, world, sample, ff);
     break;
   case DPDS:
-    DebugRenderer_dPds(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_dPds(_self, world, sample, ff);
     break;
   case DPDT:
-    DebugRenderer_dPdt(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_dPdt(_self, world, sample, ff);
     break;
   case PRIM_ID:
-    DebugRenderer_primID(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_primID(_self, world, sample, ff);
     break;
   case GEOM_ID:
-    DebugRenderer_geomID(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_geomID(_self, world, sample, ff);
     break;
   case INST_ID:
-    DebugRenderer_instID(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_instID(_self, world, sample, ff);
     break;
   case BACKFACING_NG:
-    DebugRenderer_backfacing_Ng(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_backfacing_Ng(_self, world, sample, ff);
     break;
   case BACKFACING_NS:
-    DebugRenderer_backfacing_Ns(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_backfacing_Ns(_self, world, sample, ff);
     break;
   case VOLUME:
-    DebugRenderer_volume(_self, fb, world, perFrameData, sample, ff);
+    DebugRenderer_volume(_self, fb, world, sample, ff);
     break;
   default:
-    DebugRenderer_testFrame(_self, fb, world, perFrameData, sample);
+    DebugRenderer_testFrame(_self, world, sample);
     break;
   };
 }
@@ -446,20 +413,17 @@ SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
-    void *uniform perFrameData,
     const uint32 *uniform taskIDs,
     const int taskIndex0,
     const uniform FeatureFlags &ff)
 {
-  Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, taskIndex0, ff);
+  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex0, ff);
 }
 #else
 export void DebugRenderer_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,
     void *uniform _world,
-    void *uniform perFrameData,
     void *uniform _taskIDs,
     uniform uint32 numTasks)
 {
@@ -469,7 +433,7 @@ export void DebugRenderer_renderTasks(void *uniform _self,
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, ffAll());
+      self, fb, camera, world, taskIDs, ffAll());
   sync;
 }
 #endif

@@ -97,7 +97,7 @@ inline Light_SampleRes Sample(const SpotLight *uniform self,
 SYCL_EXTERNAL Light_SampleRes SpotLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float time)
+    const float)
 {
   const SpotLight *uniform self = (SpotLight * uniform) super;
   assert(self);
@@ -175,7 +175,7 @@ SYCL_EXTERNAL Light_EvalRes SpotLight_eval(const Light *uniform super,
     const vec3f &dir,
     const float minDist,
     const float maxDist,
-    const float time)
+    const float)
 {
   const SpotLight *uniform self = (SpotLight * uniform) super;
   assert(self);

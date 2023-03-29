@@ -45,7 +45,7 @@ SYCL_EXTERNAL float Renderer_getMaxDepth(const Renderer *uniform self,
 // Exports (called from C++) //////////////////////////////////////////////////
 
 export void Renderer_pick(const void *uniform _self,
-    const void *uniform _fb,
+    const void *uniform,
     const void *uniform _camera,
     const void *uniform _world,
     const uniform vec2f &screenPos,
@@ -56,7 +56,6 @@ export void Renderer_pick(const void *uniform _self,
     uniform int32 &hit)
 {
   const Renderer *uniform self = (const Renderer *uniform)_self;
-  const FrameBuffer *uniform fb = (const FrameBuffer *uniform)_fb;
   const Camera *uniform camera = (const Camera *uniform)_camera;
   const World *uniform world = (const World *uniform)_world;
 
