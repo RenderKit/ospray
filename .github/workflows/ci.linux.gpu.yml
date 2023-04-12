@@ -15,60 +15,118 @@ jobs:
 
 ### BUILD JOBS ###
 
-  build-ubuntu2204-DG2-JIT:
+  build-ubuntu2204:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19476/artifacts/Linux/Ubuntu/22.04/Release
-      dpcpp-version: sycl-nightly/20221214
-      install-gfx-driver: true
-      submodules: true
       image: ubuntu:22.04
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
+      level-zero-version: public/1.9.9
+      install-gfx-driver: false
+      submodules: true
       cmd: |
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=kraszkow/embree-sycl-build-gpu -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_VERSION=devel
-      artifact-out: build-ubuntu2204-DG2-JIT
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=bcca9b98 -DRKCOMMON_VERSION=devel
+      artifact-out: build-ubuntu2204
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  build-ubuntu2204-DG2-JIT-mpi:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/support_oneapi_icx
-    secrets: inherit
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19476/artifacts/Linux/Ubuntu/22.04/Release
-      dpcpp-version: intel/2023.0
-      install-gfx-driver: true
-      submodules: true
-      image: ubuntu:22.04
-      cmd: |
-        sudo apt remove openmpi-* libopenmpi3 -y
-        module load level-zero/1.9.4
-        module load mpi
-        export CC=icx
-        export CXX=icpx
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=kraszkow/embree-sycl-build-gpu -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_VERSION=devel
-      artifact-out: build-ubuntu2204-DG2-JIT-mpi
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
-
-### TEST JOBS ###
-
-  test-ubuntu2204-DG2-JIT:
-    needs: [build-ubuntu2204-DG2-JIT]
+  build-ubuntu2204-devel:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19476/artifacts/Linux/Ubuntu/22.04/Release
-      dpcpp-version: sycl-nightly/20221214
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22-internal.env
+      level-zero-version: public/1.9.9
+      install-gfx-driver: false
+      submodules: true
+      cmd: |
+        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
+        export CC=clang
+        export CXX=clang++
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
+      artifact-out: build-ubuntu2204-devel
+      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-ubuntu2204-mpi:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/dpcpp-sycl-public.env .github/workflows/gfx-ubuntu22.env
+      level-zero-version: public/1.9.9
+      install-gfx-driver: false
+      submodules: true
+      cmd: |
+        sudo apt remove openmpi-* libopenmpi3 -y
+        module load mpi
+        export CC=icx
+        export CXX=icpx
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
+      artifact-out: build-ubuntu2204-mpi
+      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-suse:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: opensuse/leap:15.3
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
+      level-zero-version: public/1.9.9
+      install-gfx-driver: false
+      submodules: true
+      cmd: |
+        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
+        export CC=clang
+        export CXX=clang++
+        scripts/build/linux.sh -DBUILD_GLFW=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
+      artifact-out: build-suse
+      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+
+### TEST JOBS ###
+
+  test-ubuntu2204-dg2:
+    needs: [build-ubuntu2204]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
       install-gfx-driver: true
       submodules: true
-      image: ubuntu:22.04
       options: --device=/dev/dri:/dev/dri
       runs-on: '[ "Linux", "docker", "dg2" ]'
-      artifact-in: build-ubuntu2204-DG2-JIT
-      artifact-out: test-ubuntu2204-DG2-JIT
+      artifact-in: build-ubuntu2204
+      artifact-out: test-ubuntu2204-dg2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
+        export CC=clang
+        export CXX=clang++
+        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
+  test-ubuntu2204-devel-dg2:
+    needs: [build-ubuntu2204-devel]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22-internal.env
+      install-gfx-driver: true
+      submodules: true
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '[ "Linux", "docker", "dg2" ]'
+      artifact-in: build-ubuntu2204-devel
+      artifact-out: test-ubuntu2204-devel-dg2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
@@ -81,7 +139,7 @@ jobs:
 
 #  test-ubuntu2204-DG2-JIT-mpi:
 #    needs: [build-ubuntu2204-DG2-JIT-mpi]
-#    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/support_oneapi_icx
+#    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
 #    secrets: inherit
 #    with:
 #      allow-failure: true
@@ -98,7 +156,7 @@ jobs:
 #      artifact-on-failure: true
 #      cmd: |
 #        sudo apt remove openmpi-* libopenmpi3 -y
-#        module load level-zero/1.9.4
+#        module load level-zero/1.9.9
 #        module load mpi
 #        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
 #        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
