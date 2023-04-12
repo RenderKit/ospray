@@ -2,46 +2,49 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LoadBalancer.h"
-#include "Renderer.h"
-#include "api/Device.h"
-#include "common/Group.h"
-#include "common/Instance.h"
-#include "rkcommon/tasking/parallel_for.h"
-
+#include "camera/Camera.h"
+#include "common/World.h"
+#include "fb/FrameBuffer.h"
+// ispc shared
 #include "fb/LocalFBShared.h"
+
+#ifndef OSPRAY_TARGET_SYCL
+#include "render/RenderTask.h"
+#include "rkcommon/utility/CodeTimer.h"
+#else
+#include "render/RenderTaskSycl.h"
+#endif
 
 namespace ospray {
 
-void LocalTiledLoadBalancer::renderFrame(
-    FrameBuffer *fb, Renderer *renderer, Camera *camera, World *world)
+Renderer::Event LocalTiledLoadBalancer::renderFrame(FrameBuffer *fb,
+    Renderer *renderer,
+    Camera *camera,
+    World *world,
+    bool wait)
 {
   fb->beginFrame();
   void *perFrameData = renderer->beginFrame(fb, world);
 
-  renderer->renderTasks(fb,
+  Renderer::Event event = renderer->renderTasks(fb,
       camera,
       world,
       perFrameData,
-      fb->getRenderTaskIDs(renderer->errorThreshold)
-#ifdef OSPRAY_TARGET_SYCL
-          ,
-      *syclQueue
-#endif
-  );
+      fb->getRenderTaskIDs(renderer->errorThreshold),
+      wait);
 
-  renderer->endFrame(fb, perFrameData);
+  // No renderer->endFrame() and fb->endFrame() on GPU.
+  // Frame post-processing need to be done as a separate
+  // kernel submitted to the main compute queue.
+  if (wait) {
+    renderer->endFrame(fb, perFrameData);
+    fb->setCompletedEvent(OSP_WORLD_RENDERED);
 
-  fb->setCompletedEvent(OSP_WORLD_RENDERED);
-  fb->endFrame(renderer->errorThreshold, camera);
-  fb->setCompletedEvent(OSP_FRAME_FINISHED);
+    fb->endFrame(renderer->errorThreshold, camera);
+    fb->setCompletedEvent(OSP_FRAME_FINISHED);
+  }
+  return event;
 }
-
-#ifdef OSPRAY_TARGET_SYCL
-void LocalTiledLoadBalancer::setQueue(sycl::queue *sq)
-{
-  syclQueue = sq;
-}
-#endif
 
 std::string LocalTiledLoadBalancer::toString() const
 {

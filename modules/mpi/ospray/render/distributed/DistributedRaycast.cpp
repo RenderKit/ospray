@@ -109,8 +109,7 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
     DistributedWorld *world,
     const box3f &region,
     void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs,
-    sycl::queue &syclQueue) const
+    const utility::ArrayView<uint32_t> &taskIDs) const
 {
   auto *rendererSh = getSh();
   auto *fbSh = fb->getSh();
@@ -119,7 +118,7 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   const size_t numTasks = taskIDs.size();
 
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+  auto event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
     ff.other |= featureFlags;
     ff.other |= fb->getFeatureFlagsOther();
@@ -146,8 +145,6 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
         });
   });
   event.wait_and_throw();
-  // For prints we have to flush the entire queue, because other stuff is queued
-  syclQueue.wait_and_throw();
 }
 #endif
 

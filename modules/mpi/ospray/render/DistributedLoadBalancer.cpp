@@ -32,8 +32,11 @@ DistributedLoadBalancer::~DistributedLoadBalancer()
   handle.free();
 }
 
-void DistributedLoadBalancer::renderFrame(
-    FrameBuffer *_fb, Renderer *_renderer, Camera *camera, World *_world)
+Renderer::Event DistributedLoadBalancer::renderFrame(FrameBuffer *_fb,
+    Renderer *_renderer,
+    Camera *camera,
+    World *_world,
+    bool wait)
 {
   auto *dfb = dynamic_cast<DistributedFrameBuffer *>(_fb);
 
@@ -47,7 +50,7 @@ void DistributedLoadBalancer::renderFrame(
   if (!renderer) {
     if (world->allRegions.size() == 1) {
       renderFrameReplicated(dfb, _renderer, camera, world);
-      return;
+      return Renderer::Event();
     } else {
       throw std::runtime_error(
           "Distributed rendering requires a distributed renderer!");
@@ -177,12 +180,7 @@ void DistributedLoadBalancer::renderFrame(
         world,
         regionVisible.sharedPtr(),
         perFrameData,
-        renderTaskIDs
-#ifdef OSPRAY_TARGET_SYCL
-        ,
-        *syclQueue
-#endif
-    );
+        renderTaskIDs);
 
     // If we're rendering the background tiles send them over now
     if (layer == 0) {
@@ -249,12 +247,7 @@ void DistributedLoadBalancer::renderFrame(
           world->allRegions[rid],
           perFrameData,
           utility::ArrayView<uint32_t>(
-              activeTasksShared.data(), activeTasksShared.size())
-#ifdef OSPRAY_TARGET_SYCL
-              ,
-          *syclQueue
-#endif
-      );
+              activeTasksShared.data(), activeTasksShared.size()));
 
       tasking::parallel_for(tiles.size(), [&](size_t i) {
         if (!regionVisible[numRegions * i + rid]
@@ -277,6 +270,7 @@ void DistributedLoadBalancer::renderFrame(
   renderer->endFrame(dfb, perFrameData);
 
   dfb->endFrame(renderer->errorThreshold, camera);
+  return Renderer::Event();
 }
 
 void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
@@ -346,13 +340,6 @@ std::string DistributedLoadBalancer::toString() const
 {
   return "ospray::mpi::Distributed";
 }
-
-#ifdef OSPRAY_TARGET_SYCL
-void DistributedLoadBalancer::setQueue(sycl::queue *sq)
-{
-  syclQueue = sq;
-}
-#endif
 
 void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
     DistributedFrameBuffer *dfb,
@@ -455,12 +442,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
             camera,
             world,
             perFrameData,
-            sparseFb->getRenderTaskIDs(renderer->errorThreshold)
-#ifdef OSPRAY_TARGET_SYCL
-                ,
-            *syclQueue
-#endif
-        );
+            sparseFb->getRenderTaskIDs(renderer->errorThreshold));
 
         // TODO: Now the tile setting happens as a bulk-sync operation after
         // rendering, because we still need to send them through the compositing
@@ -521,12 +503,7 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
       camera,
       world,
       perFrameData,
-      ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold)
-#ifdef OSPRAY_TARGET_SYCL
-          ,
-      *syclQueue
-#endif
-  );
+      ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold));
 
   // TODO: Now the tile setting happens as a bulk-sync operation after
   // rendering, because we still need to send them through the compositing

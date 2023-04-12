@@ -20,16 +20,12 @@ struct DebugRenderer : public AddStructShared<Renderer, ispc::DebugRenderer>
 
   void commit() override;
 
-  virtual void renderTasks(FrameBuffer *fb,
+  virtual Event renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs
-#ifdef OSPRAY_TARGET_SYCL
-      ,
-      sycl::queue &syclQueue
-#endif
-  ) const override;
+      const utility::ArrayView<uint32_t> &taskIDs,
+      bool wait) const override;
 };
 
 } // namespace ospray

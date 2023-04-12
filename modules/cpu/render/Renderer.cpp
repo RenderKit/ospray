@@ -5,7 +5,10 @@
 #include "Renderer.h"
 #include "LoadBalancer.h"
 #include "Material.h"
+#include "camera/Camera.h"
 #include "common/Instance.h"
+#include "common/World.h"
+#include "fb/FrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
@@ -24,7 +27,7 @@ namespace ospray {
 // Renderer definitions ///////////////////////////////////////////////////////
 
 Renderer::Renderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device)
+    : AddStructShared(device.getIspcrtContext(), device), device(device)
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;

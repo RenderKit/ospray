@@ -21,7 +21,11 @@
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "render/RenderTaskSycl.h"
+#else
 #include "render/RenderTask.h"
+#endif
 #include "render/Renderer.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
@@ -286,8 +290,6 @@ void ISPCDevice::commit()
         syclDevice,
         reinterpret_cast<pi_native_handle>(ispcrtQueue.nativeTaskQueueHandle()),
         true);
-
-    loadBalancer->setQueue(&syclQueue);
 #endif
   }
 
@@ -357,13 +359,8 @@ void ISPCDevice::commit()
 
 #ifndef OSPRAY_TARGET_SYCL
   // Output device info string
-  const char *isaNames[] = {"unknown",
-      "SSE2",
-      "SSE4",
-      "AVX",
-      "AVX2",
-      "AVX512SKX",
-      "NEON"};
+  const char *isaNames[] = {
+      "unknown", "SSE2", "SSE4", "AVX", "AVX2", "AVX512SKX", "NEON"};
   postStatusMsg(OSP_LOG_INFO)
       << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
       << " instruction set";
@@ -619,6 +616,7 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   Camera *camera = (Camera *)_camera;
   World *world = (World *)_world;
 
+#ifndef OSPRAY_TARGET_SYCL
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 
   fb->refInc();
@@ -626,7 +624,7 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   camera->refInc();
   world->refInc();
 
-  auto *f = new RenderTask(fb, [=]() {
+  return (OSPFuture) new RenderTask(fb, [=]() {
     utility::CodeTimer timer;
     timer.start();
     loadBalancer->renderFrame(fb, renderer, camera, world);
@@ -639,8 +637,10 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
 
     return timer.seconds();
   });
-
-  return (OSPFuture)f;
+#else
+  return (OSPFuture) new RenderTask(
+      loadBalancer->renderFrame(fb, renderer, camera, world, false));
+#endif
 }
 
 int ISPCDevice::isReady(OSPFuture _task, OSPSyncEvent event)

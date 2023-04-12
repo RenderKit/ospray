@@ -41,12 +41,7 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
     DistributedWorld *world,
     uint8_t *regionVisible,
     void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs
-#ifdef OSPRAY_TARGET_SYCL
-    ,
-    sycl::queue &syclQueue
-#endif
-) const
+    const utility::ArrayView<uint32_t> &taskIDs) const
 {
 #ifndef OSPRAY_TARGET_SYCL
   ispc::DistributedRenderer_computeRegionVisibility(getSh(),
@@ -65,7 +60,7 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   const size_t numTasks = taskIDs.size();
 
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+  auto event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
     ff.other |= featureFlags;
     ff.other |= fb->getFeatureFlagsOther();
@@ -91,8 +86,6 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
         });
   });
   event.wait_and_throw();
-  // For prints we have to flush the entire queue, because other stuff is queued
-  syclQueue.wait_and_throw();
 #endif
 }
 

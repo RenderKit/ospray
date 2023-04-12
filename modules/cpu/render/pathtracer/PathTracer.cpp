@@ -87,17 +87,14 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   return nullptr;
 }
 
-void PathTracer::renderTasks(FrameBuffer *fb,
+Renderer::Event PathTracer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
     void *,
-    const utility::ArrayView<uint32_t> &taskIDs
-#ifdef OSPRAY_TARGET_SYCL
-    ,
-    sycl::queue &syclQueue
-#endif
-) const
+    const utility::ArrayView<uint32_t> &taskIDs,
+    bool wait) const
 {
+  Event event;
   auto *rendererSh = getSh();
   auto *fbSh = fb->getSh();
   auto *cameraSh = camera->getSh();
@@ -106,7 +103,7 @@ void PathTracer::renderTasks(FrameBuffer *fb,
 
 #ifdef OSPRAY_TARGET_SYCL
   const uint32_t *taskIDsPtr = taskIDs.data();
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+  event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
     ff.other |= featureFlags;
     ff.other |= fb->getFeatureFlagsOther();
@@ -129,13 +126,15 @@ void PathTracer::renderTasks(FrameBuffer *fb,
           }
         });
   });
-  event.wait_and_throw();
-  // For prints we have to flush the entire queue, because other stuff is queued
-  syclQueue.wait_and_throw();
+
+  if (wait)
+    event.wait_and_throw();
 #else
+  (void)wait;
   ispc::PathTracer_renderTasks(
       &rendererSh->super, fbSh, cameraSh, worldSh, taskIDs.data(), numTasks);
 #endif
+  return event;
 }
 
 } // namespace ospray

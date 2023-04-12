@@ -29,6 +29,14 @@ struct OSPRAY_SDK_INTERFACE Renderer
     : public AddStructShared<ISPCDeviceObject, ispc::Renderer>,
       public ObjectFactory<Renderer, api::ISPCDevice &>
 {
+#ifdef OSPRAY_TARGET_SYCL
+  using Event = sycl::event;
+#else
+  struct Event
+  {
+  };
+#endif
+
   Renderer(api::ISPCDevice &device);
   virtual ~Renderer() override = default;
 
@@ -52,17 +60,12 @@ struct OSPRAY_SDK_INTERFACE Renderer
   virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
   // called by the load balancer to render one "sample" for each task
-  virtual void renderTasks(FrameBuffer *,
+  virtual Event renderTasks(FrameBuffer *,
       Camera *,
       World *,
       void *,
-      const utility::ArrayView<uint32_t> &
-#ifdef OSPRAY_TARGET_SYCL
-      ,
-      sycl::queue &
-#endif
-  ) const
-  {}
+      const utility::ArrayView<uint32_t> &,
+      bool wait = true) const = 0;
 
 #ifdef OSPRAY_TARGET_SYCL
   /* Compute the rounded dispatch global size for the given work group size.
@@ -98,6 +101,7 @@ struct OSPRAY_SDK_INTERFACE Renderer
 
  protected:
   FeatureFlagsOther featureFlags{FFO_NONE};
+  api::ISPCDevice &device;
 
  private:
   void setupPixelFilter();

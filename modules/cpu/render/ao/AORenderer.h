@@ -14,16 +14,12 @@ struct AORenderer : public AddStructShared<Renderer, ispc::AORenderer>
   std::string toString() const override;
   void commit() override;
 
-  virtual void renderTasks(FrameBuffer *fb,
+  virtual Event renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs
-#ifdef OSPRAY_TARGET_SYCL
-      ,
-      sycl::queue &syclQueue
-#endif
-  ) const override;
+      const utility::ArrayView<uint32_t> &taskIDs,
+      bool wait) const override;
 
  private:
   int aoSamples{1};

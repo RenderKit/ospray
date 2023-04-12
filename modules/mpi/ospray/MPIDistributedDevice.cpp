@@ -405,10 +405,6 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
 
   auto loadBalancer =
       std::make_shared<DistributedLoadBalancer>(allocateHandle());
-#ifdef OSPRAY_TARGET_SYCL
-  auto ispcDevice = std::dynamic_pointer_cast<api::ISPCDevice>(internalDevice);
-  loadBalancer->setQueue(ispcDevice->getSyclQueue());
-#endif
 
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 

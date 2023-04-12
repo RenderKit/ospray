@@ -49,8 +49,7 @@ struct DistributedRaycastRenderer : public AddStructShared<DistributedRenderer,
       DistributedWorld *world,
       const box3f &region,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs,
-      sycl::queue &syclQueue) const override;
+      const utility::ArrayView<uint32_t> &taskIDs) const override;
 #endif
 
  private:

@@ -149,8 +149,12 @@ void Base::SetLights()
 
 void Base::RenderFrame()
 {
-  for (int frame = 0; frame < frames; ++frame)
-    framebuffer.renderFrame(renderer, camera, world);
+  for (int frame = 0; frame < frames; ++frame) {
+    cpp::Future future = framebuffer.renderFrame(renderer, camera, world);
+    // TODO: Need to wait after every frame or variance
+    // is incorrectly calculated
+    future.wait();
+  }
 }
 
 FromOsprayTesting::FromOsprayTesting()
