@@ -286,10 +286,8 @@ void ISPCDevice::commit()
         reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
         true);
 
-    syclQueue = sycl::ext::oneapi::level_zero::make_queue(syclContext,
-        syclDevice,
-        reinterpret_cast<pi_native_handle>(ispcrtQueue.nativeTaskQueueHandle()),
-        true);
+    syclQueue = sycl::queue(
+        syclContext, syclDevice, {sycl::property::queue::enable_profiling()});
 #endif
   }
 
