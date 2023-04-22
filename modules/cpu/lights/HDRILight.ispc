@@ -119,7 +119,7 @@ inline Light_EvalRes Eval(const HDRILight *uniform self,
 
   // domain of Distribution2D is shifted by half a texel compared to texture
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)
-  const vec2f uvd = frac(uv + self->map->halfTexel);
+  const vec2f uvd = clamp(frac(uv + self->map->halfTexel), make_vec2f(0.f), make_vec2f(1.f));
   res.pdf = Distribution2D_pdf(self->distribution, uvd);
   res.pdf *= (float)one_over_two_pi_sqr * rsqrt(1.f - sqr(localDir.z));
 
