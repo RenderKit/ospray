@@ -667,6 +667,7 @@ inline BSDF_EvalRes Plastic_DielectricLayerBSDF_eval(
     const vec3f &wi)
 {
   DIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->diffuse.super.albedo,
       self->diffuse.super.scatteringType,
       &self->diffuse,
       DiffuseBSDF_eval);
@@ -680,6 +681,7 @@ inline BSDF_SampleRes Plastic_DielectricLayerBSDF_sample(
     float ss)
 {
   DIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->diffuse.super.albedo,
       self->diffuse.super.scatteringType,
       &self->diffuse,
       DiffuseBSDF_sample);
@@ -694,6 +696,7 @@ inline BSDF_EvalRes Plastic_MicrofacetDielectricLayerBSDF_eval(
     const vec3f &wi)
 {
   MICROFACETDIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->diffuse.super.albedo,
       self->diffuse.super.scatteringType,
       &self->diffuse,
       DiffuseBSDF_eval);
@@ -707,6 +710,7 @@ inline BSDF_SampleRes Plastic_MicrofacetDielectricLayerBSDF_sample(
     float ss)
 {
   MICROFACETDIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->diffuse.super.albedo,
       self->diffuse.super.scatteringType,
       &self->diffuse,
       DiffuseBSDF_eval,
@@ -894,6 +898,7 @@ inline BSDF_EvalRes ClearCoat_DielectricLayerBSDF_eval(
     const vec3f &wi)
 {
   DIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->base.super.albedo,
       self->base.super.scatteringType,
       &self->base,
       BaseBSDF_eval);
@@ -907,6 +912,7 @@ inline BSDF_SampleRes ClearCoat_DielectricLayerBSDF_sample(
     float ss)
 {
   DIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->base.super.albedo,
       self->base.super.scatteringType,
       &self->base,
       BaseBSDF_sample);
@@ -921,6 +927,7 @@ inline BSDF_EvalRes ClearCoat_MicrofacetDielectricLayerBSDF_eval(
     const vec3f &wi)
 {
   MICROFACETDIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->base.super.albedo,
       self->base.super.scatteringType,
       &self->base,
       BaseBSDF_eval);
@@ -934,6 +941,7 @@ inline BSDF_SampleRes ClearCoat_MicrofacetDielectricLayerBSDF_sample(
     float ss)
 {
   MICROFACETDIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->base.super.albedo,
       self->base.super.scatteringType,
       &self->base,
       BaseBSDF_eval,

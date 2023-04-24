@@ -148,7 +148,7 @@ OSPRAY_END_ISPC_NAMESPACE
 // Eval macros
 
 #define MICROFACETDIELECTRICLAYER_EVAL(                                        \
-    mdl_name, scatteringType, substrate_bsdf, substrate_fn)                    \
+    mdl_name, albedo, scatteringType, substrate_bsdf, substrate_fn)            \
   const varying MicrofacetDielectricLayer *uniform mdl =                       \
       (const varying MicrofacetDielectricLayer *uniform) & mdl_name;           \
                                                                                \
@@ -200,7 +200,9 @@ OSPRAY_END_ISPC_NAMESPACE
                                     Szirmay-Kalos, 2001] */                    \
   substrate.value = substrate.value * T;                                       \
                                                                                \
-  float coatPickProb = Ro;                                                     \
+  /* TODO: add considering the absorption of the coating if present */         \
+  float coatPickProb =                                                         \
+      mdl->weight * Ro / ((1.f - Ro) * reduce_max(albedo) + mdl->weight * Ro); \
   float substratePickProb = 1.f - coatPickProb;                                \
                                                                                \
   if (cosThetaI > 0.f) {                                                       \
@@ -246,6 +248,7 @@ OSPRAY_END_ISPC_NAMESPACE
 // Sample macros
 
 #define MICROFACETDIELECTRICLAYER_SAMPLE(mdl_name,                             \
+    albedo,                                                                    \
     scatteringType,                                                            \
     substrate_bsdf,                                                            \
     substrate_eval,                                                            \
@@ -274,7 +277,9 @@ OSPRAY_END_ISPC_NAMESPACE
   vec3f wh;                                                                    \
   BSDF_EvalRes substrate;                                                      \
                                                                                \
-  float coatPickProb = Ro;                                                     \
+  /* TODO: add considering the absorption of the coating if present */         \
+  float coatPickProb =                                                         \
+      mdl->weight * Ro / ((1.f - Ro) * reduce_max(albedo) + mdl->weight * Ro); \
   float substratePickProb = 1.f - coatPickProb;                                \
                                                                                \
   if (ss < coatPickProb) {                                                     \

@@ -268,12 +268,15 @@ __noinline BSDF_SampleRes BaseBSDF_sample(
 inline BSDF_EvalRes DielectricLayerBSDF_eval(
     const varying CarPaint_BSDF *uniform self, const vec3f &wo, const vec3f &wi)
 {
+  vec3f albedo = (self->flakeMask) ? self->conductor.super.albedo
+                                   : self->baseDiffuse.super.albedo;
+
   BSDFScatteringType scatteringType = (self->flakeMask)
       ? self->conductor.super.scatteringType
       : self->baseDiffuse.super.scatteringType;
 
   DIELECTRICLAYER_EVAL(
-      self->dielectricLayer, scatteringType, self, BaseBSDF_eval);
+      self->dielectricLayer, albedo, scatteringType, self, BaseBSDF_eval);
   return DIELECTRICLAYER_EVAL_GET();
 }
 
@@ -283,12 +286,15 @@ inline BSDF_SampleRes DielectricLayerBSDF_sample(
     const vec2f &s,
     float ss)
 {
+  vec3f albedo = (self->flakeMask) ? self->conductor.super.albedo
+                                   : self->baseDiffuse.super.albedo;
+
   BSDFScatteringType scatteringType = (self->flakeMask)
       ? self->conductor.super.scatteringType
       : self->baseDiffuse.super.scatteringType;
 
   DIELECTRICLAYER_SAMPLE(
-      self->dielectricLayer, scatteringType, self, BaseBSDF_sample);
+      self->dielectricLayer, albedo, scatteringType, self, BaseBSDF_sample);
   return DIELECTRICLAYER_SAMPLE_GET();
 }
 
@@ -297,12 +303,15 @@ inline BSDF_SampleRes DielectricLayerBSDF_sample(
 inline BSDF_EvalRes MicrofacetDielectricLayerBSDF_eval(
     const varying CarPaint_BSDF *uniform self, const vec3f &wo, const vec3f &wi)
 {
+  vec3f albedo = (self->flakeMask) ? self->conductor.super.albedo
+                                   : self->baseDiffuse.super.albedo;
+
   BSDFScatteringType scatteringType = (self->flakeMask)
       ? self->conductor.super.scatteringType
       : self->baseDiffuse.super.scatteringType;
 
   MICROFACETDIELECTRICLAYER_EVAL(
-      self->dielectricLayer, scatteringType, self, BaseBSDF_eval);
+      self->dielectricLayer, albedo, scatteringType, self, BaseBSDF_eval);
   return MICROFACETDIELECTRICLAYER_EVAL_GET();
 }
 
@@ -312,11 +321,15 @@ inline BSDF_SampleRes MicrofacetDielectricLayerBSDF_sample(
     const vec2f &s,
     float ss)
 {
+  vec3f albedo = (self->flakeMask) ? self->conductor.super.albedo
+                                   : self->baseDiffuse.super.albedo;
+
   BSDFScatteringType scatteringType = (self->flakeMask)
       ? self->conductor.super.scatteringType
       : self->baseDiffuse.super.scatteringType;
 
   MICROFACETDIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      albedo,
       scatteringType,
       self,
       BaseBSDF_eval,

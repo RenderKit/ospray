@@ -83,7 +83,7 @@ OSPRAY_END_ISPC_NAMESPACE
 // Eval macros
 
 #define DIELECTRICLAYER_EVAL(                                                  \
-    dl_name, scatteringType, substrate_bsdf, substrate_fn)                     \
+    dl_name, albedo, scatteringType, substrate_bsdf, substrate_fn)             \
   const varying DielectricLayer *uniform dl =                                  \
       (const varying DielectricLayer *uniform) & dl_name;                      \
                                                                                \
@@ -97,7 +97,8 @@ OSPRAY_END_ISPC_NAMESPACE
                                                                                \
   /* Fresnel term */                                                           \
   float cosThetaO1; /* positive */                                             \
-  float Fo = fresnelDielectricEx(cosThetaO, cosThetaO1, dl->eta) * dl->weight; \
+  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, dl->eta);               \
+  float Fo = F * dl->weight;                                                   \
                                                                                \
   float cosThetaI = dot(wi, getN(&dl->super));                                 \
   float cosThetaI1; /* positive */                                             \
@@ -125,14 +126,16 @@ OSPRAY_END_ISPC_NAMESPACE
         * rcp(1.f - dl->Favg); /* for diffuse substrates [Kelemen and          \
                                     Szirmay-Kalos, 2001] */                    \
   substrate.value = substrate.value * T;                                       \
-  substrate.pdf *= (1.f - Fo)
+  /* TODO: add considering the absorption of the coating if present */         \
+  const float coatPickProb = Fo / ((1.f - F) * reduce_max(albedo) + Fo);       \
+  substrate.pdf *= (1.f - coatPickProb)
 
 #define DIELECTRICLAYER_EVAL_GET() substrate
 
 // Sample macros
 
 #define DIELECTRICLAYER_SAMPLE(                                                \
-    dl_name, scatteringType, substrate_bsdf, substrate_fn)                     \
+    dl_name, albedo, scatteringType, substrate_bsdf, substrate_fn)             \
   const varying DielectricLayer *uniform dl =                                  \
       (const varying DielectricLayer *uniform) & dl_name;                      \
   BSDF_SampleRes res;                                                          \
@@ -143,18 +146,22 @@ OSPRAY_END_ISPC_NAMESPACE
                                                                                \
   /* Fresnel term */                                                           \
   float cosThetaO1; /* positive */                                             \
-  float Fo = fresnelDielectricEx(cosThetaO, cosThetaO1, dl->eta) * dl->weight; \
+  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, dl->eta);               \
+  float Fo = F * dl->weight;                                                   \
                                                                                \
-  if (ss < Fo) {                                                               \
+  /* TODO: add considering the absorption of the coating if present */         \
+  const float coatPickProb = Fo / ((1.f - F) * reduce_max(albedo) + Fo);       \
+  if (ss < coatPickProb) {                                                     \
     /* Sample the coating */                                                   \
     res.type = BSDF_SPECULAR_REFLECTION;                                       \
     res.wi = reflect(wo, getN(&dl->super), cosThetaO);                         \
     res.pdf = inf;                                                             \
-    res.weight = make_vec3f(1.f);                                              \
+    res.weight = make_vec3f(Fo / coatPickProb);                                \
   } else {                                                                     \
     /* Sample the substrate */                                                 \
     /* Ignore refraction */                                                    \
-    float ss1 = (ss - Fo) * rcp(1.f - Fo); /* reallocate sample */             \
+    float ss1 =                                                                \
+        (ss - coatPickProb) * rcp(1.f - coatPickProb); /* reallocate sample */ \
     res = substrate_fn(substrate_bsdf, wo, s, ss1);                            \
     if (reduce_max(res.weight) <= 0.f)                                         \
       return res;                                                              \
@@ -184,8 +191,8 @@ OSPRAY_END_ISPC_NAMESPACE
       T = (1.f - Fo) * (1.f - Fi)                                              \
           * rcp(1.f - dl->Favg); /* for diffuse substrates [Kelemen and        \
                                       Szirmay-Kalos, 2001] */                  \
-    res.weight = res.weight * (T * rcp(1.f - Fo));                             \
-    res.pdf *= (1.f - Fo);                                                     \
+    res.weight = res.weight * (T * rcp(1.f - coatPickProb));                   \
+    res.pdf *= (1.f - coatPickProb);                                           \
   }
 
 #define DIELECTRICLAYER_SAMPLE_GET() res

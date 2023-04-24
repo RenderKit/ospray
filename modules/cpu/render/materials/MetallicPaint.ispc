@@ -124,6 +124,7 @@ SYCL_EXTERNAL BSDF_EvalRes MetallicPaint_BSDF_eval(
       (const varying MetallicPaint_BSDF *uniform)super;
 
   DIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->multi.super.albedo,
       self->multi.super.scatteringType,
       &self->multi.super,
       MultiBSDF_eval);
@@ -140,6 +141,7 @@ SYCL_EXTERNAL BSDF_SampleRes MetallicPaint_BSDF_sample(
       (const varying MetallicPaint_BSDF *uniform)super;
 
   DIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->multi.super.albedo,
       self->multi.super.scatteringType,
       &self->multi.super,
       MultiBSDF_sample);

@@ -74,6 +74,7 @@ inline BSDF_EvalRes DielectricLayerBSDF_eval(
     const varying Plastic_BSDF *uniform self, const vec3f &wo, const vec3f &wi)
 {
   DIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->lambert.albedo,
       self->lambert.scatteringType,
       &self->lambert,
       Lambert_eval);
@@ -87,6 +88,7 @@ inline BSDF_SampleRes DielectricLayerBSDF_sample(
     float ss)
 {
   DIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->lambert.albedo,
       self->lambert.scatteringType,
       &self->lambert,
       Lambert_sample);
@@ -99,6 +101,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayerBSDF_eval(
     const varying Plastic_BSDF *uniform self, const vec3f &wo, const vec3f &wi)
 {
   MICROFACETDIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->lambert.albedo,
       self->lambert.scatteringType,
       &self->lambert,
       Lambert_eval);
@@ -112,6 +115,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayerBSDF_sample(
     float ss)
 {
   MICROFACETDIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->lambert.albedo,
       self->lambert.scatteringType,
       &self->lambert,
       Lambert_eval,
