@@ -7,6 +7,9 @@ Version History
 -   Support half-precision (16\ bit float) texture formats
     `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
     float textures `OSP_TEXTURE_RA32F`
+-   New parameter `firstBounceLightSamples` for the `pathtracer` which
+    is the number of random light samples at the first non-specular
+    (i.e., diffuse and glossy) bounce
 -   Fix artifacts occassionally appearing with `gpu` device
 -   Removed Intel ISPCRT dependency (ISPC compiler is still needed):
     -   oneAPI Level Zero Loader is no longer necessary

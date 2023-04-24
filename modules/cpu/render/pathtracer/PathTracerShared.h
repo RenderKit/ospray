@@ -22,6 +22,7 @@ struct PathTracer
   bool shadowCatcher; // preprocessed
   bool backgroundRefraction;
   int32 numLightSamples; // number of light samples used for NEE
+  int32 numFirstBounceLightSamples; // like above, but at the first bounce
 
 #ifdef __cplusplus
   PathTracer()
@@ -31,7 +32,8 @@ struct PathTracer
         shadowCatcherPlane(0.f),
         shadowCatcher(false),
         backgroundRefraction(false),
-        numLightSamples(1)
+        numLightSamples(-1),
+        numFirstBounceLightSamples(-1)
   {}
 };
 } // namespace ispc

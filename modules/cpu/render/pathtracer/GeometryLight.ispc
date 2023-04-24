@@ -36,7 +36,7 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
       float lightSelectionPDF = 0.0f;
       if (pathContext.numLights > 0) {
         lightSelectionPDF =
-            (1.0f / (float)pathContext.numLights) * pathContext.numLightSamples;
+            (1.0f / (float)pathContext.numLights) * pathState.numLightSamples;
       }
       // convert pdf wrt. area to pdf wrt. solid angle
       const float cosd = dot(pathVertex.dg.Ng, ray.dir);

@@ -35,14 +35,14 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
   const World *uniform world = pathContext.world;
   const uniform PathTracerData &pathtracerData =
       *((const uniform PathTracerData *)world->pathtracerData);
-  for (uniform uint32 i = 0; i < pathContext.numLightSamples; i++) {
+  for (uniform uint32 i = 0; i < pathState.numLightSamples; i++) {
     // select a random light source from the list
     const float s1 = LDSampler_getFloat(
         pathContext.ldSampler, pathState.sampleDim + 3 + i * 3);
     const Sample1D lSelectSample = Distribution1D_sample(
         pathContext.numLights, pathContext.lightsCDF, 0, s1);
     const float lightSelectionProb =
-        lSelectSample.prob * pathContext.numLightSamples;
+        lSelectSample.prob * pathState.numLightSamples;
     const Light *light = pathtracerData.lights[lSelectSample.idx];
     // sample the contribution from the random light source
     const vec2f s2 = LDSampler_getFloat2(

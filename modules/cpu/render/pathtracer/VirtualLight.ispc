@@ -100,7 +100,7 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
             + pathState.throughput * le.radiance
                 * misHeuristic(pathState,
                     lastVertex.pdf_w * T,
-                    selectionPDF * pathContext.numLightSamples * le.pdf);
+                    selectionPDF * pathState.numLightSamples * le.pdf);
       }
     }
   }

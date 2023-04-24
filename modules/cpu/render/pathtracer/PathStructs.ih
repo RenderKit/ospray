@@ -55,7 +55,7 @@ struct PathContext
   varying LDSampler *uniform ldSampler;
   varying RandomSampler *uniform randomSampler;
   uniform uint32 numLights;
-  uniform uint32 numLightSamples;
+  uniform uint32 numIndirectBounceLightSamples;
   uniform float *uniform lightsCDF;
   uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light
                                       // samples (numLightSamples*(1D+2D))
@@ -74,6 +74,7 @@ struct PathState
   Medium currentMedium;
   float shadowCatcherDist;
   uniform uint32 sampleDim; // skip: pixel (2D), lens (2D), time (1D)
+  uint32 numLightSamples;
   uint32 scatteringEvents; // counting diffuse and glossy bounces
   uniform uint32 depth;
 #ifdef OSPRAY_PATHTRACER_DEBUG

@@ -279,6 +279,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       if (isSmooth(pathVertex)) {
         pathState.contribution = pathState.contribution
             + nextEventEstimation(pathContext, pathState, pathVertex, ffh);
+        pathState.numLightSamples = pathContext.numIndirectBounceLightSamples;
       }
 
     Scattering_SampleRes fs =

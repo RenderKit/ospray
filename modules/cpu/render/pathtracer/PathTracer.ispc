@@ -54,9 +54,15 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
       *((uniform PathTracerData *)world->pathtracerData);
   const uniform uint32 numLights =
       pathtracerData.lights ? min(MAX_LIGHTS, pathtracerData.numLights) : 0;
-  const uniform uint32 numLightSamples =
+
+  const uniform uint32 numIndirectBounceLightSamples =
       self->numLightSamples >= 0 && numLights > 0 ? self->numLightSamples
                                                   : numLights;
+  const uniform uint32 numFirstBounceLightSamples =
+      self->numFirstBounceLightSamples >= 0 && numLights > 0
+      ? self->numFirstBounceLightSamples
+      : numLights;
+
   PathContext pathContext;
   pathContext.context = self;
   pathContext.world = world;
@@ -64,15 +70,17 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathContext.ldSampler = ldSampler;
   pathContext.randomSampler = randomSampler;
   pathContext.numLights = numLights;
-  pathContext.numLightSamples = numLightSamples;
+  pathContext.numIndirectBounceLightSamples = numIndirectBounceLightSamples;
   pathContext.lightsCDF = pathtracerData.lightsCDF;
 
   // BSDF sample (3D), light samples * (3D, light selection and sampling)
-  pathContext.numBounceSampleDims = 3 + numLightSamples * 3;
+  pathContext.numBounceSampleDims =
+      3 + max(numFirstBounceLightSamples, numIndirectBounceLightSamples) * 3;
 
   PathState pathState;
 #ifdef OSPRAY_PATHTRACER_DEBUG
-  pathState.disableNEE = numLightSamples == 0;
+  pathState.disableNEE =
+      numFirstBounceLightSamples == 0 && numIndirectBounceLightSamples == 0;
   pathState.disableFWD = false;
 #endif
   pathState.straightPath = true; // path from camera did not change direction,
@@ -84,6 +92,7 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathState.depth = 0;
   pathState.sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
   pathState.scatteringEvents = 0;
+  pathState.numLightSamples = numFirstBounceLightSamples;
   pathState.throughput = make_vec3f(1.f);
   pathState.contribution = make_vec3f(0.f);
   pathState.time = ray.time;
