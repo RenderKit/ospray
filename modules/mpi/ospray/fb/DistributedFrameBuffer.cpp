@@ -912,7 +912,7 @@ void DFB::setTile(const ispc::Tile &tile)
 
 void DFB::clear()
 {
-  getSh()->frameID = -1; // we increment at the start of the frame
+  FrameBuffer::clear();
 
   if (hasAccumBuffer) {
     tileErrorRegion.clear();
