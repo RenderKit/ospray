@@ -156,7 +156,7 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
 
   int numThreads{-1};
   bool debugMode{false};
-  bool apiTraceEnabled{false};
+  bool disableMipMapGeneration{false};
 
   enum OSP_THREAD_AFFINITY
   {
@@ -188,6 +188,7 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
 
  private:
   bool committed{false};
+  bool apiTraceEnabled{false};
 
   using FactoryFcn = Device *(*)();
   using FactoryMap = std::map<std::string, FactoryFcn>;

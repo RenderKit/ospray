@@ -11,6 +11,7 @@
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 
+#include "common/RayCone.ih"
 #include "common/World.ih"
 #include "math/Distribution1D.ih"
 #include "math/random.ih"
@@ -24,6 +25,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     PathState &pathState,
     PathVertex &pathVertex,
+    float rayConeWidth,
     const uniform FeatureFlagsHandler &ffh)
 {
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
@@ -81,7 +83,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     if (reduce_max(fe.value) <= 0.0f)
       continue;
 
-    // test for shadows
+    // test for shadows with rayCones
     Ray shadowRay;
     vec3f org = pathVertex.dg.P;
     if (pathVertex.type != VOLUME) {
@@ -89,6 +91,10 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         org = org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
     }
     setRay(shadowRay, org, ls.dir, 0.f, ls.dist, pathState.time);
+    // connect ray cone to point on light
+    RayCone shadowCone;
+    shadowCone.width = rayConeWidth;
+    shadowCone.dwdt = -rayConeWidth * rcp(ls.dist);
 
     // Trace ray in clipping geometries scene, fill array with ray intervals
     RayIntervals rayIntervals;
@@ -101,6 +107,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         pathContext.world,
         unshadedLightContrib,
         shadowRay,
+        shadowCone,
         rayIntervals,
         pathState.currentMedium,
         ffh);

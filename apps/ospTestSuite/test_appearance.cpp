@@ -3,6 +3,7 @@
 
 #include "test_appearance.h"
 #include "ArcballCamera.h"
+#include "ospray_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
 namespace OSPRayTestScenes {
@@ -23,12 +24,11 @@ void Texture2D::SetUp()
   auto params = GetParam();
   OSPTextureFilter filter = std::get<0>(params);
 
-  // create (4*2) x 4 grid
+  // create (4*2) x 5 grid
   constexpr int cols = 8;
   constexpr int rows = 5;
   std::vector<vec3f> vertex;
   std::vector<vec2f> texcoord;
-  std::vector<vec4ui> index;
   rkcommon::index_sequence_2D iidx(vec2i(cols, rows));
   // Generate each quad, each needs its own vertex coordinates w/ unique
   // texcoords when we're testing w/ texture coordinates on
@@ -43,16 +43,13 @@ void Texture2D::SetUp()
     texcoord.push_back(vec2f(1.f, 0.f));
     texcoord.push_back(vec2f(1.f, 1.f));
     texcoord.push_back(vec2f(0.f, 1.f));
-
-    index.push_back(
-        vec4ui(idx_start, idx_start + 1, idx_start + 2, idx_start + 3));
   }
   cpp::Geometry mesh("mesh");
   mesh.setParam("vertex.position", cpp::CopiedData(vertex));
-  if (std::get<2>(params)) {
+  if (std::get<3>(params)) {
     mesh.setParam("vertex.texcoord", cpp::CopiedData(texcoord));
   }
-  mesh.setParam("index", cpp::CopiedData(index));
+  mesh.setParam("quadSoup", true);
   mesh.commit();
 
   // create textures:
@@ -180,7 +177,7 @@ void Texture2D::SetUp()
   cpp::Light light2("distant");
 
   // two light sets
-  if (std::get<1>(params)) {
+  if (std::get<2>(params)) {
     // default light
     light1.setParam("intensity", 3.f);
     // highlighting normal direction
@@ -197,6 +194,8 @@ void Texture2D::SetUp()
 
   AddLight(light1);
   AddLight(light2);
+
+  renderer.setParam("mipMapBias", std::get<1>(params));
 }
 
 static cpp::Texture createTexture2D(uint32_t width = 32,
@@ -318,12 +317,14 @@ void Texture2DTransform::SetUp()
 Texture2DWrapMode::Texture2DWrapMode()
 {
   rendererType = "scivis";
-  filter = GetParam();
 }
 
 void Texture2DWrapMode::SetUp()
 {
   Base::SetUp();
+
+  auto params = GetParam();
+  OSPTextureFilter filter = std::get<1>(params);
 
   camera.setParam("position", vec3f(4.f, 4.f, -8.f));
   camera.setParam("direction", vec3f(0.f, 0.f, 1.f));
@@ -355,6 +356,54 @@ void Texture2DWrapMode::SetUp()
   cpp::Light ambient("ambient");
   ambient.setParam("intensity", 0.5f);
   AddLight(ambient);
+
+  renderer.setParam("mipMapBias", std::get<0>(params));
+}
+
+Texture2DMipMapping::Texture2DMipMapping()
+{
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  samplesPerPixel = 4;
+}
+
+void Texture2DMipMapping::SetUp()
+{
+  Base::SetUp();
+
+  auto params = GetParam();
+
+  auto builder = ospray::testing::newBuilder("mip_map_textures");
+  ospray::testing::setParam(builder, "filter", (uint32_t)std::get<2>(params));
+  ospray::testing::setParam(builder, "tcScale", std::get<4>(params));
+  ospray::testing::commit(builder);
+
+  world = ospray::testing::buildWorld(builder);
+  ospray::testing::release(builder);
+
+  std::string cameraType = std::get<1>(params);
+  camera = cpp::Camera(cameraType);
+  if (cameraType == "perspective")
+    camera.setParam("aspect", imgSize.x / (float)imgSize.y);
+  if (cameraType == "orthographic")
+    camera.setParam("height", 10.0f);
+  camera.setParam(
+      "position", vec3f(0.f, 0.f, cameraType == "panoramic" ? -4.f : -6.f));
+
+  OSPStereoMode stereoMode = std::get<5>(params);
+  if (cameraType == "perspective" || cameraType == "panoramic")
+    camera.setParam("stereoMode", stereoMode);
+  if (stereoMode == OSP_STEREO_TOP_BOTTOM) {
+    camera.setParam("imageStart", vec2f(0.25f));
+    camera.setParam("imageEnd", vec2f(0.75f));
+  }
+
+  renderer.setParam("mipMapBias", std::get<3>(params));
+
+  cpp::Light distant("distant");
+  distant.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  distant.setParam("intensity", 3.f);
+  AddLight(distant);
 }
 
 RendererMaterialList::RendererMaterialList()
@@ -554,8 +603,17 @@ INSTANTIATE_TEST_SUITE_P(Appearance,
     Texture2D,
     ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_LINEAR,
                            OSP_TEXTURE_FILTER_NEAREST),
+        ::testing::Values(0.0f),
         ::testing::Bool(),
         ::testing::Bool()));
+
+INSTANTIATE_TEST_SUITE_P(AppearanceMipMap,
+    Texture2D,
+    ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_LINEAR,
+                           OSP_TEXTURE_FILTER_NEAREST),
+        ::testing::Values(6.0f),
+        ::testing::Bool(),
+        ::testing::Values(false)));
 
 TEST_P(Texture2DTransform, simple)
 {
@@ -572,7 +630,42 @@ TEST_P(Texture2DWrapMode, wrap)
 
 INSTANTIATE_TEST_SUITE_P(Appearance,
     Texture2DWrapMode,
-    ::testing::Values(OSP_TEXTURE_FILTER_NEAREST, OSP_TEXTURE_FILTER_LINEAR));
+    ::testing::Combine(::testing::Values(0.0f, 5.0f),
+        ::testing::Values(
+            OSP_TEXTURE_FILTER_NEAREST, OSP_TEXTURE_FILTER_LINEAR)));
+
+TEST_P(Texture2DMipMapping, mipMapping)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(MipMap,
+    Texture2DMipMapping,
+    ::testing::Combine(::testing::Values("scivis", "pathtracer", "ao"),
+        ::testing::Values("perspective"),
+        ::testing::Values(
+            OSP_TEXTURE_FILTER_NEAREST, OSP_TEXTURE_FILTER_LINEAR),
+        ::testing::Values(0.0f, 1.0f),
+        ::testing::Values(1.0f),
+        ::testing::Values(OSP_STEREO_NONE)));
+
+INSTANTIATE_TEST_SUITE_P(MipMapScale,
+    Texture2DMipMapping,
+    ::testing::Combine(::testing::Values("pathtracer"),
+        ::testing::Values("perspective"),
+        ::testing::Values(OSP_TEXTURE_FILTER_LINEAR),
+        ::testing::Values(1.0f),
+        ::testing::Values(0.3f, 3.1f),
+        ::testing::Values(OSP_STEREO_NONE)));
+
+INSTANTIATE_TEST_SUITE_P(MipMapCamera,
+    Texture2DMipMapping,
+    ::testing::Combine(::testing::Values("pathtracer"),
+        ::testing::Values("perspective", "orthographic", "panoramic"),
+        ::testing::Values(OSP_TEXTURE_FILTER_LINEAR),
+        ::testing::Values(1.0f),
+        ::testing::Values(1.0f),
+        ::testing::Values(OSP_STEREO_NONE, OSP_STEREO_TOP_BOTTOM)));
 
 TEST_P(PTBackgroundRefraction, backgroundRefraction)
 {

@@ -53,7 +53,7 @@ ospray_sign_target(ospray_mpi_worker)
 
 ## Build the MPI Distributed CPU module ##
 
-set(OSPRAY_MPI_DISTRIBUTED_CPP_SOURCES
+set(OSPRAY_MPI_DISTRIBUTED_HOST_SOURCES
   ${OSPRAY_RESOURCE}
 
   MPIDistributedDevice.cpp
@@ -74,7 +74,7 @@ set(OSPRAY_MPI_DISTRIBUTED_CPP_SOURCES
   render/distributed/AlphaCompositeTileOperation.cpp
 )
 
-set(OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES
+set(OSPRAY_MPI_DISTRIBUTED_KERNEL_SOURCES
   MPIDistributedDevice.ispc
   fb/DistributedFrameBuffer.ispc
   render/distributed/DistributedRaycast.ispc
@@ -117,8 +117,8 @@ endif()
 add_library(ospray_module_mpi_distributed_cpu SHARED)
 
 ispc_target_add_sources(ospray_module_mpi_distributed_cpu
-    ${OSPRAY_MPI_DISTRIBUTED_CPP_SOURCES}
-    ${OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES}
+    ${OSPRAY_MPI_DISTRIBUTED_HOST_SOURCES}
+    ${OSPRAY_MPI_DISTRIBUTED_KERNEL_SOURCES}
 )
 
 # XXX ISPC cannot DLL-import constants, need to directly link again
@@ -162,11 +162,11 @@ ospray_install_library(ospray_module_mpi_distributed_cpu mpi)
 
 if (OSPRAY_MODULE_GPU)
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
-  set_source_files_properties(${OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES} PROPERTIES
+  set_source_files_properties(${OSPRAY_MPI_DISTRIBUTED_KERNEL_SOURCES} PROPERTIES
       LANGUAGE CXX)
 
   add_library(ospray_module_mpi_distributed_gpu_kernels OBJECT
-    ${OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES}
+    ${OSPRAY_MPI_DISTRIBUTED_KERNEL_SOURCES}
   )
 
   target_link_libraries(ospray_module_mpi_distributed_gpu_kernels
@@ -197,8 +197,10 @@ if (OSPRAY_MODULE_GPU)
   # Install and export without DESTINATION to turn it into INTERFACE library
   install(TARGETS ospray_module_mpi_distributed_gpu_kernels EXPORT ospray_Exports)
 
-  add_library(ospray_module_mpi_distributed_gpu SHARED
-    ${OSPRAY_MPI_DISTRIBUTED_CPP_SOURCES}
+  add_library(ospray_module_mpi_distributed_gpu SHARED)
+
+  ispc_target_add_sources(ospray_module_mpi_distributed_gpu 
+    ${OSPRAY_MPI_DISTRIBUTED_HOST_SOURCES}
   )
  
   # Note: GPU hybrid code defines are brought in for us by linking the CPU module

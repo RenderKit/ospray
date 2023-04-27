@@ -10,6 +10,7 @@
 #include "common/FeatureFlags.ih"
 #include "common/Instance.ih"
 #include "common/Ray.ih"
+#include "common/RayCone.ih"
 #include "common/RayQueryContext.ih"
 #include "common/VolumeIntervals.ih"
 #include "geometry/GeometryDispatch.ih"
@@ -389,6 +390,7 @@ inline void postIntersect(const World *uniform world,
     const Renderer *uniform renderer,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
+    varying RayCone &rayCone,
     uniform int64 flags,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -447,11 +449,19 @@ inline void postIntersect(const World *uniform world,
       dg.Ns = neg(dg.Ns);
   }
 
-  dg.P = dg.P + dg.epsilon * ffnng;
 #undef DG_NG_FACEFORWARD
 #undef DG_NS_FACEFORWARD
 #undef DG_NG_NORMALIZE
 #undef DG_NS_NORMALIZE
+
+  dg.P = dg.P + dg.epsilon * ffnng;
+
+  rayCone.width += rayCone.dwdt * ray.t; // propagate to hit
+  const float texArea = length(cross(dg.dPds, dg.dPdt));
+  const float world2tex = rsqrtf(texArea);
+  const float projConeWidth = rayCone.width / -dot(ray.dir, dg.Ng);
+  dg.pixelFootprint = projConeWidth * world2tex;
+  dg.pixelFootprint *= renderer->mipBiasFactor;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

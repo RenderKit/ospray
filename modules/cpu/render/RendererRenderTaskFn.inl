@@ -73,7 +73,13 @@ static void Renderer_default_renderTask(const uniform vec3ui itemIndex,
       cameraSample.lens.y = 0.0f;
       cameraSample.time = 0.5f;
 
-      Camera_dispatch_initRay(camera, screenSample.ray, cameraSample, ffh);
+      Camera_dispatch_initRay(
+          camera, screenSample.ray, screenSample.rayCone, cameraSample, ffh);
+      // take screen resolution (unnormalized coordinates), i.e., pixel size
+      // into account
+      screenSample.rayCone.dwdt *= fb->rcpSize.y;
+      screenSample.rayCone.width *= fb->rcpSize.y;
+
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       screenSample.z = inf;

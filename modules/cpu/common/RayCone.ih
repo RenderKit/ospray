@@ -1,0 +1,16 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+struct RayCone
+{
+  float width; // current width (perpendicular to ray, calculated at the
+               // intersection points)
+  float dwdt; // change of width per unit distance, i.e. the slope corresponding
+              // to the spread angle
+};
+
+OSPRAY_END_ISPC_NAMESPACE

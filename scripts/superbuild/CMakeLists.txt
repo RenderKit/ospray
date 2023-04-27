@@ -96,7 +96,7 @@ else()
   mark_as_advanced(FORCE ISPC_VERSION)
 endif()
 
-set(RKCOMMON_VERSION "1.13.0" CACHE STRING "Which version of rkcommon to build?")
+set(RKCOMMON_VERSION "devel" CACHE STRING "Which version of rkcommon to build?")
 if (RKCOMMON_VERSION STREQUAL "1.13.0")
   set(RKCOMMON_HASH "9d360ce89de1842d4ae81b561ce150efd4fd812bd9e8b1d42d3934c528de637c")
 endif()

@@ -100,33 +100,38 @@ to set parameters on the device. The semantics of setting parameters is
 exactly the same as `ospSetParam`, which is documented below in the
 [parameters] section. The following parameters can be set on all devices:
 
-  ------ ------------ ----------------------------------------------------------
-  Type   Name         Description
-  ------ ------------ ----------------------------------------------------------
-  int    numThreads   number of threads which OSPRay should use
+  ------ ------------------------ ----------------------------------------------
+  Type   Name                     Description
+  ------ ------------------------ ----------------------------------------------
+  int    numThreads               number of threads which OSPRay should use
 
-  uint   logLevel     logging level; valid values (in order of severity) are
-                      `OSP_LOG_NONE`, `OSP_LOG_ERROR`, `OSP_LOG_WARNING`,
-                      `OSP_LOG_INFO`, and `OSP_LOG_DEBUG`
+  bool   disableMipMapGeneration  disable the default generation of MIP maps for
+                                  textures (e.g., to save the additional memory
+                                  needed)
 
-  string logOutput    convenience for setting where status messages go; valid
-                      values are `cerr` and `cout`
+  uint   logLevel                 logging level; valid values (in order of
+                                  severity) are `OSP_LOG_NONE`, `OSP_LOG_ERROR`,
+                                  `OSP_LOG_WARNING`, `OSP_LOG_INFO`, and
+                                  `OSP_LOG_DEBUG`
 
-  string errorOutput  convenience for setting where error messages go; valid
-                      values  are `cerr` and `cout`
+  string logOutput                convenience for setting where status messages
+                                  go; valid values are `cerr` and `cout`
 
-  bool   debug        set debug mode; equivalent to `logLevel=debug` and
-                      `numThreads=1`
+  string errorOutput              convenience for setting where error messages
+                                  go; valid values  are `cerr` and `cout`
 
-  bool   warnAsError  send `warning` and `error` messages through the error
-                      callback, otherwise send `warning` messages through
-                      the message callback; must have sufficient `logLevel` to
-                      enable warnings
+  bool   debug                    set debug mode; equivalent to `logLevel=debug`
+                                  and `numThreads=1`
 
-  bool   setAffinity  bind software threads to hardware threads if set to 1;
-                      0 disables binding omitting the parameter will let OSPRay
-                      choose
-  ------ ------------ ----------------------------------------------------------
+  bool   warnAsError              send `warning` and `error` messages through
+                                  the error callback, otherwise send `warning`
+                                  messages through the message callback; must
+                                  have sufficient `logLevel` to enable warnings
+
+  bool   setAffinity              bind software threads to hardware threads if
+                                  set to 1; 0 disables binding omitting the
+                                  parameter will let OSPRay choose
+  ------ ------------------------ ----------------------------------------------
   : Parameters shared by all devices.
 
 Once parameters are set on the created device, the device must be
@@ -858,7 +863,7 @@ the `cell.type` parameter must be omitted).
 
   uint8[]             cell.type                    [data] array of cell types (VTK
                                                    compatible), only set if `indexPrefixed
-                                                   = false` false. Supported types are:
+                                                   = false`. Supported types are:
 
                                                    `OSP_TETRAHEDRON`
 
@@ -2773,6 +2778,10 @@ General parameters of all renderers are
                                                              filter used by the renderer for
                                                              antialiasing. Possible pixel filters
                                                              are listed below.
+
+  float           mipMapBias                              0  bias for texture MIP-mapping, balancing
+                                                             between sharpness/aliasing and
+                                                             blurriness due to prefiltering
   -------------- ------------------ -----------------------  -----------------------------------------
   : Parameters understood by all renderers.
 
@@ -2799,7 +2808,7 @@ distance of primary rays, thus objects of other renderers can hide
 objects rendered by OSPRay.
 
 OSPRay supports antialiasing in image space by using pixel filters,
-which are centered around the center of a pixel. The size $w×w$ of the
+which are aligned around the center of a pixel. The size $w×w$ of the
 filter depends on the selected filter type. The types of supported pixel
 filters are defined by the `OSPPixelFilterType` enum and can be set
 using the `pixelFilter` parameter.
@@ -2824,6 +2833,14 @@ using the `pixelFilter` parameter.
   -------------------------------- ---------------------------------------------
   : Pixel filter types supported by OSPRay for antialiasing in image space.
 
+OSPRay also antialiases textures with prefiltering and MIP-mapping,
+which can be adjusted with parameter `mipMapBias`. For final frame
+rendering with a high number of `pixelSamples` or accumulated frames
+`mipMapBias` can be lowered (e.g., set to -0.5 or -2) to result in sharper
+textures which are essentially anisotropically filtered. Conversely, for
+preview rendering with just a single sample per pixel a higher
+`mipMapBias` of 1 or 2 can reduce texture aliasing and increase
+rendering speed.
 
 ### SciVis Renderer
 

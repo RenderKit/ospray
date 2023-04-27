@@ -27,6 +27,7 @@
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "PathTracerShared.h"
+#include "common/RayCone.ih"
 #include "render/MaterialShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -36,6 +37,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 static ScreenSample PathTraceIntegrator_Li(PathContext &pathContext,
     PathState &pathState,
     Ray &ray,
+    RayCone &rayCone,
     const uniform FeatureFlagsHandler &ffh)
 {
   ScreenSample sample;
@@ -62,7 +64,7 @@ static ScreenSample PathTraceIntegrator_Li(PathContext &pathContext,
   pathState.currentMedium = make_Medium_vacuum();
   pathState.shadowCatcherDist = -(float)inf;
 
-  samplePath(pathContext, pathState, ray, sample, ffh);
+  samplePath(pathContext, pathState, ray, rayCone, sample, ffh);
 
   return sample;
 }
@@ -191,15 +193,21 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     else
       cameraSample.time = 0.5f;
 
-    Camera_dispatch_initRay(camera, screenSample.ray, cameraSample, ffh);
+    Camera_dispatch_initRay(
+        camera, screenSample.ray, screenSample.rayCone, cameraSample, ffh);
+    // take screen resolution (unnormalized coordinates), i.e., pixel size into
+    // account
+    screenSample.rayCone.dwdt *= fb->rcpSize.y;
+    screenSample.rayCone.width *= fb->rcpSize.y;
+
     const float tMax =
         Renderer_getMaxDepth(&self->super, cameraSample.screen, ffh);
 
     screenSample.ray.t = min(screenSample.ray.t, tMax);
 
     pathContext.screen = cameraSample.screen;
-    ScreenSample sample =
-        PathTraceIntegrator_Li(pathContext, pathState, screenSample.ray, ffh);
+    ScreenSample sample = PathTraceIntegrator_Li(
+        pathContext, pathState, screenSample.ray, screenSample.rayCone, ffh);
 
     screenSample.rgb =
         screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));

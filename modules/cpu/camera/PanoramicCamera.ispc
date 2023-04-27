@@ -15,6 +15,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
+    varying RayCone &rayCone,
     const varying CameraSample &sample,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -82,6 +83,14 @@ SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
   }
 
   setRay(ray, org, dir, self->super.nearClip, inf, time);
+  rayCone.width = 0.f;
+  rayCone.dwdt = pi * sinTheta;
+
+  const uniform vec2f subImageSize = box_size(self->super.subImage);
+  rayCone.dwdt *= abs(subImageSize.y);
+
+  if (self->stereoMode == OSP_STEREO_TOP_BOTTOM)
+    rayCone.dwdt *= 2.f;
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////

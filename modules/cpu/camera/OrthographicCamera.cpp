@@ -46,6 +46,7 @@ void OrthographicCamera::commit()
     getSh()->org =
         pos - 0.5f * getSh()->du_size - 0.5f * getSh()->dv_up; // shift
   }
+  getSh()->height = height;
 }
 
 box3f OrthographicCamera::projectBox(const box3f &b) const

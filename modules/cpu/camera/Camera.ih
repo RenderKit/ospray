@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/Ray.ih"
+#include "common/RayCone.ih"
 #include "rkcommon/math/box.ih"
 // c++ shared
 #include "CameraShared.h"

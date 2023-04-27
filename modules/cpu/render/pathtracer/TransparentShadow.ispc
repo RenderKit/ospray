@@ -20,6 +20,7 @@ SYCL_EXTERNAL __noinline vec3f transparentShadow(
     const World *uniform world,
     vec3f lightContrib,
     Ray &shadowRay,
+    RayCone &shadowCone,
     RayIntervals &rayIntervals,
     Medium medium,
     const uniform FeatureFlagsHandler &ffh)
@@ -32,6 +33,7 @@ SYCL_EXTERNAL __noinline vec3f transparentShadow(
 
   uniform uint32 maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
+  const float widthOriginal = shadowCone.width;
 
   while (1) {
     traceGeometryRayIntervals(world, shadowRay, rayIntervals, ffh);
@@ -44,6 +46,7 @@ SYCL_EXTERNAL __noinline vec3f transparentShadow(
         &self->super,
         dg,
         shadowRay,
+        shadowCone,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
             | DG_MOTIONBLUR,
         ffh);
@@ -77,6 +80,7 @@ SYCL_EXTERNAL __noinline vec3f transparentShadow(
     }
 
     setRay(shadowRay, shadowRay.t + dg.epsilon, tOriginal);
+    shadowCone.width = widthOriginal;
   }
 }
 

@@ -80,7 +80,6 @@ inline void Instance_postIntersect(const Instance *uniform self,
       // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
       // isotropic anyway and hence cannot better handle non-uniform scaling)
       dg.epsilon *= max(abs(xfm.l.vx.x), max(abs(xfm.l.vy.y), abs(xfm.l.vz.z)));
-
       if (flags & DG_TANGENTS) {
         dg.dPds = xfmVector(xfm, dg.dPds);
         dg.dPdt = xfmVector(xfm, dg.dPdt);

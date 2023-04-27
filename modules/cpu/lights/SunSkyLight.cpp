@@ -29,8 +29,13 @@ SunSkyLight::SunSkyLight(api::ISPCDevice &device)
   static auto filter = static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_LINEAR);
   map = new Texture2D(getISPCDevice());
   map->refDec();
-  map->getSh()->set(
-      skySize, (ispc::vec3f *)this->skyImage->data(), format, filter);
+  void *data = skyImage->data();
+  map->getSh()->set(skySize,
+      &data,
+      0,
+      format,
+      filter,
+      vec2ui(OSP_TEXTURE_WRAP_REPEAT, OSP_TEXTURE_WRAP_CLAMP_TO_EDGE));
 }
 
 ispc::Light *SunSkyLight::createSh(

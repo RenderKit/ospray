@@ -55,6 +55,7 @@ static void AORenderer_renderSample(Renderer *uniform _self,
 
   // This is our main ray
   Ray &ray = sample.ray;
+  RayCone &rayCone = sample.rayCone;
 
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
@@ -95,7 +96,7 @@ static void AORenderer_renderSample(Renderer *uniform _self,
     if (rayHadHit && ff.geometry) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      computeDG(world, self, ray, dg, ffh);
+      computeDG(world, self, ray, rayCone, dg, ffh);
 
       // Shade geometry
       SSI surfaceShading;

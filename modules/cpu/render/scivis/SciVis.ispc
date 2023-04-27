@@ -57,6 +57,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
 
   // This is our main ray
   Ray &ray = sample.ray;
+  RayCone &rayCone = sample.rayCone;
 
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
@@ -140,14 +141,15 @@ static void SciVis_renderSample(Renderer *uniform _self,
           &self->super,
           dg,
           ray,
-          DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
+          rayCone,
+          DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TANGENTS
               | DG_TEXCOORD,
           ffh);
 
       // Shade geometry
       SSI surfaceShading;
       surfaceShading = SciVis_computeShading(
-          self, world, dg, sample, randomSampler, ray.dir, ffh);
+          self, world, dg, sample, randomSampler, ray.dir, rayCone.width, ffh);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully
@@ -223,6 +225,7 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const World *uniform world,
     RandomSampler &randomSampler,
     const varying DifferentialGeometry &dg,
+    const float coneWidth,
     const uniform int sampleCnt,
     const uniform float aoRadius,
     const varying vec3i &sampleID,
@@ -256,10 +259,15 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     Ray ao_ray;
     setRay(ao_ray, dg.P, ao_dir, dg.epsilon, aoRadius);
 
+    RayCone shadowCone;
+    shadowCone.width = coneWidth;
+    shadowCone.dwdt = 0.0f; // constant for AO
+
     hits = hits
         + (1.f
             - lightAlpha(self,
                 ao_ray,
+                shadowCone,
                 world,
                 randomSampler,
                 make_vec3f(1.f),

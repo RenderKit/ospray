@@ -82,7 +82,13 @@ task
         cameraSample.lens.y = 0.0f;
         cameraSample.time = 0.5f;
 
-        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample, ffh);
+        Camera_dispatch_initRay(
+            camera, screenSample.ray, screenSample.rayCone, cameraSample, ffh);
+        // take screen resolution (unnormalized coordinates), i.e., pixel size
+        // into account
+        screenSample.rayCone.dwdt *= fb->super.rcpSize.y;
+        screenSample.rayCone.width *= fb->super.rcpSize.y;
+
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         // TODO: We could store and use the region t intervals from when

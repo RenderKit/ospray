@@ -29,6 +29,7 @@ struct OSPRAY_SDK_INTERFACE Texture2D
 
  protected:
   Ref<const Data> texData;
+  BufferSharedUq<char> mipMapData;
 };
 
 } // namespace ospray

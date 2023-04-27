@@ -119,6 +119,7 @@ static void sampleVolume(SciVisRenderContext &rc,
           rc.sample,
           *rc.randomSampler,
           ray.dir,
+          0.f, // no coneWidth used
           ffh);
       vec4f shadedColor = make_vec4f(
           shading.shadedColor, 1.f - luminance(shading.transmission));
@@ -410,6 +411,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
               rc.sample,
               *rc.randomSampler,
               ray.dir,
+              0.f, // no coneWidth used
               ffh);
           vec4f shadedColor = make_vec4f(
               shading.shadedColor, 1.f - luminance(shading.transmission));

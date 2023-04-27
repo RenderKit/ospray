@@ -200,7 +200,7 @@ typedef enum
 #endif
 {
   OSP_TEXTURE_FILTER_LINEAR = 0, // default bilinear interpolation
-  OSP_TEXTURE_FILTER_NEAREST // use nearest-neighbor interpolation
+  OSP_TEXTURE_FILTER_NEAREST = 1 // use nearest-neighbor interpolation
 } OSPTextureFilter;
 
 // Wrap modes that can be set on 'texture2d' type OSPTexture

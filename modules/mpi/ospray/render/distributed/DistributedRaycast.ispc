@@ -332,6 +332,7 @@ inline void DRR_renderRegionSample(Renderer *uniform _self,
           &self->super,
           dg,
           geomRay,
+          sample.rayCone,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
               | DG_TEXCOORD,
           ffh);

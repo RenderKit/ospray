@@ -5,30 +5,29 @@
 #ifndef OSPRAY_TARGET_SYCL
 #include "texture/Texture2D_ispc.h"
 #endif
+#include "texture/MipMapGeneration_ispc.h"
 
 #include "../common/Data.h"
 
 namespace ispc {
 
-void Texture2D::set(const vec2i &aSize,
-    void *aData,
+void Texture2D::set(const rkcommon::math::vec2i &aSize,
+    void **aData,
+    int aMaxLevel,
     OSPTextureFormat aFormat,
     OSPTextureFilter aFilter,
-    vec2ui aWrapMode)
+    const rkcommon::math::vec2ui &aWrapMode,
+    const rkcommon::math::vec4f &aAvg)
 {
   size = aSize;
+  maxLevel = aMaxLevel;
   format = aFormat;
   filter = aFilter;
   wrapMode = aWrapMode;
+  avg = aAvg;
 
-  // Due to float rounding frac(x) can be exactly 1.0f (e.g. for very small
-  // negative x), although it should be strictly smaller than 1.0f. We handle
-  // this case by having sizef slightly smaller than size, such that
-  // frac(x)*sizef is always < size.
-  sizef =
-      vec2f(nextafter((float)size.x, -1.0f), nextafter((float)size.y, -1.0f));
-  halfTexel = vec2f(0.5f / size.x, 0.5f / size.y);
-  data = aData;
+  for (int l = 0; l <= aMaxLevel; l++)
+    data[l] = aData[l];
 
   super.hasAlpha = aFormat == OSP_TEXTURE_RGBA8 || aFormat == OSP_TEXTURE_SRGBA
       || aFormat == OSP_TEXTURE_RA8 || aFormat == OSP_TEXTURE_LA8
@@ -61,6 +60,10 @@ void Texture2D::commit()
         + " must have 2D 'data' array using the first two dimensions.");
   }
 
+  if (texData->size() > std::numeric_limits<std::uint32_t>::max())
+    throw std::runtime_error(toString()
+        + " too large (over 4B texels, indexing is limited to 32bit");
+
   const vec2i size = vec2i(texData->numItems.x, texData->numItems.y);
   if (!texData->compact()) {
     postStatusMsg(OSP_LOG_INFO)
@@ -88,8 +91,43 @@ void Texture2D::commit()
         + "' does not match type of 'data'='" + stringFor(texData->type)
         + "'!");
 
+  std::vector<void *> dataPtr;
+  dataPtr.emplace_back(texData->data());
+  vec4f avg{0.f, 0.f, 0.f, 1.f};
+
+  if (getISPCDevice().disableMipMapGeneration)
+    mipMapData = nullptr;
+  else {
+    // conservatively estimate needed space for MIP maps and allocate
+    const auto maxMipTexels = (size.product() + 2) / 3 // for square textures
+        + (size.x + size.y - 1) / std::min(size.x, size.y); // remaining 1D case
+    mipMapData = devicert::make_buffer_shared_unique<char>(
+        getISPCDevice().getDRTDevice(), maxMipTexels * sizeOf(format));
+
+    // generate MIP map levels
+    vec2i prevSize = size;
+    void *prevData = texData->data();
+    char *dstData = (char *)mipMapData->data();
+    while (prevSize != vec2i(1)) {
+      assert(dataPtr.size() <= MAX_MIPMAP_LEVEL); // max tex size is 2^32
+      vec2i dstSize(max(prevSize.x / 2, 1), max(prevSize.y / 2, 1));
+      ispc::MipMap_generate(prevData,
+          (ispc::vec2i &)prevSize,
+          dstData,
+          (ispc::vec2i &)dstSize,
+          (ispc::vec4f &)avg,
+          format);
+
+      dataPtr.emplace_back(dstData);
+      prevSize = dstSize;
+      prevData = dstData;
+      dstData += dstSize.product() * ospray::sizeOf(format);
+    }
+  }
+
   // Initialize ispc shared structure
-  getSh()->set(size, texData->data(), format, filter, wrapMode);
+  getSh()->set(
+      size, dataPtr.data(), dataPtr.size() - 1, format, filter, wrapMode, avg);
 }
 
 } // namespace ospray

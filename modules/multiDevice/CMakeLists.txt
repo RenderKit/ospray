@@ -15,7 +15,7 @@ endif()
 
 rkcommon_configure_build_type()
 
-set(OSPRAY_MULTIDEVICE_CPP_SOURCES
+set(OSPRAY_MULTIDEVICE_HOST_SOURCES
   ${OSPRAY_RESOURCE}
 
   MultiDevice.cpp
@@ -43,7 +43,7 @@ add_definitions_ispc(
 add_library(ospray_module_multidevice_cpu SHARED)
 
 ispc_target_add_sources(ospray_module_multidevice_cpu
-  ${OSPRAY_MULTIDEVICE_CPP_SOURCES}
+  ${OSPRAY_MULTIDEVICE_HOST_SOURCES}
 )
 
 target_link_libraries(ospray_module_multidevice_cpu
@@ -69,7 +69,7 @@ ospray_install_library(ospray_module_multidevice_cpu lib)
 
 if (OSPRAY_MODULE_GPU)
   add_library(ospray_module_multidevice_gpu SHARED
-    ${OSPRAY_MULTIDEVICE_CPP_SOURCES})
+    ${OSPRAY_MULTIDEVICE_HOST_SOURCES})
 
   target_link_libraries(ospray_module_multidevice_gpu
   PRIVATE

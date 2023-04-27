@@ -7,11 +7,13 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform,
     varying Ray &,
+    varying RayCone &,
     const varying CameraSample &,
     const uniform FeatureFlagsHandler &);
 
 SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform,
     varying Ray &,
+    varying RayCone &,
     const varying CameraSample &,
     const uniform FeatureFlagsHandler &);
 

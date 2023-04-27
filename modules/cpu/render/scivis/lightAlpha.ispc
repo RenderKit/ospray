@@ -18,6 +18,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // Lighting functions //
 SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
+    RayCone &shadowCone,
     const World *uniform world,
     RandomSampler &randomSampler,
     vec3f weight,
@@ -26,6 +27,7 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
 {
   vec3f alpha = make_vec3f(1.f);
   const float org_t_max = ray.t;
+  const float org_width = shadowCone.width;
 
 #ifdef OSPRAY_ENABLE_VOLUMES
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
@@ -86,7 +88,13 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     if (rayHadHit) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      postIntersect(world, &self->super, dg, ray, DG_COLOR | DG_TEXCOORD, ffh);
+      postIntersect(world,
+          &self->super,
+          dg,
+          ray,
+          shadowCone,
+          DG_COLOR | DG_TEXCOORD,
+          ffh);
 
       const SciVisBSDF bsdf = evalMaterial(dg, ffh);
       alpha = alpha * bsdf.transmission;
@@ -94,6 +102,7 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
       // Prepare ray for next loop iteration,
       // start from the last geometry hit all over to initial Tfar
       setRay(ray, ray.t + dg.epsilon, org_t_max);
+      shadowCone.width = org_width;
     } else {
       break;
     }

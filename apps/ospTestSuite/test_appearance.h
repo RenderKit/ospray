@@ -6,11 +6,11 @@
 namespace OSPRayTestScenes {
 
 // Test all texture image formats (and filter modes)
-class Texture2D
-    : public Base,
-      public ::testing::TestWithParam<std::tuple<OSPTextureFilter /*filter*/,
-          bool /*lightset*/,
-          bool /*use texcoords*/>>
+class Texture2D : public Base,
+                  public ::testing::TestWithParam<std::tuple<OSPTextureFilter,
+                      float /*mipMapBias*/,
+                      bool /*lightset*/,
+                      bool /*use texcoords*/>>
 {
  public:
   Texture2D();
@@ -27,12 +27,25 @@ class Texture2DTransform : public Base,
 
 class Texture2DWrapMode
     : public Base,
-      public ::testing::TestWithParam<OSPTextureFilter /*filter*/>
+      public ::testing::TestWithParam<
+          std::tuple<float /*mipMapBias*/, OSPTextureFilter>>
 {
-  OSPTextureFilter filter;
-
  public:
   Texture2DWrapMode();
+  void SetUp() override;
+};
+
+class Texture2DMipMapping
+    : public Base,
+      public ::testing::TestWithParam<std::tuple<const char * /*renderer*/,
+          const char * /*camera*/,
+          OSPTextureFilter,
+          float /*mipMapBias*/,
+          float /*scale*/,
+          OSPStereoMode>>
+{
+ public:
+  Texture2DMipMapping();
   void SetUp() override;
 };
 

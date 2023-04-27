@@ -37,7 +37,7 @@ void HDRILight::set(bool isVisible,
   this->map = map;
   this->distribution = distribution;
 
-  this->rcpSize = 1.f / this->map->sizef;
+  this->rcpSize = 1.f / this->map->size;
   this->light2world = light2world;
 
   // Enable dynamic runtime instancing or apply static transformation

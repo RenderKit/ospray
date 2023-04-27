@@ -90,7 +90,8 @@ static void DebugRenderer_Ng(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NG, ffh);
+  postIntersect(
+      world, self, dg, sample.ray, sample.rayCone, DG_NORMALIZE | DG_NG, ffh);
   sample.rgb = absf(dg.Ng);
 }
 
@@ -103,7 +104,8 @@ static void DebugRenderer_Ns(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS, ffh);
+  postIntersect(
+      world, self, dg, sample.ray, sample.rayCone, DG_NORMALIZE | DG_NS, ffh);
   sample.rgb = absf(dg.Ns);
 }
 
@@ -115,7 +117,7 @@ static void DebugRenderer_texCoord(Renderer *uniform self,
   if (hitBackground(self, world, sample, ffh))
     return;
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TEXCOORD, ffh);
+  postIntersect(world, self, dg, sample.ray, sample.rayCone, DG_TEXCOORD, ffh);
   sample.rgb = abs(make_vec3f(dg.st.x, dg.st.y, 0.0f));
 }
 
@@ -127,7 +129,7 @@ static void DebugRenderer_dPds(Renderer *uniform self,
   if (hitBackground(self, world, sample, ffh))
     return;
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TANGENTS, ffh);
+  postIntersect(world, self, dg, sample.ray, sample.rayCone, DG_TANGENTS, ffh);
   sample.rgb = normalize(dg.dPds);
   if (sample.rgb.x < 0.f)
     sample.rgb.x = sample.rgb.x * -0.3f;
@@ -146,7 +148,7 @@ static void DebugRenderer_dPdt(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TANGENTS, ffh);
+  postIntersect(world, self, dg, sample.ray, sample.rayCone, DG_TANGENTS, ffh);
   sample.rgb = normalize(dg.dPdt);
   if (sample.rgb.x < 0.f)
     sample.rgb.x = sample.rgb.x * -0.3f;
@@ -165,7 +167,8 @@ static void DebugRenderer_vertexColor(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_COLOR | DG_NS, ffh);
+  postIntersect(
+      world, self, dg, sample.ray, sample.rayCone, DG_COLOR | DG_NS, ffh);
   sample.rgb = make_vec3f(dg.color)
       * abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
 }
@@ -225,7 +228,8 @@ static void DebugRenderer_backfacing_Ns(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS, ffh);
+  postIntersect(
+      world, self, dg, sample.ray, sample.rayCone, DG_NORMALIZE | DG_NS, ffh);
   const float c = dot(dg.Ns, sample.ray.dir);
   sample.rgb = make_vec3f(.2f + .8f * abs(c));
   if (c > 0.f)

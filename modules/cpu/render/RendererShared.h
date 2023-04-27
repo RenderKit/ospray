@@ -26,6 +26,8 @@ struct Renderer
 
   PixelFilter *pixelFilter;
 
+  float mipBiasFactor;
+
 #ifdef __cplusplus
   Renderer()
       : spp(1),

@@ -89,6 +89,7 @@ static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
     "Ns",
     "backfacing_Ng",
     "backfacing_Ns",
+    "texCoord",
     "dPds",
     "dPdt",
     "volume"};
@@ -690,6 +691,17 @@ void GLFWOSPRayWindow::buildUI()
     rendererAO.setParam("pixelSamples", spp);
     rendererDBG.setParam("pixelSamples", spp);
     addObjectToCommit(renderer->handle());
+  }
+
+  if (scene == "mip_map_textures") {
+    static float mipBias = 0.0f;
+    if (ImGui::SliderFloat("mipMapBias", &mipBias, -5.0f, 10.0f)) {
+      rendererPT.setParam("mipMapBias", mipBias);
+      rendererSV.setParam("mipMapBias", mipBias);
+      rendererAO.setParam("mipMapBias", mipBias);
+      rendererDBG.setParam("mipMapBias", mipBias);
+      addObjectToCommit(renderer->handle());
+    }
   }
 
   static float varianceThreshold = 0.0f;

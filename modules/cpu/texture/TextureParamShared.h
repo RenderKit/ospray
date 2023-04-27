@@ -20,6 +20,7 @@ struct TextureParam
 {
   Texture *ptr;
   TransformFlags transformFlags;
+  float scale2f; // precompute for MIPmapping
   affine2f xform2f;
   affine3f xform3f;
 
@@ -27,6 +28,7 @@ struct TextureParam
   TextureParam()
       : ptr(nullptr),
         transformFlags(TRANSFORM_FLAG_NONE),
+        scale2f(1.f),
         xform2f(one),
         xform3f(one)
   {}

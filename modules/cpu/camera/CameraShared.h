@@ -13,11 +13,14 @@ typedef void *Camera_initRay;
 struct Camera;
 struct CameraSample;
 struct Ray;
+struct RayCone;
 
 // Fct pointer type for 'virtual' method that sets a pixel,
 // generated ray.dir must be normalized to ensure ray.t is world-space distance
+// generated rayCone is in normalized camera coordinates for y (height)
 typedef void (*Camera_initRay)(const Camera *uniform,
     varying Ray &ray,
+    varying RayCone &rayCone,
     const varying CameraSample &sample);
 #endif
 

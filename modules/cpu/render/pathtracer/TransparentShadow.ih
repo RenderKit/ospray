@@ -13,6 +13,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 struct PathTracer;
 struct World;
 struct Ray;
+struct RayCone;
 struct RayIntervals;
 
 SYCL_EXTERNAL __noinline vec3f transparentShadow(
@@ -20,6 +21,7 @@ SYCL_EXTERNAL __noinline vec3f transparentShadow(
     const World *uniform world,
     vec3f lightContrib,
     Ray &shadowRay,
+    RayCone &shadowCone,
     RayIntervals &rayIntervals,
     Medium medium,
     const uniform FeatureFlagsHandler &ffh);

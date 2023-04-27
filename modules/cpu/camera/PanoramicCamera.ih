@@ -7,6 +7,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform,
     varying Ray &,
+    varying RayCone &,
     const varying CameraSample &,
     const uniform FeatureFlagsHandler &);
 

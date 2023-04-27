@@ -26,12 +26,14 @@
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "PathTracerShared.h"
+#include "common/RayCone.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline void postIntersect(const PathContext &pathContext,
     PathVertex &pathVertex,
     Ray &ray,
+    RayCone &rayCone,
     const uniform FeatureFlagsHandler &ffh)
 {
   const PathTracer *uniform pt = pathContext.context;
@@ -41,6 +43,7 @@ inline void postIntersect(const PathContext &pathContext,
         &pt->super,
         pathVertex.dg,
         ray,
+        rayCone,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
             | DG_TANGENTS | DG_MOTIONBLUR,
         ffh);
@@ -105,6 +108,7 @@ inline Scattering_SampleRes sampleDirection(const vec2f &s,
 SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     PathState &pathState,
     Ray &ray,
+    RayCone &rayCone,
     ScreenSample &sample,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -218,7 +222,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       break;
     }
 
-    postIntersect(pathContext, pathVertex, ray, ffh);
+    postIntersect(pathContext, pathVertex, ray, rayCone, ffh);
 
 #ifdef OSPRAY_PATHTRACER_DEBUG
     if (!pathContext.disableFWD || pathState.depth == 0)
@@ -274,7 +278,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #endif
       if (isSmooth(pathVertex)) {
         pathState.contribution = pathState.contribution
-            + nextEventEstimation(pathContext, pathState, pathVertex, ffh);
+            + nextEventEstimation(
+                pathContext, pathState, pathVertex, sample.rayCone.width, ffh);
         pathState.firstBounceLight = false;
       }
 

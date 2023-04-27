@@ -7,6 +7,7 @@
 
 #include "render/Material.ih"
 #include "render/MaterialDispatch.ih"
+#include "texture/Texture2D.ih"
 #include "texture/TextureParam.ih"
 
 #include "common/Instance.ih"
@@ -108,10 +109,10 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
   res.dist = dist - max(as.epsilon, calcEpsilon(as.pos, dist)) * rcosd;
 
   DifferentialGeometry texDg;
+  initDgFromTexCoord(texDg, as.st);
   texDg.P = as.pos;
   texDg.Ns = as.normal;
   texDg.Ng = as.normal;
-  texDg.st = as.st;
 
   vec3f radiance;
   foreach_unique (m in mat)

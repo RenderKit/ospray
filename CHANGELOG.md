@@ -7,6 +7,10 @@ Version History
 -   Support half-precision (16\ bit float) texture formats
     `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
     float textures `OSP_TEXTURE_RA32F`
+-   Implement MIP Mapping for better texture filtering. If the
+    additional memory per texture needed cannot be spared, applications
+    can disable the generation of MIP maps with device parameter
+    `disableMipMapGeneration`
 -   New parameter `limitIndirectLightSamples` for the `pathtracer` which
     limits the number of light samples after the first non-specular
     (i.e., diffuse and glossy) bounce to at most one

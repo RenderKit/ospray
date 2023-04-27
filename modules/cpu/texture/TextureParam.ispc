@@ -7,8 +7,10 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #define TEXTURE_TRANSFORM(fn)                                                  \
   DifferentialGeometry xfmDg = dg;                                             \
-  if (tp.transformFlags & TRANSFORM_FLAG_2D)                                   \
+  if (tp.transformFlags & TRANSFORM_FLAG_2D) {                                 \
     xfmDg.st = xfmPoint(tp.xform2f, dg.st);                                    \
+    xfmDg.pixelFootprint *= tp.scale2f;                                        \
+  }                                                                            \
   if (tp.transformFlags & TRANSFORM_FLAG_3D)                                   \
     xfmDg.lP = xfmPoint(tp.xform3f, dg.lP);                                    \
   return fn(tp.ptr, xfmDg)

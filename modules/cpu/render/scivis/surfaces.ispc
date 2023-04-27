@@ -21,6 +21,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
     RandomSampler &randomSampler,
     const varying SciVisBSDF &bsdf,
     const varying vec3f &inDir,
+    const float coneWidth,
     const uniform FeatureFlagsHandler &ffh)
 {
   vec3f color = make_vec3f(0.f);
@@ -60,8 +61,19 @@ vec3f directIllumination(const uniform SciVis *uniform self,
           Ray shadowRay;
           setRay(shadowRay, P, light.dir, 0.0f, light.dist);
 
-          vec3f light_alpha = lightAlpha(
-              self, shadowRay, world, randomSampler, light_contrib, 0.25f, ffh);
+          RayCone shadowCone;
+          // connect ray cone to point on light
+          shadowCone.width = coneWidth;
+          shadowCone.dwdt = -coneWidth * rcp(light.dist);
+
+          vec3f light_alpha = lightAlpha(self,
+              shadowRay,
+              shadowCone,
+              world,
+              randomSampler,
+              light_contrib,
+              0.25f,
+              ffh);
 
           color = color + light_alpha * light_contrib;
         }
@@ -80,6 +92,7 @@ SYCL_EXTERNAL __noinline SSI SciVis_computeShading(const SciVis *uniform self,
     ScreenSample &sample,
     RandomSampler &randomSampler,
     const varying vec3f &inDir,
+    const float coneWidth,
     const uniform FeatureFlagsHandler &ffh)
 {
   SSI retval;
@@ -88,7 +101,7 @@ SYCL_EXTERNAL __noinline SSI SciVis_computeShading(const SciVis *uniform self,
   retval.albedo = bsdf.albedo;
 
   vec3f color = directIllumination(
-      self, world, dg, sample, randomSampler, bsdf, inDir, ffh);
+      self, world, dg, sample, randomSampler, bsdf, inDir, coneWidth, ffh);
 
   vec3f ao = make_vec3f(1.f);
   const uniform SciVisData &scivisData =
@@ -99,6 +112,7 @@ SYCL_EXTERNAL __noinline SSI SciVis_computeShading(const SciVis *uniform self,
         world,
         randomSampler,
         dg,
+        coneWidth,
         self->aoSamples,
         self->aoRadius,
         sample.sampleID,

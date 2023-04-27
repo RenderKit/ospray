@@ -73,7 +73,8 @@ export void Renderer_pick(const void *uniform _self,
 
   uniform FeatureFlagsHandler ffh;
   Ray ray;
-  Camera_dispatch_initRay(camera, ray, cameraSample, ffh);
+  RayCone rayCone;
+  Camera_dispatch_initRay(camera, ray, rayCone, cameraSample, ffh);
   ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen, ffh));
 
   traceRay(world, ray, ffh);

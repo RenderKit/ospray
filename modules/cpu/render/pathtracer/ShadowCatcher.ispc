@@ -76,6 +76,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
 
       // test for shadows
       Ray shadowRay;
+      RayCone shadowCone;
       setRay(shadowRay, pathVertex.dg.P, ls.dir, 0.0f, ls.dist, pathState.time);
 
       // Trace ray in clipping geometries scene, fill array with ray intervals
@@ -90,6 +91,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
               pathContext.world,
               unshadedLightContrib,
               shadowRay,
+              shadowCone,
               rayIntervals,
               pathState.currentMedium,
               ffh);

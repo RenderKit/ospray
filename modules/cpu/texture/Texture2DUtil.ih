@@ -1,0 +1,392 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "common/OSPCommon.ih"
+#include "rkcommon/math/vec.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+// helpers
+//////////////////////////////////////////////////////////////////////////////
+
+#define __foreach_fetcher(FCT)                                                 \
+  FCT(RGBA8);                                                                  \
+  FCT(SRGBA);                                                                  \
+  FCT(RGBA32F);                                                                \
+  FCT(RGB8);                                                                   \
+  FCT(SRGB);                                                                   \
+  FCT(LA8);                                                                    \
+  FCT(RA8);                                                                    \
+  FCT(RGB32F);                                                                 \
+  FCT(RA32F);                                                                  \
+  FCT(R8);                                                                     \
+  FCT(L8);                                                                     \
+  FCT(R32F);                                                                   \
+  FCT(RGBA16);                                                                 \
+  FCT(RGB16);                                                                  \
+  FCT(RA16);                                                                   \
+  FCT(R16);                                                                    \
+  FCT(RGBA16F);                                                                \
+  FCT(RGB16F);                                                                 \
+  FCT(RA16F);                                                                  \
+  FCT(R16F)
+
+#define BYTE2FLOAT (1.f / 255.f)
+#define SHORT2FLOAT (1.f / 65535.f)
+
+#ifdef OSPRAY_TARGET_SYCL
+using half = sycl::half;
+inline float half_to_float(int16 x)
+{
+  return *reinterpret_cast<half *>(&x);
+}
+#else
+typedef int16 half;
+
+// Low-level texel accessors: setters
+//////////////////////////////////////////////////////////////////////////////
+
+inline void setTexel_RGBA8(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((uint32 * uniform) data)[idx] = cvt_uint32(value);
+}
+
+inline void setTexel_RGBA16(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  const uint32 texelOfs = idx * 2; // write as 2x 32bit
+  const uint32 r = cvt_uint16(value.x);
+  const uint32 g = cvt_uint16(value.y);
+  ((uint32 * uniform) data)[texelOfs] = r | (g << 16);
+  const uint32 b = cvt_uint16(value.z);
+  const uint32 a = cvt_uint16(value.w);
+  ((uint32 * uniform) data)[texelOfs + 1] = b | (a << 16);
+}
+
+inline void setTexel_RGB8(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  uint8 *uniform texel = (uint8 * uniform) data;
+  const uint32 texelOfs = 3 * idx;
+  texel[texelOfs] = cvt_uint32(value.x);
+  texel[texelOfs + 1] = cvt_uint32(value.y);
+  texel[texelOfs + 2] = cvt_uint32(value.z);
+}
+
+inline void setTexel_RGB16(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  uint16 *uniform texel = (uint16 * uniform) data;
+  const uint32 texelOfs = 3 * idx;
+  texel[texelOfs] = cvt_uint16(value.x);
+  texel[texelOfs + 1] = cvt_uint16(value.y);
+  texel[texelOfs + 2] = cvt_uint16(value.z);
+}
+
+inline void setTexel_RA8(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  const uint32 r = cvt_uint32(value.x);
+  const uint32 a = cvt_uint32(value.w);
+  uint32 c = r | (a << 8);
+  ((uint16 * uniform) data)[idx] = c;
+}
+
+inline void setTexel_RA16(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  const uint32 r = cvt_uint16(value.x);
+  const uint32 a = cvt_uint16(value.w);
+  uint32 c = r | (a << 16);
+  ((uint32 * uniform) data)[idx] = c;
+}
+
+inline void setTexel_R8(void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((uint8 * uniform) data)[idx] = cvt_uint32(value.x);
+}
+
+inline void setTexel_R16(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((uint16 * uniform) data)[idx] = cvt_uint16(value.x);
+}
+
+// luminance (basically gamma-corrected grayscale) with alpha
+inline void setTexel_LA8(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  const uint32 l = cvt_uint32(linear_to_srgb(value.x));
+  const uint32 a = cvt_uint32(value.w);
+  uint32 c = l | a << 8;
+  ((uint16 * uniform) data)[idx] = c;
+}
+
+// luminance (basically gamma-corrected grayscale)
+inline void setTexel_L8(void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((uint8 * uniform) data)[idx] = cvt_uint32(linear_to_srgb(value.x));
+}
+
+inline void setTexel_SRGBA(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((uint32 * uniform) data)[idx] = linear_to_srgba8(value);
+}
+
+inline void setTexel_SRGB(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  uint8 *uniform texel = (uint8 * uniform) data;
+  const uint32 texelOfs = 3 * idx;
+  const vec4f v = linear_to_srgba(value);
+  texel[texelOfs] = cvt_uint32(v.x);
+  texel[texelOfs + 1] = cvt_uint32(v.y);
+  texel[texelOfs + 2] = cvt_uint32(v.z);
+}
+
+inline void setTexel_RGBA32F(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((vec4f * uniform) data)[idx] = value;
+}
+
+inline void setTexel_RGB32F(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((vec3f * uniform) data)[idx] = make_vec3f(value.x, value.y, value.z);
+}
+
+inline void setTexel_RA32F(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((vec2f * uniform) data)[idx] = make_vec2f(value.x, value.w);
+}
+
+inline void setTexel_R32F(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((float *uniform)data)[idx] = value.x;
+}
+
+inline vec4f setTexel_RGBA16F(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  const uint32 texelOfs = idx * 2; // write as 2x 32bit
+  const uint32 r = float_to_half(value.x);
+  const uint32 g = float_to_half(value.y);
+  ((uint32 * uniform) data)[texelOfs] = r | (g << 16);
+  const uint32 b = float_to_half(value.z);
+  const uint32 a = float_to_half(value.w);
+  ((uint32 * uniform) data)[texelOfs + 1] = b | (a << 16);
+}
+
+inline vec4f setTexel_RGB16F(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  half *uniform texel = (half * uniform) data;
+  const uint32 texelOfs = 3 * idx;
+  texel[texelOfs] = float_to_half(value.x);
+  texel[texelOfs + 1] = float_to_half(value.y);
+  texel[texelOfs + 2] = float_to_half(value.z);
+}
+
+inline vec4f setTexel_RA16F(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  const uint32 r = float_to_half(value.x);
+  const uint32 a = float_to_half(value.w);
+  ((uint32 * uniform) data)[idx] = r | (a << 16);
+}
+
+inline vec4f setTexel_R16F(
+    void *uniform data, const uint32 idx, const vec4f value)
+{
+  ((half * uniform) data)[idx] = float_to_half(value.x);
+}
+#endif
+
+// Low-level texel accessors: getters
+//////////////////////////////////////////////////////////////////////////////
+
+inline vec4f getTexel_RGBA8(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint32 c = ((const uint32 *)data)[idx];
+  const uint32 r = c & 0xff;
+  const uint32 g = (c >> 8) & 0xff;
+  const uint32 b = (c >> 16) & 0xff;
+  const uint32 a = c >> 24;
+  return make_vec4f((float)r, (float)g, (float)b, (float)a) * BYTE2FLOAT;
+}
+
+inline vec4f getTexel_RGBA16(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint32 texelOfs = idx * 2; // fetch as 2x 32bit
+  uint32 c = ((const uint32 *)data)[texelOfs];
+  const uint32 r = c & 0xffff;
+  const uint32 g = c >> 16;
+  c = ((const uint32 *)data)[texelOfs + 1];
+  const uint32 b = c & 0xffff;
+  const uint32 a = c >> 16;
+  return make_vec4f((float)r, (float)g, (float)b, (float)a) * SHORT2FLOAT;
+}
+
+inline vec4f getTexel_RGB8(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint8 *texel = (const uint8 *)data;
+  const uint32 texelOfs = 3 * idx;
+  const uint32 r = texel[texelOfs];
+  const uint32 g = texel[texelOfs + 1];
+  const uint32 b = texel[texelOfs + 2];
+  return make_vec4f(make_vec3f((float)r, (float)g, (float)b) * BYTE2FLOAT, 1.f);
+}
+
+inline vec4f getTexel_RGB16(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint16 *texel = (const uint16 *)data;
+  const uint32 texelOfs = 3 * idx;
+  const uint32 r = texel[texelOfs];
+  const uint32 g = texel[texelOfs + 1];
+  const uint32 b = texel[texelOfs + 2];
+  return make_vec4f(
+      make_vec3f((float)r, (float)g, (float)b) * SHORT2FLOAT, 1.f);
+}
+
+inline vec4f getTexel_RA8(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint32 t = ((const uint16 *)data)[idx];
+  const uint32 c = t & 0xff;
+  const uint32 a = t >> 8;
+  return make_vec4f(c * BYTE2FLOAT, 0.f, 0.f, a * BYTE2FLOAT);
+}
+
+inline vec4f getTexel_RA16(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint32 t = ((const uint32 *)data)[idx];
+  const uint32 c = t & 0xffff;
+  const uint32 a = t >> 16;
+  return make_vec4f(c * SHORT2FLOAT, 0.f, 0.f, a * SHORT2FLOAT);
+}
+
+inline vec4f getTexel_R8(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint8 c = ((const uint8 *)data)[idx];
+  return make_vec4f(c * BYTE2FLOAT, 0.f, 0.f, 1.f);
+}
+
+inline vec4f getTexel_R16(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint16 c = ((const uint16 *)data)[idx];
+  return make_vec4f(c * SHORT2FLOAT, 0.f, 0.f, 1.f);
+}
+
+// luminance (basically gamma-corrected grayscale) with alpha
+inline vec4f getTexel_LA8(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint32 t = ((const uint16 *)data)[idx];
+  const uint32 l = t & 0xff;
+  const uint32 a = t >> 8;
+  return make_vec4f(make_vec3f(srgb_to_linear(l * BYTE2FLOAT)), a * BYTE2FLOAT);
+}
+
+// luminance (basically gamma-corrected grayscale)
+inline vec4f getTexel_L8(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint8 l = ((const uint8 *)data)[idx];
+  return make_vec4f(make_vec3f(srgb_to_linear(l * BYTE2FLOAT)), 1.f);
+}
+
+inline vec4f getTexel_SRGBA(const void *data, const uint32 idx)
+{
+  return srgba_to_linear(getTexel_RGBA8(data, idx));
+}
+
+inline vec4f getTexel_SRGB(const void *data, const uint32 idx)
+{
+  return srgba_to_linear(getTexel_RGB8(data, idx));
+}
+
+inline vec4f getTexel_RGBA32F(const void *data, const uint32 idx)
+{
+  assert(data);
+  return ((const vec4f *)data)[idx];
+}
+
+inline vec4f getTexel_RGB32F(const void *data, const uint32 idx)
+{
+  assert(data);
+  vec3f v = ((const vec3f *)data)[idx];
+  return make_vec4f(v, 1.f);
+}
+
+inline vec4f getTexel_RA32F(const void *data, const uint32 idx)
+{
+  assert(data);
+  vec2f v = ((const vec2f *)data)[idx];
+  return make_vec4f(v.x, 0.0f, 0.0f, v.y);
+}
+
+inline vec4f getTexel_R32F(const void *data, const uint32 idx)
+{
+  assert(data);
+  float v = ((const float *)data)[idx];
+  return make_vec4f(v, 0.f, 0.f, 1.f);
+}
+
+inline vec4f getTexel_RGBA16F(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint32 texelOfs = idx * 2; // fetch as 2x 32bit
+  uint32 c = ((const uint32 *)data)[texelOfs];
+  const int16 r = c & 0xffff;
+  const int16 g = c >> 16;
+  c = ((const uint32 *)data)[texelOfs + 1];
+  const int16 b = c & 0xffff;
+  const int16 a = c >> 16;
+  return make_vec4f(
+      half_to_float(r), half_to_float(g), half_to_float(b), half_to_float(a));
+}
+
+inline vec4f getTexel_RGB16F(const void *data, const uint32 idx)
+{
+  assert(data);
+  const half *texel = (const half *)data;
+  const uint32 texelOfs = 3 * idx;
+  const half r = texel[texelOfs];
+  const half g = texel[texelOfs + 1];
+  const half b = texel[texelOfs + 2];
+  return make_vec4f(half_to_float(r), half_to_float(g), half_to_float(b), 1.f);
+}
+
+inline vec4f getTexel_RA16F(const void *data, const uint32 idx)
+{
+  assert(data);
+  const uint32 t = ((const uint32 *)data)[idx];
+  const int16 c = t & 0xffff;
+  const int16 a = t >> 16;
+  return make_vec4f(half_to_float(c), 0.0f, 0.0f, half_to_float(a));
+}
+
+inline vec4f getTexel_R16F(const void *data, const uint32 idx)
+{
+  assert(data);
+  const half c = ((const half *)data)[idx];
+  return make_vec4f(half_to_float(c), 0.f, 0.f, 1.f);
+}
+
+#undef BYTE2FLOAT
+#undef SHORT2FLOAT
+OSPRAY_END_ISPC_NAMESPACE

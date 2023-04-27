@@ -93,6 +93,7 @@ ispc::TextureParam Material::getTextureParam(
   param.ptr = ref_tex ? ref_tex->getSh() : nullptr;
   param.transformFlags = (ispc::TransformFlags)transformFlags;
   param.xform2f = xfm2f;
+  param.scale2f = sqrt(xfm2f.l.det());
   param.xform3f = xfm3f;
 
   // Done

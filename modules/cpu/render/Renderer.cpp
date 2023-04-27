@@ -38,6 +38,7 @@ std::string Renderer::toString() const
 void Renderer::commit()
 {
   spp = std::max(1, getParam<int>("pixelSamples", 1));
+  const float mipBias = getParam<float>("mipMapBias", 0.f);
   const uint32_t maxDepth = std::max(0, getParam<int>("maxPathLength", 20));
   const float minContribution = getParam<float>("minContribution", 0.001f);
   errorThreshold = getParam<float>("varianceThreshold", 0.f);
@@ -87,6 +88,7 @@ void Renderer::commit()
 
   setupPixelFilter();
   getSh()->pixelFilter = pixelFilter ? pixelFilter->getSh() : nullptr;
+  getSh()->mipBiasFactor = powf(2, mipBias);
 }
 
 OSPPickResult Renderer::pick(

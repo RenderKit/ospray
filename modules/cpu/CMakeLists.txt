@@ -20,7 +20,7 @@ endif()
 # Setup module include directories and source files
 # -------------------------------------------------------
 
-set(OSPRAY_CPP_SOURCES
+set(OSPRAY_HOST_SOURCES
   ${OSPRAY_RESOURCE}
 
   ModuleInit.cpp
@@ -115,9 +115,10 @@ set(OSPRAY_CPP_SOURCES
   texture/Texture.cpp
   texture/Texture2D.cpp
   texture/registration.cpp
+  texture/MipMapGeneration.ispc
 )
 
-set(OSPRAY_ISPC_SOURCES
+set(OSPRAY_KERNEL_SOURCES
   ISPCDevice.ispc
 
   common/World.ispc
@@ -213,7 +214,7 @@ set(OSPRAY_BCKND_SYCL_SOURCES
 )
 
 if (OSPRAY_ENABLE_VOLUMES)
-  set(OSPRAY_VOLUMES_CPP_SOURCES
+  set(OSPRAY_VOLUMES_HOST_SOURCES
     geometry/Isosurfaces.cpp
 
     texture/TextureVolume.cpp
@@ -226,7 +227,7 @@ if (OSPRAY_ENABLE_VOLUMES)
     volume/transferFunction/registration.cpp
   )
 
-  set(OSPRAY_VOLUMES_ISPC_SOURCES
+  set(OSPRAY_VOLUMES_KERNEL_SOURCES
     geometry/Isosurfaces.ispc
 
     render/ao/volumes.ispc
@@ -345,13 +346,13 @@ if (OSPRAY_MODULE_CPU)
   add_library(ospray_module_cpu SHARED)
 
   ispc_target_add_sources(ospray_module_cpu
-      ${OSPRAY_CPP_SOURCES}
-      ${OSPRAY_VOLUMES_CPP_SOURCES}
-      ${OSPRAY_ISPC_SOURCES}
-      ${OSPRAY_VOLUMES_ISPC_SOURCES}
+      ${OSPRAY_BCKND_ISPC_SOURCES}
+      ${OSPRAY_HOST_SOURCES}
+      ${OSPRAY_VOLUMES_HOST_SOURCES}
+      ${OSPRAY_KERNEL_SOURCES}
+      ${OSPRAY_VOLUMES_KERNEL_SOURCES}
       ${OSPRAY_ISPC_DEF}
       math/halton.c math/sobol.c # constants exported for ISPC only
-      ${OSPRAY_BCKND_ISPC_SOURCES}
       geometry/Subdivision.cpp
       geometry/Subdivision.ispc)
 
@@ -415,13 +416,13 @@ if (OSPRAY_MODULE_GPU)
   endif()
 
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
-  set_source_files_properties(${OSPRAY_ISPC_SOURCES} ${OSPRAY_VOLUMES_ISPC_SOURCES}
+  set_source_files_properties(${OSPRAY_KERNEL_SOURCES} ${OSPRAY_VOLUMES_KERNEL_SOURCES}
     PROPERTIES
     LANGUAGE CXX)
 
   add_library(ospray_module_gpu_kernels OBJECT
-    ${OSPRAY_ISPC_SOURCES}
-    ${OSPRAY_VOLUMES_ISPC_SOURCES}
+    ${OSPRAY_KERNEL_SOURCES}
+    ${OSPRAY_VOLUMES_KERNEL_SOURCES}
   )
 
   ospray_add_sycl_target(ospray_module_gpu_kernels)
@@ -512,9 +513,11 @@ if (OSPRAY_MODULE_GPU)
   install(TARGETS ospray_module_gpu_kernels EXPORT ospray_Exports)
 
   add_library(ospray_module_gpu SHARED
-    ${OSPRAY_CPP_SOURCES}
-    ${OSPRAY_VOLUMES_CPP_SOURCES}
     ${OSPRAY_BCKND_SYCL_SOURCES}
+  )
+  ispc_target_add_sources(ospray_module_gpu
+    ${OSPRAY_HOST_SOURCES}
+    ${OSPRAY_VOLUMES_HOST_SOURCES}
   )
 
   target_link_libraries(ospray_module_gpu
