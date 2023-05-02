@@ -3,6 +3,7 @@
 
 #include "camera/Camera.ih"
 #include "camera/CameraDispatch.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
 #include "fb/RenderTaskDesc.ih"
@@ -22,9 +23,11 @@ static void AORenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     varying ScreenSample &sample,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   uniform AORenderer *uniform self = (uniform AORenderer * uniform) _self;
+
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
@@ -57,28 +60,19 @@ static void AORenderer_renderSample(Renderer *uniform _self,
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
-#ifndef OSPRAY_TARGET_SYCL
-  traceClippingRay(world, ray, rayIntervals);
-#else
-  rayIntervals.count = 1;
-  rayIntervals.intervals[0].lower = ray.t0;
-  rayIntervals.intervals[0].upper = ray.t;
-#endif
+  traceClippingRay(world, ray, rayIntervals, ffh);
 
   // Iterate over all translucent geometry till we are fully opaque
   vec4f outputColor = make_vec4f(0.f);
   while (outputColor.w < 0.99f) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
-    // Note: work around for bug when using traceGeometryRayIntervals on GPU
-#ifdef OSPRAY_TARGET_SYCL
-    traceGeometryRay(world, ray, ff);
-#else
-    traceGeometryRayIntervals(world, ray, rayIntervals, ff);
-#endif
+    if (ff.geometry) {
+      traceGeometryRayIntervals(world, ray, rayIntervals, ffh);
+    }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    if (ff.volume & FFV_VOLUME) {
+    if (ff.other & FFO_VOLUME_IN_SCENE) {
       // Determine volume intervals by tracing ray in the volume scene
       Ray volumeRay = ray;
       traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -89,7 +83,8 @@ static void AORenderer_renderSample(Renderer *uniform _self,
             rayIntervals,
             volumeRay,
             ldSampler,
-            self->volumeSamplingRate);
+            self->volumeSamplingRate,
+            ffh);
         outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
       }
     }
@@ -98,14 +93,14 @@ static void AORenderer_renderSample(Renderer *uniform _self,
     // If any geometry has been hit
     vec4f blendedColor;
     const bool rayHadHit = hadHit(ray);
-    if (rayHadHit) {
+    if (rayHadHit && ff.geometry) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      computeDG(world, self, ray, dg, ff);
+      computeDG(world, self, ray, dg, ffh);
 
       // Shade geometry
       SSI surfaceShading;
-      surfaceShading = AORenderer_computeShading(self, world, dg, sample, ff);
+      surfaceShading = AORenderer_computeShading(self, world, dg, sample, ffh);
 
       // Use shaded color for blending
       blendedColor = surfaceShading.shadedColor;
@@ -124,7 +119,7 @@ static void AORenderer_renderSample(Renderer *uniform _self,
       // start from the last geometry hit all over to initial Tfar
       setRay(ray, ray.t + dg.epsilon, originalRayTFar);
     } else {
-      blendedColor = Renderer_getBackground(&self->super, sample.pos, ff.other);
+      blendedColor = Renderer_getBackground(&self->super, sample.pos, ffh);
       // Initialize other per sample data with first hit values
       if (firstHit) {
         sample.z = ray.t;
@@ -159,9 +154,10 @@ SYCL_EXTERNAL void AORenderer_renderTask(Renderer *uniform self,
     World *uniform world,
     const uint32 *uniform taskIDs,
     const int taskIndex0,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
-  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex0, ff);
+  Renderer_default_renderTask(
+      self, fb, camera, world, taskIDs, taskIndex0, ffh);
 }
 #else
 export void AORenderer_renderTasks(void *uniform _self,
@@ -176,8 +172,9 @@ export void AORenderer_renderTasks(void *uniform _self,
   Camera *uniform camera = (Camera * uniform) _camera;
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  uniform FeatureFlagsHandler ffh;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, taskIDs, ffAll());
+      self, fb, camera, world, taskIDs, ffh);
   sync;
 }
 #endif

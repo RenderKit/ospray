@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/DifferentialGeometry.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "lights/LightDispatch.ih"
 #include "lights/LightShared.h"
 
@@ -20,30 +21,32 @@ SYCL_EXTERNAL Light_SampleRes Light_dispatch_sample(const Light *uniform self,
     const DifferentialGeometry &dg,
     const vec2f &s,
     const float time,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+
 #ifndef OSPRAY_TARGET_SYCL
-  return self->sample(self, dg, s, time);
+  return self->sample(self, dg, s, time, ffh);
 #else
   if ((self->type == LIGHT_TYPE_AMBIENT) && (ffo & FFO_LIGHT_AMBIENT)) {
-    return AmbientLight_sample(self, dg, s, time);
+    return AmbientLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_DIRECTIONAL)
       && (ffo & FFO_LIGHT_DIRECTIONAL)) {
-    return DirectionalLight_sample(self, dg, s, time);
+    return DirectionalLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_POINT) && (ffo & FFO_LIGHT_POINT)) {
-    return PointLight_sample(self, dg, s, time);
+    return PointLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_SPOT) && (ffo & FFO_LIGHT_SPOT)) {
-    return SpotLight_sample(self, dg, s, time);
+    return SpotLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_HDRI) && (ffo & FFO_LIGHT_HDRI)) {
-    return HDRILight_sample(self, dg, s, time);
+    return HDRILight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_QUAD) && (ffo & FFO_LIGHT_QUAD)) {
-    return QuadLight_sample(self, dg, s, time);
+    return QuadLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_CYLINDER)
       && (ffo & FFO_LIGHT_CYLINDER)) {
-    return CylinderLight_sample(self, dg, s, time);
+    return CylinderLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_GEOMETRY)
       && (ffo & FFO_LIGHT_GEOMETRY)) {
-    return GeometryLight_sample(self, dg, s, time);
+    return GeometryLight_sample(self, dg, s, time, ffh);
   } else {
     Light_SampleRes res;
     res.weight = make_vec3f(0.f);
@@ -61,8 +64,10 @@ SYCL_EXTERNAL Light_EvalRes Light_dispatch_eval(const Light *uniform self,
     const float minDist,
     const float maxDist,
     const float time,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+
 #ifndef OSPRAY_TARGET_SYCL
   return self->eval(self, dg, dir, minDist, maxDist, time);
 #else

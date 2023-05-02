@@ -31,7 +31,7 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     varying LDSampler *uniform ldSampler,
     vec3f weight,
     uniform float quality,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const World *uniform world,
@@ -40,6 +40,6 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const uniform int sampleCnt,
     const uniform float aoRadius,
     const varying vec3i &sampleID,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

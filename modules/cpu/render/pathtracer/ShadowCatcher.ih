@@ -18,6 +18,6 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     PathVertex &pathVertex,
     const Ray &ray,
     ScreenSample &sample,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

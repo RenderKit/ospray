@@ -8,13 +8,15 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL Light_SampleRes SpotLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
-    const float);
+    const float,
+    const uniform FeatureFlagsHandler &);
 
 SYCL_EXTERNAL Light_SampleRes SpotLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
-    const float time);
+    const float time,
+    const uniform FeatureFlagsHandler &);
 
 SYCL_EXTERNAL Light_EvalRes SpotLight_eval(const Light *uniform super,
     const DifferentialGeometry &dg,

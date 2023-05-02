@@ -1,7 +1,6 @@
 // Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "common/FeatureFlags.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/Tile.ih"
 // c++ shared

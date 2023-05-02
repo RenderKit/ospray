@@ -85,13 +85,13 @@ inline BSDF_SampleRes make_BSDF_SampleRes_zero()
 typedef BSDF_EvalRes (*BSDF_EvalFunc)(const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 typedef BSDF_SampleRes (*BSDF_SampleFunc)(const varying BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 struct BSDF
 {
@@ -134,14 +134,14 @@ inline linear3f getFrame(const varying BSDF *uniform bsdf)
 SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval(const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample(
     const varying BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 // We need to break the possible recursive call structure of a multi bsdf
 // containing multi-BSDFs, since SYCL doesn't allow recursive calls
@@ -150,13 +150,13 @@ SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval_base(
     const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample_base(
     const varying BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

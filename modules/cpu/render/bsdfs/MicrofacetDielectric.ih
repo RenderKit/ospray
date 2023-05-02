@@ -36,7 +36,7 @@ inline BSDF_EvalRes MicrofacetDielectric_evalSingle(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther)
+    const uniform FeatureFlagsHandler &)
 {
   const varying MicrofacetDielectric *uniform self =
       (const varying MicrofacetDielectric *uniform)super;
@@ -101,7 +101,7 @@ inline BSDF_EvalRes MicrofacetDielectric_evalSingle(
 inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying MicrofacetDielectric *uniform self =
       (const varying MicrofacetDielectric *uniform)super;
@@ -139,7 +139,7 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF *uniform super,
   }
 
   // Evaluate the single-scattering lobe
-  BSDF_EvalRes single = MicrofacetDielectric_evalSingle(super, wo, wi, ffo);
+  BSDF_EvalRes single = MicrofacetDielectric_evalSingle(super, wo, wi, ffh);
 
   // Compute the final result
   float singlePickProb = Eo;
@@ -153,7 +153,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying MicrofacetDielectric *uniform self =
       (const varying MicrofacetDielectric *uniform)super;
@@ -242,7 +242,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(
   }
 
   // Evaluate the single-scattering lobe
-  BSDF_EvalRes single = MicrofacetDielectric_evalSingle(super, wo, res.wi, ffo);
+  BSDF_EvalRes single = MicrofacetDielectric_evalSingle(super, wo, res.wi, ffh);
 
   // Compute the final result
   res.pdf = singlePickProb * single.pdf + (1.f - singlePickProb) * fms.pdf;

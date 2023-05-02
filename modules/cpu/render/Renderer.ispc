@@ -4,6 +4,7 @@
 // TODO: Seems like ISPC bug: if Renderer.ih included before
 // Texture2D.ih I get an error that the Texture2D type is declared but not
 // defined
+#include "common/FeatureFlagsEnum.h"
 #include "texture/Texture2D.ih"
 
 #include "Renderer.ih"
@@ -17,9 +18,10 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL vec4f Renderer_getBackground(const Renderer *uniform self,
     const vec2f &screenPos,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
-  if (!self->backplate || !(ffo & FFO_TEXTURE_IN_RENDERER))
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  if (!self->backplate || !(ff.other & FFO_TEXTURE_IN_RENDERER))
     return self->bgColor;
 
   // TODO: Now for GPU making a whole DifferentialGeometry object
@@ -32,9 +34,10 @@ SYCL_EXTERNAL vec4f Renderer_getBackground(const Renderer *uniform self,
 
 SYCL_EXTERNAL float Renderer_getMaxDepth(const Renderer *uniform self,
     const vec2f &screenPos,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
-  if (!self->maxDepthTexture || !(ffo & FFO_TEXTURE_IN_RENDERER))
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  if (!self->maxDepthTexture || !(ff.other & FFO_TEXTURE_IN_RENDERER))
     return inf;
 
   DifferentialGeometry lookup;
@@ -55,6 +58,7 @@ export void Renderer_pick(const void *uniform _self,
     uniform int32 &primID,
     uniform int32 &hit)
 {
+#ifndef OSPRAY_TARGET_SYCL
   const Renderer *uniform self = (const Renderer *uniform)_self;
   const Camera *uniform camera = (const Camera *uniform)_camera;
   const World *uniform world = (const World *uniform)_world;
@@ -67,11 +71,12 @@ export void Renderer_pick(const void *uniform _self,
   cameraSample.lens.y = 0.0f;
   cameraSample.time = 0.5f;
 
+  uniform FeatureFlagsHandler ffh;
   Ray ray;
-  Camera_dispatch_initRay(camera, ray, cameraSample, FFO_ALL);
-  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen, FFO_ALL));
+  Camera_dispatch_initRay(camera, ray, cameraSample, ffh);
+  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen, ffh));
 
-  traceRay(world, ray, ffAll());
+  traceRay(world, ray, ffh);
 
   vec3f p = ray.org + ray.dir * ray.t;
 
@@ -82,6 +87,17 @@ export void Renderer_pick(const void *uniform _self,
   instID = extract(ray.instID, 0);
   geomID = extract(ray.geomID, 0);
   primID = extract(ray.primID, 0);
+#else
+  (void)_self;
+  (void)_camera;
+  (void)_world;
+  (void)screenPos;
+  (void)pos;
+  (void)instID;
+  (void)geomID;
+  (void)primID;
+  (void)hit;
+#endif
 }
 
 OSPRAY_END_ISPC_NAMESPACE

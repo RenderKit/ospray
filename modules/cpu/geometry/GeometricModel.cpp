@@ -32,10 +32,10 @@ void GeometricModel::commit()
   getSh()->material = nullptr;
   getSh()->materialID = nullptr;
   getSh()->numMaterials = 0;
-  featureFlags = FFO_NONE;
+  featureFlagsOther = FFO_NONE;
   if (materialData) {
     for (auto &&mat : materialData->as<Material *>())
-      featureFlags |= mat->getFeatureFlagsOther();
+      featureFlagsOther |= mat->getFeatureFlags().other;
 
     materialArray = make_buffer_shared_unique<ispc::Material *>(
         getISPCDevice().getIspcrtContext(),
@@ -45,10 +45,10 @@ void GeometricModel::commit()
   } else {
     materialData = getParamDataT<uint32_t>("material", false, true);
     if (materialData) {
-      materialIDArray =
-          make_buffer_shared_unique<uint32_t>(getISPCDevice().getIspcrtContext(),
-              materialData->as<uint32_t>().data(),
-              materialData->size());
+      materialIDArray = make_buffer_shared_unique<uint32_t>(
+          getISPCDevice().getIspcrtContext(),
+          materialData->as<uint32_t>().data(),
+          materialData->size());
       getSh()->materialID = materialIDArray->sharedPtr();
       getSh()->numMaterials = materialIDArray->size();
     }

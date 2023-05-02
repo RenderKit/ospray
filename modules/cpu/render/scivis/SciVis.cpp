@@ -12,6 +12,7 @@
 // ispc exports
 #include "render/scivis/SciVis_ispc.h"
 #else
+#include "common/FeatureFlags.ih"
 namespace ispc {
 SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
@@ -19,9 +20,8 @@ SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     World *uniform world,
     const uint32 *uniform taskIDs,
     const int taskIndex0,
-    const uniform ospray::FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ffh);
 }
-constexpr sycl::specialization_id<ospray::FeatureFlags> specFeatureFlags;
 #endif
 
 namespace ospray {
@@ -81,25 +81,24 @@ AsyncEvent SciVis::renderTasks(FrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
-    ff.other |= featureFlags;
-    ff.other |= fb->getFeatureFlagsOther();
-    ff.other |= camera->getFeatureFlagsOther();
-    cgh.set_specialization_constant<specFeatureFlags>(ff);
+    ff |= featureFlags;
+    ff |= fb->getFeatureFlags();
+    ff |= camera->getFeatureFlags();
+    cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
 
     const sycl::nd_range<1> dispatchRange =
         device.computeDispatchRange(numTasks, 16);
     cgh.parallel_for(dispatchRange,
         [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
           if (taskIndex.get_global_id(0) < numTasks) {
-            const FeatureFlags ff =
-                kh.get_specialization_constant<specFeatureFlags>();
+            ispc::FeatureFlagsHandler ffh(kh);
             ispc::SciVis_renderTask(&rendererSh->super,
                 fbSh,
                 cameraSh,
                 worldSh,
                 taskIDsPtr,
                 taskIndex.get_global_id(0),
-                ff);
+                ffh);
           }
         });
   });

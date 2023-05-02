@@ -11,6 +11,7 @@
 // c++ shared
 #include "GroupShared.h"
 #include "InstanceShared.h"
+#include "common/FeatureFlagsEnum.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -42,7 +43,7 @@ inline void Instance_postIntersect(const Instance *uniform self,
     const varying Ray &ray,
     uniform int64 flags,
     const uniform bool clip,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   GeometricModel **uniform models =
       clip ? self->group->clipModels : self->group->geometricModels;
@@ -54,7 +55,7 @@ inline void Instance_postIntersect(const Instance *uniform self,
   foreach_unique (geomID in ray.geomID) {
 #endif
     GeometricModel_postIntersect(
-        *(models + geomID), renderer, dg, ray, flags, ff);
+        *(models + geomID), renderer, dg, ray, flags, ffh);
   }
 
   dg.instID =

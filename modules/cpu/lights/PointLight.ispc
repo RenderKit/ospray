@@ -92,7 +92,8 @@ inline Light_SampleRes Sample(const PointLight *uniform self,
 SYCL_EXTERNAL Light_SampleRes PointLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float)
+    const float,
+    const uniform FeatureFlagsHandler &)
 {
   const PointLight *uniform self = (PointLight * uniform) super;
   assert(self);
@@ -104,7 +105,8 @@ SYCL_EXTERNAL Light_SampleRes PointLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float time)
+    const float time,
+    const uniform FeatureFlagsHandler &)
 {
   const PointLight *uniform self = (PointLight * uniform) super;
   assert(self);

@@ -33,7 +33,7 @@ struct OSPRAY_SDK_INTERFACE Camera
   // Assume no motion blur nor depth of field (true for SciVis)
   virtual box3f projectBox(const box3f &b) const;
 
-  FeatureFlagsOther getFeatureFlagsOther() const;
+  FeatureFlags getFeatureFlags() const;
 
   // Data members //
 
@@ -59,9 +59,11 @@ struct OSPRAY_SDK_INTERFACE Camera
 
 OSPTYPEFOR_SPECIALIZATION(Camera *, OSP_CAMERA);
 
-inline FeatureFlagsOther Camera::getFeatureFlagsOther() const
+inline FeatureFlags Camera::getFeatureFlags() const
 {
-  return featureFlags;
+  FeatureFlags ff;
+  ff.other = featureFlags;
+  return ff;
 }
 
 } // namespace ospray

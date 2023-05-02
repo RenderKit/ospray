@@ -4,6 +4,7 @@
 #pragma once
 
 #include "OSPConfig.h"
+#include "common/FeatureFlagsEnum.h"
 #include "common/World.ih"
 #include "rkcommon/math/vec.ih"
 
@@ -15,7 +16,7 @@ SYCL_EXTERNAL float computeAO(const Renderer *uniform,
     const uniform int sampleCnt,
     const uniform float aoRadius,
     const varying vec3i &sampleID,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ff);
 
 // struct that stores a precomputed z-order for tiles of TILE_SIZE x TILE_SIZE
 // pixels

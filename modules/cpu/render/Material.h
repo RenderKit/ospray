@@ -35,7 +35,7 @@ struct OSPRAY_SDK_INTERFACE Material
   virtual std::string toString() const override;
   virtual void commit() override;
 
-  FeatureFlagsOther getFeatureFlagsOther() const;
+  FeatureFlags getFeatureFlags() const;
 
   // helper function to get all texture related parameters
   ispc::TextureParam getTextureParam(const char *texture_name);
@@ -79,9 +79,11 @@ OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);
 
 // Inlined definitions /////////////////////////////////////////////////////////
 
-inline FeatureFlagsOther Material::getFeatureFlagsOther() const
+inline FeatureFlags Material::getFeatureFlags() const
 {
-  return featureFlags;
+  FeatureFlags ff;
+  ff.other = featureFlags;
+  return ff;
 }
 
 inline bool Material::isEmissive() const

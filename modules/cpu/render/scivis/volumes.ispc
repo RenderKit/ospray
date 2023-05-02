@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#include "common/FeatureFlagsEnum.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "math/random.ih"
@@ -35,8 +36,9 @@ static void sampleVolume(SciVisRenderContext &rc,
     Ray &ray,
     const VolumeInterval &vi,
     const uniform float samplingRate,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
   // We have to iterate till we get a valid sample value
   float dt = 0.f;
   float sampleVal = nan;
@@ -47,7 +49,13 @@ static void sampleVolume(SciVisRenderContext &rc,
     while (vc.iuDistance > vc.iuLength) {
       // Get next VKL interval
       const float prevUpper = vc.interval.tRange.upper;
-      if (vklIterateIntervalV(vc.intervalIterator, &vc.interval)) {
+      if (vklIterateIntervalV(vc.intervalIterator,
+              &vc.interval
+#ifdef OSPRAY_TARGET_SYCL
+              ,
+              ff.volume
+#endif
+              )) {
         // Intervals may not be contiguous, accumulate empty space
         emptySpace += max(vc.interval.tRange.lower - prevUpper, 0.f);
 
@@ -79,14 +87,21 @@ static void sampleVolume(SciVisRenderContext &rc,
     p = vc.org + newDistance * vc.dir;
 
     // Sample volume value in given point
-    sampleVal = vklComputeSampleV(
 #if OPENVKL_VERSION_MAJOR == 1
-        m->volume->vklSampler,
+    // We know if we have OpenVKL version 1 we're not targetting SYCL
+    sampleVal = vklComputeSampleV(
+        m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 #else
-        &m->volume->vklSampler,
+    sampleVal = vklComputeSampleV(&m->volume->vklSampler,
+        (const varying vkl_vec3f *uniform) & p
+#ifdef OSPRAY_TARGET_SYCL
+        ,
+        0,
+        0.5f,
+        ff.volume
 #endif
-        (const varying vkl_vec3f *uniform) & p);
-
+    );
+#endif
     // Go to the next sub-interval
     vc.iuDistance += 1.f;
     dt = newDistance - vc.distance - emptySpace;
@@ -99,7 +114,7 @@ static void sampleVolume(SciVisRenderContext &rc,
 
   // compute gradient shading lighting
   if (m->gradientShadingScale > 0.0f) {
-    vec3f ns = Volume_getGradient(m->volume, p);
+    vec3f ns = Volume_getGradient(m->volume, p, ffh);
     if (dot(ns, ns) > 1e-6f) {
       // assume that opacity directly correlates to volume scalar field, i.e.
       // that "outside" has lower values; because the gradient point towards
@@ -117,7 +132,7 @@ static void sampleVolume(SciVisRenderContext &rc,
           normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
       dg.P = ray.org + vc.distance * ray.dir;
       SSI shading = SciVis_computeShading(
-          rc.renderer, rc.world, dg, rc.sample, rc.ldSampler, ray.dir, ff);
+          rc.renderer, rc.world, dg, rc.sample, rc.ldSampler, ray.dir, ffh);
       vec4f shadedColor = make_vec4f(
           shading.shadedColor, 1.f - luminance(shading.transmission));
       vc.sample = lerp(m->gradientShadingScale, vc.sample, shadedColor);
@@ -134,7 +149,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
     Ray &ray,
     const uniform float samplingRate,
     vec4f &sampledColor,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   // Look for the closest sample across all volumes
   float minDist = inf;
@@ -154,7 +169,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
 #else
       foreach_unique (m in vi.volumetricModel) {
 #endif
-        sampleVolume(rc, vc, m, ray, vi, samplingRate, ff);
+        sampleVolume(rc, vc, m, ray, vi, samplingRate, ffh);
       }
       vc.ready = 1;
     }
@@ -189,7 +204,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
     const uniform float samplingRate,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
 #ifdef OSPRAY_TARGET_SYCL
   // Only a single volume context is supported on the GPU, no dynamic allocation
@@ -202,6 +217,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
           pushTLS(reduce_max(volumeIntervals.numVolumeIntervals)
               * sizeof(varying VolumeContext));
 #endif
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
   // Sampling position jitter
   const float jitter = LDSampler_getFloat(ldSampler, 0);
@@ -278,12 +294,16 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       foreach_unique (m in model) {
 #endif
         // Create volume interval iterator
-        vc.intervalIterator = vklInitIntervalIteratorV(
 #if OPENVKL_VERSION_MAJOR == 1
-            m->vklIntervalContext,
+        // We know if we have OpenVKL version 1 we're not targetting SYCL
+        vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
+            (varying vkl_vec3f *)&vc.org,
+            (varying vkl_vec3f *)&vc.dir,
+            (varying vkl_range1f *)&rInterval,
+            &time,
+            vc.intervalIteratorBuffer);
 #else
-            &m->vklIntervalContext,
-#endif
+        vc.intervalIterator = vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
@@ -292,7 +312,13 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
 #else
             &time,
 #endif
-            vc.intervalIteratorBuffer);
+            vc.intervalIteratorBuffer
+#ifdef OSPRAY_TARGET_SYCL
+            ,
+            ff.volume
+#endif
+        );
+#endif
       }
     }
 
@@ -306,7 +332,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
           ray,
           samplingRate,
           sampledColor,
-          ff);
+          ffh);
 
       // Exit loop if nothing sampled
       if (dist == inf)

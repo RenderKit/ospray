@@ -4,6 +4,7 @@
 // ospray
 #include "World.h"
 #include "Instance.h"
+#include "common/FeatureFlagsEnum.h"
 #include "lights/Light.h"
 #include "render/pathtracer/PathTracerData.h"
 #include "render/scivis/SciVisData.h"
@@ -138,6 +139,7 @@ void World::commit()
       }
 #ifdef OSPRAY_ENABLE_VOLUMES
       if (inst->group->sceneVolumes) {
+        featureFlags.other |= FFO_VOLUME_IN_SCENE;
         addGeometryInstance(
             esVol, inst->group->sceneVolumes, inst, embreeDevice, id);
       }
@@ -150,17 +152,17 @@ void World::commit()
 #endif
       // Gather feature flags from all groups
       const FeatureFlags &gff = inst->group->getFeatureFlags();
-      featureFlags.geometry |= gff.geometry;
-      featureFlags.volume |= gff.volume;
-      featureFlags.other |= gff.other;
+      featureFlags |= gff;
       id++;
     }
   }
 
   // Gather light types
-  if (lights)
-    for (auto &&light : *lights)
-      featureFlags.other |= light->getFeatureFlagsOther();
+  if (lights) {
+    for (auto &&light : *lights) {
+      featureFlags |= light->getFeatureFlags();
+    }
+  }
 
   if (esGeom) {
     rtcSetSceneFlags(esGeom, static_cast<RTCSceneFlags>(sceneFlags));

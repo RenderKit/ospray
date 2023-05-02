@@ -4,6 +4,7 @@
 #include "SciVis.ih"
 #include "camera/Camera.ih"
 #include "camera/CameraDispatch.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
@@ -23,9 +24,11 @@ static void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     varying ScreenSample &sample,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
+
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
@@ -59,19 +62,21 @@ static void SciVis_renderSample(Renderer *uniform _self,
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
-  traceClippingRay(world, ray, rayIntervals);
+  traceClippingRay(world, ray, rayIntervals, ffh);
 
   // Iterate over all translucent geometry till we are fully opaque
   vec3f outColor = make_vec3f(0.f);
   vec3f outTransmission = make_vec3f(1.f);
   while (true) {
-    // Then trace normal geometry using calculated ray intervals,
-    // if hit ray.t will be updated
-    traceGeometryRayIntervals(world, ray, rayIntervals, ff);
+    if (ff.geometry) {
+      // Then trace normal geometry using calculated ray intervals,
+      // if hit ray.t will be updated
+      traceGeometryRayIntervals(world, ray, rayIntervals, ffh);
+    }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
     Ray volumeRay = ray;
-    if (ff.volume & FFV_VOLUME) {
+    if (ff.other & FFO_VOLUME_IN_SCENE) {
       // Determine volume intervals by tracing ray in the volume scene
       traceVolumeRay(world, volumeRay, volumeIntervals);
 
@@ -90,7 +95,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
             volumeRay,
             ldSampler,
             self->volumeSamplingRate,
-            ff);
+            ffh);
 
         // Blend volume
         outColor = outColor + outTransmission * make_vec3f(volumeColor);
@@ -135,12 +140,12 @@ static void SciVis_renderSample(Renderer *uniform _self,
     if (self->visibleLights) {
       dg.P = ray.org;
       outColor =
-          outColor + outTransmission * evaluateLights(world, dg, ray, ff);
+          outColor + outTransmission * evaluateLights(world, dg, ray, ffh);
     }
 
     // If any geometry has been hit
     const bool rayHadHit = hadHit(ray);
-    if (rayHadHit) {
+    if (ff.geometry && rayHadHit) {
       // Prepare differential geometry structure
       postIntersect(world,
           &self->super,
@@ -148,12 +153,12 @@ static void SciVis_renderSample(Renderer *uniform _self,
           ray,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
               | DG_TEXCOORD,
-          ff);
+          ffh);
 
       // Shade geometry
       SSI surfaceShading;
       surfaceShading = SciVis_computeShading(
-          self, world, dg, sample, ldSampler, ray.dir, ff);
+          self, world, dg, sample, ldSampler, ray.dir, ffh);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully
@@ -196,7 +201,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
     } else {
       // Blend background with output final color
       vec4f backgroundColor =
-          Renderer_getBackground(&self->super, sample.pos, ff.other);
+          Renderer_getBackground(&self->super, sample.pos, ffh);
       outColor = outColor + outTransmission * make_vec3f(backgroundColor);
       outTransmission = outTransmission * (1.f - backgroundColor.w);
 
@@ -232,7 +237,7 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const uniform int sampleCnt,
     const uniform float aoRadius,
     const varying vec3i &sampleID,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
 
@@ -266,7 +271,7 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     hits = hits
         + (1.f
             - lightAlpha(
-                self, ao_ray, world, ldSampler, make_vec3f(1.f), 0.1f, ff));
+                self, ao_ray, world, ldSampler, make_vec3f(1.f), 0.1f, ffh));
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
@@ -285,9 +290,10 @@ SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     World *uniform world,
     const uint32 *uniform taskIDs,
     const int taskIndex0,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
-  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex0, ff);
+  Renderer_default_renderTask(
+      self, fb, camera, world, taskIDs, taskIndex0, ffh);
 }
 #else
 export void SciVis_renderTasks(void *uniform _self,
@@ -302,8 +308,9 @@ export void SciVis_renderTasks(void *uniform _self,
   Camera *uniform camera = (Camera * uniform) _camera;
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  uniform FeatureFlagsHandler ffh;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, taskIDs, ffAll());
+      self, fb, camera, world, taskIDs, ffh);
   sync;
 }
 #endif

@@ -5,8 +5,8 @@
 #pragma once
 
 #include "ISPCDeviceObject.h"
-#include "common/StructShared.h"
 #include "common/FeatureFlagsEnum.h"
+#include "common/StructShared.h"
 // embree
 #include "common/Embree.h"
 // openvkl
@@ -29,7 +29,7 @@ struct OSPRAY_SDK_INTERFACE Volume
   std::string toString() const override;
   void commit() override;
 
-  FeatureFlagsVolume getFeatureFlagsVolume() const;
+  FeatureFlags getFeatureFlags() const;
 
  private:
   void checkDataStride(const Data *) const;
@@ -49,14 +49,16 @@ struct OSPRAY_SDK_INTERFACE Volume
 
   std::string vklType;
 
-  FeatureFlagsVolume featureFlags;
+  VKLFeatureFlags vklFeatureFlags = VKL_FEATURE_FLAGS_NONE;
 };
 
 OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);
 
-inline FeatureFlagsVolume Volume::getFeatureFlagsVolume() const
+inline FeatureFlags Volume::getFeatureFlags() const
 {
-  return featureFlags;
+  FeatureFlags ff;
+  ff.volume = vklFeatureFlags;
+  return ff;
 }
 
 } // namespace ospray

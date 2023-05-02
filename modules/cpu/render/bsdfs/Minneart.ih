@@ -19,7 +19,7 @@ struct Minneart
 inline BSDF_EvalRes Minneart_eval(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther)
+    const uniform FeatureFlagsHandler &)
 {
   const varying Minneart *uniform self = (const varying Minneart *uniform)super;
   BSDF_EvalRes res;
@@ -36,14 +36,14 @@ inline BSDF_SampleRes Minneart_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
     float,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
   BSDF_SampleRes res;
 
   const vec3f localDir = cosineSampleHemisphere(s);
   res.wi = getFrame(super) * localDir;
   res.type = BSDF_DIFFUSE_REFLECTION;
-  BSDF_EvalRes eval = Minneart_eval(super, wo, res.wi, ffo);
+  BSDF_EvalRes eval = Minneart_eval(super, wo, res.wi, ffh);
   res.pdf = eval.pdf;
   res.weight = eval.value * rcp(eval.pdf);
   return res;

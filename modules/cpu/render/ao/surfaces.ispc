@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlagsEnum.h"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/ScreenSample.ih"
@@ -15,14 +16,15 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline vec4f getSurfaceColor(
-    const DifferentialGeometry &dg, const uniform FeatureFlagsOther ffo)
+    const DifferentialGeometry &dg, const uniform FeatureFlagsHandler &ffh)
 {
   const OBJ *mat = (const OBJ *)dg.material;
 
   vec3f surfaceColor = make_vec3f(1.f);
   float opacity = 1.f;
 
-  const uniform bool fft = ffo & FFO_TEXTURE_IN_MATERIAL;
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  const uniform bool fft = ff.other & FFO_TEXTURE_IN_MATERIAL;
 
 #ifdef OSPRAY_TARGET_SYCL
   {
@@ -48,11 +50,11 @@ SYCL_EXTERNAL SSI AORenderer_computeShading(const AORenderer *uniform self,
     const World *uniform world,
     const DifferentialGeometry &dg,
     ScreenSample &sample,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   SSI retval;
 
-  const vec4f surfaceColor = getSurfaceColor(dg, ff.other);
+  const vec4f surfaceColor = getSurfaceColor(dg, ffh);
 
   const vec3f color = make_vec3f(surfaceColor);
   const float opacity = surfaceColor.w;
@@ -66,7 +68,7 @@ SYCL_EXTERNAL SSI AORenderer_computeShading(const AORenderer *uniform self,
         self->aoSamples,
         self->aoRadius,
         sample.sampleID,
-        ff);
+        ffh);
     intensity *= (1.0f - self->aoIntensity) + (ao * self->aoIntensity);
   }
 

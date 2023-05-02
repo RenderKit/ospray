@@ -99,7 +99,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   int32 getFrameID() const;
 
-  FeatureFlagsOther getFeatureFlagsOther() const;
+  FeatureFlags getFeatureFlags() const;
 
  protected:
   // Fill vectors with instantiated live objects
@@ -144,9 +144,11 @@ inline int32_t FrameBuffer::getFrameID() const
   return frameID;
 }
 
-inline FeatureFlagsOther FrameBuffer::getFeatureFlagsOther() const
+inline FeatureFlags FrameBuffer::getFeatureFlags() const
 {
-  return featureFlags;
+  FeatureFlags ff;
+  ff.other = featureFlags;
+  return ff;
 }
 
 } // namespace ospray

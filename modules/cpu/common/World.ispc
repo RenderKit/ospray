@@ -53,7 +53,7 @@ unmasked void clippingIntersectionFilterV(
       // Call postIntersect to get shading normal
       Instance *uniform instance = *(context->world->instances + instID);
       Instance_postIntersect(
-          instance, NULL, dg, *ray, DG_NG | DG_NS, true, ffAll());
+          instance, NULL, dg, *ray, DG_NG | DG_NS, true, *context->super.ffh);
 
       // Use geometry normal for clipping
       // but use shading normal to check if invertion is needed

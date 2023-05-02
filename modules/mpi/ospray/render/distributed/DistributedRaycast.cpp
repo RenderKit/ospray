@@ -22,6 +22,7 @@
 #ifndef OSPRAY_TARGET_SYCL
 #include "render/distributed/DistributedRaycast_ispc.h"
 #else
+#include "common/FeatureFlags.ih"
 namespace ispc {
 SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(void *_self,
     void *_fb,
@@ -31,9 +32,8 @@ SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(void *_self,
     void *perFrameData,
     const void *_taskIDs,
     const int taskIndex0,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ffh);
 }
-constexpr sycl::specialization_id<ospray::FeatureFlags> specFeatureFlags;
 #endif
 
 namespace ospray {
@@ -120,10 +120,10 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
 
   auto event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
-    ff.other |= featureFlags;
-    ff.other |= fb->getFeatureFlagsOther();
-    ff.other |= camera->getFeatureFlagsOther();
-    cgh.set_specialization_constant<specFeatureFlags>(ff);
+    ff |= featureFlags;
+    ff |= fb->getFeatureFlags();
+    ff |= camera->getFeatureFlags();
+    cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
 
     const sycl::nd_range<1> dispatchRange =
         device.computeDispatchRange(numTasks, 16);
@@ -131,8 +131,7 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
         [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
           const box3f regionCopy = region;
           if (taskIndex.get_global_id(0) < numTasks) {
-            const FeatureFlags ff =
-                kh.get_specialization_constant<specFeatureFlags>();
+            ispc::FeatureFlagsHandler ffh(kh);
             ispc::DistributedRaycast_renderRegionToTileTask(&rendererSh->super,
                 fbSh,
                 cameraSh,
@@ -141,7 +140,7 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
                 perFrameData,
                 taskIDsPtr,
                 taskIndex.get_global_id(0),
-                ff);
+                ffh);
           }
         });
   });

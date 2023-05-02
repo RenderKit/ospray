@@ -33,7 +33,7 @@ struct OSPRAY_SDK_INTERFACE Light
   vec3f coloredIntensity{1.0f, 1.0f, 1.0f};
   OSPIntensityQuantity intensityQuantity = OSP_INTENSITY_QUANTITY_UNKNOWN;
 
-  FeatureFlagsOther getFeatureFlagsOther() const;
+  FeatureFlags getFeatureFlags() const;
 
  protected:
   FeatureFlagsOther featureFlags;
@@ -50,9 +50,11 @@ inline uint32_t Light::getShCount() const
   return 1;
 }
 
-inline FeatureFlagsOther Light::getFeatureFlagsOther() const
+inline FeatureFlags Light::getFeatureFlags() const
 {
-  return featureFlags;
+  FeatureFlags ff;
+  ff.other = featureFlags;
+  return ff;
 }
 
 } // namespace ospray

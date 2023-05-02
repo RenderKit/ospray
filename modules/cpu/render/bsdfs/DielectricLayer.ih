@@ -32,7 +32,7 @@ struct DielectricLayer
 inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying DielectricLayer *uniform self =
       (const varying DielectricLayer *uniform)super;
@@ -60,10 +60,10 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF *uniform super,
     // recursion (that we know will terminate) from the SYCL compiler we have
     // to call MultiBSDF directly here if we have a layer over a MultiBSDF
     if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-      substrate = MultiBSDF_eval(f, wo, wi, ffo); // f->eval(f, wo, wi);
+      substrate = MultiBSDF_eval(f, wo, wi, ffh); // f->eval(f, wo, wi);
     } else {
       substrate =
-          BSDF_dispatch_eval_base(f, wo, wi, ffo); // f->eval(f, wo, wi);
+          BSDF_dispatch_eval_base(f, wo, wi, ffh); // f->eval(f, wo, wi);
     }
   }
 
@@ -101,7 +101,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying DielectricLayer *uniform self =
       (const varying DielectricLayer *uniform)super;
@@ -136,10 +136,10 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF *uniform super,
       // recursion (that we know will terminate) from the SYCL compiler we have
       // to call MultiBSDF directly here if we have a layer over a MultiBSDF
       if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        res = MultiBSDF_sample(f, wo, s, ss1, ffo); // f->sample(f, wo, s, ss1);
+        res = MultiBSDF_sample(f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
       } else {
         res = BSDF_dispatch_sample_base(
-            f, wo, s, ss1, ffo); // f->sample(f, wo, s, ss1);
+            f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
       }
     }
     if (reduce_max(res.weight) <= 0.f)

@@ -10,6 +10,6 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL void Camera_dispatch_initRay(const Camera *uniform self,
     varying Ray &ray,
     const varying CameraSample &sample,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

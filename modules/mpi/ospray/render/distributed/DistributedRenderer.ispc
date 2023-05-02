@@ -34,6 +34,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 struct RayQueryContextRegion
 {
   RTCRayQueryContext ectx;
+  const FeatureFlagsHandler *uniform ffh;
   uint8 *regionVisible;
 };
 
@@ -83,7 +84,7 @@ task
 #ifdef OSPRAY_TARGET_SYCL
         const int taskIndex0,
 #endif
-        const uniform FeatureFlags &ff)
+        const uniform FeatureFlagsHandler &ffh)
 {
   ScreenSample screenSample;
   screenSample.z = inf;
@@ -92,7 +93,7 @@ task
   CameraSample cameraSample;
 
   uniform RenderTaskDesc taskDesc = FrameBuffer_dispatch_getRenderTaskDesc(
-      &fb->super, taskIDs[taskIndex0], ff.other);
+      &fb->super, taskIDs[taskIndex0], ffh);
 
   if (fb->super.cancelRender || isEmpty(taskDesc.region)) {
     return;
@@ -154,13 +155,13 @@ task
         cameraSample.lens.y = 0.0f;
         cameraSample.time = 0.5f;
 
-        Camera_dispatch_initRay(
-            camera, screenSample.ray, cameraSample, ff.other);
+        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample, ffh);
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         if (world->regionScene) {
           uniform RayQueryContextRegion context;
           rtcInitRayQueryContext(&context.ectx);
+          context.ffh = &ffh;
           context.regionVisible = tileRegionVisible;
 
           uniform RTCIntersectArguments intersectArgs;
@@ -194,6 +195,7 @@ export void DistributedRenderer_computeRegionVisibility(void *uniform _self,
 {
   Renderer *uniform self = (uniform Renderer * uniform) _self;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  uniform FeatureFlagsHandler ffh;
   launch[numTasks] DR_default_computeRegionVisibility(self,
       (SparseFB * uniform) fb,
       (Camera * uniform) camera,
@@ -201,9 +203,10 @@ export void DistributedRenderer_computeRegionVisibility(void *uniform _self,
       regionVisible,
       perFrameData,
       taskIDs,
-      ffAll());
+      ffh);
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void DistributedRenderer_pick(const void *uniform _self,
     const void *uniform _fb,
     const void *uniform _camera,
@@ -216,6 +219,7 @@ export void DistributedRenderer_pick(const void *uniform _self,
     uniform float &depth,
     uniform int32 &hit)
 {
+  uniform FeatureFlagsHandler ffh;
   const Renderer *uniform self = (const Renderer *uniform)_self;
   const FrameBuffer *uniform fb = (const FrameBuffer *uniform)_fb;
   const Camera *uniform camera = (const Camera *uniform)_camera;
@@ -231,8 +235,8 @@ export void DistributedRenderer_pick(const void *uniform _self,
   cameraSample.time = 0.5f;
 
   Ray ray;
-  Camera_dispatch_initRay(camera, ray, cameraSample, FFO_ALL);
-  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen, FFO_ALL));
+  Camera_dispatch_initRay(camera, ray, cameraSample, ffh);
+  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen, ffh));
 
   // Clip the ray to each region this rank owns and trace the clipped ray to
   // find the picked object
@@ -249,7 +253,7 @@ export void DistributedRenderer_pick(const void *uniform _self,
         && isect.entry.t <= regionRay.t) {
       regionRay.t0 = isect.entry.t;
       regionRay.t = min(regionRay.t, isect.exit.t);
-      traceRay(&world->super, regionRay, ffAll());
+      traceRay(&world->super, regionRay, ffh);
 
       if (hadHit(regionRay)) {
         closestHit = regionRay.t;
@@ -267,6 +271,7 @@ export void DistributedRenderer_pick(const void *uniform _self,
     }
   }
 }
+#endif
 
 #endif
 

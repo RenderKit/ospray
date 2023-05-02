@@ -3,6 +3,28 @@
 
 #pragma once
 
+#ifdef OSPRAY_ENABLE_VOLUMES
+#ifdef ISPC
+#include <openvkl/openvkl.isph>
+#else
+#include <openvkl/openvkl.h>
+#endif
+
+#if OPENVKL_VERSION_MAJOR == 1
+#ifdef ISPC
+typedef uint64 VKLFeatureFlags;
+#else
+#include <cstdint>
+typedef uint64_t VKLFeatureFlags;
+#endif
+
+#define VKL_FEATURE_FLAGS_NONE 0
+#define VKL_FEATURE_FLAGS_DEFAULT -1
+
+#endif
+
+#endif
+
 #ifdef __cplusplus
 #include <cstdint>
 #include <type_traits>
@@ -64,18 +86,6 @@ enum FeatureFlagsGeometry
   FFG_ALL = 0xffffffff
 };
 
-enum FeatureFlagsVolume
-#ifdef __cplusplus
-    : uint32_t
-#endif
-{
-  FFV_NONE = 0,
-
-  FFV_VOLUME = 1 << 0,
-
-  FFV_ALL = 0xffffffff
-};
-
 enum FeatureFlagsOther
 #ifdef __cplusplus
     : uint32_t
@@ -115,26 +125,45 @@ enum FeatureFlagsOther
   FFO_TEXTURE_IN_MATERIAL = 1 << 25,
   FFO_TEXTURE_IN_RENDERER = 1 << 26,
 
+  // We track if there's a volume object in the scene separately from the volume
+  // feature flags to distinguish between needing the volume rendering/sampling
+  // code paths or just needing the isosurface traversal code path.
+  FFO_VOLUME_IN_SCENE = 1 << 27,
+
   FFO_ALL = 0xffffffff
 };
 
 struct FeatureFlags
 {
   FeatureFlagsGeometry geometry;
-  FeatureFlagsVolume volume;
+
   FeatureFlagsOther other;
+
+#ifdef OSPRAY_ENABLE_VOLUMES
+  VKLFeatureFlags volume;
+#endif
+
 #ifdef __cplusplus
   constexpr FeatureFlags()
-      : geometry(FFG_NONE), volume(FFV_NONE), other(FFO_NONE)
+      : geometry(FFG_NONE),
+        other(FFO_NONE)
+#ifdef OSPRAY_ENABLE_VOLUMES
+        ,
+        volume(VKL_FEATURE_FLAGS_NONE)
+#endif
   {}
   void reset()
   {
     geometry = FFG_NONE;
-    volume = FFV_NONE;
     other = FFO_NONE;
+#ifdef OSPRAY_ENABLE_VOLUMES
+    volume = VKL_FEATURE_FLAGS_NONE;
+#endif
   }
+#endif
 };
 
+#ifdef __cplusplus
 template <typename T,
     typename = typename std::enable_if<std::is_enum<T>::value>::type>
 inline T operator|(T a, T b)
@@ -148,7 +177,30 @@ inline T &operator|=(T &a, T b)
 {
   return a = a | b;
 }
-} // namespace ospray
-#else
-};
-#endif // __cplusplus
+
+inline FeatureFlags operator|(const FeatureFlags &a, const FeatureFlags &b)
+{
+  FeatureFlags ff;
+  ff.geometry = a.geometry | b.geometry;
+#ifdef OSPRAY_ENABLE_VOLUMES
+  ff.volume = a.volume | b.volume;
+#endif
+  ff.other = a.other | b.other;
+  return ff;
+}
+
+inline FeatureFlags &operator|=(FeatureFlags &a, const FeatureFlags &b)
+{
+  a.geometry |= b.geometry;
+#ifdef OSPRAY_ENABLE_VOLUMES
+  a.volume |= b.volume;
+#endif
+  a.other |= b.other;
+  return a;
+}
+#endif
+
+#ifdef __cplusplus
+}
+// namespace ospray
+#endif

@@ -26,6 +26,7 @@
 #include "render/bsdfs/Velvety.ih"
 
 #include "common/FeatureFlags.ih"
+#include "common/FeatureFlagsEnum.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -67,21 +68,22 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 static BSDF_EvalRes BSDF_dispatch_eval_nomulti(const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->bsdfType == BSDF_TYPE_DIELECTRIC_LAYER)
       && (ffo & MTB_DIELECTRIC_LAYER)) {
-    return DielectricLayer_eval(self, wo, wi, ffo);
+    return DielectricLayer_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER)
       && (ffo & MTB_MICROFACET_DIELECTRIC_LAYER)) {
-    return MicrofacetDielectricLayer_eval(self, wo, wi, ffo);
+    return MicrofacetDielectricLayer_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_SCALE) && (ffo & MTB_SCALE)) {
-    return Scale_eval(self, wo, wi, ffo);
+    return Scale_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MICROFACET_SHEEN_LAYER)
       && (ffo & MTB_MICROFACET_SHEEN_LAYER)) {
-    return MicrofacetSheenLayer_eval(self, wo, wi, ffo);
+    return MicrofacetSheenLayer_eval(self, wo, wi, ffh);
   } else {
-    return BSDF_dispatch_eval_base(self, wo, wi, ffo);
+    return BSDF_dispatch_eval_base(self, wo, wi, ffh);
   }
 }
 
@@ -90,33 +92,35 @@ static BSDF_SampleRes BSDF_dispatch_sample_nomulti(
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->bsdfType == BSDF_TYPE_DIELECTRIC_LAYER)
       && (ffo & MTB_DIELECTRIC_LAYER)) {
-    return DielectricLayer_sample(self, wo, s, ss, ffo);
+    return DielectricLayer_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER)
       && (ffo & MTB_MICROFACET_DIELECTRIC_LAYER)) {
-    return MicrofacetDielectricLayer_sample(self, wo, s, ss, ffo);
+    return MicrofacetDielectricLayer_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_SCALE) && (ffo & MTB_SCALE)) {
-    return Scale_sample(self, wo, s, ss, ffo);
+    return Scale_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MICROFACET_SHEEN_LAYER)
       && (ffo & MTB_MICROFACET_SHEEN_LAYER)) {
-    return MicrofacetSheenLayer_sample(self, wo, s, ss, ffo);
+    return MicrofacetSheenLayer_sample(self, wo, s, ss, ffh);
   } else {
-    return BSDF_dispatch_sample_base(self, wo, s, ss, ffo);
+    return BSDF_dispatch_sample_base(self, wo, s, ss, ffh);
   }
 }
 
 SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval(const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->bsdfType == BSDF_TYPE_MULTI_BSDF) && (ffo & MTB_MULTI_BSDF)) {
-    return MultiBSDF_eval(self, wo, wi, ffo);
+    return MultiBSDF_eval(self, wo, wi, ffh);
   } else {
-    return BSDF_dispatch_eval_nomulti(self, wo, wi, ffo);
+    return BSDF_dispatch_eval_nomulti(self, wo, wi, ffh);
   }
 }
 
@@ -125,12 +129,13 @@ SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample(
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->bsdfType == BSDF_TYPE_MULTI_BSDF) && (ffo & MTB_MULTI_BSDF)) {
-    return MultiBSDF_sample(self, wo, s, ss, ffo);
+    return MultiBSDF_sample(self, wo, s, ss, ffh);
   } else {
-    return BSDF_dispatch_sample_nomulti(self, wo, s, ss, ffo);
+    return BSDF_dispatch_sample_nomulti(self, wo, s, ss, ffh);
   }
 }
 
@@ -138,55 +143,56 @@ SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval_base(
     const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->bsdfType == BSDF_TYPE_CONDUCTOR) && (ffo & MTB_CONDUCTOR)) {
-    return Conductor_eval(self, wo, wi, ffo);
+    return Conductor_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_DIELECTRIC)
       && (ffo & MTB_DIELECTRIC)) {
-    return Dielectric_eval(self, wo, wi, ffo);
+    return Dielectric_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_LAMBERT) && (ffo & MTB_LAMBERT)) {
-    return Lambert_eval(self, wo, wi, ffo);
+    return Lambert_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_LAMBERT_TRANSMISSION)
       && (ffo & MTB_LAMBERT_TRANSMISSION)) {
-    return LambertTransmission_eval(self, wo, wi, ffo);
+    return LambertTransmission_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MICROFACET_CONDUCTOR)
       && (ffo & MTB_MICROFACET_CONDUCTOR)) {
-    return MicrofacetConductor_eval(self, wo, wi, ffo);
+    return MicrofacetConductor_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MICROFACET_DIELECTRIC)
       && (ffo & MTB_MICROFACET_DIELECTRIC)) {
-    return MicrofacetDielectric_eval(self, wo, wi, ffo);
+    return MicrofacetDielectric_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MINNEART) && (ffo & MTB_MINNEART)) {
-    return Minneart_eval(self, wo, wi, ffo);
+    return Minneart_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_SPECULAR) && (ffo & MTB_SPECULAR)) {
-    return Specular_eval(self, wo, wi, ffo);
+    return Specular_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_OREN_NAYAR)
       && (ffo & MTB_OREN_NAYAR)) {
-    return OrenNayar_eval(self, wo, wi, ffo);
+    return OrenNayar_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_REFLECTION)
       && (ffo & MTB_REFLECTION)) {
-    return Reflection_eval(self, wo, wi, ffo);
+    return Reflection_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_ROBUST_DIELECTRIC)
       && (ffo & MTB_ROBUST_DIELECTRIC)) {
-    return RobustDielectric_eval(self, wo, wi, ffo);
+    return RobustDielectric_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_ROBUST_THIN_DIELECTRIC)
       && (ffo & MTB_ROBUST_THIN_DIELECTRIC)) {
-    return RobustThinDielectric_eval(self, wo, wi, ffo);
+    return RobustThinDielectric_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_THIN_DIELECTRIC)
       && (ffo & MTB_THIN_DIELECTRIC)) {
-    return ThinDielectric_eval(self, wo, wi, ffo);
+    return ThinDielectric_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_THIN_MICROFACET_DIELECTRIC)
       && (ffo & MTB_THIN_MICROFACET_DIELECTRIC)) {
-    return ThinMicrofacetDielectric_eval(self, wo, wi, ffo);
+    return ThinMicrofacetDielectric_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_TRANSMISSION)
       && (ffo & MTB_TRANSMISSION)) {
-    return Transmission_eval(self, wo, wi, ffo);
+    return Transmission_eval(self, wo, wi, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_VELVETY) && (ffo & MTB_VELVETY)) {
-    return Velvety_eval(self, wo, wi, ffo);
+    return Velvety_eval(self, wo, wi, ffh);
   } else if (self->bsdfType == BSDF_TYPE_REALLY_UNKNOWN) {
   } else {
 #ifndef OSPRAY_TARGET_SYCL
-    return self->eval(self, wo, wi, ffo);
+    return self->eval(self, wo, wi, ffh);
 #endif
   }
   return make_BSDF_EvalRes_zero();
@@ -197,55 +203,56 @@ SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample_base(
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->bsdfType == BSDF_TYPE_CONDUCTOR) && (ffo & MTB_CONDUCTOR)) {
-    return Conductor_sample(self, wo, s, ss, ffo);
+    return Conductor_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_DIELECTRIC)
       && (ffo & MTB_DIELECTRIC)) {
-    return Dielectric_sample(self, wo, s, ss, ffo);
+    return Dielectric_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_LAMBERT) && (ffo & MTB_LAMBERT)) {
-    return Lambert_sample(self, wo, s, ss, ffo);
+    return Lambert_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_LAMBERT_TRANSMISSION)
       && (ffo & MTB_LAMBERT_TRANSMISSION)) {
-    return LambertTransmission_sample(self, wo, s, ss, ffo);
+    return LambertTransmission_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MICROFACET_CONDUCTOR)
       && (ffo & MTB_MICROFACET_CONDUCTOR)) {
-    return MicrofacetConductor_sample(self, wo, s, ss, ffo);
+    return MicrofacetConductor_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MICROFACET_DIELECTRIC)
       && (ffo & MTB_MICROFACET_DIELECTRIC)) {
-    return MicrofacetDielectric_sample(self, wo, s, ss, ffo);
+    return MicrofacetDielectric_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_MINNEART) && (ffo & MTB_MINNEART)) {
-    return Minneart_sample(self, wo, s, ss, ffo);
+    return Minneart_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_OREN_NAYAR)
       && (ffo & MTB_OREN_NAYAR)) {
-    return OrenNayar_sample(self, wo, s, ss, ffo);
+    return OrenNayar_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_SPECULAR) && (ffo & MTB_SPECULAR)) {
-    return Specular_sample(self, wo, s, ss, ffo);
+    return Specular_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_REFLECTION)
       && (ffo & MTB_REFLECTION)) {
-    return Reflection_sample(self, wo, s, ss, ffo);
+    return Reflection_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_ROBUST_DIELECTRIC)
       && (ffo & MTB_ROBUST_DIELECTRIC)) {
-    return RobustDielectric_sample(self, wo, s, ss, ffo);
+    return RobustDielectric_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_ROBUST_THIN_DIELECTRIC)
       && (ffo & MTB_ROBUST_THIN_DIELECTRIC)) {
-    return RobustThinDielectric_sample(self, wo, s, ss, ffo);
+    return RobustThinDielectric_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_THIN_DIELECTRIC)
       && (ffo & MTB_THIN_DIELECTRIC)) {
-    return ThinDielectric_sample(self, wo, s, ss, ffo);
+    return ThinDielectric_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_THIN_MICROFACET_DIELECTRIC)
       && (ffo & MTB_THIN_MICROFACET_DIELECTRIC)) {
-    return ThinMicrofacetDielectric_sample(self, wo, s, ss, ffo);
+    return ThinMicrofacetDielectric_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_TRANSMISSION)
       && (ffo & MTB_TRANSMISSION)) {
-    return Transmission_sample(self, wo, s, ss, ffo);
+    return Transmission_sample(self, wo, s, ss, ffh);
   } else if ((self->bsdfType == BSDF_TYPE_VELVETY) && (ffo & MTB_VELVETY)) {
-    return Velvety_sample(self, wo, s, ss, ffo);
+    return Velvety_sample(self, wo, s, ss, ffh);
   } else if (self->bsdfType == BSDF_TYPE_REALLY_UNKNOWN) {
   } else {
 #ifndef OSPRAY_TARGET_SYCL
-    return self->sample(self, wo, s, ss, ffo);
+    return self->sample(self, wo, s, ss, ffh);
 #endif
   }
   return make_BSDF_SampleRes_zero();

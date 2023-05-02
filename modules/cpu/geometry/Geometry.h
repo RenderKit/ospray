@@ -30,12 +30,12 @@ struct OSPRAY_SDK_INTERFACE Geometry
 
   bool supportAreaLighting() const;
 
-  FeatureFlagsGeometry getFeatureFlagsGeometry() const;
+  virtual FeatureFlags getFeatureFlags() const;
 
  protected:
   RTCGeometry embreeGeometry{nullptr};
 
-  FeatureFlagsGeometry featureFlags;
+  FeatureFlagsGeometry featureFlagsGeometry;
 
   void createEmbreeGeometry(RTCGeometryType type);
   // NOTE: We now pass intersection functions through Embree RTCIntersectionArgs
@@ -55,9 +55,11 @@ inline bool Geometry::supportAreaLighting() const
   return (getSh()->sampleArea != nullptr) && (getSh()->getAreas != nullptr);
 }
 
-inline FeatureFlagsGeometry Geometry::getFeatureFlagsGeometry() const
+inline FeatureFlags Geometry::getFeatureFlags() const
 {
-  return featureFlags;
+  FeatureFlags ff;
+  ff.geometry = featureFlagsGeometry;
+  return ff;
 }
 
 // convenience wrappers to set Embree buffer //////////////////////////////////

@@ -9,6 +9,7 @@
 #ifndef OSPRAY_TARGET_SYCL
 #include "render/distributed/DistributedRenderer_ispc.h"
 #else
+#include "common/FeatureFlags.ih"
 namespace ispc {
 SYCL_EXTERNAL void DR_default_computeRegionVisibility(Renderer *uniform self,
     SparseFB *uniform fb,
@@ -18,9 +19,8 @@ SYCL_EXTERNAL void DR_default_computeRegionVisibility(Renderer *uniform self,
     void *uniform perFrameData,
     const uint32 *uniform taskIDs,
     const int taskIndex0,
-    const uniform ospray::FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ff);
 }
-constexpr sycl::specialization_id<ospray::FeatureFlags> specFeatureFlags;
 #endif
 
 namespace ospray {
@@ -62,18 +62,22 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
 
   auto event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
-    ff.other |= featureFlags;
-    ff.other |= fb->getFeatureFlagsOther();
-    ff.other |= camera->getFeatureFlagsOther();
-    cgh.set_specialization_constant<specFeatureFlags>(ff);
+    ff.other = FFO_NONE;
+    ff |= fb->getFeatureFlags();
+    ff |= camera->getFeatureFlags();
+    // Disable features we don't need for the region visibility computation
+    ff.geometry = FFG_BOX | FFG_USER_GEOMETRY;
+#ifdef OSPRAY_ENABLE_VOLUMES
+    ff.volume = VKL_FEATURE_FLAGS_NONE;
+#endif
+    cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
 
     const sycl::nd_range<1> dispatchRange =
         device.computeDispatchRange(numTasks, 16);
     cgh.parallel_for(dispatchRange,
         [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
           if (taskIndex.get_global_id(0) < numTasks) {
-            const FeatureFlags ff =
-                kh.get_specialization_constant<specFeatureFlags>();
+            ispc::FeatureFlagsHandler ffh(kh);
             ispc::DR_default_computeRegionVisibility(rendererSh,
                 fbSh,
                 cameraSh,
@@ -82,7 +86,7 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
                 perFrameData,
                 taskIDsPtr,
                 taskIndex.get_global_id(0),
-                ff);
+                ffh);
           }
         });
   });

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifdef OSPRAY_ENABLE_VOLUMES
 
+#include "common/FeatureFlagsEnum.h"
 #include "common/World.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #include "volume/transferFunction/TransferFunctionDispatch.ih"
@@ -15,8 +16,11 @@ float delta_tracking(const VolumetricModel *uniform vModel,
     const vec3f &w,
     const float &time,
     float &mu_t, // sampled extinction coefficint
-    vec3f &albedo) // sampled albedo (color)
+    vec3f &albedo,
+    const uniform FeatureFlagsHandler &ffh) // sampled albedo (color)
 {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+
 #ifdef OSPRAY_TARGET_SYCL
   // No alloca on GPU, need to be conservative for now and use the
   // VKL_MAX_INTERVAL_ITERATOR_SIZE
@@ -31,25 +35,42 @@ float delta_tracking(const VolumetricModel *uniform vModel,
       ));
 #endif
 
-  VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
 #if OPENVKL_VERSION_MAJOR == 1
-      vModel->vklIntervalContext,
+  // We know if we have OpenVKL version 1 we're not targetting SYCL
+  VKLIntervalIterator intervalIterator =
+      vklInitIntervalIteratorV(vModel->vklIntervalContext,
+          (varying vkl_vec3f *)&o,
+          (varying vkl_vec3f *)&w,
+          (varying vkl_range1f *)&rInterval,
+          &time,
+          intervalIteratorBuffer);
 #else
-      &vModel->vklIntervalContext,
-#endif
-      (varying vkl_vec3f *)&o,
-      (varying vkl_vec3f *)&w,
-      (varying vkl_range1f *)&rInterval,
+  VKLIntervalIterator intervalIterator =
+      vklInitIntervalIteratorV(&vModel->vklIntervalContext,
+          (varying vkl_vec3f *)&o,
+          (varying vkl_vec3f *)&w,
+          (varying vkl_range1f *)&rInterval,
 #ifdef OSPRAY_TARGET_SYCL
-      time,
+          time,
 #else
-      &time,
+          &time,
 #endif
-      intervalIteratorBuffer);
-
+          intervalIteratorBuffer
+#ifdef OSPRAY_TARGET_SYCL
+          ,
+          ff.volume
+#endif
+      );
+#endif
   float t = 0.f;
   VKLInterval interval;
-  while (vklIterateIntervalV(intervalIterator, &interval)) {
+  while (vklIterateIntervalV(intervalIterator,
+      &interval
+#ifdef OSPRAY_TARGET_SYCL
+      ,
+      ff.volume
+#endif
+      )) {
     t = interval.tRange.lower;
 
     const float maxOpacity =
@@ -70,13 +91,21 @@ float delta_tracking(const VolumetricModel *uniform vModel,
       xi = RandomSampler_getFloat(randomSampler);
       const vec3f p = o + t * w;
 
-      const float sample = vklComputeSampleV(
 #if OPENVKL_VERSION_MAJOR == 1
-          vModel->volume->vklSampler,
+      // We know if we have OpenVKL version 1 we're not targetting SYCL
+      const float sample = vklComputeSampleV(
+          vModel->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 #else
-          &vModel->volume->vklSampler,
+      const float sample = vklComputeSampleV(&vModel->volume->vklSampler,
+          (const varying vkl_vec3f *uniform) & p
+#ifdef OSPRAY_TARGET_SYCL
+          ,
+          0,
+          time,
+          ff.volume
 #endif
-          (const varying vkl_vec3f *uniform) & p);
+      );
+#endif
       if (isnan(sample))
         continue;
 
@@ -98,7 +127,8 @@ SYCL_EXTERNAL float volumeSampleFreePath(const World *uniform world,
     varying RandomSampler *uniform randomSampler,
     const VolumetricModel *varying *uniform sampledInstance,
     float &sampledExtinctionCoefficient,
-    vec3f &sampledAlbedo)
+    vec3f &sampledAlbedo,
+    const uniform FeatureFlagsHandler &ffh)
 {
 #ifdef OSPRAY_TARGET_SYCL
   // We only support a single volume interval on the GPU
@@ -177,7 +207,8 @@ SYCL_EXTERNAL float volumeSampleFreePath(const World *uniform world,
             transformedVolumeRay.dir,
             transformedVolumeRay.time,
             extinctionCoefficient,
-            albedo);
+            albedo,
+            ffh);
         if (dist < inf) {
           if (dist < min_dist) {
             min_dist = dist;
@@ -203,7 +234,8 @@ SYCL_EXTERNAL float volumeSampleFreePath(const World *uniform world,
 SYCL_EXTERNAL float volumeTransmittance(const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
-    varying RandomSampler *uniform randomSampler)
+    varying RandomSampler *uniform randomSampler,
+    const uniform FeatureFlagsHandler &ffh)
 {
 #ifdef OSPRAY_TARGET_SYCL
   // We only support a single volume interval on the GPU
@@ -276,7 +308,8 @@ SYCL_EXTERNAL float volumeTransmittance(const World *uniform world,
             transformedVolumeRay.dir,
             transformedVolumeRay.time,
             extinctionCoefficient,
-            albedo);
+            albedo,
+            ffh);
         transmittance = transmittance * ((dist < rInterval.upper) ? 0.f : 1.f);
       }
     }

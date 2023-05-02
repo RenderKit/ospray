@@ -22,7 +22,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     PathVertex &pathVertex,
     const Ray &ray,
     ScreenSample &,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 
 {
   if (!(pathContext.context->backgroundRefraction
@@ -56,8 +56,8 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
       const Light *uniform light = pathtracerData.lights[i];
       const vec2f s = LDSampler_getFloat2(
           pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);
-      Light_SampleRes ls = Light_dispatch_sample(
-          light, pathVertex.dg, s, pathState.time, ff.other);
+      Light_SampleRes ls =
+          Light_dispatch_sample(light, pathVertex.dg, s, pathState.time, ffh);
 
       // skip when zero contribution from light
       if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -77,7 +77,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
 
       // Trace ray in clipping geometries scene, fill array with ray intervals
       RayIntervals rayIntervals;
-      traceClippingRay(pathContext.world, shadowRay, rayIntervals);
+      traceClippingRay(pathContext.world, shadowRay, rayIntervals, ffh);
 
       const vec3f unshadedLightContrib = pathState.throughput * ls.weight
           * brdf; // * misHeuristic(pathState, ls.pdf, brdf);
@@ -89,7 +89,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
               shadowRay,
               rayIntervals,
               pathState.currentMedium,
-              ff);
+              ffh);
     }
     // order of args important to filter NaNs (in case unshaded.X is zero)
     const vec3f ratio = min(

@@ -19,7 +19,7 @@ struct Dielectric
 inline BSDF_EvalRes Dielectric_eval(const varying BSDF *uniform,
     const vec3f &,
     const vec3f &,
-    const uniform FeatureFlagsOther)
+    const uniform FeatureFlagsHandler &)
 {
   return make_BSDF_EvalRes_zero();
 }
@@ -28,7 +28,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &,
     float ss,
-    const uniform FeatureFlagsOther)
+    const uniform FeatureFlagsHandler &)
 {
   const varying Dielectric *uniform self =
       (const varying Dielectric *uniform)super;

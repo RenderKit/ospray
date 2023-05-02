@@ -172,7 +172,8 @@ SYCL_EXTERNAL Light_SampleRes CylinderLight_sample(
     const uniform Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float)
+    const float,
+    const uniform FeatureFlagsHandler &)
 {
   const CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);
@@ -184,7 +185,8 @@ SYCL_EXTERNAL Light_SampleRes CylinderLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float time)
+    const float time,
+    const uniform FeatureFlagsHandler &)
 {
   const CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);

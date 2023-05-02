@@ -12,8 +12,6 @@
 #include "render/debug/DebugRenderer_ispc.h"
 #else
 #include "DebugRenderer.ih"
-
-constexpr sycl::specialization_id<ospray::FeatureFlags> specFeatureFlags;
 #endif
 
 namespace ospray {
@@ -91,31 +89,33 @@ AsyncEvent DebugRenderer::renderTasks(FrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
-    ff.other |= featureFlags;
-    ff.other |= fb->getFeatureFlagsOther();
-    ff.other |= camera->getFeatureFlagsOther();
-    cgh.set_specialization_constant<specFeatureFlags>(ff);
+    ff |= featureFlags;
+    ff |= fb->getFeatureFlags();
+    ff |= camera->getFeatureFlags();
+    cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
+
+    cgh.set_specialization_constant<debugRendererType>(rendererSh->type);
 
     const sycl::nd_range<1> dispatchRange =
         device.computeDispatchRange(numTasks, 16);
     cgh.parallel_for(dispatchRange,
         [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
           if (taskIndex.get_global_id(0) < numTasks) {
-            const FeatureFlags ff =
-                kh.get_specialization_constant<specFeatureFlags>();
+            ispc::FeatureFlagsHandler ffh(kh);
             ispc::DebugRenderer_renderTask(&rendererSh->super,
                 fbSh,
                 cameraSh,
                 worldSh,
                 taskIDsPtr,
                 taskIndex.get_global_id(0),
-                ff);
+                ffh);
           }
         });
   });
 
   if (wait)
     event.wait_and_throw();
+
 #else
   (void)wait;
   ispc::DebugRenderer_renderTasks(

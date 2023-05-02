@@ -23,9 +23,7 @@ inline void createEmbreeScene(RTCScene &scene,
 {
   for (auto &&obj : objects) {
     rtcAttachGeometry(scene, obj->embreeGeometryHandle());
-    featureFlags.geometry |= obj->getFeatureFlagsGeometry();
-    featureFlags.volume |= obj->getFeatureFlagsVolume();
-    featureFlags.other |= obj->getFeatureFlagsOther();
+    featureFlags |= obj->getFeatureFlags();
   }
 
   rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
@@ -191,7 +189,7 @@ void Group::commit()
   if (numLights > 0) {
     // Gather light types
     for (auto &&light : *lights)
-      featureFlags.other |= light->getFeatureFlagsOther();
+      featureFlags |= light->getFeatureFlags();
 
     // Create empty scene for lights-only group,
     // it is needed to have rtcGeometry created in Instance object

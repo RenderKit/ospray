@@ -19,7 +19,7 @@ struct RobustThinDielectric
 inline BSDF_EvalRes RobustThinDielectric_eval(const varying BSDF *uniform,
     const vec3f &,
     const vec3f &,
-    const uniform FeatureFlagsOther)
+    const uniform FeatureFlagsHandler &)
 {
   return make_BSDF_EvalRes_zero();
 }
@@ -29,7 +29,7 @@ inline BSDF_SampleRes RobustThinDielectric_sample(
     const vec3f &wo,
     const vec2f &,
     float ss,
-    const uniform FeatureFlagsOther)
+    const uniform FeatureFlagsHandler &)
 {
   const varying RobustThinDielectric *uniform self =
       (const varying RobustThinDielectric *uniform)super;

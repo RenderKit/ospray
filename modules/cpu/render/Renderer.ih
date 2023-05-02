@@ -11,9 +11,9 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL vec4f Renderer_getBackground(const Renderer *uniform self,
     const vec2f &screenPos,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 SYCL_EXTERNAL float Renderer_getMaxDepth(const Renderer *uniform self,
     const vec2f &screenPos,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

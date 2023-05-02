@@ -32,20 +32,21 @@ inline void postIntersect(const PathContext &pathContext,
     const PathState &,
     PathVertex &pathVertex,
     Ray &ray,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   const PathTracer *uniform pt = pathContext.context;
-  if (pathVertex.type == SURFACE) {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  if (ff.geometry && pathVertex.type == SURFACE) {
     postIntersect(pathContext.world,
         &pt->super,
         pathVertex.dg,
         ray,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
             | DG_TANGENTS | DG_MOTIONBLUR,
-        ff);
+        ffh);
   }
 #ifdef OSPRAY_ENABLE_VOLUMES
-  if ((pathVertex.type == VOLUME) && (ff.volume & FFV_VOLUME)) {
+  if ((ff.other & FFO_VOLUME_IN_SCENE) && pathVertex.type == VOLUME) {
     pathVertex.dg.P = ray.org + ray.t * ray.dir;
     pathVertex.dg.renderer = &pt->super;
 
@@ -79,14 +80,16 @@ inline void postIntersect(const PathContext &pathContext,
 inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
     const PathState &pathState,
     PathVertex &pathVertex,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+
   const vec2f ss =
       LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim);
   const float s =
       LDSampler_getFloat(pathContext.ldSampler, pathState.sampleDim + 2);
   Scattering_SampleRes fs;
-  if (pathVertex.type == SURFACE) {
+  if (ff.geometry && pathVertex.type == SURFACE) {
 #ifdef OSPRAY_TARGET_SYCL
     {
       const BSDF *f = pathVertex.bsdf;
@@ -94,14 +97,14 @@ inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
     foreach_unique (f in pathVertex.bsdf) {
 #endif
       if (f != NULL) {
-        fs = BSDF_dispatch_sample(f, pathVertex.wo, ss, s, ff.other);
+        fs = BSDF_dispatch_sample(f, pathVertex.wo, ss, s, ffh);
         pathVertex.wi = fs.wi;
         pathVertex.pdf_w = fs.pdf;
       }
     }
   }
 #ifdef OSPRAY_ENABLE_VOLUMES
-  if ((pathVertex.type == VOLUME) && (ff.volume & FFV_VOLUME)) {
+  if ((ff.other & FFO_VOLUME_IN_SCENE) && pathVertex.type == VOLUME) {
 #ifdef OSPRAY_TARGET_SYCL
     {
       const VolumetricModel *v = pathVertex.volume;
@@ -123,7 +126,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     PathState &pathState,
     Ray &ray,
     ScreenSample &sample,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   PathVertex lastVertex;
   lastVertex.type = CAMERA;
@@ -139,6 +142,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
   uniform ShadingContext ctx;
   ShadingContext_Constructor(&ctx);
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
   if (pathContext.context->shadowCatcher) {
     const Hit hit = intersectPlane(
@@ -153,10 +157,12 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     // Trace ray in clipping geometries scene, fill array with ray intervals
     RayIntervals rayIntervals;
-    traceClippingRay(pathContext.world, ray, rayIntervals);
+    traceClippingRay(pathContext.world, ray, rayIntervals, ffh);
 
-    // Trace ray intervals in geometry
-    traceGeometryRayIntervals(pathContext.world, ray, rayIntervals, ff);
+    if (ff.geometry) {
+      // Trace ray intervals in geometry
+      traceGeometryRayIntervals(pathContext.world, ray, rayIntervals, ffh);
+    }
 
     PathVertex pathVertex;
     pathVertex.bsdf = NULL;
@@ -164,20 +170,20 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #ifdef OSPRAY_ENABLE_VOLUMES
     pathVertex.volume = NULL;
 #endif
-    if (noHit(ray)) {
+    if (noHit(ray) || !ff.geometry) {
       pathVertex.type = ENVIRONMENT;
     } else {
       pathVertex.type = SURFACE;
     }
 
-    if (shadowCatcher(pathContext, pathState, pathVertex, ray, sample, ff)) {
+    if (shadowCatcher(pathContext, pathState, pathVertex, ray, sample, ffh)) {
       pathVertex.type = ENVIRONMENT;
     }
 
     pathVertex.wo = neg(ray.dir);
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    if (ff.volume & FFV_VOLUME) {
+    if (ff.other & FFO_VOLUME_IN_SCENE) {
       float extinctionCoefficient;
       float freePath = volumeSampleFreePath(pathContext.world,
           ray,
@@ -185,7 +191,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
           pathContext.randomSampler,
           &pathVertex.volume,
           extinctionCoefficient,
-          pathVertex.albedo);
+          pathVertex.albedo,
+          ffh);
       if (freePath < inf) {
         pathVertex.type = VOLUME;
         pathState.throughput = pathState.throughput * pathVertex.albedo;
@@ -203,7 +210,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
                 ? pathState.specularTransmissionPath
                 : pathState.straightPath)) {
       vec4f bg = Renderer_getBackground(
-          &pathContext.context->super, *pathContext.pixel, ff.other);
+          &pathContext.context->super, *pathContext.pixel, ffh);
       pathState.contribution =
           pathState.contribution + pathState.throughput * make_vec3f(bg);
       sample.alpha = 1.0f - luminance(pathState.throughput);
@@ -214,7 +221,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
         && pathVertex.type != VOLUME) {
       pathState.contribution = pathState.contribution
           + evaluateVirtualLights(
-              pathContext, pathState, lastVertex, pathVertex, ray, ff);
+              pathContext, pathState, lastVertex, pathVertex, ray, ffh);
     }
     if (pathVertex.type == ENVIRONMENT) {
       break;
@@ -231,7 +238,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       break;
     }
 
-    postIntersect(pathContext, pathState, pathVertex, ray, ff);
+    postIntersect(pathContext, pathState, pathVertex, ray, ffh);
 
     if (!pathState.disableFWD && (pathVertex.type != VOLUME)
         && (ff.other & FFO_LIGHT_GEOMETRY)) {
@@ -250,13 +257,14 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     // terminate after evaluation of lights and before next shading to always
     // have both samples for MIS
     if (pathState.depth >= pathContext.context->super.maxDepth
-        || pathState.scatteringEvents >= pathContext.context->maxScatteringEvents) {
+        || pathState.scatteringEvents
+            >= pathContext.context->maxScatteringEvents) {
       break;
     }
 
     // shade surface
     ShadingContext_Constructor(&ctx);
-    if (pathVertex.type == SURFACE) {
+    if (ff.geometry && pathVertex.type == SURFACE) {
       Material *material = (Material *)pathVertex.dg.material;
 #ifdef OSPRAY_TARGET_SYCL
       {
@@ -266,7 +274,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #endif
         if (m != NULL) {
           pathVertex.bsdf = Material_dispatch_getBSDF(
-              m, &ctx, pathVertex.dg, ray, pathState.currentMedium, ff.other);
+              m, &ctx, pathVertex.dg, ray, pathState.currentMedium, ffh);
           if (pathVertex.bsdf != NULL) {
             pathVertex.albedo = pathVertex.bsdf->albedo;
           }
@@ -281,11 +289,11 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     // next event estimation
     if (!pathState.disableNEE && isSmooth(pathVertex)) {
       pathState.contribution = pathState.contribution
-          + nextEventEstimation(pathContext, pathState, pathVertex, ff);
+          + nextEventEstimation(pathContext, pathState, pathVertex, ffh);
     }
 
     Scattering_SampleRes fs =
-        sampleDirection(pathContext, pathState, pathVertex, ff);
+        sampleDirection(pathContext, pathState, pathVertex, ffh);
 
     if (pathState.auxFree && (fs.type & SCATTERING_SMOOTH)) {
       updateAuxilliaryData(pathState, pathVertex, sample);
@@ -318,7 +326,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
           * expf(pathState.currentMedium.attenuation * ray.t);
 
     vec3f ray_org = pathVertex.dg.P;
-    if (pathVertex.type == SURFACE) {
+    if (ff.geometry && pathVertex.type == SURFACE) {
       // update currentMedium if we hit a medium interface
       // TODO: support nested dielectrics
       if (fs.type & SCATTERING_TRANSMISSION) {
@@ -332,7 +340,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #endif
           if (m != NULL) {
             Material_dispatch_selectNextMedium(
-                m, pathVertex.dg, pathState.currentMedium, ff.other);
+                m, pathVertex.dg, pathState.currentMedium, ffh);
           }
         }
       }

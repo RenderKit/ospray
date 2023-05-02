@@ -49,11 +49,11 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   Geometry *uniform geom = self->geom;
 
-  Geometry_dispatch_postIntersect(geom, dg, ray, flags, ff.geometry);
+  Geometry_dispatch_postIntersect(geom, dg, ray, flags, ffh);
 
   dg.areaPDF = self->areaPDF;
   dg.objID =

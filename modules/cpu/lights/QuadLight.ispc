@@ -135,7 +135,8 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
 SYCL_EXTERNAL Light_SampleRes QuadLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
-    const float)
+    const float,
+    const uniform FeatureFlagsHandler &)
 {
   const QuadLight *uniform self = (QuadLight * uniform) super;
   assert(self);
@@ -147,7 +148,8 @@ SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
-    const float time)
+    const float time,
+    const uniform FeatureFlagsHandler &)
 {
   const QuadLight *uniform self = (QuadLight * uniform) super;
   assert(self);

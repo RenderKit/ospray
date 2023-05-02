@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlagsEnum.h"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
@@ -21,10 +22,12 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     varying LDSampler *uniform ldSampler,
     vec3f weight,
     uniform float quality,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
   vec3f alpha = make_vec3f(1.f);
   const float org_t_max = ray.t;
+
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
 #ifdef OSPRAY_ENABLE_VOLUMES
 #ifdef OSPRAY_TARGET_SYCL
@@ -40,23 +43,24 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
   allocVolumeIntervals(volumeIntervals);
 #endif
 #endif
+
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
-  traceClippingRay(world, ray, rayIntervals);
+  traceClippingRay(world, ray, rayIntervals, ffh);
 
   while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
     // WA for https://jira.devtools.intel.com/browse/XDEPS-4875
 #ifndef OSPRAY_TARGET_SYCL
-    traceGeometryRayIntervals(world, ray, rayIntervals, ff);
+    traceGeometryRayIntervals(world, ray, rayIntervals, ffh);
 #else
-    traceGeometryRay(world, ray, ff);
+    traceGeometryRay(world, ray, ffh);
 #endif
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    if (ff.volume & FFV_VOLUME) {
+    if (ff.other & FFO_VOLUME_IN_SCENE) {
       // Determine volume intervals by tracing ray in the volume scene
       Ray volumeRay = ray;
       traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -67,7 +71,8 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
             rayIntervals,
             volumeRay,
             ldSampler,
-            self->volumeSamplingRate * quality);
+            self->volumeSamplingRate * quality,
+            ffh);
 
         alpha = alpha * make_vec3f(1.f - volumeColor.w);
       }
@@ -79,9 +84,9 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     if (rayHadHit) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      postIntersect(world, &self->super, dg, ray, DG_COLOR | DG_TEXCOORD, ff);
+      postIntersect(world, &self->super, dg, ray, DG_COLOR | DG_TEXCOORD, ffh);
 
-      const SciVisBSDF bsdf = evalMaterial(dg, ff.other);
+      const SciVisBSDF bsdf = evalMaterial(dg, ffh);
       alpha = alpha * bsdf.transmission;
 
       // Prepare ray for next loop iteration,

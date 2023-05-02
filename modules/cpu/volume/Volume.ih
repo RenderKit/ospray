@@ -18,6 +18,7 @@
 #include "openvkl/device/openvkl.h"
 #endif
 #endif
+#include "common/FeatureFlags.ih"
 #include "rkcommon/math/box.ih"
 // c++ shared
 #include "VolumeShared.h"
@@ -37,15 +38,26 @@ inline float Volume_getSample(const Volume *uniform volume, const vec3f &P)
       &((const vkl_vec3f &)P));
 }
 
-inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
+inline vec3f Volume_getGradient(const Volume *uniform volume,
+    const vec3f &P,
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+
   vkl_vec3f result = vklComputeGradientV(
 #if OPENVKL_VERSION_MAJOR == 1
       volume->vklSampler,
 #else
       &volume->vklSampler,
 #endif
-      &((const vkl_vec3f &)P));
+      &((const vkl_vec3f &)P)
+#ifdef OSPRAY_TARGET_SYCL
+          ,
+      0,
+      0.f,
+      ff.volume
+#endif
+  );
 
   // TODO: remove it once VKL no longer returns sporadic NaNs
   if (isnan(result.x))

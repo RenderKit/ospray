@@ -33,7 +33,8 @@ SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample(
     const Light *uniform super,
     const DifferentialGeometry &,
     const vec2f &s,
-    const float)
+    const float,
+    const uniform FeatureFlagsHandler &)
 {
   const DirectionalLight *uniform self = (DirectionalLight * uniform) super;
   assert(self);
@@ -45,7 +46,8 @@ SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float time)
+    const float time,
+    const uniform FeatureFlagsHandler &)
 {
   const DirectionalLight *uniform self = (DirectionalLight * uniform) super;
   assert(self);

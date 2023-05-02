@@ -81,7 +81,7 @@ struct OSPRAY_SDK_INTERFACE Renderer
   std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
 
  protected:
-  FeatureFlagsOther featureFlags{FFO_NONE};
+  FeatureFlags featureFlags;
   api::ISPCDevice &device;
 
  private:

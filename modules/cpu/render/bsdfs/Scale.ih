@@ -18,11 +18,11 @@ struct Scale
 inline BSDF_EvalRes Scale_eval(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec3f &wi,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying Scale *uniform self = (const varying Scale *uniform)super;
 
-  BSDF_EvalRes res = BSDF_dispatch_eval_base(self->base, wo, wi, ffo);
+  BSDF_EvalRes res = BSDF_dispatch_eval_base(self->base, wo, wi, ffh);
   res.value = res.value * self->factor;
 
   return res;
@@ -32,11 +32,11 @@ inline BSDF_SampleRes Scale_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
     float ss,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying Scale *uniform self = (const varying Scale *uniform)super;
 
-  BSDF_SampleRes res = BSDF_dispatch_sample_base(self->base, wo, s, ss, ffo);
+  BSDF_SampleRes res = BSDF_dispatch_sample_base(self->base, wo, s, ss, ffh);
   res.weight = res.weight * self->factor;
 
   return res;

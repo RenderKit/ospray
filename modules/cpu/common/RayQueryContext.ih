@@ -4,7 +4,7 @@
 #pragma once
 
 // ospray
-#include "FeatureFlagsEnum.h"
+#include "FeatureFlags.ih"
 // embree
 #include "Embree.h"
 
@@ -25,15 +25,15 @@ struct RayQueryContextDefault
 {
   RTCRayQueryContext ectx;
   RayQueryContextType type;
-  FeatureFlagsGeometry ffg;
+  const FeatureFlagsHandler *uniform ffh;
 };
 
 inline void initRayQueryContextDefault(RayQueryContextDefault *uniform context,
-    const uniform FeatureFlagsGeometry ffg)
+    const uniform FeatureFlagsHandler &ffh)
 {
   rtcInitRayQueryContext(&context->ectx);
   context->type = RQCT_DEFAULT;
-  context->ffg = ffg;
+  context->ffh = &ffh;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

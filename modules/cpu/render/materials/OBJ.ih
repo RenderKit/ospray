@@ -20,12 +20,12 @@ SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL vec3f OBJ_getTransparency(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium,
-    const uniform FeatureFlagsOther ffo);
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

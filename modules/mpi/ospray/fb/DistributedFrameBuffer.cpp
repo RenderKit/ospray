@@ -370,7 +370,53 @@ const void *DFB::mapBuffer(OSPFrameBufferChannel channel)
         "#osp:mpi:dfb: tried to 'ospMap()' a frame "
         "buffer that doesn't have a host-side correspondence");
   }
-  return localFBonMaster->mapBuffer(channel);
+
+  const void *buf = nullptr;
+
+  // DFB writes directly to the localFB's host-side memory, so we don't want
+  // to call map/unmap here because it'll copy over the unused/empty GPU
+  // buffers for the channel.
+  switch (channel) {
+  case OSP_FB_COLOR: {
+    buf = localFBonMaster->colorBuffer ? localFBonMaster->colorBuffer->data()
+                                       : nullptr;
+  } break;
+  case OSP_FB_DEPTH: {
+    buf = localFBonMaster->depthBuffer ? localFBonMaster->depthBuffer->data()
+                                       : nullptr;
+  } break;
+  case OSP_FB_NORMAL: {
+    buf = localFBonMaster->normalBuffer ? localFBonMaster->normalBuffer->data()
+                                        : nullptr;
+  } break;
+  case OSP_FB_ALBEDO: {
+    buf = localFBonMaster->albedoBuffer ? localFBonMaster->albedoBuffer->data()
+                                        : nullptr;
+  } break;
+  case OSP_FB_ID_PRIMITIVE: {
+    buf = localFBonMaster->primitiveIDBuffer
+        ? localFBonMaster->primitiveIDBuffer->data()
+        : nullptr;
+  } break;
+  case OSP_FB_ID_OBJECT: {
+    buf = localFBonMaster->objectIDBuffer
+        ? localFBonMaster->objectIDBuffer->data()
+        : nullptr;
+  } break;
+  case OSP_FB_ID_INSTANCE: {
+    buf = localFBonMaster->instanceIDBuffer
+        ? localFBonMaster->instanceIDBuffer->data()
+        : nullptr;
+  } break;
+  default:
+    break;
+  }
+
+  if (buf) {
+    this->refInc();
+  }
+
+  return buf;
 }
 
 void DFB::unmap(const void *mappedMem)
@@ -381,7 +427,9 @@ void DFB::unmap(const void *mappedMem)
         "buffer that doesn't have a host-side color "
         "buffer");
   }
-  localFBonMaster->unmap(mappedMem);
+  if (mappedMem) {
+    this->refDec();
+  }
 }
 
 void DFB::waitUntilFinished()

@@ -31,9 +31,7 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
 
   Ref<Volume> getVolume() const;
 
-  FeatureFlagsGeometry getFeatureFlagsGeometry() const;
-  FeatureFlagsVolume getFeatureFlagsVolume() const;
-  FeatureFlagsOther getFeatureFlagsOther() const;
+  FeatureFlags getFeatureFlags() const;
 
  private:
   box3f volumeBounds;
@@ -44,19 +42,9 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
 
 OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);
 
-inline FeatureFlagsGeometry VolumetricModel::getFeatureFlagsGeometry() const
+inline FeatureFlags VolumetricModel::getFeatureFlags() const
 {
-  return FFG_NONE;
-}
-
-inline FeatureFlagsVolume VolumetricModel::getFeatureFlagsVolume() const
-{
-  return volume->getFeatureFlagsVolume();
-}
-
-inline FeatureFlagsOther VolumetricModel::getFeatureFlagsOther() const
-{
-  return FFO_NONE;
+  return volume->getFeatureFlags();
 }
 
 } // namespace ospray

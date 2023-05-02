@@ -1,6 +1,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlagsEnum.h"
 #include "fb/FrameBufferDispatch.ih"
 #include "fb/LocalFB.ih"
 #include "fb/RenderTaskDesc.ih"
@@ -14,8 +15,9 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL uniform RenderTaskDesc FrameBuffer_dispatch_getRenderTaskDesc(
     FrameBuffer *uniform fb,
     const uniform uint32 taskID,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((fb->type == FRAMEBUFFER_TYPE_LOCAL) && (ffo & FFO_FB_LOCAL)) {
     return LocalFB_getRenderTaskDesc(fb, taskID);
   } else if ((fb->type == FRAMEBUFFER_TYPE_SPARSE) && (ffo & FFO_FB_SPARSE)) {
@@ -36,8 +38,9 @@ SYCL_EXTERNAL void FrameBuffer_dispatch_accumulateSample(
     FrameBuffer *uniform fb,
     const varying ScreenSample &screenSample,
     uniform RenderTaskDesc &taskDesc,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((fb->type == FRAMEBUFFER_TYPE_LOCAL) && (ffo & FFO_FB_LOCAL)) {
     LocalFB_accumulateSample(fb, screenSample, taskDesc);
   } else if ((fb->type == FRAMEBUFFER_TYPE_SPARSE) && (ffo & FFO_FB_SPARSE)) {
@@ -51,8 +54,9 @@ SYCL_EXTERNAL void FrameBuffer_dispatch_accumulateSample(
 
 SYCL_EXTERNAL void FrameBuffer_dispatch_completeTask(FrameBuffer *uniform fb,
     const uniform RenderTaskDesc &taskDesc,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((fb->type == FRAMEBUFFER_TYPE_LOCAL) && (ffo & FFO_FB_LOCAL)) {
     LocalFB_completeTask(fb, taskDesc);
   } else if ((fb->type == FRAMEBUFFER_TYPE_SPARSE) && (ffo & FFO_FB_SPARSE)) {

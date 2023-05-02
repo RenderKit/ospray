@@ -62,7 +62,8 @@ inline Light_SampleRes Sample(const HDRILight *uniform self,
 SYCL_EXTERNAL Light_SampleRes HDRILight_sample(const Light *uniform super,
     const DifferentialGeometry &,
     const vec2f &s,
-    const float)
+    const float,
+    const uniform FeatureFlagsHandler &)
 {
   const HDRILight *uniform self = (HDRILight * uniform) super;
   assert(self);
@@ -74,7 +75,8 @@ SYCL_EXTERNAL Light_SampleRes HDRILight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &,
     const vec2f &s,
-    const float time)
+    const float time,
+    const uniform FeatureFlagsHandler &)
 {
   const HDRILight *uniform self = (HDRILight * uniform) super;
   assert(self);

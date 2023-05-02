@@ -10,7 +10,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 inline BSDF_EvalRes LambertTransmission_eval(const varying BSDF *uniform self,
     const vec3f &,
     const vec3f &wi,
-    const uniform FeatureFlagsOther)
+    const uniform FeatureFlagsHandler &)
 {
   BSDF_EvalRes res;
   float cosThetaI = max(-dot(wi, getN(self)), 0.f);
@@ -24,7 +24,7 @@ inline BSDF_SampleRes LambertTransmission_sample(
     const vec3f &,
     const vec2f &s,
     float,
-    const uniform FeatureFlagsOther)
+    const uniform FeatureFlagsHandler &)
 {
   const vec3f localDir = cosineSampleHemisphere(s);
   BSDF_SampleRes res;

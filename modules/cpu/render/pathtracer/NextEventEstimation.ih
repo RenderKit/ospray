@@ -15,6 +15,6 @@ struct PathVertex;
 SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
     PathVertex &pathVertex,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

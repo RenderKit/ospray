@@ -29,7 +29,7 @@ namespace ospray {
 Volume::Volume(api::ISPCDevice &device, const std::string &type)
     : AddStructShared(device.getIspcrtContext(), device),
       vklType(type),
-      featureFlags(FFV_VOLUME)
+      vklFeatureFlags(VKL_FEATURE_FLAGS_NONE)
 {
   // check VKL has default config for VDB
   if (type == "vdb"
@@ -92,6 +92,10 @@ void Volume::commit()
 
   vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
+
+#if OPENVKL_VERSION_MAJOR > 1
+  vklFeatureFlags = vklGetFeatureFlags(vklSampler);
+#endif
 
   // Setup Embree user-defined geometry
   rtcSetGeometryUserData(embreeGeometry, getSh());

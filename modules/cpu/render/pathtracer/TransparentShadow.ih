@@ -20,5 +20,6 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     Ray &shadowRay,
     RayIntervals &rayIntervals,
     Medium medium,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ffh);
+
 OSPRAY_END_ISPC_NAMESPACE

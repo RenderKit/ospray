@@ -17,7 +17,8 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL Light_SampleRes AmbientLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float)
+    const float,
+    const uniform FeatureFlagsHandler &)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight * uniform) super;
   Light_SampleRes res;

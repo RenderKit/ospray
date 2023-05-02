@@ -4,6 +4,7 @@
 #include "Material.ih"
 #include "MaterialDispatch.ih"
 
+#include "common/FeatureFlagsEnum.h"
 #include "render/materials/Alloy.ih"
 #include "render/materials/CarPaint.ih"
 #include "render/materials/Glass.ih"
@@ -25,8 +26,9 @@ SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->type == MATERIAL_TYPE_ALLOY) && (ffo & FFO_MATERIAL_ALLOY)) {
     return Alloy_getBSDF(self, ctx, dg, ray, currentMedium);
   } else if ((self->type == MATERIAL_TYPE_CARPAINT)
@@ -47,7 +49,7 @@ SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
   } else if ((self->type == MATERIAL_TYPE_MIX) && (ffo & FFO_MATERIAL_MIX)) {
     return Mix_getBSDF(self, ctx, dg, ray, currentMedium);
   } else if ((self->type == MATERIAL_TYPE_OBJ) && (ffo & FFO_MATERIAL_OBJ)) {
-    return OBJ_getBSDF(self, ctx, dg, ray, currentMedium, ffo);
+    return OBJ_getBSDF(self, ctx, dg, ray, currentMedium, ffh);
   } else if ((self->type == MATERIAL_TYPE_PLASTIC)
       && (ffo & FFO_MATERIAL_PLASTIC)) {
     return Plastic_getBSDF(self, ctx, dg, ray, currentMedium);
@@ -73,8 +75,9 @@ SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->type == MATERIAL_TYPE_GLASS) && (ffo & FFO_MATERIAL_GLASS)) {
     return Glass_getTransparency(self, dg, ray, currentMedium);
   } else if ((self->type == MATERIAL_TYPE_LUMINOUS)
@@ -83,7 +86,7 @@ SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
   } else if ((self->type == MATERIAL_TYPE_MIX) && (ffo & FFO_MATERIAL_MIX)) {
     return Mix_getTransparency(self, dg, ray, currentMedium);
   } else if ((self->type == MATERIAL_TYPE_OBJ) && (ffo & FFO_MATERIAL_OBJ)) {
-    return OBJ_getTransparency(self, dg, ray, currentMedium, ffo);
+    return OBJ_getTransparency(self, dg, ray, currentMedium, ffh);
   } else if ((self->type == MATERIAL_TYPE_PRINCIPLED)
       && (ffo & FFO_MATERIAL_PRINCIPLED)) {
     return Principled_getTransparency(self, dg, ray, currentMedium);
@@ -103,8 +106,9 @@ SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     Medium &currentMedium,
-    const uniform FeatureFlagsOther ffo)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->type == MATERIAL_TYPE_GLASS) && (ffo & FFO_MATERIAL_GLASS)) {
     Glass_selectNextMedium(self, dg, currentMedium);
   } else if ((self->type == MATERIAL_TYPE_PRINCIPLED)

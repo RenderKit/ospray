@@ -94,7 +94,6 @@ add_definitions_ispc(
   -DOSPRAY_BEGIN_ISPC_NAMESPACE=
   -DOSPRAY_END_ISPC_NAMESPACE=
   -DSYCL_EXTERNAL=
-  -D__noinline=
 )
 
 if (OSPRAY_ENABLE_VOLUMES)

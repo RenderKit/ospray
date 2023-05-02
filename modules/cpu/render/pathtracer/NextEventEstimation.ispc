@@ -24,8 +24,10 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
     PathVertex &pathVertex,
-    const uniform FeatureFlags &ff)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
 
@@ -51,8 +53,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
 #else
     foreach_unique (l in light) {
 #endif
-      ls =
-          Light_dispatch_sample(l, pathVertex.dg, s2, pathState.time, ff.other);
+      ls = Light_dispatch_sample(l, pathVertex.dg, s2, pathState.time, ffh);
     }
     // adjust the contibution with the probabiltiy of selecting the light source
     ls.weight = ls.weight / lightSelectionProb;
@@ -64,7 +65,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
 
     // evaluate BSDF
     Scattering_EvalRes fe;
-    if (pathVertex.type == SURFACE) {
+    if (ff.geometry && pathVertex.type == SURFACE) {
 #ifdef OSPRAY_TARGET_SYCL
       {
         const BSDF *f = pathVertex.bsdf;
@@ -72,11 +73,11 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
       foreach_unique (f in pathVertex.bsdf) {
 #endif
         if (f != NULL)
-          fe = BSDF_dispatch_eval(f, pathVertex.wo, ls.dir, ff.other);
+          fe = BSDF_dispatch_eval(f, pathVertex.wo, ls.dir, ffh);
       }
     } else {
 #ifdef OSPRAY_ENABLE_VOLUMES
-      if (ff.volume & FFV_VOLUME) {
+      if (ff.other & FFO_VOLUME_IN_SCENE) {
 #ifdef OSPRAY_TARGET_SYCL
         {
           const VolumetricModel *v = pathVertex.volume;
@@ -105,7 +106,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
 
     // Trace ray in clipping geometries scene, fill array with ray intervals
     RayIntervals rayIntervals;
-    traceClippingRay(pathContext.world, shadowRay, rayIntervals);
+    traceClippingRay(pathContext.world, shadowRay, rayIntervals, ffh);
 
     const vec3f throughput = pathState.throughput * fe.value;
 
@@ -125,14 +126,15 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         shadowRay,
         rayIntervals,
         pathState.currentMedium,
-        ff);
+        ffh);
     if (reduce_max(lightContrib) > 0) {
 #ifdef OSPRAY_ENABLE_VOLUMES
-      if (ff.volume & FFV_VOLUME) {
+      if (ff.other & FFO_VOLUME_IN_SCENE) {
         const float T = volumeTransmittance(pathContext.world,
             shadowRay,
             rayIntervals,
-            pathContext.randomSampler);
+            pathContext.randomSampler,
+            ffh);
         if (reduce_max(T) > 0) {
           // we have to use an independent transmittance estimate for MIS to get
           // a correct result
@@ -141,7 +143,8 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
               : volumeTransmittance(pathContext.world,
                   shadowRay,
                   rayIntervals,
-                  pathContext.randomSampler);
+                  pathContext.randomSampler,
+                  ffh);
           L = L
               + T * lightContrib
                   * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);

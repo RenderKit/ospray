@@ -170,7 +170,7 @@ void Mesh::commit()
     getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
 
   postCreationInfo(vertexData->size());
-  featureFlags = isTri ? FFG_TRIANGLE : FFG_QUAD;
+  featureFlagsGeometry = isTri ? FFG_TRIANGLE : FFG_QUAD;
 }
 
 size_t Mesh::numPrimitives() const

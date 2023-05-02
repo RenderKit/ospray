@@ -409,7 +409,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
   }
 
 #ifdef ENABLE_PROFILING
-  start = ProfilingPoint();
+  auto start = ProfilingPoint();
 #endif
 
   const int sparseFbChannelFlags =
@@ -517,11 +517,19 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
   const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
 
+#ifdef ENABLE_PROFILING
+  auto startRenderTasks = ProfilingPoint();
+#endif
+
   renderer->renderTasks(ownedTilesFb,
       camera,
       world,
       perFrameData,
       ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold));
+
+#ifdef ENABLE_PROFILING
+  auto endRenderTasks = ProfilingPoint();
+#endif
 
   // TODO: Now the tile setting happens as a bulk-sync operation after
   // rendering, because we still need to send them through the compositing
@@ -535,6 +543,18 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     }
     dfb->setTile(tiles[i]);
   });
+#ifdef ENABLE_PROFILING
+  auto endWriteTiles = ProfilingPoint();
+
+  std::cout << "Render tasks took: "
+            << elapsedTimeMs(startRenderTasks, endRenderTasks)
+            << "ms, CPU %: " << cpuUtilization(startRenderTasks, endRenderTasks)
+            << "%\n"
+            << "Parallel write tiles took: "
+            << elapsedTimeMs(endRenderTasks, endWriteTiles)
+            << "ms, CPU %: " << cpuUtilization(endRenderTasks, endWriteTiles)
+            << "%\n";
+#endif
 }
 
 } // namespace mpi

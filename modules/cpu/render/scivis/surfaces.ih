@@ -4,6 +4,7 @@
 #pragma once
 
 #include "SciVis.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "render/Material.ih"
 #include "render/materials/OBJ.ih"
 // c++ shared
@@ -27,12 +28,12 @@ SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     const varying vec3f &inDir,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ff);
 
 SYCL_EXTERNAL vec3f evaluateLights(const World *uniform world,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const uniform FeatureFlags &ff);
+    const uniform FeatureFlagsHandler &ffh);
 
 struct SciVisBSDF
 {
@@ -45,8 +46,10 @@ struct SciVisBSDF
 };
 
 inline SciVisBSDF evalMaterial(
-    const DifferentialGeometry &dg, const uniform FeatureFlagsOther ffo)
+    const DifferentialGeometry &dg, const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+
   const OBJ *mat = (const OBJ *)dg.material;
 
   // defaults
@@ -64,7 +67,7 @@ inline SciVisBSDF evalMaterial(
   foreach_unique (m in mat) {
 #endif
     if (m != NULL && m->super.type == MATERIAL_TYPE_OBJ) {
-      float d = m->d * get1f_ff(m->dMap, dg, 1.f, ffo) * dg.color.w;
+      float d = m->d * get1f_ff(m->dMap, dg, 1.f, ffh) * dg.color.w;
       res.diffuse = res.diffuse * m->Kd;
       if (valid(m->KdMap) && (ffo & FFO_TEXTURE_IN_MATERIAL)) {
         vec4f Kd_from_map = get4f(m->KdMap, dg);
@@ -72,8 +75,8 @@ inline SciVisBSDF evalMaterial(
         d *= Kd_from_map.w;
       }
       res.diffuse = res.diffuse * d;
-      res.specular = d * m->Ks * get3f_ff(m->KsMap, dg, make_vec3f(1.f), ffo);
-      res.shininess = m->Ns * get1f_ff(m->NsMap, dg, 1.f, ffo);
+      res.specular = d * m->Ks * get3f_ff(m->KsMap, dg, make_vec3f(1.f), ffh);
+      res.shininess = m->Ns * get1f_ff(m->NsMap, dg, 1.f, ffh);
       res.transmission = m->Tf * d + make_vec3f(1.f - d);
       res.opacity = d;
     }

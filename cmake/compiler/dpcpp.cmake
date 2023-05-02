@@ -87,7 +87,7 @@ elseif (CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 
 # Large GRF mode
-option(OSPRAY_SYCL_LARGEGRF "Enable SYCL Large GRF Support" OFF)
+option(OSPRAY_SYCL_LARGEGRF "Enable SYCL Large GRF Support" ON)
 if (OSPRAY_SYCL_LARGEGRF)
   list(APPEND OSPRAY_OCL_OPTIONS "-internal_options -cl-intel-256-GRF-per-thread")
 endif()

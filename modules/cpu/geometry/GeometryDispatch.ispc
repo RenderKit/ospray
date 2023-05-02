@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/DifferentialGeometry.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "common/Ray.ih"
 #include "common/RayQueryContext.ih"
 #include "geometry/Boxes.ih"
@@ -23,8 +24,12 @@ SYCL_EXTERNAL void Geometry_dispatch_postIntersect(const Geometry *uniform self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags,
-    const uniform FeatureFlagsGeometry ffg)
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  // See https://github.com/ispc/ispc/issues/2533
+  const uniform FeatureFlagsGeometry ffg = ff.geometry;
+
   if ((self->type == GEOMETRY_TYPE_QUAD_MESH) && (ffg & FFG_QUAD)) {
     QuadMesh_postIntersect(self, dg, ray, flags);
   } else if ((self->type == GEOMETRY_TYPE_TRIANGLE_MESH)
@@ -41,7 +46,7 @@ SYCL_EXTERNAL void Geometry_dispatch_postIntersect(const Geometry *uniform self,
 #ifdef OSPRAY_ENABLE_VOLUMES
   } else if ((self->type == GEOMETRY_TYPE_ISOSURFACES)
       && (ffg & FFG_ISOSURFACE)) {
-    Isosurfaces_postIntersect(self, dg, ray, flags);
+    Isosurfaces_postIntersect(self, dg, ray, flags, ffh);
 #endif
 #ifndef OSPRAY_TARGET_SYCL
   } else if ((self->type == GEOMETRY_TYPE_SUBDIVISION)
@@ -62,27 +67,31 @@ SYCL_EXTERNAL SampleAreaRes Geometry_dispatch_sampleArea(
     const uniform affine3f &xfm,
     const uniform affine3f &rcp_xfm,
     const vec2f &s,
-    const float time)
+    const float time,
+    const uniform FeatureFlagsHandler &ffh)
 
 {
-  switch (self->type) {
-  case GEOMETRY_TYPE_QUAD_MESH:
-  case GEOMETRY_TYPE_TRIANGLE_MESH:
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  // See https://github.com/ispc/ispc/issues/2533
+  const uniform FeatureFlagsGeometry ffg = ff.geometry;
+
+  if (((self->type == GEOMETRY_TYPE_QUAD_MESH) && (ffg & FFG_QUAD))
+      || ((self->type == GEOMETRY_TYPE_TRIANGLE_MESH)
+          && (ffg & FFG_TRIANGLE))) {
     return Mesh_sampleArea(self, primID, xfm, rcp_xfm, s, time);
-  case GEOMETRY_TYPE_SPHERES:
+  } else if ((self->type == GEOMETRY_TYPE_SPHERES) && (ffg & FFG_SPHERE)) {
     return Spheres_sampleArea(self, primID, xfm, rcp_xfm, s, time);
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     return self->sampleArea(self, primID, xfm, rcp_xfm, s, time);
 #endif
-    break;
-  }
 #ifdef OSPRAY_TARGET_SYCL
-  SampleAreaRes res;
-  res.pos = make_vec3f(0.f);
-  res.normal = make_vec3f(0.f);
-  return res;
+    SampleAreaRes res;
+    res.pos = make_vec3f(0.f);
+    res.normal = make_vec3f(0.f);
+    return res;
 #endif
+  }
 }
 
 RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
@@ -90,7 +99,12 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
 {
   RayQueryContextDefault *uniform ctx =
       (RayQueryContextDefault * uniform) args->context;
-  const uniform FeatureFlagsGeometry ffg = ctx->ffg;
+
+  const uniform FeatureFlagsHandler &ffh = *ctx->ffh;
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  // See https://github.com/ispc/ispc/issues/2533
+  const uniform FeatureFlagsGeometry ffg = ff.geometry;
+
   Geometry *uniform geom = (Geometry * uniform) args->geometryUserPtr;
   if ((geom->type == GEOMETRY_TYPE_BOXES) && (ffg & FFG_BOX)) {
     Boxes_intersect_kernel(args, false);
@@ -99,7 +113,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
 #ifdef OSPRAY_ENABLE_VOLUMES
   } else if ((geom->type == GEOMETRY_TYPE_ISOSURFACES)
       && (ffg & FFG_ISOSURFACE)) {
-    Isosurfaces_intersect_kernel(args, false);
+    Isosurfaces_intersect_kernel(args, false, ffh);
 #endif
   } else {
 #ifndef OSPRAY_TARGET_SYCL
@@ -113,7 +127,11 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
 {
   RayQueryContextDefault *uniform ctx =
       (RayQueryContextDefault * uniform) args->context;
-  const uniform FeatureFlagsGeometry ffg = ctx->ffg;
+  const uniform FeatureFlagsHandler &ffh = *ctx->ffh;
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  // See https://github.com/ispc/ispc/issues/2533
+  const uniform FeatureFlagsGeometry ffg = ff.geometry;
+
   Geometry *uniform geom = (Geometry * uniform) args->geometryUserPtr;
   if ((geom->type == GEOMETRY_TYPE_BOXES) && (ffg & FFG_BOX)) {
     Boxes_intersect_kernel(
@@ -125,7 +143,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
   } else if ((geom->type == GEOMETRY_TYPE_ISOSURFACES)
       && (ffg & FFG_ISOSURFACE)) {
     Isosurfaces_intersect_kernel(
-        (RTCIntersectFunctionNArguments * uniform) args, true);
+        (RTCIntersectFunctionNArguments * uniform) args, true, ffh);
 #endif
   } else {
 #ifndef OSPRAY_TARGET_SYCL

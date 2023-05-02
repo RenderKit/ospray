@@ -171,7 +171,7 @@ void Curves::commit()
   }
 
   postCreationInfo(vertexData->size());
-  featureFlags = curveFeatureFlags[embreeCurveType];
+  featureFlagsGeometry = curveFeatureFlags[embreeCurveType];
 }
 
 size_t Curves::numPrimitives() const
