@@ -361,11 +361,28 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
 
   // Do not pass all tiles at once, this way if other ranks want to steal
   // work, they can
-  const int maxTilesPerRound = 20;
-  const int numRounds = std::max(NTILES / maxTilesPerRound, 1);
-  const int tilesPerRound = NTILES / numRounds;
-  const int remainTiles = NTILES % numRounds;
-  const int minActiveTiles = (ALLTILES / workerSize()) * 0.25f;
+  // We target 1/3rd of tiles per-round by default to balance between executing
+  // work locally and allowing work to be stolen for load balancing.
+  // This can be overriden by the environment variable
+  // OSPRAY_MPI_LB_TILES_PER_ROUND
+  const float percentTilesPerRound =
+      utility::getEnvVar<float>("OSPRAY_MPI_LB_TILES_PER_ROUND")
+          .value_or(0.33f);
+  const int maxTilesPerRound = std::ceil(NTILES * percentTilesPerRound);
+  const float minActiveTilesPercent =
+      utility::getEnvVar<float>("OSPRAY_MPI_LB_MIN_ACTIVE_TILES")
+          .value_or(0.25f);
+  const int minActiveTiles = (ALLTILES / workerSize()) * minActiveTilesPercent;
+
+  // Avoid division by 0 for the case that this rank doesn't have any tiles
+  int numRounds = 0;
+  int tilesPerRound = 0;
+  int remainTiles = 0;
+  if (NTILES > 0) {
+    numRounds = std::max(NTILES / maxTilesPerRound, 1);
+    tilesPerRound = NTILES / numRounds;
+    remainTiles = NTILES % numRounds;
+  }
   int terminatedTiles = 0;
 
   auto dynamicLB = make_unique<DynamicLoadBalancer>(handle, ALLTILES);
