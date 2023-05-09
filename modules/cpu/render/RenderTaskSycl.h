@@ -11,7 +11,7 @@ namespace ospray {
 struct RenderTask : public Future
 {
   RenderTask(sycl::event);
-  ~RenderTask() override = default;
+  ~RenderTask() override;
 
   bool isFinished(OSPSyncEvent event = OSP_TASK_FINISHED) override;
   void wait(OSPSyncEvent event = OSP_TASK_FINISHED) override;
@@ -26,6 +26,12 @@ struct RenderTask : public Future
 // Inlined definitions //////////////////////////////////////////////////////
 
 inline RenderTask::RenderTask(sycl::event syclEvent) : syclEvent(syclEvent) {}
+
+inline RenderTask::~RenderTask()
+{
+  // Mimic non-sycl RenderTask behavior which waits on destruction
+  wait();
+}
 
 inline bool RenderTask::isFinished(OSPSyncEvent event)
 {
