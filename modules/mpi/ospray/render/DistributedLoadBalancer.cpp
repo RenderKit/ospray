@@ -36,7 +36,7 @@ Renderer::Event DistributedLoadBalancer::renderFrame(FrameBuffer *_fb,
     Renderer *_renderer,
     Camera *camera,
     World *_world,
-    bool wait)
+    bool /*wait*/)
 {
   auto *dfb = dynamic_cast<DistributedFrameBuffer *>(_fb);
 

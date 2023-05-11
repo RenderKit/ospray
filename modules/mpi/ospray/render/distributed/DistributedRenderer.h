@@ -35,12 +35,12 @@ struct DistributedRenderer : public AddStructShared<Renderer, ispc::Renderer>
       const utility::ArrayView<uint32_t> &taskIDs) const;
 
   // Not used by distributed renderers
-  Event renderTasks(FrameBuffer *fb,
-      Camera *camera,
-      World *world,
-      void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs,
-      bool wait) const override
+  Event renderTasks(FrameBuffer *,
+      Camera *,
+      World *,
+      void * /*perFrameData*/,
+      const utility::ArrayView<uint32_t> & /*taskIDs*/,
+      bool /*wait*/) const override
   {
     return Event();
   }
