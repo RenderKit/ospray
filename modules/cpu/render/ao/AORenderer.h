@@ -14,7 +14,7 @@ struct AORenderer : public AddStructShared<Renderer, ispc::AORenderer>
   std::string toString() const override;
   void commit() override;
 
-  virtual Event renderTasks(FrameBuffer *fb,
+  virtual AsyncEvent renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,

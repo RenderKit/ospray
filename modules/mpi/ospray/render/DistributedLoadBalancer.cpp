@@ -32,7 +32,8 @@ DistributedLoadBalancer::~DistributedLoadBalancer()
   handle.free();
 }
 
-Renderer::Event DistributedLoadBalancer::renderFrame(FrameBuffer *_fb,
+std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
+    FrameBuffer *_fb,
     Renderer *_renderer,
     Camera *camera,
     World *_world,
@@ -50,7 +51,7 @@ Renderer::Event DistributedLoadBalancer::renderFrame(FrameBuffer *_fb,
   if (!renderer) {
     if (world->allRegions.size() == 1) {
       renderFrameReplicated(dfb, _renderer, camera, world);
-      return Renderer::Event();
+      return std::make_pair(AsyncEvent(), AsyncEvent());
     } else {
       throw std::runtime_error(
           "Distributed rendering requires a distributed renderer!");
@@ -270,7 +271,7 @@ Renderer::Event DistributedLoadBalancer::renderFrame(FrameBuffer *_fb,
   renderer->endFrame(dfb, perFrameData);
 
   dfb->endFrame(renderer->errorThreshold, camera);
-  return Renderer::Event();
+  return std::make_pair(AsyncEvent(), AsyncEvent());
 }
 
 void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,

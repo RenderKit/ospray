@@ -17,7 +17,8 @@
 
 namespace ospray {
 
-Renderer::Event LocalTiledLoadBalancer::renderFrame(FrameBuffer *fb,
+std::pair<AsyncEvent, AsyncEvent> LocalTiledLoadBalancer::renderFrame(
+    FrameBuffer *fb,
     Renderer *renderer,
     Camera *camera,
     World *world,
@@ -26,24 +27,29 @@ Renderer::Event LocalTiledLoadBalancer::renderFrame(FrameBuffer *fb,
   fb->beginFrame();
   void *perFrameData = renderer->beginFrame(fb, world);
 
-  Renderer::Event event = renderer->renderTasks(fb,
+  AsyncEvent rendererEvent = renderer->renderTasks(fb,
       camera,
       world,
       perFrameData,
       fb->getRenderTaskIDs(renderer->errorThreshold),
       wait);
 
-  // No renderer->endFrame() and fb->endFrame() on GPU.
-  // Frame post-processing need to be done as a separate
-  // kernel submitted to the main compute queue.
+  // Can't call renderer->endFrame() because we might still render
   if (wait) {
     renderer->endFrame(fb, perFrameData);
     fb->setCompletedEvent(OSP_WORLD_RENDERED);
+  }
 
+  // But we can queue FB post-processing kernel
+  AsyncEvent fbEvent = fb->postProcess(camera, wait);
+
+  // Can't call fb->endFrame() because we might still post-process
+  if (wait) {
     fb->endFrame(renderer->errorThreshold, camera);
     fb->setCompletedEvent(OSP_FRAME_FINISHED);
   }
-  return event;
+
+  return std::make_pair(rendererEvent, fbEvent);
 }
 
 std::string LocalTiledLoadBalancer::toString() const

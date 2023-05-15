@@ -17,9 +17,14 @@ template <typename T>
 struct BufferDevice : public ispcrt::Array<T, ispcrt::AllocType::Device>
 {
   using ispcrt::Array<T, ispcrt::AllocType::Device>::devicePtr;
-  BufferDevice(ispcrt::Device &device);
+  BufferDevice(ispcrt::Device &device, T *hostPtr = nullptr);
   BufferDevice(ispcrt::Device &device, size_t size);
 };
+
+template <typename T>
+BufferDevice<T>::BufferDevice(ispcrt::Device &device, T *hostPtr)
+    : ispcrt::Array<T, ispcrt::AllocType::Device>(device, hostPtr)
+{}
 
 template <typename T>
 BufferDevice<T>::BufferDevice(ispcrt::Device &device, size_t size)

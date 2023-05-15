@@ -5,6 +5,8 @@ Version History
 
 -   New parameter `maxScatteringEvents` for the `pathtracer` which
     limits the number of non-specular (i.e., diffuse and glossy) bounces
+-   Support denoising on the GPU with OIDN 2.0, which is the new minimum
+    version
 
 
 ### Changes in v2.11.0:

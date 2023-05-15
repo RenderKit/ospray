@@ -286,8 +286,10 @@ void ISPCDevice::commit()
         reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
         true);
 
-    syclQueue = sycl::queue(
-        syclContext, syclDevice, {sycl::property::queue::enable_profiling()});
+    syclQueue = sycl::queue(syclContext,
+        syclDevice,
+        {sycl::property::queue::enable_profiling(),
+            sycl::property::queue::in_order()});
 #endif
   }
 
@@ -566,7 +568,7 @@ OSPFrameBuffer ISPCDevice::frameBufferCreate(
 
 OSPImageOperation ISPCDevice::newImageOp(const char *type)
 {
-  ospray::ImageOp *ret = ImageOp::createInstance(type);
+  ospray::ImageOp *ret = ImageOp::createImageOp(type, *this);
   return (OSPImageOperation)ret;
 }
 
@@ -636,8 +638,9 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
     return timer.seconds();
   });
 #else
-  return (OSPFuture) new RenderTask(
-      loadBalancer->renderFrame(fb, renderer, camera, world, false));
+  std::pair<AsyncEvent, AsyncEvent> events =
+      loadBalancer->renderFrame(fb, renderer, camera, world, false);
+  return (OSPFuture) new RenderTask(events.first, events.second);
 #endif
 }
 
@@ -683,6 +686,18 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
   World *world = (World *)_world;
   return renderer->pick(fb, camera, world, screenPos);
 }
+
+#ifdef OSPRAY_TARGET_SYCL
+sycl::nd_range<1> ISPCDevice::computeDispatchRange(
+    const size_t globalSize, const size_t workgroupSize) const
+{
+  // roundedRange global size must be at least workgroupSize
+  const size_t roundedRange =
+      std::max(size_t(1), (globalSize + workgroupSize - 1) / workgroupSize)
+      * workgroupSize;
+  return sycl::nd_range<1>(roundedRange, workgroupSize);
+}
+#endif
 
 } // namespace api
 } // namespace ospray

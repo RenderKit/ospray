@@ -2,24 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DenoiseFrameOp.h"
-#include "fb/FrameBuffer.h"
+#include "api/Device.h"
+#include "fb/FrameBufferView.h"
 
 namespace ospray {
 
-static bool osprayDenoiseMonitorCallback(void *userPtr, double)
+struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
+    : public LiveFrameOpInterface
 {
-  auto *fb = (FrameBuffer *)userPtr;
-  return !fb->frameCancelled();
-}
-
-struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
-{
-  LiveDenoiseFrameOp(FrameBufferView &_fbView, OIDNDevice device)
-      : LiveFrameOp(_fbView),
-        device(device),
-        filter(oidnNewFilter(device, "RT"))
+  LiveDenoiseFrameOp(FrameBufferView &fbView, OIDNDevice oidnDevice)
+      : oidnDevice(oidnDevice),
+        filter(oidnNewFilter(oidnDevice, "RT")),
+        fbView(fbView)
   {
-    oidnRetainDevice(device);
+    oidnRetainDevice(oidnDevice);
 
     float *fbColor = static_cast<float *>(fbView.colorBuffer);
     oidnSetSharedFilterImage(filter,
@@ -64,11 +60,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
         sizeof(float) * 4,
         0);
 
-    oidnSetFilter1b(filter, "hdr", false);
-
-    oidnSetFilterProgressMonitorFunction(filter,
-        (OIDNProgressMonitorFunction)osprayDenoiseMonitorCallback,
-        _fbView.originalFB);
+    oidnSetFilterBool(filter, "hdr", false);
 
     oidnCommitFilter(filter);
   }
@@ -76,16 +68,18 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
   ~LiveDenoiseFrameOp() override
   {
     oidnReleaseFilter(filter);
-    oidnReleaseDevice(device);
+    oidnReleaseDevice(oidnDevice);
   }
 
-  void process(const Camera *) override
+  void process(void *waitEvent, const Camera *) override
   {
-    if (fbView.originalFB->getSh()->numPixelsRendered)
+    if (waitEvent)
+      oidnExecuteSYCLFilterAsync(filter, nullptr, 0, (sycl::event *)waitEvent);
+    else
       oidnExecuteFilter(filter);
 
     const char *errorMessage = nullptr;
-    auto error = oidnGetDeviceError(device, &errorMessage);
+    auto error = oidnGetDeviceError(oidnDevice, &errorMessage);
 
     if (error != OIDN_ERROR_NONE && error != OIDN_ERROR_CANCELLED) {
       throw std::runtime_error(
@@ -93,30 +87,40 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
     }
   }
 
-  OIDNDevice device;
+  OIDNDevice oidnDevice;
   OIDNFilter filter;
+
+  FrameBufferView fbView;
 };
 
-DenoiseFrameOp::DenoiseFrameOp()
-    : device(oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT))
+DenoiseFrameOp::DenoiseFrameOp(api::Device &device)
 {
-  oidnSetDevice1b(device, "setAffinity", false);
-  oidnCommitDevice(device);
+  // Get appropriate SYCL command queue for post-processing from device
+  sycl::queue *syclQueuePtr =
+      (sycl::queue *)device.getPostProcessingCommandQueuePtr();
+  if (syclQueuePtr)
+    oidnDevice = oidnNewSYCLDevice(syclQueuePtr, 1);
+  else
+    oidnDevice = oidnNewDevice(OIDN_DEVICE_TYPE_CPU);
+
+  oidnSetDeviceBool(oidnDevice, "setAffinity", false);
+  oidnCommitDevice(oidnDevice);
 }
 
 DenoiseFrameOp::~DenoiseFrameOp()
 {
-  oidnReleaseDevice(device);
+  oidnReleaseDevice(oidnDevice);
 }
 
-std::unique_ptr<LiveImageOp> DenoiseFrameOp::attach(FrameBufferView &fbView)
+std::unique_ptr<LiveFrameOpInterface> DenoiseFrameOp::attach(
+    FrameBufferView &fbView)
 {
   if (fbView.colorBufferFormat != OSP_FB_RGBA32F)
     throw std::runtime_error(
         "DenoiseFrameOp must be used with an RGBA32F "
         "color format framebuffer!");
 
-  return rkcommon::make_unique<LiveDenoiseFrameOp>(fbView, device);
+  return rkcommon::make_unique<LiveDenoiseFrameOp>(fbView, oidnDevice);
 }
 
 std::string DenoiseFrameOp::toString() const

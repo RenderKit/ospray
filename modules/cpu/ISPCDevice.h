@@ -31,6 +31,14 @@ namespace ospray {
 
 struct LocalTiledLoadBalancer;
 
+#ifdef OSPRAY_TARGET_SYCL
+using AsyncEvent = sycl::event;
+#else
+struct AsyncEvent
+{
+};
+#endif
+
 namespace api {
 
 struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
@@ -169,11 +177,29 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     return ispcrtQueue;
   }
 
+  void *getPostProcessingCommandQueuePtr() override
+  {
+#ifdef OSPRAY_TARGET_SYCL
+    return &syclQueue;
+#else
+    return nullptr;
+#endif
+  }
+
 #ifdef OSPRAY_TARGET_SYCL
   sycl::queue &getSyclQueue()
   {
     return syclQueue;
   }
+
+  /* Compute the rounded dispatch global size for the given work group size.
+   * SYCL requires that globalSize % workgroupSize == 0, ths function will
+   * round up globalSize and return nd_range(roundedSize, workgroupSize).
+   * The kernel being launched must discard tasks that are out of bounds
+   * bounds due to this rounding
+   */
+  sycl::nd_range<1> computeDispatchRange(
+      const size_t globalSize, const size_t workgroupSize) const;
 #endif
 
  private:

@@ -29,7 +29,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=bcca9b98 -DRKCOMMON_VERSION=devel
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=bcca9b98 -DRKCOMMON_VERSION=devel
       artifact-out: build-ubuntu2204
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -47,7 +47,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
       artifact-out: build-ubuntu2204-devel
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 

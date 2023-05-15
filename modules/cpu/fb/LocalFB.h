@@ -8,8 +8,8 @@
 #include "fb/FrameBuffer.h"
 #include "fb/TaskError.h"
 // rkcommon
-#include <rkcommon/utility/ArrayView.h>
 #include "rkcommon/containers/AlignedVector.h"
+#include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "LocalFBShared.h"
 #include "TileShared.h"
@@ -54,6 +54,8 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   void beginFrame() override;
 
   void endFrame(const float errorThreshold, const Camera *camera) override;
+
+  AsyncEvent postProcess(const Camera *camera, bool wait) override;
 
   const void *mapBuffer(OSPFrameBufferChannel channel) override;
 

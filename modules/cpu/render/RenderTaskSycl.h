@@ -4,13 +4,13 @@
 #pragma once
 
 // ospray
-#include "../common/Future.h"
+#include "common/Future.h"
 
 namespace ospray {
 
 struct RenderTask : public Future
 {
-  RenderTask(sycl::event);
+  RenderTask(sycl::event rendererEvent, sycl::event frameBufferEvent);
   ~RenderTask() override;
 
   bool isFinished(OSPSyncEvent event = OSP_TASK_FINISHED) override;
@@ -20,12 +20,16 @@ struct RenderTask : public Future
   float getTaskDuration() override;
 
  private:
-  sycl::event syclEvent;
+  sycl::event rendererEvent;
+  sycl::event frameBufferEvent;
 };
 
 // Inlined definitions //////////////////////////////////////////////////////
 
-inline RenderTask::RenderTask(sycl::event syclEvent) : syclEvent(syclEvent) {}
+inline RenderTask::RenderTask(
+    sycl::event rendererEvent, sycl::event frameBufferEvent)
+    : rendererEvent(rendererEvent), frameBufferEvent(frameBufferEvent)
+{}
 
 inline RenderTask::~RenderTask()
 {
@@ -35,9 +39,17 @@ inline RenderTask::~RenderTask()
 
 inline bool RenderTask::isFinished(OSPSyncEvent event)
 {
-  (void)event;
-  syclEvent.wait_and_throw();
-  return true;
+  switch (event) {
+  case OSP_TASK_FINISHED:
+  case OSP_FRAME_FINISHED:
+    frameBufferEvent.wait_and_throw();
+    [[fallthrough]];
+  case OSP_WORLD_RENDERED:
+    rendererEvent.wait_and_throw();
+    [[fallthrough]];
+  default:
+    return true;
+  }
 
   // The proper way of checking is commented out because it degrades
   // performance by a factor of 3. Analysis shows that sharing GPU
@@ -49,8 +61,17 @@ inline bool RenderTask::isFinished(OSPSyncEvent event)
 
 inline void RenderTask::wait(OSPSyncEvent event)
 {
-  (void)event;
-  syclEvent.wait_and_throw();
+  switch (event) {
+  case OSP_TASK_FINISHED:
+  case OSP_FRAME_FINISHED:
+    frameBufferEvent.wait_and_throw();
+    [[fallthrough]];
+  case OSP_WORLD_RENDERED:
+    rendererEvent.wait_and_throw();
+    [[fallthrough]];
+  default:
+    return;
+  }
 }
 
 inline void RenderTask::cancel()
@@ -67,11 +88,18 @@ inline float RenderTask::getProgress()
 inline float RenderTask::getTaskDuration()
 {
   const auto t0 =
-      syclEvent
+      rendererEvent
           .get_profiling_info<sycl::info::event_profiling::command_start>();
   const auto t1 =
-      syclEvent.get_profiling_info<sycl::info::event_profiling::command_end>();
-  return (t1 - t0) * 1E-9;
+      rendererEvent
+          .get_profiling_info<sycl::info::event_profiling::command_end>();
+  const auto t2 =
+      frameBufferEvent
+          .get_profiling_info<sycl::info::event_profiling::command_start>();
+  const auto t3 =
+      frameBufferEvent
+          .get_profiling_info<sycl::info::event_profiling::command_end>();
+  return ((t1 - t0) + (t3 - t2)) * 1E-9;
 }
 
 } // namespace ospray

@@ -20,7 +20,7 @@ struct PathTracer : public AddStructShared<Renderer, ispc::PathTracer>
   virtual void commit() override;
   virtual void *beginFrame(FrameBuffer *, World *) override;
 
-  virtual Event renderTasks(FrameBuffer *fb,
+  virtual AsyncEvent renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,

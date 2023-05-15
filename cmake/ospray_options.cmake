@@ -115,7 +115,7 @@ endif()
 
 # OpenImageDenoise
 if (OSPRAY_MODULE_DENOISER)
-  find_package(OpenImageDenoise 1.2.3 REQUIRED)
+  find_package(OpenImageDenoise 2.0.0 REQUIRED)
 endif()
 
 # ISPC

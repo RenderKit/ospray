@@ -33,14 +33,15 @@ IDBuffer::IDBuffer()
   appIDs = std::get<1>(params);
   rendererType = std::get<2>(params);
 
-  framebuffer =
-      cpp::FrameBuffer(imgSize.x, imgSize.y, frameBufferFormat, idBuffer);
   samplesPerPixel = 2;
 }
 
 void IDBuffer::SetUp()
 {
   Base::SetUp();
+
+  framebuffer =
+      cpp::FrameBuffer(imgSize.x, imgSize.y, frameBufferFormat, idBuffer);
 
   instances.clear();
 

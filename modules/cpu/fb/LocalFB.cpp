@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalFB.h"
-#include <rkcommon/utility/ArrayView.h>
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-#include <numeric>
-#include "ImageOp.h"
+#include "FrameOp.h"
 #include "SparseFB.h"
+#include "fb/FrameBufferView.h"
+#include "render/util.h"
+#include "rkcommon/common.h"
+#include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/utility/ArrayView.h"
+
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/LocalFB_ispc.h"
 #else
@@ -29,9 +30,11 @@ void LocalFrameBuffer_writeIDTile(void *uniform _fb,
     const void *uniform src);
 } // namespace ispc
 #endif
-#include "render/util.h"
-#include "rkcommon/common.h"
-#include "rkcommon/tasking/parallel_for.h"
+
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <numeric>
 
 namespace ospray {
 
@@ -151,19 +154,17 @@ void LocalFrameBuffer::commit()
 {
   FrameBuffer::commit();
 
-  imageOps.clear();
   if (imageOpData) {
     FrameBufferView fbv(this,
         getColorBufferFormat(),
-        colorBuffer ? colorBuffer->data() : nullptr,
-        depthBuffer ? depthBuffer->data() : nullptr,
-        normalBuffer ? normalBuffer->data() : nullptr,
-        albedoBuffer ? albedoBuffer->data() : nullptr);
+        getNumPixels(),
+        colorBuffer ? colorBuffer->devicePtr() : nullptr,
+        depthBuffer ? depthBuffer->devicePtr() : nullptr,
+        normalBuffer ? normalBuffer->devicePtr() : nullptr,
+        albedoBuffer ? albedoBuffer->devicePtr() : nullptr);
 
-    for (auto &&obj : *imageOpData)
-      imageOps.push_back(obj->attach(fbv));
+    prepareLiveOpsForFBV(fbv);
   }
-  prepareImageOps();
 }
 
 vec2i LocalFrameBuffer::getNumRenderTasks() const
@@ -327,30 +328,20 @@ float LocalFrameBuffer::taskError(const uint32_t taskID) const
 void LocalFrameBuffer::beginFrame()
 {
   FrameBuffer::beginFrame();
-
-  std::for_each(imageOps.begin(),
-      imageOps.end(),
-      [](std::unique_ptr<LiveImageOp> &p) { p->beginFrame(); });
 }
 
 void LocalFrameBuffer::endFrame(
-    const float errorThreshold, const Camera *camera)
+    const float errorThreshold, const Camera *)
 {
-  if (!imageOps.empty() && firstFrameOperation < imageOps.size()) {
-    std::for_each(imageOps.begin() + firstFrameOperation,
-        imageOps.end(),
-        [&](std::unique_ptr<LiveImageOp> &iop) {
-          LiveFrameOp *fop = dynamic_cast<LiveFrameOp *>(iop.get());
-          if (fop)
-            fop->process(camera);
-        });
-  }
-
-  std::for_each(imageOps.begin(),
-      imageOps.end(),
-      [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
-
   frameVariance = taskErrorRegion.refine(errorThreshold);
+}
+
+AsyncEvent LocalFrameBuffer::postProcess(const Camera *camera, bool wait)
+{
+  AsyncEvent event;
+  for (auto &p : frameOps)
+    p->process((wait) ? nullptr : &event, camera);
+  return event;
 }
 
 const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)

@@ -20,7 +20,7 @@ struct DebugRenderer : public AddStructShared<Renderer, ispc::DebugRenderer>
 
   void commit() override;
 
-  virtual Event renderTasks(FrameBuffer *fb,
+  virtual AsyncEvent renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,

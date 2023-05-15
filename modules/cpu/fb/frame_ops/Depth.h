@@ -1,23 +1,28 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../ImageOp.h"
+#include "fb/FrameOp.h"
 
 namespace ospray {
 
 //! Depth frameop replaces the color data with a normalized depth buffer img
 struct OSPRAY_SDK_INTERFACE DepthFrameOp : public FrameOp
 {
-  std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+  DepthFrameOp(api::Device &device)
+      : FrameOp(static_cast<api::ISPCDevice &>(device))
+  {}
+
+  std::unique_ptr<LiveFrameOpInterface> attach(
+      FrameBufferView &fbView) override;
 
   std::string toString() const override;
 };
 
 struct OSPRAY_SDK_INTERFACE LiveDepthFrameOp : public LiveFrameOp
 {
-  LiveDepthFrameOp(FrameBufferView &fbView);
+  LiveDepthFrameOp(api::ISPCDevice &device, FrameBufferView &fbView);
 
-  void process(const Camera *) override;
+  void process(void *, const Camera *) override;
 };
 
 } // namespace ospray

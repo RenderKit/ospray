@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBuffer.h"
+#include "FrameOp.h"
+#include "OSPConfig.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
 #endif
-#include "OSPConfig.h"
 
 namespace {
 // Internal utilities for thread local progress tracking
@@ -78,6 +79,14 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
 
 void FrameBuffer::commit()
 {
+  // Erase all image operations arrays
+  frameOps.clear();
+  pixelOps.clear();
+  pixelOpShs.clear();
+  getSh()->pixelOps = nullptr;
+  getSh()->numPixelOps = 0;
+
+  // Read image operations array set by user
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
 }
 
@@ -170,42 +179,27 @@ bool FrameBuffer::frameCancelled() const
   return cancelRender;
 }
 
-void FrameBuffer::prepareImageOps()
+void FrameBuffer::prepareLiveOpsForFBV(
+    FrameBufferView &fbv, bool fillFrameOps, bool fillPixelOps)
 {
-  findFirstFrameOperation();
-  setPixelOpShs();
-}
-
-void FrameBuffer::findFirstFrameOperation()
-{
-  firstFrameOperation = -1;
-  if (imageOps.empty())
-    return;
-
-  firstFrameOperation = imageOps.size();
-  for (size_t i = 0; i < imageOps.size(); ++i) {
-    const auto *obj = imageOps[i].get();
-    const bool isFrameOp = dynamic_cast<const LiveFrameOp *>(obj) != nullptr;
-
-    if (firstFrameOperation == imageOps.size() && isFrameOp)
-      firstFrameOperation = i;
-    else if (firstFrameOperation < imageOps.size() && !isFrameOp) {
-      postStatusMsg(OSP_LOG_WARNING)
-          << "Invalid pixel/frame op pipeline: all frame operations "
-             "must come after all pixel operations";
-    }
-  }
-}
-
-void FrameBuffer::setPixelOpShs()
-{
-  pixelOpShs.clear();
-  for (auto &op : imageOps) {
-    LivePixelOp *pop = dynamic_cast<LivePixelOp *>(op.get());
+  // Iterate through all image operations set on commit
+  for (auto &&obj : *imageOpData) {
+    // Populate pixel operations
+    PixelOp *pop = dynamic_cast<PixelOp *>(obj);
     if (pop) {
-      pixelOpShs.push_back(pop->getSh());
+      if (fillPixelOps) {
+        pixelOps.push_back(pop->attach());
+        pixelOpShs.push_back(pixelOps.back()->getSh());
+      }
+    } else {
+      // Populate frame operations
+      FrameOpInterface *fopi = dynamic_cast<FrameOpInterface *>(obj);
+      if (fillFrameOps && fopi)
+        frameOps.push_back(fopi->attach(fbv));
     }
   }
+
+  // Prepare shared parameters for kernel
   getSh()->pixelOps = pixelOpShs.empty() ? nullptr : pixelOpShs.data();
   getSh()->numPixelOps = pixelOpShs.size();
 }

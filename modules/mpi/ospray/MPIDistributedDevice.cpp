@@ -474,6 +474,12 @@ float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
   return internalDevice->getVariance((OSPFrameBuffer)fb);
 }
 
+void *MPIDistributedDevice::getPostProcessingCommandQueuePtr()
+{
+  // Run post-processing on internal device only
+  return internalDevice->getPostProcessingCommandQueuePtr();
+}
+
 void MPIDistributedDevice::setObjectParam(
     OSPObject object, const char *name, OSPDataType type, const void *mem)
 {

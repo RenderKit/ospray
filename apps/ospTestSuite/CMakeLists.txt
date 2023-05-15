@@ -50,6 +50,7 @@ add_executable(ospTestSuite
   test_motionblur.cpp
   test_framebuffer.cpp
   test_interpolation.cpp
+  test_imageop.cpp
   ospTestSuite.cpp
 )
 
@@ -61,6 +62,14 @@ PRIVATE
   $<$<BOOL:${OSPRAY_ENABLE_VOLUMES}>:openvkl::openvkl>
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:${GLM_TARGET}>
 )
+
+if (OSPRAY_MODULE_DENOISER)
+  # Enable OIDN tests
+  target_compile_definitions(ospTestSuite
+    PUBLIC
+    -DOSPRAY_MODULE_DENOISER
+  )
+endif()
 
 ospray_sign_target(ospTestSuite)
 

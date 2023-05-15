@@ -15,7 +15,7 @@ struct SciVis : public AddStructShared<Renderer, ispc::SciVis>
   void commit() override;
   void *beginFrame(FrameBuffer *, World *) override;
 
-  virtual Event renderTasks(FrameBuffer *fb,
+  virtual AsyncEvent renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,

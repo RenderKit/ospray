@@ -9,6 +9,7 @@
 #include "ISPCDevice.h"
 #include "TileOperation.h"
 #include "common/Profiling.h"
+#include "fb/FrameBufferView.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
 #endif
@@ -90,22 +91,38 @@ void DFB::commit()
 {
   FrameBuffer::commit();
 
-  imageOps.clear();
   if (imageOpData) {
-    FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
-                                        : static_cast<FrameBuffer *>(this),
-        getSh()->colorBufferFormat,
-        localFBonMaster ? localFBonMaster->colorBuffer->data() : nullptr,
-        localFBonMaster ? localFBonMaster->depthBuffer->data() : nullptr,
-        localFBonMaster ? localFBonMaster->normalBuffer->data() : nullptr,
-        localFBonMaster ? localFBonMaster->albedoBuffer->data() : nullptr);
+    FrameBuffer *fb = static_cast<FrameBuffer *>(this);
+    void *colorBuffer = nullptr;
+    float *depthBuffer = nullptr;
+    vec3f *normalBuffer = nullptr;
+    vec3f *albedoBuffer = nullptr;
+    if (localFBonMaster) {
+      fb = localFBonMaster.get();
+      colorBuffer = localFBonMaster->colorBuffer
+          ? localFBonMaster->colorBuffer->devicePtr()
+          : nullptr;
+      depthBuffer = localFBonMaster->depthBuffer
+          ? localFBonMaster->depthBuffer->devicePtr()
+          : nullptr;
+      normalBuffer = localFBonMaster->normalBuffer
+          ? localFBonMaster->normalBuffer->devicePtr()
+          : nullptr;
+      albedoBuffer = localFBonMaster->albedoBuffer
+          ? localFBonMaster->albedoBuffer->devicePtr()
+          : nullptr;
+    }
 
-    std::for_each(imageOpData->begin(), imageOpData->end(), [&](ImageOp *i) {
-      if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
-        imageOps.push_back(i->attach(fbv));
-    });
+    FrameBufferView fbv(fb,
+        getColorBufferFormat(),
+        getNumPixels(),
+        colorBuffer,
+        depthBuffer,
+        normalBuffer,
+        albedoBuffer);
+
+    prepareLiveOpsForFBV(fbv, localFBonMaster != nullptr, true);
   }
-  prepareImageOps();
 }
 
 mpicommon::Group DFB::getMPIGroup()
@@ -143,10 +160,6 @@ void DFB::startNewFrame(const float errorThreshold)
     frameProgress = 0.f;
 
     FrameBuffer::beginFrame();
-
-    std::for_each(imageOps.begin(),
-        imageOps.end(),
-        [](std::unique_ptr<LiveImageOp> &p) { p->beginFrame(); });
 
     lastProgressReport = std::chrono::steady_clock::now();
     renderingProgressTiles = 0;
@@ -962,21 +975,9 @@ float DFB::tileError(const uint32_t tileID)
 
 void DFB::endFrame(const float errorThreshold, const Camera *camera)
 {
-  if (localFBonMaster && !imageOps.empty()
-      && firstFrameOperation < imageOps.size()) {
-    std::for_each(imageOps.begin() + firstFrameOperation,
-        imageOps.end(),
-        [&](std::unique_ptr<LiveImageOp> &iop) {
-          LiveFrameOp *fop = dynamic_cast<LiveFrameOp *>(iop.get());
-          if (fop)
-            fop->process(camera);
-        });
-  }
-  if (!imageOps.empty()) {
-    std::for_each(imageOps.begin(),
-        imageOps.end(),
-        [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
-  }
+  if (localFBonMaster)
+    for (auto &p : frameOps)
+      p->process(nullptr, camera);
 
   // only refine on master
   if (mpicommon::IamTheMaster()) {
@@ -987,6 +988,14 @@ void DFB::endFrame(const float errorThreshold, const Camera *camera)
   }
 
   setCompletedEvent(OSP_FRAME_FINISHED);
+}
+
+AsyncEvent DFB::postProcess(const Camera *, bool)
+{
+  AsyncEvent event;
+  // TODO: Modify DistributedLoadBalancer and move here post-processing loop
+  // from endFrame()
+  return event;
 }
 
 } // namespace ospray

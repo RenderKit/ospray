@@ -41,14 +41,13 @@ set(OSPRAY_CPP_SOURCES
   common/Group.cpp
   common/Instance.cpp
   common/MotionTransform.cpp
-  common/Managed.cpp
   common/World.cpp
 
   fb/FrameBuffer.cpp
-  fb/FrameBufferView.cpp
   fb/LocalFB.cpp
   fb/SparseFB.cpp
-  fb/ImageOp.cpp
+  fb/FrameOp.cpp
+  fb/PixelOp.cpp
   fb/TaskError.cpp
   fb/registration.cpp
 

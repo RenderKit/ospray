@@ -96,18 +96,6 @@ void Renderer::commit()
   ispc::precomputeZOrder();
 }
 
-#ifdef OSPRAY_TARGET_SYCL
-sycl::nd_range<1> Renderer::computeDispatchRange(
-    const size_t globalSize, const size_t workgroupSize) const
-{
-  // roundedRange global size must be at least workgroupSize
-  const size_t roundedRange =
-      std::max(size_t(1), (globalSize + workgroupSize - 1) / workgroupSize)
-      * workgroupSize;
-  return sycl::nd_range<1>(roundedRange, workgroupSize);
-}
-#endif
-
 OSPPickResult Renderer::pick(
     FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos)
 {

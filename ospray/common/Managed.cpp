@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Managed.h"
-#include "Data.h"
 
 namespace ospray {
 

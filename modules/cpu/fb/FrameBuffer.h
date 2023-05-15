@@ -6,15 +6,18 @@
 #include <atomic>
 // ospray
 #include "ISPCDeviceObject.h"
+#include "PixelOp.h"
 #include "common/Data.h"
 #include "common/FeatureFlagsEnum.h"
-#include "fb/ImageOp.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "FrameBufferShared.h"
 
 namespace ospray {
+
+struct Camera;
+struct FrameBufferView;
 
 // abstract frame buffer class
 struct OSPRAY_SDK_INTERFACE FrameBuffer
@@ -68,6 +71,9 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   // end the frame and run any final post-processing frame ops
   virtual void endFrame(const float errorThreshold, const Camera *camera) = 0;
 
+  // Invoke post-processing by calling all FrameOps
+  virtual AsyncEvent postProcess(const Camera *camera, bool wait) = 0;
+
   // common function to help printf-debugging, every derived class should
   // override this
   virtual std::string toString() const override;
@@ -96,16 +102,9 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   FeatureFlagsOther getFeatureFlagsOther() const;
 
  protected:
-  // Finalize the pixel op and frame op state for rendering on commit
-  void prepareImageOps();
-
-  /*! Find the index of the first frameoperation included in
-   * the imageop pipeline
-   */
-  void findFirstFrameOperation();
-
-  // Find all the LivePixelOps and set their ISPC-side data on the FrameBuffer
-  void setPixelOpShs();
+  // Fill vectors with instantiated live objects
+  void prepareLiveOpsForFBV(
+      FrameBufferView &fbv, bool fillFrameOps = true, bool fillPixelOps = true);
 
   const vec2i size;
 
@@ -131,9 +130,9 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
   Ref<const DataT<ImageOp *>> imageOpData;
-  std::vector<std::unique_ptr<LiveImageOp>> imageOps;
+  std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;
+  std::vector<std::unique_ptr<LivePixelOp>> pixelOps;
   std::vector<ispc::LivePixelOp *> pixelOpShs;
-  size_t firstFrameOperation = -1;
 
   FeatureFlagsOther featureFlags{FFO_NONE};
 };

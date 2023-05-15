@@ -15,12 +15,6 @@ Base::Base()
       ::testing::UnitTest::GetInstance()->current_test_case();
   const ::testing::TestInfo *const testInfo =
       ::testing::UnitTest::GetInstance()->current_test_info();
-  imgSize = ospEnv->GetImgSize();
-
-  framebuffer = cpp::FrameBuffer(imgSize.x,
-      imgSize.y,
-      frameBufferFormat,
-      OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
 
   {
     std::string testCaseName = testCase->name();
@@ -38,15 +32,21 @@ Base::Base()
         byte = '_';
   }
 
+  imgSize = ospEnv->GetImgSize();
   rendererType = "scivis";
   frames = 1;
   samplesPerPixel = 16;
-
-  imageTool.reset(new OSPImageTools(imgSize, GetTestName(), frameBufferFormat));
 }
 
 void Base::SetUp()
 {
+  framebuffer = cpp::FrameBuffer(imgSize.x,
+      imgSize.y,
+      frameBufferFormat,
+      OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
+
+  imageTool.reset(new OSPImageTools(imgSize, GetTestName(), frameBufferFormat));
+
   CreateEmptyScene();
 }
 

@@ -58,7 +58,7 @@ export void LiveSSAOFrameOp_set(void *uniform _self,
 }
 
 export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
-    void *uniform _fb,
+    const void *uniform _fb,
     float *uniform occlusionBuffer,
     const uniform float radius,
     const uniform float checkRadius,
@@ -129,7 +129,7 @@ export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
 }
 
 export void LiveSSAOFrameOp_applyOcclusion(void *uniform,
-    void *uniform _fb,
+    const void *uniform _fb,
     void *uniform _color,
     float *uniform occlusionBuffer)
 {

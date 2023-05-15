@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "../ImageOp.h"
 #include "camera/PerspectiveCamera.h"
+#include "fb/FrameOp.h"
 #include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
@@ -20,14 +20,14 @@ void LiveSSAOFrameOp_set(void *uniform _self,
     void *_kernel,
     void *_randomVecs);
 void LiveSSAOFrameOp_getOcclusion(const void *_self,
-    void *_fb,
+    const void *_fb,
     float *occlusionBuffer,
     const float radius,
     const float checkRadius,
     unsigned int kernelSize,
     int programID);
 void LiveSSAOFrameOp_applyOcclusion(
-    void *_self, void *_fb, void *_color, float *occlusionBuffer);
+    void *_self, const void *_fb, void *_color, float *occlusionBuffer);
 int8_t getProgramCount();
 } // namespace ispc
 #else
@@ -48,7 +48,11 @@ struct OSPRAY_SDK_INTERFACE SSAOFrameOp : public FrameOp
   std::vector<vec3f> kernel;
   std::vector<vec3f> randomVecs;
 
-  std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+  SSAOFrameOp(api::Device &device)
+      : FrameOp(static_cast<api::ISPCDevice &>(device))
+  {}
+  std::unique_ptr<LiveFrameOpInterface> attach(
+      FrameBufferView &fbView) override;
   void commit() override;
   std::string toString() const override;
 };
@@ -62,23 +66,24 @@ struct OSPRAY_SDK_INTERFACE LiveSSAOFrameOp : public LiveFrameOp
   std::vector<vec3f> randomVecs;
 
   template <typename T>
-  void applySSAO(FrameBufferView &fb, T *color, const Camera *);
+  void applySSAO(const FrameBufferView &fb, T *color, const Camera *);
 
-  LiveSSAOFrameOp(FrameBufferView &fbView,
+  LiveSSAOFrameOp(api::ISPCDevice &device,
+      FrameBufferView &fbView,
       void *,
       float,
       float,
       float,
       std::vector<vec3f>,
       std::vector<vec3f>);
-  void process(const Camera *) override;
+  void process(void *, const Camera *) override;
 };
 
 // Inlined definitions ////////////////////////////////////////////////////////
 
 template <typename T>
 inline void LiveSSAOFrameOp::applySSAO(
-    FrameBufferView &fb, T *color, const Camera *cam)
+    const FrameBufferView &fb, T *color, const Camera *cam)
 {
   if (cam->toString().compare("ospray::PerspectiveCamera"))
     throw std::runtime_error(

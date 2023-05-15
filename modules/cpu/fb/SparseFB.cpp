@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "SparseFB.h"
-#include <cstdlib>
-#include <numeric>
-#include "ImageOp.h"
+#include "PixelOp.h"
+#include "fb/FrameBufferView.h"
 #include "render/util.h"
 #include "rkcommon/common.h"
 #include "rkcommon/tasking/parallel_for.h"
@@ -12,6 +11,9 @@
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/SparseFB_ispc.h"
 #endif
+
+#include <cstdlib>
+#include <numeric>
 
 namespace ospray {
 
@@ -64,21 +66,20 @@ void SparseFrameBuffer::commit()
 {
   FrameBuffer::commit();
 
-  imageOps.clear();
   if (imageOpData) {
-    FrameBufferView fbv(
-        this, getColorBufferFormat(), nullptr, nullptr, nullptr, nullptr);
+    FrameBufferView fbv(this,
+        getColorBufferFormat(),
+        getNumPixels(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
 
     // Sparse framebuffer cannot execute frame operations because it doesn't
     // have the full framebuffer. This is handled by the parent object managing
     // the set of sparse framebuffer's, so here we just ignore them
-    for (auto &&obj : *imageOpData) {
-      if (dynamic_cast<PixelOp *>(obj)) {
-        imageOps.push_back(obj->attach(fbv));
-      }
-    }
+    prepareLiveOpsForFBV(fbv, false, true);
   }
-  prepareImageOps();
 }
 
 vec2i SparseFrameBuffer::getNumRenderTasks() const
@@ -168,17 +169,6 @@ void SparseFrameBuffer::beginFrame()
       tile.accumID = getFrameID();
     }
   }
-
-  std::for_each(imageOps.begin(),
-      imageOps.end(),
-      [](std::unique_ptr<LiveImageOp> &p) { p->beginFrame(); });
-}
-
-void SparseFrameBuffer::endFrame(const float, const Camera *)
-{
-  std::for_each(imageOps.begin(),
-      imageOps.end(),
-      [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
 }
 
 const void *SparseFrameBuffer::mapBuffer(OSPFrameBufferChannel)

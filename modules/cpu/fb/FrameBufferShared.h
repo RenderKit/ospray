@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "fb/ImageOpShared.h"
+#include "fb/PixelOpShared.h"
 #include "ospray/OSPEnums.h"
 
 #ifdef __cplusplus

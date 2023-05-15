@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../ImageOpShared.h"
+#include "fb/PixelOpShared.h"
 
 #ifdef __cplusplus
 namespace ispc {

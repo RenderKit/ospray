@@ -119,6 +119,8 @@ struct MultiDevice : public Device
   float getProgress(OSPFuture) override;
   float getTaskDuration(OSPFuture) override;
 
+  void *getPostProcessingCommandQueuePtr() override;
+
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
 

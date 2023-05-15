@@ -21,7 +21,7 @@ struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
   /*! Render the entire framebuffer using the given renderer, camera and
    * world configuration using the load balancer to parallelize the work
    */
-  virtual Renderer::Event renderFrame(FrameBuffer *fb,
+  virtual std::pair<AsyncEvent, AsyncEvent> renderFrame(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
       World *world,
@@ -37,7 +37,7 @@ struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
   application ranks each doing local rendering on their own)  */
 struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
 {
-  Renderer::Event renderFrame(FrameBuffer *fb,
+  std::pair<AsyncEvent, AsyncEvent> renderFrame(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
       World *world,

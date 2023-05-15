@@ -67,7 +67,8 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
     ff.other |= camera->getFeatureFlagsOther();
     cgh.set_specialization_constant<specFeatureFlags>(ff);
 
-    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
+    const sycl::nd_range<1> dispatchRange =
+        device.computeDispatchRange(numTasks, 16);
     cgh.parallel_for(dispatchRange,
         [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
           if (taskIndex.get_global_id(0) < numTasks) {

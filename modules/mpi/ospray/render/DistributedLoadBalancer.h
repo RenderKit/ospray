@@ -30,7 +30,7 @@ struct DistributedLoadBalancer : public TiledLoadBalancer
 
   ~DistributedLoadBalancer() override;
 
-  Renderer::Event renderFrame(FrameBuffer *fb,
+  std::pair<AsyncEvent, AsyncEvent> renderFrame(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
       World *world,
