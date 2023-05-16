@@ -14,16 +14,26 @@
 #include "fb/LocalFB_ispc.h"
 #else
 namespace ispc {
-void LocalFrameBuffer_writeTile_RGBA8(void *_fb, const void *_tile);
-void LocalFrameBuffer_writeTile_SRGBA(void *_fb, const void *_tile);
-void LocalFrameBuffer_writeTile_RGBA32F(void *_fb, const void *_tile);
+
+SYCL_EXTERNAL void LocalFrameBuffer_writeTile_RGBA8(
+    void *_fb, const void *_tile);
+SYCL_EXTERNAL void LocalFrameBuffer_writeTile_SRGBA(
+    void *_fb, const void *_tile);
+SYCL_EXTERNAL void LocalFrameBuffer_writeTile_RGBA32F(
+    void *_fb, const void *_tile);
+
+SYCL_EXTERNAL
 void LocalFrameBuffer_writeDepthTile(void *_fb, const void *uniform _tile);
+
+SYCL_EXTERNAL
 void LocalFrameBuffer_writeAuxTile(void *_fb,
     const void *_tile,
     void *aux,
     const void *_ax,
     const void *_ay,
     const void *_az);
+
+SYCL_EXTERNAL
 void LocalFrameBuffer_writeIDTile(void *uniform _fb,
     const void *uniform _tile,
     uniform uint32 *uniform dst,
@@ -216,12 +226,12 @@ void LocalFrameBuffer::clear()
     taskErrorRegion.clear();
   }
 }
-
 void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
 {
   // TODO: The parallel dispatch part of this should be moved into ISPC as an
   // ISPC launch that calls the individual (currently) exported functions that
   // we call below in this loop
+#ifndef OSPRAY_TARGET_SYCL
   tasking::parallel_for(tiles.size(), [&](const size_t i) {
     const Tile *tile = &tiles[i];
     if (hasDepthBuffer) {
@@ -231,11 +241,7 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
     if (hasAlbedoBuffer) {
       ispc::LocalFrameBuffer_writeAuxTile(getSh(),
           tile,
-#ifndef OSPRAY_TARGET_SYCL
           (ispc::vec3f *)albedoBuffer->data(),
-#else
-          *albedoBuffer->data(),
-#endif
           tile->ar,
           tile->ag,
           tile->ab);
@@ -259,31 +265,88 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
     if (hasNormalBuffer) {
       ispc::LocalFrameBuffer_writeAuxTile(getSh(),
           tile,
-#ifndef OSPRAY_TARGET_SYCL
           (ispc::vec3f *)normalBuffer->data(),
-#else
-          *normalBuffer->data(),
-#endif
           tile->nx,
           tile->ny,
           tile->nz);
     }
     if (colorBuffer) {
       switch (getColorBufferFormat()) {
-      case OSP_FB_RGBA8:
+      case OSP_FB_RGBA8: {
         ispc::LocalFrameBuffer_writeTile_RGBA8(getSh(), tile);
         break;
-      case OSP_FB_SRGBA:
+      }
+      case OSP_FB_SRGBA: {
         ispc::LocalFrameBuffer_writeTile_SRGBA(getSh(), tile);
         break;
-      case OSP_FB_RGBA32F:
+      }
+      case OSP_FB_RGBA32F: {
         ispc::LocalFrameBuffer_writeTile_RGBA32F(getSh(), tile);
         break;
+      }
       default:
         NOT_IMPLEMENTED;
       }
     }
   });
+
+#else
+  auto *fbSh = getSh();
+  const size_t numTasks = tiles.size();
+  const Tile *tilesPtr = tiles.data();
+  const int colorFormat = getColorBufferFormat();
+  vec3f *albedoBufferPtr = fbSh->super.channels & OSP_FB_ALBEDO ? albedoBuffer->data() : nullptr;
+  vec3f *normalBufferPtr = fbSh->super.channels & OSP_FB_NORMAL ? normalBuffer->data() : nullptr;
+
+  device.getSyclQueue()
+      .submit([&](sycl::handler &cgh) {
+        const sycl::nd_range<1> dispatchRange =
+            device.computeDispatchRange(numTasks, 16);
+        cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
+          if (taskIndex.get_global_id(0) < numTasks) {
+            const Tile *tile = &tilesPtr[taskIndex.get_global_id(0)];
+            if (fbSh->super.channels & OSP_FB_DEPTH) {
+              ispc::LocalFrameBuffer_writeDepthTile(fbSh, tile);
+            }
+            if (fbSh->super.channels & OSP_FB_ALBEDO) {
+              ispc::LocalFrameBuffer_writeAuxTile(
+                  fbSh, tile, albedoBufferPtr, tile->ar, tile->ag, tile->ab);
+            }
+            if (fbSh->super.channels & OSP_FB_ID_PRIMITIVE) {
+              ispc::LocalFrameBuffer_writeIDTile(
+                  fbSh, tile, fbSh->primitiveIDBuffer, tile->pid);
+            }
+            if (fbSh->super.channels & OSP_FB_ID_OBJECT) {
+              ispc::LocalFrameBuffer_writeIDTile(
+                  fbSh, tile, fbSh->objectIDBuffer, tile->gid);
+            }
+            if (fbSh->super.channels & OSP_FB_ID_INSTANCE) {
+              ispc::LocalFrameBuffer_writeIDTile(
+                  fbSh, tile, fbSh->instanceIDBuffer, tile->iid);
+            }
+            if (fbSh->super.channels & OSP_FB_NORMAL) {
+              ispc::LocalFrameBuffer_writeAuxTile(
+                  fbSh, tile, normalBufferPtr, tile->nx, tile->ny, tile->nz);
+            }
+            switch (colorFormat) {
+            case OSP_FB_RGBA8:
+              ispc::LocalFrameBuffer_writeTile_RGBA8(fbSh, tile);
+              break;
+            case OSP_FB_SRGBA:
+              ispc::LocalFrameBuffer_writeTile_SRGBA(fbSh, tile);
+              break;
+            case OSP_FB_RGBA32F:
+              ispc::LocalFrameBuffer_writeTile_RGBA32F(fbSh, tile);
+              break;
+            default:
+              break;
+            }
+          }
+        });
+      })
+      .wait_and_throw();
+
+#endif
 }
 
 void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)

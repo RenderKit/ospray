@@ -15,7 +15,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // this buffer _must_ exist when this fct is called, and it
 // _must_ have format 'name'
 #define template_writeTile(name, type, cvt)                                    \
-  export void LocalFrameBuffer_writeTile_##name(                               \
+export SYCL_EXTERNAL void LocalFrameBuffer_writeTile_##name(                   \
       void *uniform _fb, const void *uniform _tile)                            \
   {                                                                            \
     Tile *uniform tile = (Tile * uniform) _tile;                               \
@@ -291,7 +291,7 @@ SYCL_EXTERNAL void LocalFB_completeTask(
 }
 
 // Write the input tile into the row-major framebuffer's depth buffer
-export void LocalFrameBuffer_writeDepthTile(
+export SYCL_EXTERNAL void LocalFrameBuffer_writeDepthTile(
     void *uniform _fb, const void *uniform _tile)
 {
   uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;
@@ -317,7 +317,7 @@ export void LocalFrameBuffer_writeDepthTile(
 }
 
 // "accumulate" first frame only and write into buffer
-export void LocalFrameBuffer_writeIDTile(void *uniform _fb,
+export SYCL_EXTERNAL void LocalFrameBuffer_writeIDTile(void *uniform _fb,
     const void *uniform _tile,
     uniform uint32 *uniform dst,
     const void *uniform src)
@@ -353,7 +353,7 @@ export void LocalFrameBuffer_writeIDTile(void *uniform _fb,
 }
 
 // Write a Tile's auxiliary buffer into the framebuffer's row major storage
-export void LocalFrameBuffer_writeAuxTile(void *uniform _fb,
+export SYCL_EXTERNAL void LocalFrameBuffer_writeAuxTile(void *uniform _fb,
     const void *uniform _tile,
     void *uniform _aux,
     const void *uniform _ax,
@@ -398,4 +398,5 @@ export void *uniform LocalFrameBuffer_completeTask_addr()
 {
   return (void *uniform)LocalFB_completeTask;
 }
+
 OSPRAY_END_ISPC_NAMESPACE
