@@ -54,7 +54,7 @@ jobs:
     with:
       runs-on: '["build", "NAS", "mpi"]'
       cmd: |
-        scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON" "ON"
+        scripts\build\win.ps1 -G "Visual Studio 17 2022" -buildType=Debug -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-windows-debug-all
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 

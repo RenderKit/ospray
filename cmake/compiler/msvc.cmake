@@ -51,7 +51,6 @@ else()
       CMAKE_C_FLAGS_RELEASE
       CMAKE_C_FLAGS_RELWITHDEBINFO
     )
-      string(APPEND ${FLAG} " /Qimf-use-svml:false")
     endforeach()
   endif()
 endif()

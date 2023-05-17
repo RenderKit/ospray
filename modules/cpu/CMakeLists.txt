@@ -271,7 +271,7 @@ if (WIN32)
   # changes .def only if content changed, avoids unnecessary re-linking
   configure_file(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_cpu.def.in ospray_module_cpu.def COPYONLY)
 
-  list(APPEND OSPRAY_ISPC_SOURCES ospray_module_cpu.def)
+  set(OSPRAY_ISPC_DEF ospray_module_cpu.def)
 endif()
 
 ## ISPC Device-specific options ##
@@ -347,6 +347,7 @@ if (OSPRAY_MODULE_CPU)
       ${OSPRAY_VOLUMES_CPP_SOURCES}
       ${OSPRAY_ISPC_SOURCES}
       ${OSPRAY_VOLUMES_ISPC_SOURCES}
+      ${OSPRAY_ISPC_DEF}
       geometry/Subdivision.cpp
       geometry/Subdivision.ispc)
 
@@ -452,10 +453,12 @@ if (OSPRAY_MODULE_GPU)
     RKCOMMON_NO_SIMD
   )
 
+  if (NOT WIN32)
   target_compile_options(ospray_module_gpu_kernels
   PRIVATE
     -x c++
   )
+  endif()
 
   # catch implicit float to double promotions in kernels only
   target_compile_options(ospray_module_gpu_kernels PRIVATE
@@ -489,6 +492,7 @@ if (OSPRAY_MODULE_GPU)
     OSPRAY_TARGET_SYCL
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}
+    _ALLOW_KEYWORD_MACROS # avoid error when redefining reserved keywords like "export"
     uniform=
     varying=
     unmasked=
@@ -541,10 +545,12 @@ if (OSPRAY_MODULE_GPU)
     ospray_module_gpu_kernels
   )
 
+  if (NOT WIN32)
   target_compile_options(ospray_module_gpu
   PRIVATE
     -x c++
   )
+  endif()
 
   ospray_install_library(ospray_module_gpu lib)
 endif()

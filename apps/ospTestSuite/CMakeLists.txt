@@ -76,9 +76,8 @@ if (OSPRAY_MODULE_GPU)
     ${OSPRAY_CXX_FLAGS_SYCL}
     -fsycl-targets=${OSPRAY_SYCL_TARGET}
   )
-  target_link_libraries(ospTestSuite
-  PRIVATE
-    sycl
+  target_link_options(ospTestSuite PUBLIC
+    -fsycl
   )
 endif()
 

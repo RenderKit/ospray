@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #ifdef OSPRAY_TARGET_SYCL
-#include <level_zero/ze_api.h>
-// ze_api and sycl level zero backend must be in this order
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
 #endif
 

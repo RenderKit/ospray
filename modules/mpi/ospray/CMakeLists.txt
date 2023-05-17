@@ -188,10 +188,12 @@ if (OSPRAY_MODULE_GPU)
       ${PROJECT_BINARY_DIR}/ospray/
   )
 
-  target_compile_options(ospray_module_mpi_distributed_gpu
+  if (NOT WIN32)
+  target_compile_options(ospray_module_mpi_distributed_gpu_kernels
   PRIVATE
     -x c++
   )
+  endif()
 
   # Note: GPU hybrid code defines are brought in for us by linking the CPU module
   target_compile_definitions(ospray_module_mpi_distributed_gpu PRIVATE
