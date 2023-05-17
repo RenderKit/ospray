@@ -112,6 +112,25 @@ SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
       dg.color.w = 1.f;
   }
 
+  vec3f va, vb, vc, vd;
+  if (self->motionKeys) {
+    int idx;
+    const float t = Mesh_calcKey(self, ray.time, idx);
+    const uniform int64 byteStride = self->vertex.byteStride;
+    const uint8 *a0 = self->motionVertex[idx];
+    const uint8 *a1 = self->motionVertex[idx + 1];
+    va = interpolate_vec3f(byteStride, a0, a1, index.x, t);
+    vb = interpolate_vec3f(byteStride, a0, a1, index.y, t);
+    vc = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+    vd = interpolate_vec3f(byteStride, a0, a1, index.w, t);
+  } else {
+    va = get_vec3f(self->vertex, index.x);
+    vb = get_vec3f(self->vertex, index.y);
+    vc = get_vec3f(self->vertex, index.z);
+    vd = get_vec3f(self->vertex, index.w);
+  }
+  dg.epsilon = reduce_max(max(max(va, vb), max(vc, vd))) * ulpEpsilon;
+
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
   if ((compute_texcoord || compute_tangents) && valid(self->texcoord)) {
@@ -130,23 +149,8 @@ SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
 
       if (det != 0.f) {
         const float invDet = rcp(det);
-        vec3f a, b, d;
-        if (self->motionKeys) {
-          int idx;
-          const float t = Mesh_calcKey(self, ray.time, idx);
-          const uniform int64 byteStride = self->vertex.byteStride;
-          const uint8 *a0 = self->motionVertex[idx];
-          const uint8 *a1 = self->motionVertex[idx + 1];
-          a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
-          b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
-          d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
-        } else {
-          a = get_vec3f(self->vertex, index.x);
-          b = get_vec3f(self->vertex, index.y);
-          d = get_vec3f(self->vertex, index.w);
-        }
-        const vec3f dp02 = a - d;
-        const vec3f dp12 = b - d;
+        const vec3f dp02 = va - vd;
+        const vec3f dp12 = vb - vd;
         dg.dPds = (dst12.y * dp02 - dst02.y * dp12) * invDet;
         dg.dPdt = (dst02.x * dp12 - dst12.x * dp02) * invDet;
         compute_tangents = false;
@@ -154,11 +158,8 @@ SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
     }
   }
   if (compute_tangents) {
-    const vec3f a = get_vec3f(self->vertex, index.x);
-    const vec3f b = get_vec3f(self->vertex, index.y);
-    const vec3f d = get_vec3f(self->vertex, index.w);
-    dg.dPds = b - a;
-    dg.dPdt = d - a;
+    dg.dPds = vb - va;
+    dg.dPdt = vd - va;
   }
 }
 
@@ -207,6 +208,23 @@ SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
       dg.color.w = 1.f;
   }
 
+  vec3f va, vb, vc;
+  if (self->motionKeys) {
+    int idx;
+    const float t = Mesh_calcKey(self, ray.time, idx);
+    const uniform int64 byteStride = self->vertex.byteStride;
+    const uint8 *a0 = self->motionVertex[idx];
+    const uint8 *a1 = self->motionVertex[idx + 1];
+    va = interpolate_vec3f(byteStride, a0, a1, index.x, t);
+    vb = interpolate_vec3f(byteStride, a0, a1, index.y, t);
+    vc = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+  } else {
+    va = get_vec3f(self->vertex, index.x);
+    vb = get_vec3f(self->vertex, index.y);
+    vc = get_vec3f(self->vertex, index.z);
+  }
+  dg.epsilon = reduce_max(max(max(va, vb), vc)) * ulpEpsilon;
+
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
   if ((compute_texcoord || compute_tangents) && valid(self->texcoord)) {
@@ -223,23 +241,8 @@ SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
 
       if (det != 0.f) {
         const float invDet = rcp(det);
-        vec3f a, b, c;
-        if (self->motionKeys) {
-          int idx;
-          const float t = Mesh_calcKey(self, ray.time, idx);
-          const uniform int64 byteStride = self->vertex.byteStride;
-          const uint8 *a0 = self->motionVertex[idx];
-          const uint8 *a1 = self->motionVertex[idx + 1];
-          a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
-          b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
-          c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
-        } else {
-          a = get_vec3f(self->vertex, index.x);
-          b = get_vec3f(self->vertex, index.y);
-          c = get_vec3f(self->vertex, index.z);
-        }
-        const vec3f dp02 = a - c;
-        const vec3f dp12 = b - c;
+        const vec3f dp02 = va - vc;
+        const vec3f dp12 = vb - vc;
         dg.dPds = (dst12.y * dp02 - dst02.y * dp12) * invDet;
         dg.dPdt = (dst02.x * dp12 - dst12.x * dp02) * invDet;
         compute_tangents = false;
@@ -247,11 +250,8 @@ SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
     }
   }
   if (compute_tangents) {
-    const vec3f a = get_vec3f(self->vertex, index.x);
-    const vec3f b = get_vec3f(self->vertex, index.y);
-    const vec3f c = get_vec3f(self->vertex, index.z);
-    dg.dPds = b - a;
-    dg.dPdt = c - a;
+    dg.dPds = vb - va;
+    dg.dPdt = vc - va;
   }
 }
 
