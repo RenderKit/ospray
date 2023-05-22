@@ -105,7 +105,7 @@ void Base::PerformRenderTest()
 
   RenderFrame();
 
-  auto *framebuffer_data = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
+  void *framebuffer_data = framebuffer.map(OSP_FB_COLOR);
 
   if (ospEnv->GetDumpImg()) {
     EXPECT_EQ(imageTool->saveTestImage(framebuffer_data), OsprayStatus::Ok);
