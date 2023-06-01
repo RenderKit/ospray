@@ -3,6 +3,7 @@ Version History
 
 ### Changes in v3.1.0:
 
+-   Improve noise in reflections of ThisGlass
 -   Fix indirectly seen albedo and normal buffer
 
 ### Changes in v3.0.0:
