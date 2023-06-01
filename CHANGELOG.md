@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v3.1.0:
+
+-   Fix indirectly seen albedo and normal buffer
+
 ### Changes in v3.0.0:
 
 -   Beta support for Intel Xe GPUs (Intel Arc™ GPUs a Intel Data Center
@@ -70,7 +74,6 @@ Version History
         -   `spot` light with `intensityDistribution`: `intensityQuantity` other than `OSP_INTENSITY_QUANTITY_SCALE`
 
 
-
 ### Changes in v2.12.0:
 
 -   Support denoising on the GPU with OIDN 2.0, which is the new minimum
@@ -84,7 +87,6 @@ Version History
 -   Fix transparent shadows with too high `minContribution` setting
 -   The new minimum version for ISPC is v1.20.0
 -   Release binaries on Linux are built on Rocky 8
-
 
 ### Changes in v2.11.0:
 
