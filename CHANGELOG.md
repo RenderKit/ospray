@@ -7,6 +7,7 @@ Version History
     limits the number of non-specular (i.e., diffuse and glossy) bounces
 -   Support denoising on the GPU with OIDN 2.0, which is the new minimum
     version
+-   The new minimum version for ISPC is v1.20.0
 
 
 ### Changes in v2.11.0:

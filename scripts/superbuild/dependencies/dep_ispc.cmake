@@ -9,7 +9,7 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
 endif()
 
 if (APPLE)
-  set(ISPC_OSSUFFIX "macOS.tar.gz")
+  set(ISPC_OSSUFFIX "macOS.universal.tar.gz")
 elseif(WIN32)
   set(ISPC_OSSUFFIX "windows.zip")
 else()
