@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.11.1 (devel) of Intel® OSPRay. For changes and new
+This is release v2.12.0 (devel) of Intel® OSPRay. For changes and new
 features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
 for more information.
 
@@ -75,7 +75,7 @@ before you can build OSPRay you need the following prerequisites:
   Linux development tools.
 
 - Additionally you require a copy of the [Intel® Implicit SPMD Program
-  Compiler (ISPC)](http://ispc.github.io), version 1.19.0 or later.
+  Compiler (ISPC)](http://ispc.github.io), version 1.20.0 or later.
   Please obtain a release of ISPC from the [ISPC downloads
   page](https://ispc.github.io/downloads.html). If ISPC is not found by
   CMake its location can be hinted with the variable `ispcrt_DIR`.
@@ -104,7 +104,7 @@ before you can build OSPRay you need the following prerequisites:
 - OSPRay also provides an optional module implementing the `denoiser`
   image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
   module requires Intel [Open Image
-  Denoise](https://openimagedenoise.github.io/) in version 1.2.3 or
+  Denoise](https://openimagedenoise.github.io/) in version 2.0.0 or
   newer. You may need to hint the location of the library with the CMake
   variable `OpenImageDenoise_DIR`.
 
@@ -2081,7 +2081,7 @@ occlusion).
 This renderer supports only a subset of the features of the [SciVis
 renderer](#scivis-renderer) to gain performance. As the name suggest its
 main shading method is ambient occlusion (AO), [lights](#lights) are
-*not* considered at all and , Volume rendering is supported. The Ambient
+*not* considered at all. Volume rendering is supported. The Ambient
 Occlusion renderer is created by passing the type string “`ao`” to
 `ospNewRenderer`. In addition to the [general parameters](#renderer)
 understood by all renderers the following parameters are supported as
@@ -2108,6 +2108,7 @@ supports the following special parameters:
 |:------|:---------------------|--------:|:------------------------------------------------------------------------------------------|
 | int   | lightSamples         |     all | number of random light samples per path vertex, per default all light sources are sampled |
 | int   | roulettePathLength   |       5 | ray recursion depth at which to start Russian roulette termination                        |
+| int   | maxScatteringEvents  |      20 | maximum number of non-specular (i.e., diffuse and glossy) bounces                         |
 | float | maxContribution      |       ∞ | samples are clamped to this value before they are accumulated into the framebuffer        |
 | bool  | backgroundRefraction |   false | allow for alpha blending even if background is seen through refractive objects like glass |
 
