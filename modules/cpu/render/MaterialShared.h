@@ -22,8 +22,9 @@ struct Medium;
 struct DifferentialGeometry;
 struct Ray;
 struct Material;
+struct FeatureFlagsHandler;
 
-typedef const varying BSDF *varying (*Material_GetBSDFFunc)(
+typedef const varying BSDF *uniform (*Material_GetBSDFFunc)(
     const uniform Material *uniform self,
     uniform ShadingContext *uniform ctx,
     // The point to shade on a surface.
@@ -31,7 +32,8 @@ typedef const varying BSDF *varying (*Material_GetBSDFFunc)(
     // The ray arriving at the point to shade.
     const Ray &ray,
     // The medium this ray travels inside.
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh);
 
 // shortcut: compute transmission of material, for transparent shadows,
 // neglecting refraction
@@ -42,7 +44,8 @@ typedef vec3f (*Material_GetTransparencyFunc)(
     // The ray arriving at the point to shade.
     const Ray &ray,
     // The medium this ray travels inside.
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh);
 
 typedef void (*Material_SelectNextMediumFunc)(
     const uniform Material *uniform self,

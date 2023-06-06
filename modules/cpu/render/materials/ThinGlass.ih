@@ -2,22 +2,36 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
-#include "ThinGlassShared.h"
+#include "render/bsdfs/BSDF.ih"
+#include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL const varying BSDF *varying ThinGlass_getBSDF(
+struct Material;
+struct ShadingContext;
+struct DifferentialGeometry;
+struct Ray;
+struct Medium;
+
+SYCL_EXTERNAL const varying BSDF *uniform ThinGlass_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL vec3f ThinGlass_getTransparency(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh);
+
+SYCL_EXTERNAL BSDF_SampleRes ThinGlass_BSDF_sample(
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss);
 
 OSPRAY_END_ISPC_NAMESPACE
-

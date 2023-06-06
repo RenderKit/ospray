@@ -24,14 +24,6 @@ struct RobustDielectric
   vec3f Ns;
 };
 
-inline BSDF_EvalRes RobustDielectric_eval(const varying BSDF *uniform,
-    const vec3f &,
-    const vec3f &,
-    const uniform FeatureFlagsHandler &)
-{
-  return make_BSDF_EvalRes_zero();
-}
-
 struct RefractionResult
 {
   vec3f outgoingDirection;
@@ -99,8 +91,7 @@ inline vec3f ReflectionDirection(const vec3f &incomingDir, const vec3f &normal)
 inline BSDF_SampleRes RobustDielectric_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f & /*randomV*/,
-    float randomF,
-    const uniform FeatureFlagsHandler &)
+    float randomF)
 {
   const varying RobustDielectric *uniform self =
       (const varying RobustDielectric *uniform)super;
@@ -202,13 +193,6 @@ inline void RobustDielectric_Constructor(varying RobustDielectric *uniform self,
       make_vec3f(1.0f),
       BSDF_SPECULAR,
       BSDF_TYPE_ROBUST_DIELECTRIC,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      RobustDielectric_eval,
-      RobustDielectric_sample,
-#endif
       shadingframe);
   self->eta = eta;
   self->Ns = dg.Ns;

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OBJ.ih"
+
 #include "render/Material.ih"
 #include "render/bsdfs/Lambert.ih"
 #include "render/bsdfs/MultiBSDF.ih"
@@ -16,7 +17,16 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
+#define MULTIBSDF_SIZE 3
+struct OBJ_BSDF
+{
+  DEFINE_MULTIBSDF(MULTIBSDF_SIZE);
+  BSDF lambert;
+  BSDF transmission;
+  Specular specular;
+};
+
+SYCL_EXTERNAL const varying BSDF *uniform OBJ_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -25,10 +35,17 @@ SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
     const uniform FeatureFlagsHandler &ffh)
 {
   uniform const OBJ *uniform self = (uniform const OBJ *uniform)super;
-  varying BSDF *uniform bsdf = MultiBSDF_create(ctx);
+
+  // Allocate memory and initialize material BSDF
+  varying OBJ_BSDF *uniform bsdf =
+      (varying OBJ_BSDF * uniform) ShadingContext_alloc(ctx, sizeof(OBJ_BSDF));
+  varying MultiBSDF *uniform mbsdf = (varying MultiBSDF * uniform) bsdf;
+  MultiBSDF_Constructor(mbsdf, MULTIBSDF_SIZE);
+  bsdf->super.bsdfType = BSDF_TYPE_OBJ;
+
   // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
 
-  /*! normal map */
+  // Normal map
   varying linear3f *uniform shadingFrame = LinearSpace3f_create(
       ctx, makeShadingFrame_ff(dg, self->bumpMap, self->bumpRot, ffh));
 
@@ -37,7 +54,7 @@ SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
 
   const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
 
-  /*! diffuse component */
+  // Diffuse component
   vec3f Kd = self->Kd;
   if (valid(self->KdMap) && (ffo & FFO_TEXTURE_IN_MATERIAL)) {
     vec4f Kd_from_map = get4f(self->KdMap, dg);
@@ -45,26 +62,32 @@ SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
     d *= Kd_from_map.w;
   }
 
+  // Lambert shading
   Kd = Kd * d * make_vec3f(dg.color);
   if (reduce_max(Kd) > 0.0f) {
-    MultiBSDF_add(
-        bsdf, Lambert_create(ctx, shadingFrame, Kd), 1.f, luminance(Kd));
+    Lambert_Constructor(&bsdf->lambert, shadingFrame, Kd);
+    MultiBSDF_add(mbsdf, 0, &bsdf->lambert, 1.f, luminance(Kd));
   }
 
-  /*! transmission component */
+  // Transmission component
   vec3f T = self->Tf * d + make_vec3f(1.f - d);
-  if (reduce_max(T) > 0.0f)
-    MultiBSDF_add(
-        bsdf, Transmission_create(ctx, shadingFrame, T), 1.f, luminance(T));
+  if (reduce_max(T) > 0.0f) {
+    Transmission_Constructor(&bsdf->transmission, shadingFrame, T);
+    MultiBSDF_add(mbsdf, 1, &bsdf->transmission, 1.f, luminance(T));
+  }
 
   /*! specular component */
   float Ns = self->Ns * get1f_ff(self->NsMap, dg, 1.0f, ffh);
   vec3f Ks = d * self->Ks * get3f_ff(self->KsMap, dg, make_vec3f(1.f), ffh);
   if (reduce_max(Ks) > 0.0f) {
-    MultiBSDF_add(
-        bsdf, Specular_create(ctx, shadingFrame, Ks, Ns), 1.f, luminance(Ks));
+    Specular_Constructor(&bsdf->specular, shadingFrame, Ks, Ns);
+    MultiBSDF_add(mbsdf,
+        2,
+        (varying BSDF * uniform) & bsdf->specular,
+        1.f,
+        luminance(Ks));
   }
-  return bsdf;
+  return &bsdf->super;
 }
 
 SYCL_EXTERNAL vec3f OBJ_getTransparency(const uniform Material *uniform super,
@@ -83,10 +106,41 @@ SYCL_EXTERNAL vec3f OBJ_getTransparency(const uniform Material *uniform super,
     d *= Kd_from_map.w;
   }
 
-  /*! transmission component */
+  // Transmission component
   vec3f T = self->Tf * d + make_vec3f(1.f - d);
-
   return T;
+}
+
+SYCL_EXTERNAL BSDF_EvalRes OBJ_BSDF_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+{
+  const varying OBJ_BSDF *uniform self = (const varying OBJ_BSDF *uniform)super;
+
+  MULTIBSDF_EVAL_BEGIN();
+  MULTIBSDF_EVAL_CHILD(0, &self->lambert, Lambert_eval);
+  // 1 - omitted, no evaluation needed for transmission BSDF
+  MULTIBSDF_EVAL_CHILD(2, &self->specular, Specular_eval);
+  MULTIBSDF_EVAL_END();
+  return MULTIBSDF_EVAL_GET();
+}
+
+SYCL_EXTERNAL BSDF_SampleRes OBJ_BSDF_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  const varying OBJ_BSDF *uniform self = (const varying OBJ_BSDF *uniform)super;
+
+  MULTIBSDF_SAMPLE_BEGIN();
+  MULTIBSDF_SAMPLE_CHILD(0, &self->lambert, Lambert_sample);
+  MULTIBSDF_SAMPLE_CHILD(1, &self->transmission, Transmission_sample);
+  MULTIBSDF_SAMPLE_CHILD(2, &self->specular, Specular_sample);
+  MULTIBSDF_SAMPLE_EVAL();
+  MULTIBSDF_EVAL_CHILD(0, &self->lambert, Lambert_eval);
+  // 1 - omitted, no evaluation needed for transmission BSDF
+  MULTIBSDF_EVAL_CHILD(2, &self->specular, Specular_eval);
+  MULTIBSDF_SAMPLE_END();
+  return MULTIBSDF_SAMPLE_GET();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

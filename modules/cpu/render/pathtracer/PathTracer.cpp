@@ -26,7 +26,6 @@ SYCL_EXTERNAL void PathTracer_renderTask(Renderer *uniform _self,
 #else
 // ispc exports
 #include "math/Distribution1D_ispc.h"
-#include "render/bsdfs/MicrofacetAlbedoTables_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
 #endif
 

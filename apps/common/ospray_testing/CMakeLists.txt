@@ -30,11 +30,19 @@ add_library(ospray_testing SHARED
   builders/VdbVolume.cpp
 
   # regression test scenes
+  builders/test_pt_alloy_roughness.cpp
+  builders/test_pt_carpaint.cpp
   builders/test_pt_glass.cpp
   builders/test_pt_luminous.cpp
   builders/test_pt_metal_roughness.cpp
   builders/test_pt_metallic_flakes.cpp
   builders/test_pt_obj.cpp
+  builders/test_pt_plastic.cpp
+  builders/test_pt_principled.cpp
+  builders/test_pt_tex_material.cpp
+  builders/test_pt_tex_mix.cpp
+  builders/test_pt_thinglass.cpp
+  builders/test_pt_velvet.cpp
 )
 
 generate_export_header(ospray_testing)

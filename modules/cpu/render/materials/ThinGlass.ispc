@@ -1,12 +1,14 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "ThinGlass.ih"
+
 #include "common/Ray.ih"
 #include "render/Material.ih"
 #include "render/bsdfs/RobustThinDielectric.ih"
 #include "texture/TextureParam.ih"
-
-#include "ThinGlass.ih"
+// c++ shared
+#include "ThinGlassShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
@@ -26,31 +28,44 @@ static inline const vec3f getAttenuation(
   return attenuation;
 }
 
-SYCL_EXTERNAL const varying BSDF *varying ThinGlass_getBSDF(
+SYCL_EXTERNAL const varying BSDF *uniform ThinGlass_getBSDF(
     const Material *uniform super,
     ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &,
-    const Medium &)
+    const Medium &,
+    const uniform FeatureFlagsHandler &)
 {
   const ThinGlass *uniform self = (const ThinGlass *uniform)super;
 
   varying linear3f *uniform shadingframe =
       LinearSpace3f_create(ctx, frame(dg.Ns));
-  return RobustThinDielectric_create(
+  varying BSDF *uniform bsdf = RobustThinDielectric_create(
       ctx, shadingframe, self->eta, getAttenuation(self, dg));
+  bsdf->bsdfType = BSDF_TYPE_THINGLASS;
+  return bsdf;
 }
 
 SYCL_EXTERNAL vec3f ThinGlass_getTransparency(const Material *uniform material,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &)
+    const Medium &,
+    const uniform FeatureFlagsHandler &)
 {
   const ThinGlass *uniform self = (const ThinGlass *uniform)material;
 
   float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.0f);
   return RobustThinDielectric_getTransparency(
       cosThetaO, self->eta, getAttenuation(self, dg));
+}
+
+SYCL_EXTERNAL BSDF_SampleRes ThinGlass_BSDF_sample(
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  return RobustThinDielectric_sample(super, wo, s, ss);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

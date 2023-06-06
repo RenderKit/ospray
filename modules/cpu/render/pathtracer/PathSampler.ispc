@@ -13,6 +13,7 @@
 
 #include "common/Intersect.ih"
 #include "common/World.ih"
+#include "math/random.ih"
 #include "render/Material.ih"
 #include "render/MaterialDispatch.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"

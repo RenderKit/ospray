@@ -33,10 +33,7 @@ struct MicrofacetDielectric
 
 // Single-scattering lobe
 inline BSDF_EvalRes MicrofacetDielectric_evalSingle(
-    const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &)
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   const varying MicrofacetDielectric *uniform self =
       (const varying MicrofacetDielectric *uniform)super;
@@ -98,10 +95,8 @@ inline BSDF_EvalRes MicrofacetDielectric_evalSingle(
   return res;
 }
 
-inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &ffh)
+inline BSDF_EvalRes MicrofacetDielectric_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   const varying MicrofacetDielectric *uniform self =
       (const varying MicrofacetDielectric *uniform)super;
@@ -139,7 +134,7 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF *uniform super,
   }
 
   // Evaluate the single-scattering lobe
-  BSDF_EvalRes single = MicrofacetDielectric_evalSingle(super, wo, wi, ffh);
+  BSDF_EvalRes single = MicrofacetDielectric_evalSingle(super, wo, wi);
 
   // Compute the final result
   float singlePickProb = Eo;
@@ -152,8 +147,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss,
-    const uniform FeatureFlagsHandler &ffh)
+    float ss)
 {
   const varying MicrofacetDielectric *uniform self =
       (const varying MicrofacetDielectric *uniform)super;
@@ -242,7 +236,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(
   }
 
   // Evaluate the single-scattering lobe
-  BSDF_EvalRes single = MicrofacetDielectric_evalSingle(super, wo, res.wi, ffh);
+  BSDF_EvalRes single = MicrofacetDielectric_evalSingle(super, wo, res.wi);
 
   // Compute the final result
   res.pdf = singlePickProb * single.pdf + (1.f - singlePickProb) * fms.pdf;
@@ -262,13 +256,6 @@ inline void MicrofacetDielectric_Constructor(
       make_vec3f(0.9f), // TODO better estimate
       BSDF_GLOSSY | BSDF_DIFFUSE,
       BSDF_TYPE_MICROFACET_DIELECTRIC,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      MicrofacetDielectric_eval,
-      MicrofacetDielectric_sample,
-#endif
       frame);
 
   self->eta = eta;

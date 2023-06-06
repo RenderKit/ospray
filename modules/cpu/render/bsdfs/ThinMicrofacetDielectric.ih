@@ -20,9 +20,10 @@ struct ThinMicrofacetDielectric
   BSDF super;
 
   float eta;
+  vec3f attenuation;
+
   GGXDistribution microfacet;
   float roughness;
-  vec3f attenuation;
   const MicrofacetAlbedoTables *uniform microfacetAlbedoTables;
 
   // Energy compensation [Kulla and Conty, 2017]
@@ -31,10 +32,7 @@ struct ThinMicrofacetDielectric
 };
 
 inline BSDF_EvalRes ThinMicrofacetDielectric_eval(
-    const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &)
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   const varying ThinMicrofacetDielectric *uniform self =
       (const varying ThinMicrofacetDielectric *uniform)super;
@@ -89,8 +87,7 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss,
-    const uniform FeatureFlagsHandler &)
+    float ss)
 {
   const varying ThinMicrofacetDielectric *uniform self =
       (const varying ThinMicrofacetDielectric *uniform)super;
@@ -170,13 +167,6 @@ inline void ThinMicrofacetDielectric_Constructor(
       expf(attenuation),
       BSDF_GLOSSY_REFLECTION | BSDF_SPECULAR_TRANSMISSION,
       BSDF_TYPE_THIN_MICROFACET_DIELECTRIC,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      ThinMicrofacetDielectric_eval,
-      ThinMicrofacetDielectric_sample,
-#endif
       frame);
 
   self->eta = eta;

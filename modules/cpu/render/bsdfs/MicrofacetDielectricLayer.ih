@@ -22,10 +22,12 @@ struct MicrofacetDielectricLayer
 {
   BSDF super;
 
-  varying BSDF *varying substrate;
+  float weight;
+
   float eta;
   vec3f transmittance;
   float thickness;
+
   GGXDistribution microfacet;
   float roughness;
   const MicrofacetAlbedoTables *uniform microfacetAlbedoTables;
@@ -34,293 +36,7 @@ struct MicrofacetDielectricLayer
   float Ravg;
   float Eavg;
   float fmsScale;
-
-  float weight;
 };
-
-inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
-    const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &ffh)
-{
-  const varying MicrofacetDielectricLayer *uniform self =
-      (const varying MicrofacetDielectricLayer *uniform)super;
-
-  float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.f)
-    return make_BSDF_EvalRes_zero();
-  float cosThetaI = dot(wi, getN(super));
-
-  // Evaluate the substrate
-  // Ignore refraction
-  BSDF_EvalRes substrate;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    const BSDF *f = self->substrate;
-#else
-  foreach_unique (f in self->substrate) {
-#endif
-    // Because of how the dispatches are unrolled to hide the potential
-    // recursion (that we know will terminate) from the SYCL compiler we have
-    // to call MultiBSDF directly here if we have a layer over a MultiBSDF
-    if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-      substrate = MultiBSDF_eval(f, wo, wi, ffh); // f->eval(f, wo, wi);
-    } else {
-      substrate =
-          BSDF_dispatch_eval_base(f, wo, wi, ffh); // f->eval(f, wo, wi);
-    }
-  }
-
-  // Apply the coating medium absorption
-  // Use refracted angles for computing the absorption path length
-  float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
-  float lengthI1 = rcp(refract(abs(cosThetaI), self->eta)); // rcp(cosThetaI1)
-  float length = lengthO1 + lengthI1;
-  if (cosThetaI <= 0.f)
-    length *= 0.5f; // for transmission, use the average length
-  substrate.value = lerp(self->weight,
-      substrate.value,
-      substrate.value * pow(self->transmittance, self->thickness * length));
-
-  // Energy conservation
-  float Eo = MicrofacetAlbedoTable_eval(
-      self->microfacetAlbedoTables, cosThetaO, self->roughness);
-  float Ei = MicrofacetAlbedoTable_eval(
-      self->microfacetAlbedoTables, abs(cosThetaI), self->roughness);
-  float Ro =
-      (MicrofacetDielectricReflectionAlbedoTable_eval(
-           self->microfacetAlbedoTables, cosThetaO, self->eta, self->roughness)
-          + self->fmsScale * (1.f - Eo))
-      * self->weight; // add missing energy
-  float Ri = (MicrofacetDielectricReflectionAlbedoTable_eval(
-                  self->microfacetAlbedoTables,
-                  abs(cosThetaI),
-                  self->eta,
-                  self->roughness)
-                 + self->fmsScale * (1.f - Ei))
-      * self->weight; // add missing energy
-  float T;
-  if (self->substrate->scatteringType & ~BSDF_DIFFUSE)
-    T = min(1.f - Ro, 1.f - Ri); // for generic (non-diffuse) substrates [Kulla
-                                 // and Conty, 2017]
-  else
-    T = (1.f - Ro) * (1.f - Ri)
-        * rcp(1.f - self->Ravg); // for diffuse substrates [Kelemen and
-                                 // Szirmay-Kalos, 2001]
-  substrate.value = substrate.value * T;
-
-  float coatPickProb = Ro;
-  float substratePickProb = 1.f - coatPickProb;
-
-  if (cosThetaI > 0.f) {
-    // Compute the microfacet normal
-    vec3f wh = normalize(wo + wi);
-    float cosThetaOH = dot(wo, wh);
-
-    // Fresnel term
-    float F = fresnelDielectric(cosThetaOH, self->eta) * self->weight;
-
-    // Evaluate the coating reflection
-    float cosThetaIH = dot(wi, wh);
-
-    linear3f toLocal = transposed(getFrame(super));
-    vec3f wo0 = toLocal * wo;
-    vec3f wi0 = toLocal * wi;
-    vec3f wh0 = toLocal * wh;
-
-    float whPdf;
-    float D = evalVisible(self->microfacet, wh0, wo0, cosThetaOH, whPdf);
-    float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
-
-    // Energy compensation
-    float fms = self->fmsScale
-        * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
-            * cosThetaI);
-
-    BSDF_EvalRes coat;
-    coat.pdf = whPdf * rcp(4.f * cosThetaOH);
-    coat.value = make_vec3f(F * D * G * rcp(4.f * cosThetaO) + fms);
-
-    // Compute the total reflection
-    BSDF_EvalRes res;
-    res.pdf = coatPickProb * coat.pdf + substratePickProb * substrate.pdf;
-    res.value = coat.value + substrate.value;
-    return res;
-  } else {
-    // Return the substrate transmission
-    substrate.pdf *= substratePickProb;
-    return substrate;
-  }
-}
-
-inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
-    const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec2f &s,
-    float ss,
-    const uniform FeatureFlagsHandler &ffh)
-{
-  const varying MicrofacetDielectricLayer *uniform self =
-      (const varying MicrofacetDielectricLayer *uniform)super;
-  BSDF_SampleRes res;
-
-  float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.f)
-    return make_BSDF_SampleRes_zero();
-
-  linear3f toGlobal = getFrame(super);
-  linear3f toLocal = transposed(getFrame(super));
-  vec3f wo0 = toLocal * wo;
-
-  // Energy conservation
-  float Eo = MicrofacetAlbedoTable_eval(
-      self->microfacetAlbedoTables, cosThetaO, self->roughness);
-  float Ro =
-      MicrofacetDielectricReflectionAlbedoTable_eval(
-          self->microfacetAlbedoTables, cosThetaO, self->eta, self->roughness)
-      + self->fmsScale * (1.f - Eo) * self->weight; // add missing energy
-
-  // Sample the coating or the substrate
-  vec3f wh;
-  BSDF_EvalRes substrate;
-
-  float coatPickProb = Ro;
-  float substratePickProb = 1.f - coatPickProb;
-
-  if (ss < coatPickProb) {
-    // Sample the microfacet normal
-    float whPdf;
-    wh = toGlobal * sampleVisible(self->microfacet, wo0, whPdf, s);
-    float cosThetaOH = dot(wo, wh);
-
-    res.type = BSDF_GLOSSY_REFLECTION;
-    res.wi = reflect(wo, wh, cosThetaOH);
-
-    // Evaluate the substrate
-    // Ignore refraction
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const BSDF *f = self->substrate;
-#else
-    foreach_unique (f in self->substrate) {
-#endif
-      // Because of how the dispatches are unrolled to hide the potential
-      // recursion (that we know will terminate) from the SYCL compiler we have
-      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
-      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        substrate = MultiBSDF_eval(f, wo, res.wi, ffh); // f->eval(f, wo, wi);
-      } else {
-        substrate =
-            BSDF_dispatch_eval_base(f, wo, res.wi, ffh); // f->eval(f, wo, wi);
-      }
-    }
-  } else {
-    // Sample the substrate
-    // Ignore refraction
-    float ss1 =
-        (ss - coatPickProb) * rcp(substratePickProb); // reallocate sample
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const BSDF *f = self->substrate;
-#else
-    foreach_unique (f in self->substrate) {
-#endif
-      // Because of how the dispatches are unrolled to hide the potential
-      // recursion (that we know will terminate) from the SYCL compiler we have
-      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
-      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        res = MultiBSDF_sample(f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
-      } else {
-        res = BSDF_dispatch_sample_base(
-            f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
-      }
-    }
-    if (reduce_max(res.weight) <= 0.f)
-      return res;
-    substrate.pdf = res.pdf;
-    substrate.value = res.weight
-        * ((res.type & BSDF_SPECULAR)
-                ? 1.f
-                : res.pdf); // correctly handle delta distributions
-
-    // Compute the microfacet normal
-    wh = normalize(wo + res.wi);
-  }
-
-  float cosThetaI = dot(res.wi, getN(super));
-  float cosThetaOH = dot(wo, wh);
-
-  // Apply the coating medium absorption
-  // Use refracted angles for computing the absorption path length
-  float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
-  float lengthI1 = rcp(refract(abs(cosThetaI), self->eta)); // rcp(cosThetaI1)
-  float length = lengthO1 + lengthI1;
-  if (cosThetaI <= 0.f)
-    length *= 0.5f; // for transmission, use the average length
-  substrate.value = lerp(self->weight,
-      substrate.value,
-      substrate.value * pow(self->transmittance, self->thickness * length));
-
-  // Energy conservation
-  float Ei = MicrofacetAlbedoTable_eval(
-      self->microfacetAlbedoTables, abs(cosThetaI), self->roughness);
-  float Ri = (MicrofacetDielectricReflectionAlbedoTable_eval(
-                  self->microfacetAlbedoTables,
-                  abs(cosThetaI),
-                  self->eta,
-                  self->roughness)
-                 + self->fmsScale * (1.f - Ei))
-      * self->weight; // add missing energy
-  float T;
-  if (self->substrate->scatteringType & ~BSDF_DIFFUSE)
-    T = min(1.f - Ro, 1.f - Ri); // for generic (non-diffuse) substrates [Kulla
-                                 // and Conty, 2017]
-  else
-    T = (1.f - Ro) * (1.f - Ri)
-        * rcp(1.f - self->Ravg); // for diffuse substrates [Kelemen and
-                                 // Szirmay-Kalos, 2001]
-  substrate.value = substrate.value * T;
-
-  if (res.type & BSDF_SPECULAR) {
-    // If we sampled a delta distribution, we don't have to evaluate the coating
-    // reflection (see MultiBSDF_sample)
-    res.weight = substrate.value * rcp(substratePickProb);
-    return res;
-  } else if (cosThetaI <= 0.f) {
-    // If we sampled transmission, we just have to return the substrate
-    // transmission
-    res.pdf = substratePickProb * substrate.pdf;
-    res.weight = substrate.value * rcp(res.pdf);
-    return res;
-  } else {
-    // Fresnel term
-    float F = fresnelDielectric(cosThetaOH, self->eta) * self->weight;
-
-    // Evaluate the coating reflection
-    float cosThetaIH = dot(res.wi, wh);
-    vec3f wi0 = toLocal * res.wi;
-    vec3f wh0 = toLocal * wh;
-
-    float whPdf;
-    float D = evalVisible(self->microfacet, wh0, wo0, cosThetaOH, whPdf);
-    float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
-
-    // Energy compensation
-    float fms = self->fmsScale
-        * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
-            * cosThetaI);
-
-    BSDF_EvalRes coat;
-    coat.pdf = whPdf * rcp(4.f * cosThetaOH);
-    coat.value = make_vec3f(F * D * G * rcp(4.f * cosThetaO) + fms);
-
-    // Compute the total reflection
-    res.pdf = coatPickProb * coat.pdf + substratePickProb * substrate.pdf;
-    res.weight = (coat.value + substrate.value) * rcp(res.pdf);
-    return res;
-  }
-}
 
 inline void MicrofacetDielectricLayer_Constructor(
     varying MicrofacetDielectricLayer *uniform self,
@@ -350,16 +66,8 @@ inline void MicrofacetDielectricLayer_Constructor(
       albedo,
       BSDF_GLOSSY_REFLECTION | substrate->scatteringType,
       BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      MicrofacetDielectricLayer_eval,
-      MicrofacetDielectricLayer_sample,
-#endif
       frame);
 
-  self->substrate = substrate;
   self->eta = (eta <= 1.f) ? eta : rcp(eta);
   self->transmittance = transmittance;
   self->thickness = thickness;
@@ -436,3 +144,239 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
+
+// Eval macros
+
+#define MICROFACETDIELECTRICLAYER_EVAL(                                        \
+    mdl_name, scatteringType, substrate_bsdf, substrate_fn)                    \
+  const varying MicrofacetDielectricLayer *uniform mdl =                       \
+      (const varying MicrofacetDielectricLayer *uniform) & mdl_name;           \
+                                                                               \
+  float cosThetaO = dot(wo, getN(&mdl->super));                                \
+  if (cosThetaO <= 0.f)                                                        \
+    return make_BSDF_EvalRes_zero();                                           \
+  float cosThetaI = dot(wi, getN(&mdl->super));                                \
+                                                                               \
+  /* Evaluate the substrate */                                                 \
+  /* Ignore refraction */                                                      \
+  BSDF_EvalRes substrate = substrate_fn(substrate_bsdf, wo, wi);               \
+                                                                               \
+  /* Apply the coating medium absorption */                                    \
+  /* Use refracted angles for computing the absorption path length */          \
+  float lengthO1 = rcp(refract(cosThetaO, mdl->eta)); /* rcp(cosThetaO1) */    \
+  float lengthI1 =                                                             \
+      rcp(refract(abs(cosThetaI), mdl->eta)); /* rcp(cosThetaI1) */            \
+  float length = lengthO1 + lengthI1;                                          \
+  if (cosThetaI <= 0.f)                                                        \
+    length *= 0.5f; /* for transmission, use the average length */             \
+  substrate.value = lerp(mdl->weight,                                          \
+      substrate.value,                                                         \
+      substrate.value * pow(mdl->transmittance, mdl->thickness * length));     \
+                                                                               \
+  /* Energy conservation */                                                    \
+  float Eo = MicrofacetAlbedoTable_eval(                                       \
+      mdl->microfacetAlbedoTables, cosThetaO, mdl->roughness);                 \
+  float Ei = MicrofacetAlbedoTable_eval(                                       \
+      mdl->microfacetAlbedoTables, abs(cosThetaI), mdl->roughness);            \
+  float Ro =                                                                   \
+      (MicrofacetDielectricReflectionAlbedoTable_eval(                         \
+           mdl->microfacetAlbedoTables, cosThetaO, mdl->eta, mdl->roughness)   \
+          + mdl->fmsScale * (1.f - Eo))                                        \
+      * mdl->weight; /* add missing energy */                                  \
+  float Ri = (MicrofacetDielectricReflectionAlbedoTable_eval(                  \
+                  mdl->microfacetAlbedoTables,                                 \
+                  abs(cosThetaI),                                              \
+                  mdl->eta,                                                    \
+                  mdl->roughness)                                              \
+                 + mdl->fmsScale * (1.f - Ei))                                 \
+      * mdl->weight; /* add missing energy */                                  \
+  float T;                                                                     \
+  if (scatteringType & ~BSDF_DIFFUSE)                                          \
+    T = min(1.f - Ro, 1.f - Ri); /* for generic (non-diffuse) substrates       \
+                                    [Kulla and Conty, 2017] */                 \
+  else                                                                         \
+    T = (1.f - Ro) * (1.f - Ri)                                                \
+        * rcp(1.f - mdl->Ravg); /* for diffuse substrates [Kelemen and         \
+                                    Szirmay-Kalos, 2001] */                    \
+  substrate.value = substrate.value * T;                                       \
+                                                                               \
+  float coatPickProb = Ro;                                                     \
+  float substratePickProb = 1.f - coatPickProb;                                \
+                                                                               \
+  if (cosThetaI > 0.f) {                                                       \
+    /* Compute the microfacet normal */                                        \
+    vec3f wh = normalize(wo + wi);                                             \
+    float cosThetaOH = dot(wo, wh);                                            \
+                                                                               \
+    /* Fresnel term */                                                         \
+    float F = fresnelDielectric(cosThetaOH, mdl->eta) * mdl->weight;           \
+                                                                               \
+    /* Evaluate the coating reflection */                                      \
+    float cosThetaIH = dot(wi, wh);                                            \
+                                                                               \
+    linear3f toLocal = transposed(getFrame(&mdl->super));                      \
+    vec3f wo0 = toLocal * wo;                                                  \
+    vec3f wi0 = toLocal * wi;                                                  \
+    vec3f wh0 = toLocal * wh;                                                  \
+                                                                               \
+    float whPdf;                                                               \
+    float D = evalVisible(mdl->microfacet, wh0, wo0, cosThetaOH, whPdf);       \
+    float G = evalG2(mdl->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);       \
+                                                                               \
+    /* Energy compensation */                                                  \
+    float fms = mdl->fmsScale                                                  \
+        * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - mdl->Eavg))        \
+            * cosThetaI);                                                      \
+                                                                               \
+    BSDF_EvalRes coat;                                                         \
+    coat.pdf = whPdf * rcp(4.f * cosThetaOH);                                  \
+    coat.value = make_vec3f(F * D * G * rcp(4.f * cosThetaO) + fms);           \
+                                                                               \
+    /* Compute the total reflection */                                         \
+    substrate.pdf =                                                            \
+        coatPickProb * coat.pdf + substratePickProb * substrate.pdf;           \
+    substrate.value = coat.value + substrate.value;                            \
+  } else {                                                                     \
+    /* Return the substrate transmission */                                    \
+    substrate.pdf *= substratePickProb;                                        \
+  }
+
+#define MICROFACETDIELECTRICLAYER_EVAL_GET() substrate
+
+// Sample macros
+
+#define MICROFACETDIELECTRICLAYER_SAMPLE(mdl_name,                             \
+    scatteringType,                                                            \
+    substrate_bsdf,                                                            \
+    substrate_eval,                                                            \
+    substrate_sample)                                                          \
+  const varying MicrofacetDielectricLayer *uniform mdl =                       \
+      (const varying MicrofacetDielectricLayer *uniform) & mdl_name;           \
+  BSDF_SampleRes res;                                                          \
+                                                                               \
+  float cosThetaO = dot(wo, getN(&mdl->super));                                \
+  if (cosThetaO <= 0.f)                                                        \
+    return make_BSDF_SampleRes_zero();                                         \
+                                                                               \
+  linear3f toGlobal = getFrame(&mdl->super);                                   \
+  linear3f toLocal = transposed(getFrame(&mdl->super));                        \
+  vec3f wo0 = toLocal * wo;                                                    \
+                                                                               \
+  /* Energy conservation */                                                    \
+  float Eo = MicrofacetAlbedoTable_eval(                                       \
+      mdl->microfacetAlbedoTables, cosThetaO, mdl->roughness);                 \
+  float Ro =                                                                   \
+      MicrofacetDielectricReflectionAlbedoTable_eval(                          \
+          mdl->microfacetAlbedoTables, cosThetaO, mdl->eta, mdl->roughness)    \
+      + mdl->fmsScale * (1.f - Eo) * mdl->weight; /* add missing energy */     \
+                                                                               \
+  /* Sample the coating or the substrate */                                    \
+  vec3f wh;                                                                    \
+  BSDF_EvalRes substrate;                                                      \
+                                                                               \
+  float coatPickProb = Ro;                                                     \
+  float substratePickProb = 1.f - coatPickProb;                                \
+                                                                               \
+  if (ss < coatPickProb) {                                                     \
+    /* Sample the microfacet normal */                                         \
+    float whPdf;                                                               \
+    wh = toGlobal * sampleVisible(mdl->microfacet, wo0, whPdf, s);             \
+    float cosThetaOH = dot(wo, wh);                                            \
+                                                                               \
+    res.type = BSDF_GLOSSY_REFLECTION;                                         \
+    res.wi = reflect(wo, wh, cosThetaOH);                                      \
+                                                                               \
+    /* Evaluate the substrate */                                               \
+    /* Ignore refraction */                                                    \
+    substrate = substrate_eval(substrate_bsdf, wo, res.wi);                    \
+  } else {                                                                     \
+    /* Sample the substrate */                                                 \
+    /* Ignore refraction */                                                    \
+    float ss1 =                                                                \
+        (ss - coatPickProb) * rcp(substratePickProb); /* reallocate sample */  \
+    res = substrate_sample(substrate_bsdf, wo, s, ss1);                        \
+    if (reduce_max(res.weight) <= 0.f)                                         \
+      return res;                                                              \
+                                                                               \
+    substrate.pdf = res.pdf;                                                   \
+    substrate.value = res.weight                                               \
+        * ((res.type & BSDF_SPECULAR)                                          \
+                ? 1.f                                                          \
+                : res.pdf); /* correctly handle delta distributions */         \
+                                                                               \
+    /* Compute the microfacet normal */                                        \
+    wh = normalize(wo + res.wi);                                               \
+  }                                                                            \
+                                                                               \
+  float cosThetaI = dot(res.wi, getN(&mdl->super));                            \
+  float cosThetaOH = dot(wo, wh);                                              \
+                                                                               \
+  /* Apply the coating medium absorption */                                    \
+  /* Use refracted angles for computing the absorption path length */          \
+  float lengthO1 = rcp(refract(cosThetaO, mdl->eta)); /* rcp(cosThetaO1) */    \
+  float lengthI1 =                                                             \
+      rcp(refract(abs(cosThetaI), mdl->eta)); /* rcp(cosThetaI1) */            \
+  float length = lengthO1 + lengthI1;                                          \
+  if (cosThetaI <= 0.f)                                                        \
+    length *= 0.5f; /* for transmission, use the average length */             \
+  substrate.value = lerp(mdl->weight,                                          \
+      substrate.value,                                                         \
+      substrate.value * pow(mdl->transmittance, mdl->thickness * length));     \
+                                                                               \
+  /* Energy conservation */                                                    \
+  float Ei = MicrofacetAlbedoTable_eval(                                       \
+      mdl->microfacetAlbedoTables, abs(cosThetaI), mdl->roughness);            \
+  float Ri = (MicrofacetDielectricReflectionAlbedoTable_eval(                  \
+                  mdl->microfacetAlbedoTables,                                 \
+                  abs(cosThetaI),                                              \
+                  mdl->eta,                                                    \
+                  mdl->roughness)                                              \
+                 + mdl->fmsScale * (1.f - Ei))                                 \
+      * mdl->weight; /* add missing energy */                                  \
+  float T;                                                                     \
+  if (scatteringType & ~BSDF_DIFFUSE)                                          \
+    T = min(1.f - Ro, 1.f - Ri); /* for generic (non-diffuse) substrates       \
+                                    [Kulla and Conty, 2017] */                 \
+  else                                                                         \
+    T = (1.f - Ro) * (1.f - Ri)                                                \
+        * rcp(1.f - mdl->Ravg); /* for diffuse substrates [Kelemen and         \
+                                    Szirmay-Kalos, 2001] */                    \
+  substrate.value = substrate.value * T;                                       \
+                                                                               \
+  if (res.type & BSDF_SPECULAR) {                                              \
+    /* If we sampled a delta distribution, we don't have to evaluate the       \
+     * coating reflection (see MultiBSDF_sample) */                            \
+    res.weight = substrate.value * rcp(substratePickProb);                     \
+  } else if (cosThetaI <= 0.f) {                                               \
+    /* If we sampled transmission, we just have to return the substrate        \
+     * transmission */                                                         \
+    res.pdf = substratePickProb * substrate.pdf;                               \
+    res.weight = substrate.value * rcp(res.pdf);                               \
+  } else {                                                                     \
+    /* Fresnel term */                                                         \
+    float F = fresnelDielectric(cosThetaOH, mdl->eta) * mdl->weight;           \
+                                                                               \
+    /* Evaluate the coating reflection */                                      \
+    float cosThetaIH = dot(res.wi, wh);                                        \
+    vec3f wi0 = toLocal * res.wi;                                              \
+    vec3f wh0 = toLocal * wh;                                                  \
+                                                                               \
+    float whPdf;                                                               \
+    float D = evalVisible(mdl->microfacet, wh0, wo0, cosThetaOH, whPdf);       \
+    float G = evalG2(mdl->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);       \
+                                                                               \
+    /* Energy compensation */                                                  \
+    float fms = mdl->fmsScale                                                  \
+        * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - mdl->Eavg))        \
+            * cosThetaI);                                                      \
+                                                                               \
+    BSDF_EvalRes coat;                                                         \
+    coat.pdf = whPdf * rcp(4.f * cosThetaOH);                                  \
+    coat.value = make_vec3f(F * D * G * rcp(4.f * cosThetaO) + fms);           \
+                                                                               \
+    /* Compute the total reflection */                                         \
+    res.pdf = coatPickProb * coat.pdf + substratePickProb * substrate.pdf;     \
+    res.weight = (coat.value + substrate.value) * rcp(res.pdf);                \
+  }
+
+#define MICROFACETDIELECTRICLAYER_SAMPLE_GET() res

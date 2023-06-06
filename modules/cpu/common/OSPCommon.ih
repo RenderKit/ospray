@@ -5,6 +5,7 @@
 
 #ifdef OSPRAY_TARGET_SYCL
 #include <sycl/sycl.hpp>
+
 #define __noinline __attribute__((noinline))
 
 namespace ispc {
@@ -78,6 +79,8 @@ void PRINT3(const rkcommon::math::vec3f &x)
 #endif
 */
 #else
+
+#define __noinline
 
 #define LOG(x)
 

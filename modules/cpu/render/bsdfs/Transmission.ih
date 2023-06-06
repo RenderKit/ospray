@@ -8,19 +8,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline BSDF_EvalRes Transmission_eval(const varying BSDF *uniform,
-    const vec3f &,
-    const vec3f &,
-    const uniform FeatureFlagsHandler &)
-{
-  return make_BSDF_EvalRes_zero();
-}
-
-inline BSDF_SampleRes Transmission_sample(const varying BSDF *uniform self,
-    const vec3f &wo,
-    const vec2f &,
-    float,
-    const uniform FeatureFlagsHandler &)
+inline BSDF_SampleRes Transmission_sample(
+    const varying BSDF *uniform self, const vec3f &wo, const vec2f &, float)
 {
   BSDF_SampleRes res;
 
@@ -31,6 +20,13 @@ inline BSDF_SampleRes Transmission_sample(const varying BSDF *uniform self,
   return res;
 }
 
+inline void Transmission_Constructor(
+    varying BSDF *uniform self, const varying linear3f *uniform frame, vec3f T)
+{
+  BSDF_Constructor(
+      self, T, BSDF_SPECULAR_TRANSMISSION, BSDF_TYPE_TRANSMISSION, frame);
+}
+
 inline varying BSDF *uniform Transmission_create(
     uniform ShadingContext *uniform ctx,
     const varying linear3f *uniform frame,
@@ -38,18 +34,7 @@ inline varying BSDF *uniform Transmission_create(
 {
   varying BSDF *uniform self =
       (varying BSDF * uniform) ShadingContext_alloc(ctx, sizeof(BSDF));
-  BSDF_Constructor(self,
-      T,
-      BSDF_SPECULAR_TRANSMISSION,
-      BSDF_TYPE_TRANSMISSION,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      Transmission_eval,
-      Transmission_sample,
-#endif
-      frame);
+  Transmission_Constructor(self, frame, T);
   return self;
 }
 

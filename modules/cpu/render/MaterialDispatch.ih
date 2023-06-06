@@ -9,10 +9,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// Note: Can't remove these `__noinline` because it causes artifiacts
-// in 'ThinGlass' material on ci-comp_igc-19476 driver
-
-SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
+SYCL_EXTERNAL __noinline const varying BSDF *uniform Material_dispatch_getBSDF(
     const uniform Material *uniform self,
     uniform ShadingContext *uniform ctx,
     // The point to shade on a surface.

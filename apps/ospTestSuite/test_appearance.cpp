@@ -441,13 +441,23 @@ INSTANTIATE_TEST_SUITE_P(MaterialLists,
 
 INSTANTIATE_TEST_SUITE_P(TestScenesPtMaterials,
     FromOsprayTesting,
-    ::testing::Combine(::testing::Values("test_pt_glass",
+    ::testing::Combine(::testing::Values("test_pt_alloy_roughness",
+                           "test_pt_carpaint",
+                           "test_pt_glass",
+                           "test_pt_thinglass",
                            "test_pt_luminous",
                            "test_pt_metal_roughness",
                            "test_pt_metallic_flakes",
-                           "test_pt_obj"),
+                           "test_pt_obj",
+                           "test_pt_plastic",
+                           "test_pt_principled_metal",
+                           "test_pt_principled_plastic",
+                           "test_pt_principled_glass",
+                           "test_pt_tex_material",
+                           "test_pt_tex_mix",
+                           "test_pt_velvet"),
         ::testing::Values("pathtracer"),
-        ::testing::Values(16)));
+        ::testing::Values(64)));
 
 TEST_P(Texture2D, filter)
 {

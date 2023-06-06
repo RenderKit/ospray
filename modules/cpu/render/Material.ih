@@ -92,7 +92,8 @@ SYCL_EXTERNAL vec3f Material_getTransparency(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL void Material_selectNextMedium(
     const uniform Material *uniform self,

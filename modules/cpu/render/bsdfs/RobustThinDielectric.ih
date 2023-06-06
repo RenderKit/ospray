@@ -16,20 +16,8 @@ struct RobustThinDielectric
   vec3f attenuation;
 };
 
-inline BSDF_EvalRes RobustThinDielectric_eval(const varying BSDF *uniform,
-    const vec3f &,
-    const vec3f &,
-    const uniform FeatureFlagsHandler &)
-{
-  return make_BSDF_EvalRes_zero();
-}
-
 inline BSDF_SampleRes RobustThinDielectric_sample(
-    const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec2f &,
-    float ss,
-    const uniform FeatureFlagsHandler &)
+    const varying BSDF *uniform super, const vec3f &wo, const vec2f &, float ss)
 {
   const varying RobustThinDielectric *uniform self =
       (const varying RobustThinDielectric *uniform)super;
@@ -84,13 +72,6 @@ inline void RobustThinDielectric_Constructor(
       expf(attenuation),
       BSDF_SPECULAR,
       BSDF_TYPE_ROBUST_THIN_DIELECTRIC,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      RobustThinDielectric_eval,
-      RobustThinDielectric_sample,
-#endif
       frame);
   self->eta = eta;
   self->attenuation = attenuation;

@@ -3,18 +3,18 @@
 #pragma once
 
 #include "common/FeatureFlags.ih"
+#include "render/bsdfs/BSDF.ih"
 #include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-struct BSDF;
 struct Material;
 struct ShadingContext;
 struct DifferentialGeometry;
 struct Ray;
 struct Medium;
 
-SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
+SYCL_EXTERNAL const varying BSDF *uniform OBJ_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -27,5 +27,13 @@ SYCL_EXTERNAL vec3f OBJ_getTransparency(const uniform Material *uniform super,
     const Ray &ray,
     const Medium &currentMedium,
     const uniform FeatureFlagsHandler &ffh);
+
+SYCL_EXTERNAL BSDF_EvalRes OBJ_BSDF_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi);
+
+SYCL_EXTERNAL BSDF_SampleRes OBJ_BSDF_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss);
 
 OSPRAY_END_ISPC_NAMESPACE

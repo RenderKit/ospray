@@ -6,12 +6,7 @@
 #include "common/FeatureFlags.ih"
 #include "common/OSPCommon.ih"
 #include "render/pathtracer/Scattering.ih"
-
-#include "rkcommon/math/vec.ih"
-// utilities used by (almost all) implementations
-#include "Optics.ih"
-#include "math/random.ih"
-#include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -37,10 +32,22 @@ typedef Scattering_Type BSDFScatteringType;
 
 enum BSDFType
 {
-  // TODO: It seems like MultiBSDF works by having a uniform BSDF memory
-  // but then just relying on some threads BSDF memory being null to handle
-  // masking!?
-  BSDF_TYPE_REALLY_UNKNOWN,
+  BSDF_TYPE_UNKNOWN,
+  BSDF_TYPE_OBJ,
+  BSDF_TYPE_THINGLASS,
+  BSDF_TYPE_GLASS,
+  BSDF_TYPE_LUMINOUS,
+  BSDF_TYPE_METAL,
+  BSDF_TYPE_METAL_ROUGH,
+  BSDF_TYPE_METALLICPAINT,
+  BSDF_TYPE_MIX,
+  BSDF_TYPE_CARPAINT,
+  BSDF_TYPE_PRINCIPLED,
+  BSDF_TYPE_ALLOY,
+  BSDF_TYPE_ALLOY_ROUGH,
+  BSDF_TYPE_PLASTIC,
+  BSDF_TYPE_VELVET,
+
   BSDF_TYPE_CONDUCTOR,
   BSDF_TYPE_DIELECTRIC,
   BSDF_TYPE_DIELECTRIC_LAYER,
@@ -61,11 +68,8 @@ enum BSDFType
   BSDF_TYPE_THIN_DIELECTRIC,
   BSDF_TYPE_THIN_MICROFACET_DIELECTRIC,
   BSDF_TYPE_TRANSMISSION,
-  BSDF_TYPE_VELVETY,
-  BSDF_TYPE_UNKNOWN,
+  BSDF_TYPE_VELVETY
 };
-
-struct BSDF;
 
 inline BSDF_EvalRes make_BSDF_EvalRes_zero()
 {
@@ -82,26 +86,11 @@ inline BSDF_SampleRes make_BSDF_SampleRes_zero()
   return res;
 }
 
-typedef BSDF_EvalRes (*BSDF_EvalFunc)(const varying BSDF *uniform self,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &ffh);
-
-typedef BSDF_SampleRes (*BSDF_SampleFunc)(const varying BSDF *uniform self,
-    const vec3f &wo,
-    const vec2f &s,
-    float ss,
-    const uniform FeatureFlagsHandler &ffh);
-
 struct BSDF
 {
   varying vec3f albedo;
   varying BSDFScatteringType scatteringType;
   uniform BSDFType bsdfType;
-  // TODO: We probably want to remove these to reduce the size of the BSDF
-  // object
-  uniform BSDF_EvalFunc eval;
-  uniform BSDF_SampleFunc sample;
   const varying linear3f *uniform frame;
 };
 
@@ -109,15 +98,11 @@ inline void BSDF_Constructor(varying BSDF *uniform self,
     varying vec3f albedo,
     varying BSDFScatteringType scatteringType,
     uniform BSDFType bsdfType,
-    uniform BSDF_EvalFunc eval,
-    uniform BSDF_SampleFunc sample,
     const varying linear3f *uniform frame)
 {
   self->albedo = albedo;
   self->scatteringType = scatteringType;
   self->bsdfType = bsdfType;
-  self->eval = eval;
-  self->sample = sample;
   self->frame = frame;
 }
 
@@ -131,28 +116,13 @@ inline linear3f getFrame(const varying BSDF *uniform bsdf)
   return *bsdf->frame;
 }
 
-SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval(const varying BSDF *uniform self,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &ffh);
-
-SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample(
-    const varying BSDF *uniform self,
-    const vec3f &wo,
-    const vec2f &s,
-    float ss,
-    const uniform FeatureFlagsHandler &ffh);
-
-// We need to break the possible recursive call structure of a multi bsdf
-// containing multi-BSDFs, since SYCL doesn't allow recursive calls
-// TODO: Is there a flag to allow recursion in SYCL?
-SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval_base(
+SYCL_EXTERNAL __noinline BSDF_EvalRes BSDF_dispatch_eval(
     const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
     const uniform FeatureFlagsHandler &ffh);
 
-SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample_base(
+SYCL_EXTERNAL __noinline BSDF_SampleRes BSDF_dispatch_sample(
     const varying BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,

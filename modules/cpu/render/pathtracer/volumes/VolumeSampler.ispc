@@ -4,6 +4,7 @@
 
 #include "common/FeatureFlagsEnum.h"
 #include "common/World.ih"
+#include "math/random.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #include "volume/transferFunction/TransferFunctionDispatch.ih"
 

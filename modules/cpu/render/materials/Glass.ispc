@@ -1,24 +1,27 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "Glass.ih"
+
 #include "Medium.ih"
 #include "common/Ray.ih"
 #include "render/Material.ih"
 #include "render/bsdfs/RobustDielectric.ih"
-
-#include "Glass.ih"
+// c++ shared
+#include "GlassShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL const varying BSDF *varying Glass_getBSDF(
+SYCL_EXTERNAL const varying BSDF *uniform Glass_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &,
-    const Medium &currentMedium)
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &)
 {
   uniform const Glass *uniform self = (uniform const Glass *uniform)super;
 
@@ -27,6 +30,7 @@ SYCL_EXTERNAL const varying BSDF *varying Glass_getBSDF(
       : self->mediumInside.ior * rcp(self->mediumOutside.ior);
 
   varying BSDF *uniform bsdf = RobustDielectric_create(ctx, dg, eta);
+  bsdf->bsdfType = BSDF_TYPE_GLASS;
   return bsdf;
 }
 
@@ -34,7 +38,8 @@ SYCL_EXTERNAL vec3f Glass_getTransparency(
     const uniform Material *uniform material,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium)
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &)
 {
   const uniform Glass *uniform self = (const uniform Glass *uniform)material;
 
@@ -56,6 +61,15 @@ SYCL_EXTERNAL void Glass_selectNextMedium(const uniform Material *uniform super,
     currentMedium = self->mediumInside;
   else
     currentMedium = self->mediumOutside;
+}
+
+SYCL_EXTERNAL BSDF_SampleRes Glass_BSDF_sample(
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  return RobustDielectric_sample(super, wo, s, ss);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

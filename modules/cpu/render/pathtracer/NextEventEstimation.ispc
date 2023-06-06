@@ -14,6 +14,7 @@
 #include "common/World.ih"
 #include "math/Distribution1D.ih"
 #include "math/sampling.ih"
+#include "math/random.ih"
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "lights/LightDispatch.ih"

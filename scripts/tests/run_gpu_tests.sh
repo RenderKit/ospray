@@ -93,6 +93,8 @@ test_filters+=":Texcoord/Interpolation.Interpolation/2"
 test_filters+=":Texcoord/Interpolation.Interpolation/3"
 # Variance termination is not quite right
 test_filters+=":TestScenesVariance/FromOsprayTestingVariance.testScenes/0"
+# 'mix' material not supported on GPU (difficult to implement without fn ptr)
+test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/13"
 
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
 

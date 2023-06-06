@@ -17,10 +17,8 @@ struct OrenNayar
   float roughness;
 };
 
-inline BSDF_EvalRes OrenNayar_eval(const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &)
+inline BSDF_EvalRes OrenNayar_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   const varying OrenNayar *uniform self =
       (const varying OrenNayar *uniform)super;
@@ -38,16 +36,13 @@ inline BSDF_EvalRes OrenNayar_eval(const varying BSDF *uniform super,
   return res;
 }
 
-inline BSDF_SampleRes OrenNayar_sample(const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec2f &s,
-    float,
-    const uniform FeatureFlagsHandler &ffh)
+inline BSDF_SampleRes OrenNayar_sample(
+    const varying BSDF *uniform super, const vec3f &wo, const vec2f &s, float)
 {
   const vec3f localDir = cosineSampleHemisphere(s);
   BSDF_SampleRes res;
   res.wi = getFrame(super) * localDir;
-  BSDF_EvalRes eval = OrenNayar_eval(super, wo, res.wi, ffh);
+  BSDF_EvalRes eval = OrenNayar_eval(super, wo, res.wi);
   res.pdf = eval.pdf;
   res.type = BSDF_DIFFUSE_REFLECTION;
   res.weight = eval.value * rcp(eval.pdf);
@@ -59,18 +54,8 @@ inline void OrenNayar_Constructor(varying OrenNayar *uniform self,
     const vec3f &R,
     float roughness)
 {
-  BSDF_Constructor(&self->super,
-      R,
-      BSDF_DIFFUSE_REFLECTION,
-      BSDF_TYPE_OREN_NAYAR,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      OrenNayar_eval,
-      OrenNayar_sample,
-#endif
-      frame);
+  BSDF_Constructor(
+      &self->super, R, BSDF_DIFFUSE_REFLECTION, BSDF_TYPE_OREN_NAYAR, frame);
 
   self->roughness = roughness;
 }

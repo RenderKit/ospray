@@ -8,7 +8,8 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL vec3f Material_getTransparency(const uniform Material *uniform,
     const DifferentialGeometry &,
     const Ray &,
-    const Medium &)
+    const Medium &,
+    const uniform FeatureFlagsHandler &)
 {
   return make_vec3f(0.0f);
 }
