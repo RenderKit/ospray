@@ -514,7 +514,6 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
   SparseFrameBuffer *ownedTilesFb = dfb->getSparseFBLayer(0);
 
   // Note: these views are already in USM
-  const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
 
 #ifdef ENABLE_PROFILING
@@ -530,6 +529,7 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
 #ifdef ENABLE_PROFILING
   auto endRenderTasks = ProfilingPoint();
 #endif
+  const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
 
   // TODO: Now the tile setting happens as a bulk-sync operation after
   // rendering, because we still need to send them through the compositing
@@ -539,6 +539,7 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     // Don't send anything if this tile was finished due to adaptive
     // refinement
     if (dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
+      PING;
       return;
     }
     dfb->setTile(tiles[i]);

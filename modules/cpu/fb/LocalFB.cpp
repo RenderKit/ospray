@@ -1,6 +1,11 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+
 #include "LocalFB.h"
 #include "FrameOp.h"
 #include "SparseFB.h"
@@ -40,11 +45,6 @@ void LocalFrameBuffer_writeIDTile(void *uniform _fb,
     const void *uniform src);
 } // namespace ispc
 #endif
-
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-#include <numeric>
 
 namespace ospray {
 

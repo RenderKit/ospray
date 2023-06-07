@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ISPCDevice.h"
 #include "fb/FrameBuffer.h"
 #include "fb/LocalFB.h"
 #include "fb/TaskError.h"
@@ -115,17 +116,19 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   uint32_t getNumTasksPerTile() const;
 
+  api::ISPCDevice &device;
+
   // The tiles in this framebuffer
-  std::unique_ptr<BufferShared<Tile>> tiles;
+  std::unique_ptr<BufferDeviceShadowed<Tile>> tiles;
 
   // Accumulation buffer for the tile colors for accumulation buffering. The
   // rgba data in the Tiles stores the final color for display in float format,
   // while the accumulation buffer is used for progressive refinement
-  std::unique_ptr<BufferShared<vec4f>> accumulationBuffer;
+  std::unique_ptr<BufferDevice<vec4f>> accumulationBuffer;
 
   // Variance data for the image, stored in tiled order with one RGBA value per
   // pixel, accumulates every other sample, for variance estimation
-  std::unique_ptr<BufferShared<vec4f>> varianceBuffer;
+  std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
 
   // holds accumID per render task, for adaptive accumulation
   std::unique_ptr<BufferShared<int>> taskAccumID;
@@ -135,6 +138,7 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   // this is true by default when created with OSP_FB_ACCUM
   bool useTaskAccumIDs;
 
+  // Does this need to be USM at all?
   std::unique_ptr<BufferShared<uint32_t>> tileIDs;
 
   // Total number of tiles that the framebuffer is divided into, including those
@@ -148,7 +152,7 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   // holds error per task for each tile, stored in tiled order.
   // The SparseFB doesn't do its own error refinement since it doesn't have
   // access to error data for the entire framebuffer
-  std::unique_ptr<BufferShared<float>> taskErrorBuffer;
+  std::unique_ptr<BufferDeviceShadowed<float>> taskErrorBuffer;
 
   std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
   std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;
