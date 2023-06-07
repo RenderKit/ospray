@@ -218,7 +218,9 @@ void LocalFrameBuffer::clear()
     // TODO: Implement fill function in ISPCRT to do this through level-zero
     // on the device
     std::fill(taskAccumID->begin(), taskAccumID->end(), 0);
-    device.getIspcrtQueue().copyToDevice(*taskAccumID);
+    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+    tq.copyToDevice(*taskAccumID);
+    tq.sync();
   }
 
   // always also clear error buffer (if present)
@@ -349,14 +351,13 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
         });
       })
       .wait_and_throw();
-
 #endif
 }
 
 void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
 {
-  const auto tiles = sparseFb->getTilesDevice();
-  writeTiles(tiles);
+  // Write tiles operates on device memory
+  writeTiles(sparseFb->getTilesDevice());
 
   assert(getRenderTaskSize() == sparseFb->getRenderTaskSize());
   const vec2i renderTaskSize = getRenderTaskSize();
@@ -365,8 +366,10 @@ void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
     return;
   }
 
-#if 0
-  // TODO
+  // Now we do need the tile memory on the host to read the region information
+  // TODO: This information never changes between frames, so maybe we can split
+  // it out to separate the rendered tile data and this metadata?
+  const auto tiles = sparseFb->getTiles();
   uint32_t renderTaskID = 0;
   for (size_t i = 0; i < tiles.size(); ++i) {
     const auto &tile = tiles[i];
@@ -380,7 +383,6 @@ void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
       }
     }
   }
-#endif
 }
 
 vec2i LocalFrameBuffer::getTaskStartPos(const uint32_t taskID) const

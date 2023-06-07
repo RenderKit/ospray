@@ -155,7 +155,7 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   // holds error per task for each tile, stored in tiled order.
   // The SparseFB doesn't do its own error refinement since it doesn't have
   // access to error data for the entire framebuffer
-  std::unique_ptr<BufferDeviceShadowed<float>> taskErrorBuffer;
+  std::unique_ptr<BufferShared<float>> taskErrorBuffer;
 
   std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
   std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;

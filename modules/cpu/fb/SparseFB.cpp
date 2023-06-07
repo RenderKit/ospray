@@ -204,7 +204,6 @@ void SparseFrameBuffer::clear()
 {
   FrameBuffer::clear();
 
-#ifndef OSPRAY_TARGET_SYCL
   // We only need to reset the accumID, SparseFB_accumulateWriteSample will
   // handle overwriting the image when accumID == 0
   // TODO: Should be done in a kernel or with a GPU memcpy, USM thrashing
@@ -216,20 +215,6 @@ void SparseFrameBuffer::clear()
   if (taskErrorBuffer) {
     std::fill(taskErrorBuffer->begin(), taskErrorBuffer->end(), inf);
   }
-#else
-  std::vector<sycl::event> events;
-  if (taskAccumID) {
-    events.push_back(device.getSyclQueue().fill(
-        taskAccumID->data(), taskAccumID->size(), 0));
-  }
-  if (taskErrorBuffer) {
-    events.push_back(device.getSyclQueue().fill(
-        taskErrorBuffer->devicePtr(), taskErrorBuffer->size(), inf));
-  }
-  if (!events.empty()) {
-    sycl::event::wait_and_throw(events);
-  }
-#endif
 }
 
 const utility::ArrayView<Tile> SparseFrameBuffer::getTiles() const
@@ -284,15 +269,9 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
   }
 
   if (hasVarianceBuffer && !_tileIDs.empty()) {
-    taskErrorBuffer = make_buffer_device_shadowed_unique<float>(
-        getISPCDevice().getIspcrtDevice(), numRenderTasks.long_product());
-#ifndef OSPRAY_TARGET_SYCL
+    taskErrorBuffer = make_buffer_shared_unique<float>(
+        getISPCDevice().getIspcrtContext(), numRenderTasks.long_product());
     std::fill(taskErrorBuffer->begin(), taskErrorBuffer->end(), inf);
-#else
-    device.getSyclQueue()
-        .fill(taskErrorBuffer->devicePtr(), taskErrorBuffer->size(), inf)
-        .wait_and_throw();
-#endif
   } else {
     taskErrorBuffer = nullptr;
   }
