@@ -354,7 +354,7 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
 #endif
 }
 
-void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
+void LocalFrameBuffer::writeTiles(SparseFrameBuffer *sparseFb)
 {
   // Write tiles operates on device memory
   writeTiles(sparseFb->getTilesDevice());

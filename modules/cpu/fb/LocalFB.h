@@ -77,7 +77,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
    * Safe to call in parallel from multiple threads, as long as each thread is
    * writing different tiles
    */
-  void writeTiles(const SparseFrameBuffer *sparseFb);
+  void writeTiles(SparseFrameBuffer *sparseFb);
 
   // NOTE: All per-pixel data is only allocated if the corresponding channel
   //       flag was passed on construction

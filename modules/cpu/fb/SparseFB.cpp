@@ -191,6 +191,7 @@ void SparseFrameBuffer::beginFrame()
     });
 #endif
   }
+  tilesDirty = true;
 }
 
 const void *SparseFrameBuffer::mapBuffer(OSPFrameBufferChannel)
@@ -217,14 +218,17 @@ void SparseFrameBuffer::clear()
   }
 }
 
-const utility::ArrayView<Tile> SparseFrameBuffer::getTiles() const
+const utility::ArrayView<Tile> SparseFrameBuffer::getTiles()
 {
   if (!tiles) {
     return utility::ArrayView<Tile>(nullptr, 0);
   }
-  ispcrt::TaskQueue &tq = device.getIspcrtQueue();
-  tq.copyToHost(*tiles);
-  tq.sync();
+  if (tilesDirty) {
+    tilesDirty = false;
+    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+    tq.copyToHost(*tiles);
+    tq.sync();
+  }
 
   return utility::ArrayView<Tile>(tiles->data(), tiles->size());
 }

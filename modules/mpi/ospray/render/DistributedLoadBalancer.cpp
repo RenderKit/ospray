@@ -163,6 +163,8 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
 
     // Explicitly avoiding std::vector<bool> because we need to match ISPC's
     // memory layout
+    // TODO: need to separate tile count/position data on host from
+    // tile rendered data
     const utility::ArrayView<Tile> tiles = sparseFb->getTiles();
     const utility::ArrayView<uint32_t> tileIDs = sparseFb->getTileIDs();
 
@@ -446,6 +448,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       // complete
       if (!taskTileIDs.empty()) {
         sparseFb->setTiles(taskTileIDs);
+        sparseFb->beginFrame();
 
         // Set the right accumID for the tiles we're going to render
         // TODO: would be nice if there was a more efficient way to run this as
@@ -539,7 +542,6 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     // Don't send anything if this tile was finished due to adaptive
     // refinement
     if (dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
-      PING;
       return;
     }
     dfb->setTile(tiles[i]);

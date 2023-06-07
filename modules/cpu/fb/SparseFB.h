@@ -95,7 +95,7 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   void clear() override;
 
-  const utility::ArrayView<Tile> getTiles() const;
+  const utility::ArrayView<Tile> getTiles();
 
   // Get a view of the device memory of the tiles
   const utility::ArrayView<Tile> getTilesDevice() const;
@@ -123,6 +123,8 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   // The tiles in this framebuffer
   std::unique_ptr<BufferDeviceShadowed<Tile>> tiles;
+  // Track if we need to read back tiles to the host
+  bool tilesDirty = false;
 
   // Accumulation buffer for the tile colors for accumulation buffering. The
   // rgba data in the Tiles stores the final color for display in float format,
