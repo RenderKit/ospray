@@ -97,6 +97,9 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   const utility::ArrayView<Tile> getTiles() const;
 
+  // Get a view of the device memory of the tiles
+  const utility::ArrayView<Tile> getTilesDevice() const;
+
   const utility::ArrayView<uint32_t> getTileIDs() const;
 
   // Get the index of the tile in the tile ID and Tiles lists that this task

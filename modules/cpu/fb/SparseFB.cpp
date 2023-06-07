@@ -120,9 +120,9 @@ std::string SparseFrameBuffer::toString() const
 
 float SparseFrameBuffer::taskError(const uint32_t taskID) const
 {
-  PING;
-  // If this SparseFB doesn't have any tiles return 0. This should not typically
-  // be called in this case anyways
+  // PING;
+  //  If this SparseFB doesn't have any tiles return 0. This should not
+  //  typically be called in this case anyways
   if (!tiles) {
     return 0.f;
   }
@@ -137,9 +137,9 @@ float SparseFrameBuffer::taskError(const uint32_t taskID) const
 
 void SparseFrameBuffer::setTaskError(const uint32_t taskID, const float error)
 {
-  PING;
-  // If this SparseFB doesn't have any tiles then do nothing. This should not
-  // typically be called in this case anyways
+  // PING;
+  //  If this SparseFB doesn't have any tiles then do nothing. This should not
+  //  typically be called in this case anyways
   if (!tiles) {
     return;
   }
@@ -153,8 +153,8 @@ void SparseFrameBuffer::setTaskError(const uint32_t taskID, const float error)
 
 void SparseFrameBuffer::setTaskAccumID(const uint32_t taskID, const int accumID)
 {
-  PING;
-  // TODO: make device shadowed, sync over in begin frame
+  // PING;
+  //  TODO: make device shadowed, sync over in begin frame
   if (taskAccumID) {
     (*taskAccumID)[taskID] = accumID;
   } else if (tiles) {
@@ -242,6 +242,15 @@ const utility::ArrayView<Tile> SparseFrameBuffer::getTiles() const
   tq.sync();
 
   return utility::ArrayView<Tile>(tiles->data(), tiles->size());
+}
+
+const utility::ArrayView<Tile> SparseFrameBuffer::getTilesDevice() const
+{
+  if (!tiles) {
+    return utility::ArrayView<Tile>(nullptr, 0);
+  }
+
+  return utility::ArrayView<Tile>(tiles->devicePtr(), tiles->size());
 }
 
 const utility::ArrayView<uint32_t> SparseFrameBuffer::getTileIDs() const

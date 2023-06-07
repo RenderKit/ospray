@@ -6,8 +6,8 @@
 #include <iterator>
 #include <numeric>
 
-#include "LocalFB.h"
 #include "FrameOp.h"
+#include "LocalFB.h"
 #include "SparseFB.h"
 #include "fb/FrameBufferView.h"
 #include "render/util.h"
@@ -295,8 +295,12 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
   const size_t numTasks = tiles.size();
   const Tile *tilesPtr = tiles.data();
   const int colorFormat = getColorBufferFormat();
-  vec3f *albedoBufferPtr = fbSh->super.channels & OSP_FB_ALBEDO ? albedoBuffer->data() : nullptr;
-  vec3f *normalBufferPtr = fbSh->super.channels & OSP_FB_NORMAL ? normalBuffer->data() : nullptr;
+  vec3f *albedoBufferPtr = fbSh->super.channels & OSP_FB_ALBEDO
+      ? albedoBuffer->devicePtr()
+      : nullptr;
+  vec3f *normalBufferPtr = fbSh->super.channels & OSP_FB_NORMAL
+      ? normalBuffer->devicePtr()
+      : nullptr;
 
   device.getSyclQueue()
       .submit([&](sycl::handler &cgh) {
@@ -351,7 +355,7 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
 
 void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
 {
-  const auto &tiles = sparseFb->getTiles();
+  const auto tiles = sparseFb->getTilesDevice();
   writeTiles(tiles);
 
   assert(getRenderTaskSize() == sparseFb->getRenderTaskSize());
@@ -361,6 +365,8 @@ void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
     return;
   }
 
+#if 0
+  // TODO
   uint32_t renderTaskID = 0;
   for (size_t i = 0; i < tiles.size(); ++i) {
     const auto &tile = tiles[i];
@@ -374,6 +380,7 @@ void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
       }
     }
   }
+#endif
 }
 
 vec2i LocalFrameBuffer::getTaskStartPos(const uint32_t taskID) const
@@ -393,8 +400,7 @@ void LocalFrameBuffer::beginFrame()
   FrameBuffer::beginFrame();
 }
 
-void LocalFrameBuffer::endFrame(
-    const float errorThreshold, const Camera *)
+void LocalFrameBuffer::endFrame(const float errorThreshold, const Camera *)
 {
   frameVariance = taskErrorRegion.refine(errorThreshold);
 }
