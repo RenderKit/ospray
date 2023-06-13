@@ -10,6 +10,7 @@
 #include "imgui.h"
 // std
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -355,7 +356,8 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
 
 void GLFWOSPRayWindow::display()
 {
-  static auto displayStart = std::chrono::high_resolution_clock::now();
+  static float totalRenderTime = 0.f;
+  static auto displayStart = std::chrono::steady_clock::now();
 
   if (showUi)
     buildUI();
@@ -368,17 +370,24 @@ void GLFWOSPRayWindow::display()
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
     // display frame rate in window title
-    auto displayEnd = std::chrono::high_resolution_clock::now();
-    auto durationMilliseconds =
+    const auto displayEnd = std::chrono::steady_clock::now();
+    const auto displayMilliseconds =
         std::chrono::duration_cast<std::chrono::milliseconds>(
             displayEnd - displayStart);
+    const auto renderTime = currentFrame.duration();
+    totalRenderTime += renderTime;
 
-    // update FPS every second
+    // update fps every 10 frames or every second
     framesCounter++;
-    if (durationMilliseconds > std::chrono::seconds(1)) {
+    if (framesCounter > 9 || totalRenderTime > 1.f
+        || displayMilliseconds > std::chrono::seconds(1)) {
+      displayFPS = 1000.f * float(framesCounter) / displayMilliseconds.count();
+      latestFPS = float(framesCounter) / totalRenderTime;
+
       displayStart = displayEnd;
-      latestFPS = 1000.0f * float(framesCounter) / durationMilliseconds.count();
+      totalRenderTime = 0.f;
       framesCounter = 0;
+
       updateTitleBar();
     }
 
@@ -516,7 +525,8 @@ void GLFWOSPRayWindow::addObjectToCommit(OSPObject obj)
 void GLFWOSPRayWindow::updateTitleBar()
 {
   std::stringstream windowTitle;
-  windowTitle << "OSPRay: " << std::setprecision(3) << latestFPS << " fps";
+  windowTitle << "OSPRay: " << std::setprecision(4) << " render: " << latestFPS
+              << " fps, app: " << displayFPS << " fps";
   if (latestFPS > 0.f && latestFPS < 2.f) {
     float progress = currentFrame.progress();
     windowTitle << " | ";
