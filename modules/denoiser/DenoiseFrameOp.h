@@ -24,6 +24,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOpInterface
 
  private:
   OIDNDevice oidnDevice;
+  bool sharedMem{false};
 };
 
 } // namespace ospray

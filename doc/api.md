@@ -3054,11 +3054,14 @@ parameters to the values listed in the table below.
 
 #### Denoiser
 
-OSPRay comes with a module that adds support for Intel® Open Image Denoise.
-This is provided as an optional module as it creates an additional project
-dependency at compile time. The module implements a "`denoiser`"
-frame operation, which denoises the entire frame before the frame is
-completed.
+OSPRay comes with a module that adds support for Intel® Open Image
+Denoise (OIDN). This is provided as an optional module as it creates an
+additional project dependency at compile time. The module implements a
+"`denoiser`" frame operation, which denoises the entire frame before the
+frame is completed. OIDN will automatically select the fastest device,
+using a GPU when available. The device selection be overriden by the
+environment valiable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
+`sycl`, `cuda`, `hip`, or a physical device ID
 
 
 Rendering
