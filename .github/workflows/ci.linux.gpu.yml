@@ -21,15 +21,14 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env
       level-zero-version: public/1.9.9
-      install-gfx-driver: false
       submodules: true
       cmd: |
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=bcca9b98 -DRKCOMMON_VERSION=devel
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
       artifact-out: build-ubuntu2204
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -39,9 +38,8 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22-internal.env
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env
       level-zero-version: public/1.9.9
-      install-gfx-driver: false
       submodules: true
       cmd: |
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
@@ -57,9 +55,8 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-sycl-public.env .github/workflows/gfx-ubuntu22.env
+      env-from-files: .github/workflows/dpcpp-sycl-public.env
       level-zero-version: public/1.9.9
-      install-gfx-driver: false
       submodules: true
       cmd: |
         sudo apt remove openmpi-* libopenmpi3 -y
@@ -76,9 +73,8 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: opensuse/leap:15.3
-      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env
       level-zero-version: public/1.9.9
-      install-gfx-driver: false
       submodules: true
       cmd: |
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
@@ -98,7 +94,6 @@ jobs:
     with:
       image: ubuntu:22.04
       env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
-      install-gfx-driver: true
       submodules: true
       options: --device=/dev/dri:/dev/dri
       runs-on: '[ "Linux", "docker", "dg2" ]'
@@ -121,7 +116,6 @@ jobs:
     with:
       image: ubuntu:22.04
       env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
-      install-gfx-driver: true
       submodules: true
       options: --device=/dev/dri:/dev/dri
       runs-on: '[ "Linux", "docker", "pvc" ]'
@@ -144,7 +138,6 @@ jobs:
     with:
       image: ubuntu:22.04
       env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22-internal.env
-      install-gfx-driver: true
       submodules: true
       options: --device=/dev/dri:/dev/dri
       runs-on: '[ "Linux", "docker", "dg2" ]'
@@ -168,7 +161,6 @@ jobs:
 #      allow-failure: true
 #      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19476/artifacts/Linux/Ubuntu/22.04/Release
 #      dpcpp-version: intel/2023.0
-#      install-gfx-driver: true
 #      submodules: true
 #      image: ubuntu:22.04
 #      options: --device=/dev/dri:/dev/dri

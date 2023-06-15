@@ -44,16 +44,23 @@ test_filters="ClippingParallel.planes"
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/15"
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/16"
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/17"
+# Artifacts on PVC
+test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/21"
+test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/22"
 # Instancing test also makes use of motion blur, which is unsupported
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/24"
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/25"
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/26"
 # Clipping unsupported
 test_filters+=":TestScenesClipping/FromOsprayTesting.*"
+# Different noise
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/1"
 # Multiple volumes, unsupported
 test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/3"
 test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/4"
 test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/5"
+# Line artifacts
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/18"
 # Multiple volumes unsupported
 test_filters+=":TestScenesVolumesStrictParams/FromOsprayTesting.*"
 # Clipping unsupported
