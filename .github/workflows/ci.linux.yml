@@ -62,7 +62,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
-        scripts/build/linux.sh -DBUILD_ISA_AVX512=OFF # TODO Embree source build incompatible with older GCC for AVX512
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF
       artifact-out: build-centos7-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -108,11 +108,10 @@ jobs:
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
         export CFLAGS=$CXXFLAGS
         export LDFLAGS="-static-intel"
-        scripts/build/linux.sh
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-centos7-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  # TODO: Enable AVX512 testing after Embree4 release
   build-centos7-mpi-impi:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -122,11 +121,10 @@ jobs:
       cmd: |
         module load cmake
         module load impi/2021.6
-        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
       artifact-out: build-centos7-mpi-impi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  # TODO: Enable AVX512 testing after Embree4 release
   build-centos7-mpi-mpich:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -136,11 +134,10 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
-        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
       artifact-out: build-centos7-mpi-mpich
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  # TODO: Enable AVX512 testing after Embree4 release
   build-centos7-mpi-openmpi:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -150,7 +147,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/openmpi-x86_64
-        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
 
   build-centos8:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -197,7 +194,6 @@ jobs:
       artifact-out: build-linux-debug
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  # TODO: Enable AVX512 testing after Embree4 release
   build-ubuntu1804-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -205,7 +201,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:18.04
       cmd: |
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF
       artifact-out: build-ubuntu1804-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -227,7 +223,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx2"]'
       cmd: |
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-centos7-gcc
@@ -256,7 +251,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx2"]'
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
@@ -276,6 +270,19 @@ jobs:
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-centos7-icx
       artifact-out: test-centos7-icx-avx2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  test-centos7-icx-avx512skx:
+    needs: build-centos7-icx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      runs-on: '["Linux", "avx512"]'
+      cmd: |
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+      artifact-in: build-centos7-icx
+      artifact-out: test-centos7-icx-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
@@ -305,18 +312,14 @@ jobs:
         cmake --build .
       artifact-in: build-centos7-gcc
 
-  # TODO: Enable AVX512 testing after Embree4 release
   test-ubuntu1804-gcc-avx512skx:
     needs: build-ubuntu1804-gcc
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:18.04
-      # runs-on: '["Linux", "avx512"]'
-      runs-on: '["Linux", "avx2"]'
-      # cmd: |
-      #   LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+      runs-on: '["Linux", "avx512"]'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-ubuntu1804-gcc
       artifact-out: test-ubuntu1804-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -353,7 +356,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx2"]' # TODO: Remove it after Embree4 release
       cmd: scripts/tests/run_tutorials.sh
       artifact-in: build-centos7-gcc
 
