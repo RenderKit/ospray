@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.12.0 (devel) of Intel® OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
-for more information.
+This is release v2.12.0 of Intel® OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -45,9 +45,6 @@ missing features please contact us via email at
 
 To receive release announcements simply [“Watch” the OSPRay
 repository](https://github.com/ospray/OSPRay) on GitHub.
-
-[![Join the chat at
-https://gitter.im/ospray/ospray](https://ospray.github.io/images/gitter_badge.svg)](https://gitter.im/ospray/ospray?utm_source=badge&utm_medium=badge&utm_content=badge)
 
 Building and Finding OSPRay
 ===========================
@@ -3086,10 +3083,13 @@ exposure bias to match 18% middle gray.
 #### Denoiser
 
 OSPRay comes with a module that adds support for Intel® Open Image
-Denoise. This is provided as an optional module as it creates an
+Denoise (OIDN). This is provided as an optional module as it creates an
 additional project dependency at compile time. The module implements a
 “`denoiser`” frame operation, which denoises the entire frame before the
-frame is completed.
+frame is completed. OIDN will automatically select the fastest device,
+using a GPU when available. The device selection be overriden by the
+environment valiable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
+`sycl`, `cuda`, `hip`, or a physical device ID
 
 Rendering
 ---------
