@@ -11,7 +11,7 @@
 #include "rkcommon/math/rkmath.h"
 #include "rkcommon/math/vec.h"
 
-#include "BufferShared.h"
+#include "ISPCRTBuffers.h"
 
 namespace ispc {
 
@@ -42,9 +42,10 @@ namespace ospray {
 */
 
 template <typename T>
-inline ISPCRTMemoryView StructSharedCreate(ISPCRTDevice device)
+inline ISPCRTMemoryView StructSharedCreate(ISPCRTContext context)
 {
-  ISPCRTMemoryView view = BufferSharedCreate(device, sizeof(T));
+  ISPCRTMemoryView view =
+      BufferSharedCreate(context, sizeof(T), ISPCRT_SM_HOST_WRITE_DEVICE_READ);
   new (ispcrtSharedPtr(view)) T;
   return view;
 }
@@ -66,7 +67,7 @@ struct StructSharedView
 template <typename T, typename>
 struct StructSharedGet
 {
-  StructSharedGet(ISPCRTDevice, ISPCRTMemoryView *);
+  StructSharedGet(ISPCRTContext, ISPCRTMemoryView *);
   T *getSh() const;
 };
 
@@ -121,9 +122,9 @@ struct AddStructShared
       "StructShared_t needs to have 'super' member of type Base::StructShared_t");
 
   template <typename... Args>
-  AddStructShared(ispcrt::Device &device, Args &&... args)
+  AddStructShared(ispcrt::Context &context, Args &&...args)
       : StructSharedGet<Struct, AddStructShared<Base, Struct>>(
-          device.handle(), &_view),
+          context.handle(), &_view),
         Base(std::forward<Args>(args)...)
   {}
 };
@@ -137,7 +138,7 @@ inline StructSharedView::~StructSharedView()
 
 template <typename T, typename B>
 StructSharedGet<T, B>::StructSharedGet(
-    ISPCRTDevice device, ISPCRTMemoryView *view)
+    ISPCRTContext device, ISPCRTMemoryView *view)
 {
   if (!*view)
     *view = StructSharedCreate<T>(device);
@@ -164,7 +165,7 @@ struct ShouldPass3 : public AddStructShared<ShouldPass2, D2> {};
 //struct ShouldFail1 : public AddStructShared<ShouldPass3, D2> {};
 //struct ShouldFail2 : public AddStructShared<ShouldPass2, B> {};
 //struct ShouldFail3 : public AddStructShared<ShouldPass3, D1> {};
-// clang-format on
+//  clang-format on
 } // namespace test
 
 } // namespace ospray

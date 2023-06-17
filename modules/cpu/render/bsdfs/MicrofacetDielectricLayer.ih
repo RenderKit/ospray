@@ -39,7 +39,10 @@ struct MicrofacetDielectricLayer
 };
 
 inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying MicrofacetDielectricLayer *uniform self =
       (const varying MicrofacetDielectricLayer *uniform)super;
@@ -62,9 +65,10 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
     // recursion (that we know will terminate) from the SYCL compiler we have
     // to call MultiBSDF directly here if we have a layer over a MultiBSDF
     if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-      substrate = MultiBSDF_eval(f, wo, wi); // f->eval(f, wo, wi);
+      substrate = MultiBSDF_eval(f, wo, wi, ffh); // f->eval(f, wo, wi);
     } else {
-      substrate = BSDF_dispatch_eval_base(f, wo, wi); // f->eval(f, wo, wi);
+      substrate =
+          BSDF_dispatch_eval_base(f, wo, wi, ffh); // f->eval(f, wo, wi);
     }
   }
 
@@ -118,7 +122,6 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
     float F = fresnelDielectric(cosThetaOH, self->eta) * self->weight;
 
     // Evaluate the coating reflection
-    float cosThetaH = dot(wh, getN(super));
     float cosThetaIH = dot(wi, wh);
 
     linear3f toLocal = transposed(getFrame(super));
@@ -155,7 +158,8 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss)
+    float ss,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying MicrofacetDielectricLayer *uniform self =
       (const varying MicrofacetDielectricLayer *uniform)super;
@@ -205,10 +209,10 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
       // recursion (that we know will terminate) from the SYCL compiler we have
       // to call MultiBSDF directly here if we have a layer over a MultiBSDF
       if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        substrate = MultiBSDF_eval(f, wo, res.wi); // f->eval(f, wo, wi);
+        substrate = MultiBSDF_eval(f, wo, res.wi, ffh); // f->eval(f, wo, wi);
       } else {
         substrate =
-            BSDF_dispatch_eval_base(f, wo, res.wi); // f->eval(f, wo, wi);
+            BSDF_dispatch_eval_base(f, wo, res.wi, ffh); // f->eval(f, wo, wi);
       }
     }
   } else {
@@ -226,10 +230,10 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
       // recursion (that we know will terminate) from the SYCL compiler we have
       // to call MultiBSDF directly here if we have a layer over a MultiBSDF
       if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        res = MultiBSDF_sample(f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+        res = MultiBSDF_sample(f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
       } else {
         res = BSDF_dispatch_sample_base(
-            f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+            f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
       }
     }
     if (reduce_max(res.weight) <= 0.f)
@@ -294,7 +298,6 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
     float F = fresnelDielectric(cosThetaOH, self->eta) * self->weight;
 
     // Evaluate the coating reflection
-    float cosThetaH = dot(wh, getN(super));
     float cosThetaIH = dot(res.wi, wh);
     vec3f wi0 = toLocal * res.wi;
     vec3f wh0 = toLocal * wh;
@@ -404,7 +407,7 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(
     vec3f transmittance,
     float thickness,
     float roughness,
-    float anisotropy,
+    float,
     float weight)
 {
   if (eta > 1.f)

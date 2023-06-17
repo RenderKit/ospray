@@ -17,8 +17,8 @@ SYCL_EXTERNAL const varying BSDF *varying Alloy_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium)
+    const Ray &,
+    const Medium &)
 {
   const uniform Alloy *uniform self = (const uniform Alloy *uniform)super;
   varying linear3f *uniform shadingframe =

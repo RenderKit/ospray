@@ -98,13 +98,6 @@ void PRINT3(const rkcommon::math::vec3f &x)
 #define PRINT_STR(s) print(s);
 #endif
 
-OSPRAY_BEGIN_ISPC_NAMESPACE
-
-/*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
-export void delete_uniform(void *uniform uptr);
-
-OSPRAY_END_ISPC_NAMESPACE
-
 #ifndef OSPRAY_TARGET_SYCL
 /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
 extern "C" void *uniform malloc64(uniform uint64 size);

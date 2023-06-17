@@ -5,19 +5,16 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL vec3f Material_getTransparency(
-    const uniform Material *uniform self,
-    const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium)
+SYCL_EXTERNAL vec3f Material_getTransparency(const uniform Material *uniform,
+    const DifferentialGeometry &,
+    const Ray &,
+    const Medium &)
 {
   return make_vec3f(0.0f);
 }
 
 SYCL_EXTERNAL void Material_selectNextMedium(
-    const uniform Material *uniform self,
-    const DifferentialGeometry &dg,
-    Medium &currentMedium)
+    const uniform Material *uniform, const DifferentialGeometry &, Medium &)
 { /* do nothing by default */
 }
 

@@ -13,7 +13,8 @@ struct PathTracer
 {
   Renderer super;
 
-  int32 rouletteDepth; // path depth from which on RR is used
+  uint32 rouletteDepth; // path depth from which on RR is used
+  uint32 maxScatteringEvents;
   float maxRadiance;
   // coefficients of plane equation defining geometry to catch shadows for
   // compositing; disabled if normal is zero-length
@@ -25,6 +26,7 @@ struct PathTracer
 #ifdef __cplusplus
   PathTracer()
       : rouletteDepth(5),
+        maxScatteringEvents(20),
         maxRadiance(inf),
         shadowCatcherPlane(0.f),
         shadowCatcher(false),

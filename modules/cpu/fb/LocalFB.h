@@ -4,12 +4,12 @@
 #pragma once
 
 // ospray
-#include "common/BufferShared.h"
+#include "common/ISPCRTBuffers.h"
 #include "fb/FrameBuffer.h"
 #include "fb/TaskError.h"
 // rkcommon
-#include <rkcommon/utility/ArrayView.h>
 #include "rkcommon/containers/AlignedVector.h"
+#include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "LocalFBShared.h"
 #include "TileShared.h"
@@ -26,7 +26,13 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
       ColorBufferFormat colorBufferFormat,
       const uint32 channels);
 
-  virtual ~LocalFrameBuffer() override = default;
+  virtual ~LocalFrameBuffer() override
+  {
+#ifdef OSPRAY_TARGET_SYCL
+    device.getSyclQueue().wait_and_throw();
+    device.getIspcrtQueue().sync();
+#endif
+  }
 
   virtual void commit() override;
 
@@ -48,6 +54,8 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   void beginFrame() override;
 
   void endFrame(const float errorThreshold, const Camera *camera) override;
+
+  AsyncEvent postProcess(const Camera *camera, bool wait) override;
 
   const void *mapBuffer(OSPFrameBufferChannel channel) override;
 
@@ -75,33 +83,35 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   //       flag was passed on construction
 
   // format depends on FrameBuffer::colorBufferFormat
-  std::unique_ptr<BufferShared<uint8_t>> colorBuffer;
+  std::unique_ptr<BufferDeviceShadowed<uint8_t>> colorBuffer;
   // one float per pixel
-  std::unique_ptr<BufferShared<float>> depthBuffer;
+  std::unique_ptr<BufferDeviceShadowed<float>> depthBuffer;
   // one RGBA per pixel
-  std::unique_ptr<BufferShared<vec4f>> accumBuffer;
+  std::unique_ptr<BufferDevice<vec4f>> accumBuffer;
   // one RGBA per pixel, accumulates every other sample, for variance estimation
-  std::unique_ptr<BufferShared<vec4f>> varianceBuffer;
+  std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
   // accumulated world-space normal per pixel
-  std::unique_ptr<BufferShared<vec3f>> normalBuffer;
+  std::unique_ptr<BufferDeviceShadowed<vec3f>> normalBuffer;
   // accumulated, one RGB per pixel
-  std::unique_ptr<BufferShared<vec3f>> albedoBuffer;
+  std::unique_ptr<BufferDeviceShadowed<vec3f>> albedoBuffer;
   // primitive ID, object ID, and instance ID
-  std::unique_ptr<BufferShared<uint32_t>> primitiveIDBuffer;
-  std::unique_ptr<BufferShared<uint32_t>> objectIDBuffer;
-  std::unique_ptr<BufferShared<uint32_t>> instanceIDBuffer;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> primitiveIDBuffer;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> objectIDBuffer;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> instanceIDBuffer;
 
  protected:
   vec2i getTaskStartPos(const uint32_t taskID) const;
 
   //// Data ////
 
+  api::ISPCDevice &device;
+
   vec2i numRenderTasks;
 
   std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
   std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;
   // holds accumID per render task, for adaptive accumulation
-  std::unique_ptr<BufferShared<int32_t>> taskAccumID;
+  std::unique_ptr<BufferDeviceShadowed<int32_t>> taskAccumID;
 
   // holds error per tile and adaptive regions
   TaskError taskErrorRegion;

@@ -32,8 +32,12 @@ DistributedLoadBalancer::~DistributedLoadBalancer()
   handle.free();
 }
 
-void DistributedLoadBalancer::renderFrame(
-    FrameBuffer *_fb, Renderer *_renderer, Camera *camera, World *_world)
+std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
+    FrameBuffer *_fb,
+    Renderer *_renderer,
+    Camera *camera,
+    World *_world,
+    bool /*wait*/)
 {
   auto *dfb = dynamic_cast<DistributedFrameBuffer *>(_fb);
 
@@ -47,7 +51,7 @@ void DistributedLoadBalancer::renderFrame(
   if (!renderer) {
     if (world->allRegions.size() == 1) {
       renderFrameReplicated(dfb, _renderer, camera, world);
-      return;
+      return std::make_pair(AsyncEvent(), AsyncEvent());
     } else {
       throw std::runtime_error(
           "Distributed rendering requires a distributed renderer!");
@@ -165,7 +169,8 @@ void DistributedLoadBalancer::renderFrame(
     // We use uint8 instead of bool to avoid hitting UB with differing "true"
     // values used by ISPC and C++
     BufferShared<uint8_t> regionVisible(
-        sparseFb->getISPCDevice().getIspcrtDevice(), numRegions * tiles.size());
+        sparseFb->getISPCDevice().getIspcrtContext(),
+        numRegions * tiles.size());
     std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
 
     // Compute visibility for the tasks we're rendering
@@ -176,12 +181,7 @@ void DistributedLoadBalancer::renderFrame(
         world,
         regionVisible.sharedPtr(),
         perFrameData,
-        renderTaskIDs
-#ifdef OSPRAY_TARGET_SYCL
-        ,
-        *syclQueue
-#endif
-    );
+        renderTaskIDs);
 
     // If we're rendering the background tiles send them over now
     if (layer == 0) {
@@ -240,7 +240,7 @@ void DistributedLoadBalancer::renderFrame(
           });
       activeTasks.erase(removeTasks, activeTasks.end());
       BufferShared<uint32_t> activeTasksShared(
-          sparseFb->getISPCDevice().getIspcrtDevice(), activeTasks);
+          sparseFb->getISPCDevice().getIspcrtContext(), activeTasks);
 
       renderer->renderRegionTasks(sparseFb,
           camera,
@@ -248,12 +248,7 @@ void DistributedLoadBalancer::renderFrame(
           world->allRegions[rid],
           perFrameData,
           utility::ArrayView<uint32_t>(
-              activeTasksShared.data(), activeTasksShared.size())
-#ifdef OSPRAY_TARGET_SYCL
-              ,
-          *syclQueue
-#endif
-      );
+              activeTasksShared.data(), activeTasksShared.size()));
 
       tasking::parallel_for(tiles.size(), [&](size_t i) {
         if (!regionVisible[numRegions * i + rid]
@@ -276,6 +271,7 @@ void DistributedLoadBalancer::renderFrame(
   renderer->endFrame(dfb, perFrameData);
 
   dfb->endFrame(renderer->errorThreshold, camera);
+  return std::make_pair(AsyncEvent(), AsyncEvent());
 }
 
 void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
@@ -346,13 +342,6 @@ std::string DistributedLoadBalancer::toString() const
   return "ospray::mpi::Distributed";
 }
 
-#ifdef OSPRAY_TARGET_SYCL
-void DistributedLoadBalancer::setQueue(sycl::queue *sq)
-{
-  syclQueue = sq;
-}
-#endif
-
 void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
     DistributedFrameBuffer *dfb,
     Renderer *renderer,
@@ -373,11 +362,28 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
 
   // Do not pass all tiles at once, this way if other ranks want to steal
   // work, they can
-  const int maxTilesPerRound = 20;
-  const int numRounds = std::max(NTILES / maxTilesPerRound, 1);
-  const int tilesPerRound = NTILES / numRounds;
-  const int remainTiles = NTILES % numRounds;
-  const int minActiveTiles = (ALLTILES / workerSize()) * 0.25f;
+  // We target 1/3rd of tiles per-round by default to balance between executing
+  // work locally and allowing work to be stolen for load balancing.
+  // This can be overriden by the environment variable
+  // OSPRAY_MPI_LB_TILES_PER_ROUND
+  const float percentTilesPerRound =
+      utility::getEnvVar<float>("OSPRAY_MPI_LB_TILES_PER_ROUND")
+          .value_or(0.33f);
+  const int maxTilesPerRound = std::ceil(NTILES * percentTilesPerRound);
+  const float minActiveTilesPercent =
+      utility::getEnvVar<float>("OSPRAY_MPI_LB_MIN_ACTIVE_TILES")
+          .value_or(0.25f);
+  const int minActiveTiles = (ALLTILES / workerSize()) * minActiveTilesPercent;
+
+  // Avoid division by 0 for the case that this rank doesn't have any tiles
+  int numRounds = 0;
+  int tilesPerRound = 0;
+  int remainTiles = 0;
+  if (NTILES > 0) {
+    numRounds = std::max(NTILES / maxTilesPerRound, 1);
+    tilesPerRound = NTILES / numRounds;
+    remainTiles = NTILES % numRounds;
+  }
   int terminatedTiles = 0;
 
   auto dynamicLB = make_unique<DynamicLoadBalancer>(handle, ALLTILES);
@@ -403,7 +409,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
   }
 
 #ifdef ENABLE_PROFILING
-  start = ProfilingPoint();
+  auto start = ProfilingPoint();
 #endif
 
   const int sparseFbChannelFlags =
@@ -454,12 +460,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
             camera,
             world,
             perFrameData,
-            sparseFb->getRenderTaskIDs(renderer->errorThreshold)
-#ifdef OSPRAY_TARGET_SYCL
-                ,
-            *syclQueue
-#endif
-        );
+            sparseFb->getRenderTaskIDs(renderer->errorThreshold));
 
         // TODO: Now the tile setting happens as a bulk-sync operation after
         // rendering, because we still need to send them through the compositing
@@ -516,16 +517,19 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
   const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
 
+#ifdef ENABLE_PROFILING
+  auto startRenderTasks = ProfilingPoint();
+#endif
+
   renderer->renderTasks(ownedTilesFb,
       camera,
       world,
       perFrameData,
-      ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold)
-#ifdef OSPRAY_TARGET_SYCL
-          ,
-      *syclQueue
+      ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold));
+
+#ifdef ENABLE_PROFILING
+  auto endRenderTasks = ProfilingPoint();
 #endif
-  );
 
   // TODO: Now the tile setting happens as a bulk-sync operation after
   // rendering, because we still need to send them through the compositing
@@ -539,6 +543,18 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     }
     dfb->setTile(tiles[i]);
   });
+#ifdef ENABLE_PROFILING
+  auto endWriteTiles = ProfilingPoint();
+
+  std::cout << "Render tasks took: "
+            << elapsedTimeMs(startRenderTasks, endRenderTasks)
+            << "ms, CPU %: " << cpuUtilization(startRenderTasks, endRenderTasks)
+            << "%\n"
+            << "Parallel write tiles took: "
+            << elapsedTimeMs(endRenderTasks, endWriteTiles)
+            << "ms, CPU %: " << cpuUtilization(endRenderTasks, endWriteTiles)
+            << "%\n";
+#endif
 }
 
 } // namespace mpi

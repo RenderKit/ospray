@@ -125,5 +125,7 @@ class GLFWOSPRayWindow
   std::function<void()> uiCallback;
 
   // FPS measurement of last frame
+  uint32_t framesCounter{0};
   float latestFPS{0.f};
+  float displayFPS{0.f};
 };

@@ -20,7 +20,7 @@ ISPCRTMemoryView AmbientLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
   ISPCRTMemoryView view = StructSharedCreate<ispc::AmbientLight>(
-      getISPCDevice().getIspcrtDevice().handle());
+      getISPCDevice().getIspcrtContext().handle());
   ispc::AmbientLight *sh = (ispc::AmbientLight *)ispcrtSharedPtr(view);
 #ifndef OSPRAY_TARGET_SYCL
   sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(

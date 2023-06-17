@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlagsEnum.h"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/ScreenSample.ih"
@@ -14,12 +15,17 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
+inline vec4f getSurfaceColor(
+    const DifferentialGeometry &dg, const uniform FeatureFlagsHandler &ffh)
 {
   const OBJ *mat = (const OBJ *)dg.material;
 
   vec3f surfaceColor = make_vec3f(1.f);
   float opacity = 1.f;
+
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  const uniform bool fft = ff.other & FFO_TEXTURE_IN_MATERIAL;
+
 #ifdef OSPRAY_TARGET_SYCL
   {
     const OBJ *m = mat;
@@ -28,12 +34,12 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 #endif
     if (m != NULL && m->super.type == MATERIAL_TYPE_OBJ) {
       surfaceColor = m->Kd;
-      if (valid(m->KdMap)) {
+      if (valid(m->KdMap) && fft) {
         vec4f Kd_from_map = get4f(m->KdMap, dg);
         surfaceColor = surfaceColor * make_vec3f(Kd_from_map);
         opacity *= Kd_from_map.w;
       }
-      opacity *= m->d * get1f(m->dMap, dg, 1.f);
+      opacity *= m->d * (fft ? get1f(m->dMap, dg, 1.f) : 1.f);
     }
   }
 
@@ -41,14 +47,14 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 }
 
 SYCL_EXTERNAL SSI AORenderer_computeShading(const AORenderer *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
-    ScreenSample &sample)
+    ScreenSample &sample,
+    const uniform FeatureFlagsHandler &ffh)
 {
   SSI retval;
 
-  const vec4f surfaceColor = getSurfaceColor(dg);
+  const vec4f surfaceColor = getSurfaceColor(dg, ffh);
 
   const vec3f color = make_vec3f(surfaceColor);
   const float opacity = surfaceColor.w;
@@ -61,7 +67,8 @@ SYCL_EXTERNAL SSI AORenderer_computeShading(const AORenderer *uniform self,
         dg,
         self->aoSamples,
         self->aoRadius,
-        sample.sampleID);
+        sample.sampleID,
+        ffh);
     intensity *= (1.0f - self->aoIntensity) + (ao * self->aoIntensity);
   }
 

@@ -15,7 +15,7 @@ struct OSPRAY_SDK_INTERFACE Texture2D
     : public AddStructShared<Texture, ispc::Texture2D>
 {
   Texture2D(api::ISPCDevice &device)
-      : AddStructShared(device.getIspcrtDevice(), device)
+      : AddStructShared(device.getIspcrtContext(), device)
   {}
   virtual ~Texture2D() override = default;
 

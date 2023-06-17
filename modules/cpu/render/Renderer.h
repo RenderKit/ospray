@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ISPCDeviceObject.h"
+#include "common/FeatureFlagsEnum.h"
 #include "math/MathConstants.h"
 #include "pf/PixelFilter.h"
 #include "rkcommon/utility/ArrayView.h"
@@ -51,28 +52,12 @@ struct OSPRAY_SDK_INTERFACE Renderer
   virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
   // called by the load balancer to render one "sample" for each task
-  virtual void renderTasks(FrameBuffer *,
+  virtual AsyncEvent renderTasks(FrameBuffer *,
       Camera *,
       World *,
       void *,
-      const utility::ArrayView<uint32_t> &
-#ifdef OSPRAY_TARGET_SYCL
-      ,
-      sycl::queue &
-#endif
-  ) const
-  {}
-
-#ifdef OSPRAY_TARGET_SYCL
-  /* Compute the rounded dispatch global size for the given work group size.
-   * SYCL requires that globalSize % workgroupSize == 0, ths function will
-   * round up globalSize and return nd_range(roundedSize, workgroupSize).
-   * The kernel being launched must discard tasks that are out of bounds
-   * bounds due to this rounding
-   */
-  sycl::nd_range<1> computeDispatchRange(
-      const size_t globalSize, const size_t workgroupSize) const;
-#endif
+      const utility::ArrayView<uint32_t> &,
+      bool wait = true) const = 0;
 
   virtual OSPPickResult pick(
       FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos);
@@ -94,6 +79,10 @@ struct OSPRAY_SDK_INTERFACE Renderer
 
   Ref<const DataT<Material *>> materialData;
   std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
+
+ protected:
+  FeatureFlags featureFlags;
+  api::ISPCDevice &device;
 
  private:
   void setupPixelFilter();

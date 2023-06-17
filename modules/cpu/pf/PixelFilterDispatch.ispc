@@ -7,7 +7,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL __noinline vec2f PixelFilter_dispatch_sample(
+SYCL_EXTERNAL vec2f PixelFilter_dispatch_sample(
     const PixelFilter *uniform self, const vec2f &x)
 {
   switch (self->type) {

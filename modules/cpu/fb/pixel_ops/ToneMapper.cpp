@@ -54,10 +54,10 @@ void ToneMapper::commit()
       0.f);
 }
 
-std::unique_ptr<LiveImageOp> ToneMapper::attach(FrameBufferView &fbView)
+std::unique_ptr<LivePixelOp> ToneMapper::attach()
 {
   return rkcommon::make_unique<LiveToneMapper>(
-      fbView, exposure, a, b, c, d, acesColor);
+      device, exposure, a, b, c, d, acesColor);
 }
 
 std::string ToneMapper::toString() const
@@ -65,15 +65,14 @@ std::string ToneMapper::toString() const
   return "ospray::ToneMapper";
 }
 
-LiveToneMapper::LiveToneMapper(FrameBufferView &_fbView,
+LiveToneMapper::LiveToneMapper(api::ISPCDevice &device,
     float exposure,
     float a,
     float b,
     float c,
     float d,
     bool acesColor)
-    : AddStructShared(
-        _fbView.originalFB->getISPCDevice().getIspcrtDevice(), _fbView)
+    : AddStructShared(device.getIspcrtContext(), device)
 {
   getSh()->super.processPixel =
       reinterpret_cast<ispc::LivePixelOp_processPixel>(

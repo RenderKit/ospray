@@ -18,12 +18,13 @@ void HDRILight_initDistribution(const void *map, void *distribution);
 
 namespace ospray {
 
-SunSkyLight::SunSkyLight(api::ISPCDevice &device) : Light(device)
+SunSkyLight::SunSkyLight(api::ISPCDevice &device)
+    : Light(device, FFO_LIGHT_HDRI | FFO_LIGHT_DIRECTIONAL)
 {
   static const int skyResolution = 512;
   this->skySize = vec2i(skyResolution, skyResolution / 2);
   this->skyImage = make_buffer_shared_unique<vec3f>(
-      getISPCDevice().getIspcrtDevice(), skySize.product());
+      getISPCDevice().getIspcrtContext(), skySize.product());
   static auto format = static_cast<OSPTextureFormat>(OSP_TEXTURE_RGB32F);
   static auto filter =
       static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_BILINEAR);
@@ -39,7 +40,7 @@ ISPCRTMemoryView SunSkyLight::createSh(
   switch (index) {
   case 0: {
     ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>(
-        getISPCDevice().getIspcrtDevice().handle());
+        getISPCDevice().getIspcrtContext().handle());
     ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
     sh->set(visible,
         instance,
@@ -51,7 +52,7 @@ ISPCRTMemoryView SunSkyLight::createSh(
   }
   case 1: {
     ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>(
-        getISPCDevice().getIspcrtDevice().handle());
+        getISPCDevice().getIspcrtContext().handle());
     ispc::DirectionalLight *sh =
         (ispc::DirectionalLight *)ispcrtSharedPtr(view);
     sh->set(visible, instance, direction, solarIrradiance, cosAngle);

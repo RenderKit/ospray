@@ -72,7 +72,7 @@ vec3f addLightsToArray(std::vector<ISPCRTMemoryView> &lightViews,
 } // namespace
 
 SciVisData::SciVisData(const World &world)
-    : AddStructShared(world.getISPCDevice().getIspcrtDevice())
+    : AddStructShared(world.getISPCDevice().getIspcrtContext())
 {
   vec3f aoColor = vec3f(0.f);
   uint32_t visibleOnly = 0;
@@ -102,7 +102,7 @@ SciVisData::SciVisData(const World &world)
 
   // Then create shared buffer from the temporary std::vector
   lightArray = make_buffer_shared_unique<ispc::Light *>(
-      world.getISPCDevice().getIspcrtDevice(), lights);
+      world.getISPCDevice().getIspcrtContext(), lights);
   getSh()->lights = lightArray->sharedPtr();
   getSh()->numLights = lights.size();
   getSh()->numLightsVisibleOnly = visibleOnly;

@@ -18,8 +18,10 @@ struct Specular
   float ns; // exponent
 };
 
-inline BSDF_EvalRes Specular_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes Specular_eval(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsHandler &)
 {
   const varying Specular *uniform self = (const varying Specular *uniform)super;
   BSDF_EvalRes res;
@@ -42,7 +44,8 @@ inline BSDF_EvalRes Specular_eval(
 inline BSDF_SampleRes Specular_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss)
+    float,
+    const uniform FeatureFlagsHandler &)
 {
   const varying Specular *uniform self = (const varying Specular *uniform)super;
   BSDF_SampleRes res;

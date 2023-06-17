@@ -9,7 +9,6 @@ cmake --version
 cmake -L `
   -G $($args[0]) `
   -T $($args[1]) `
-  -D BUILD_EMBREE_FROM_SOURCE=OFF `
   -D CMAKE_BUILD_TYPE=$($args[2]) `
   -D DEPENDENCIES_BUILD_TYPE=$($args[2]) `
   -D BUILD_OSPRAY_MODULE_MPI=$($args[3]) `

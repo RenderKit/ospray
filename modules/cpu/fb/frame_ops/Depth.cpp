@@ -8,7 +8,8 @@
 
 namespace ospray {
 
-std::unique_ptr<LiveImageOp> DepthFrameOp::attach(FrameBufferView &fbView)
+std::unique_ptr<LiveFrameOpInterface> DepthFrameOp::attach(
+    FrameBufferView &fbView)
 {
   if (!fbView.colorBuffer) {
     throw std::runtime_error(
@@ -22,7 +23,7 @@ std::unique_ptr<LiveImageOp> DepthFrameOp::attach(FrameBufferView &fbView)
         "data");
   }
 
-  return rkcommon::make_unique<LiveDepthFrameOp>(fbView);
+  return rkcommon::make_unique<LiveDepthFrameOp>(device, fbView);
 }
 
 std::string DepthFrameOp::toString() const
@@ -30,15 +31,17 @@ std::string DepthFrameOp::toString() const
   return "ospray::DepthFrameOp";
 }
 
-LiveDepthFrameOp::LiveDepthFrameOp(FrameBufferView &_fbView)
-    : LiveFrameOp(_fbView)
+LiveDepthFrameOp::LiveDepthFrameOp(
+    api::ISPCDevice &device, FrameBufferView &_fbView)
+    : LiveFrameOp(device, _fbView)
 {}
 
-void LiveDepthFrameOp::process(const Camera *)
+void LiveDepthFrameOp::process(void *, const Camera *)
 {
   // First find the min/max depth range to normalize the image,
   // we don't use minmax_element here b/c we don't want inf to be
   // found as the max depth value
+  const FrameBufferView &fbView = getFBView();
   const int numPixels = fbView.fbDims.x * fbView.fbDims.y;
   vec2f depthRange(std::numeric_limits<float>::infinity(),
       -std::numeric_limits<float>::infinity());

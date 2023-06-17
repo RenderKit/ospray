@@ -5,7 +5,8 @@
 
 namespace ospray {
 
-std::unique_ptr<LiveImageOp> BlurFrameOp::attach(FrameBufferView &fbView)
+std::unique_ptr<LiveFrameOpInterface> BlurFrameOp::attach(
+    FrameBufferView &fbView)
 {
   if (!fbView.colorBuffer) {
     throw std::runtime_error(
@@ -15,10 +16,10 @@ std::unique_ptr<LiveImageOp> BlurFrameOp::attach(FrameBufferView &fbView)
 
   if (fbView.colorBufferFormat == OSP_FB_RGBA8
       || fbView.colorBufferFormat == OSP_FB_SRGBA) {
-    return rkcommon::make_unique<LiveBlurFrameOp<uint8_t>>(fbView);
+    return rkcommon::make_unique<LiveBlurFrameOp<uint8_t>>(device, fbView);
   }
 
-  return rkcommon::make_unique<LiveBlurFrameOp<float>>(fbView);
+  return rkcommon::make_unique<LiveBlurFrameOp<float>>(device, fbView);
 }
 
 std::string BlurFrameOp::toString() const

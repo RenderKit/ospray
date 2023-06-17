@@ -19,7 +19,7 @@ struct Renderer
   Texture2D *backplate;
   Texture2D *maxDepthTexture; // optional maximum depth texture used for early
                               // ray termination
-  int maxDepth;
+  uint32 maxDepth;
   float minContribution;
 
   int32 numMaterials;

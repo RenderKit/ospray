@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBuffer.h"
+#include "FrameOp.h"
+#include "OSPConfig.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
 #endif
-#include "OSPConfig.h"
 
 namespace {
 // Internal utilities for thread local progress tracking
@@ -29,8 +30,9 @@ namespace ospray {
 FrameBuffer::FrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
-    const uint32 channels)
-    : AddStructShared(device.getIspcrtDevice(), device),
+    const uint32 channels,
+    const FeatureFlagsOther ffo)
+    : AddStructShared(device.getIspcrtContext(), device),
       size(_size),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
       hasAccumBuffer(channels & OSP_FB_ACCUM),
@@ -40,7 +42,8 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
       hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
       hasPrimitiveIDBuffer(channels & OSP_FB_ID_PRIMITIVE),
       hasObjectIDBuffer(channels & OSP_FB_ID_OBJECT),
-      hasInstanceIDBuffer(channels & OSP_FB_ID_INSTANCE)
+      hasInstanceIDBuffer(channels & OSP_FB_ID_INSTANCE),
+      featureFlags(ffo)
 {
   managedObjectType = OSP_FRAMEBUFFER;
   if (_size.x <= 0 || _size.y <= 0) {
@@ -76,7 +79,20 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
 
 void FrameBuffer::commit()
 {
+  // Erase all image operations arrays
+  frameOps.clear();
+  pixelOps.clear();
+  pixelOpShs.clear();
+  getSh()->pixelOps = nullptr;
+  getSh()->numPixelOps = 0;
+
+  // Read image operations array set by user
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
+}
+
+void FrameBuffer::clear()
+{
+  frameID = -1; // we increment at the start of the frame
 }
 
 vec2i FrameBuffer::getRenderTaskSize() const
@@ -102,10 +118,13 @@ float FrameBuffer::getVariance() const
 void FrameBuffer::beginFrame()
 {
   cancelRender = false;
+  frameID++;
   // TODO: Maybe better as a kernel to avoid USM thrash to host
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->cancelRender = 0;
   getSh()->numPixelsRendered = 0;
-  getSh()->frameID++;
+  getSh()->frameID = frameID;
+#endif
 }
 
 std::string FrameBuffer::toString() const
@@ -115,12 +134,14 @@ std::string FrameBuffer::toString() const
 
 void FrameBuffer::setCompletedEvent(OSPSyncEvent event)
 {
+#ifndef OSPRAY_TARGET_SYCL
   // We won't be running ISPC-side rendering tasks when updating the
   // progress values here in C++
   if (event == OSP_NONE_FINISHED)
     getSh()->numPixelsRendered = 0;
   if (event == OSP_FRAME_FINISHED)
     getSh()->numPixelsRendered = getNumPixels().long_product();
+#endif
   stagesCompleted = event;
 }
 
@@ -158,42 +179,27 @@ bool FrameBuffer::frameCancelled() const
   return cancelRender;
 }
 
-void FrameBuffer::prepareImageOps()
+void FrameBuffer::prepareLiveOpsForFBV(
+    FrameBufferView &fbv, bool fillFrameOps, bool fillPixelOps)
 {
-  findFirstFrameOperation();
-  setPixelOpShs();
-}
-
-void FrameBuffer::findFirstFrameOperation()
-{
-  firstFrameOperation = -1;
-  if (imageOps.empty())
-    return;
-
-  firstFrameOperation = imageOps.size();
-  for (size_t i = 0; i < imageOps.size(); ++i) {
-    const auto *obj = imageOps[i].get();
-    const bool isFrameOp = dynamic_cast<const LiveFrameOp *>(obj) != nullptr;
-
-    if (firstFrameOperation == imageOps.size() && isFrameOp)
-      firstFrameOperation = i;
-    else if (firstFrameOperation < imageOps.size() && !isFrameOp) {
-      postStatusMsg(OSP_LOG_WARNING)
-          << "Invalid pixel/frame op pipeline: all frame operations "
-             "must come after all pixel operations";
-    }
-  }
-}
-
-void FrameBuffer::setPixelOpShs()
-{
-  pixelOpShs.clear();
-  for (auto &op : imageOps) {
-    LivePixelOp *pop = dynamic_cast<LivePixelOp *>(op.get());
+  // Iterate through all image operations set on commit
+  for (auto &&obj : *imageOpData) {
+    // Populate pixel operations
+    PixelOp *pop = dynamic_cast<PixelOp *>(obj);
     if (pop) {
-      pixelOpShs.push_back(pop->getSh());
+      if (fillPixelOps) {
+        pixelOps.push_back(pop->attach());
+        pixelOpShs.push_back(pixelOps.back()->getSh());
+      }
+    } else {
+      // Populate frame operations
+      FrameOpInterface *fopi = dynamic_cast<FrameOpInterface *>(obj);
+      if (fillFrameOps && fopi)
+        frameOps.push_back(fopi->attach(fbv));
     }
   }
+
+  // Prepare shared parameters for kernel
   getSh()->pixelOps = pixelOpShs.empty() ? nullptr : pixelOpShs.data();
   getSh()->numPixelOps = pixelOpShs.size();
 }
@@ -237,11 +243,6 @@ uint32 FrameBuffer::getChannelFlags() const
     channels |= OSP_FB_ALBEDO;
   }
   return channels;
-}
-
-int32 FrameBuffer::getFrameID() const
-{
-  return getSh()->frameID;
 }
 
 bool FrameBuffer::hasPrimitiveIDBuf() const

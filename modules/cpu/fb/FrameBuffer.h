@@ -6,14 +6,18 @@
 #include <atomic>
 // ospray
 #include "ISPCDeviceObject.h"
+#include "PixelOp.h"
 #include "common/Data.h"
-#include "fb/ImageOp.h"
+#include "common/FeatureFlagsEnum.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "FrameBufferShared.h"
 
 namespace ospray {
+
+struct Camera;
+struct FrameBufferView;
 
 // abstract frame buffer class
 struct OSPRAY_SDK_INTERFACE FrameBuffer
@@ -26,7 +30,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   FrameBuffer(api::ISPCDevice &device,
       const vec2i &size,
       ColorBufferFormat colorBufferFormat,
-      const uint32 channels);
+      const uint32 channels,
+      const FeatureFlagsOther ffo);
 
   virtual ~FrameBuffer() override = default;
 
@@ -37,7 +42,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual void unmap(const void *mappedMem) = 0;
 
   // clear (the specified channels of) this frame buffer
-  virtual void clear() = 0;
+  virtual void clear();
 
   // Get number of pixels per render task, in x and y direction
   vec2i getRenderTaskSize() const;
@@ -66,6 +71,9 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   // end the frame and run any final post-processing frame ops
   virtual void endFrame(const float errorThreshold, const Camera *camera) = 0;
 
+  // Invoke post-processing by calling all FrameOps
+  virtual AsyncEvent postProcess(const Camera *camera, bool wait) = 0;
+
   // common function to help printf-debugging, every derived class should
   // override this
   virtual std::string toString() const override;
@@ -91,19 +99,16 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   int32 getFrameID() const;
 
+  FeatureFlags getFeatureFlags() const;
+
  protected:
-  // Finalize the pixel op and frame op state for rendering on commit
-  void prepareImageOps();
-
-  /*! Find the index of the first frameoperation included in
-   * the imageop pipeline
-   */
-  void findFirstFrameOperation();
-
-  // Find all the LivePixelOps and set their ISPC-side data on the FrameBuffer
-  void setPixelOpShs();
+  // Fill vectors with instantiated live objects
+  void prepareLiveOpsForFBV(
+      FrameBufferView &fbv, bool fillFrameOps = true, bool fillPixelOps = true);
 
   const vec2i size;
+
+  int32_t frameID{-1};
 
   // indicates whether the app requested this frame buffer to have
   // an (application-mappable) depth buffer
@@ -125,11 +130,25 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
   Ref<const DataT<ImageOp *>> imageOpData;
-  std::vector<std::unique_ptr<LiveImageOp>> imageOps;
+  std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;
+  std::vector<std::unique_ptr<LivePixelOp>> pixelOps;
   std::vector<ispc::LivePixelOp *> pixelOpShs;
-  size_t firstFrameOperation = -1;
+
+  FeatureFlagsOther featureFlags{FFO_NONE};
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
+
+inline int32_t FrameBuffer::getFrameID() const
+{
+  return frameID;
+}
+
+inline FeatureFlags FrameBuffer::getFeatureFlags() const
+{
+  FeatureFlags ff;
+  ff.other = featureFlags;
+  return ff;
+}
 
 } // namespace ospray

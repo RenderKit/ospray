@@ -51,12 +51,14 @@ ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baselin
 
 if [ $TEST_MULTIDEVICE ]; then
   mkdir failed-multidevice
-  OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --osp:load-modules=multidevice_cpu --osp:device=multidevice || exit 2
+  test_filters="DebugOp/ImageOp.ImageOp/0" # post-processing not enabled on multidevice
+  OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --gtest_filter="-$test_filters" --osp:load-modules=multidevice_cpu --osp:device=multidevice || exit 2
 fi
 
 if [ $TEST_MPI ]; then
   mkdir failed-mpi
-  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi --gtest_filter="-TestScenesVariance/*" --osp:load-modules=mpi_offload --osp:device=mpiOffload : $MPI_WORKER_CONFIG ospray_mpi_worker || exit 2
+  test_filters="TestScenesVariance/*"
+  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi --gtest_filter="-$test_filters" --osp:load-modules=mpi_offload --osp:device=mpiOffload : $MPI_WORKER_CONFIG ospray_mpi_worker || exit 2
 
   mkdir failed-mpi-data-parallel
   mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-data-parallel || exit 2

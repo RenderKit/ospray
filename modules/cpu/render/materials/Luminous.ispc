@@ -14,7 +14,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL const varying BSDF *varying Luminous_getBSDF(
     const uniform Material *uniform _self,
     uniform ShadingContext *uniform ctx,
-    const DifferentialGeometry &dg,
+    const DifferentialGeometry &,
     const Ray &,
     const Medium &)
 {

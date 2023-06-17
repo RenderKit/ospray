@@ -4,6 +4,7 @@
 // ospray
 #include "World.h"
 #include "Instance.h"
+#include "common/FeatureFlagsEnum.h"
 #include "lights/Light.h"
 #include "render/pathtracer/PathTracerData.h"
 #include "render/scivis/SciVisData.h"
@@ -57,7 +58,7 @@ World::~World()
 }
 
 World::World(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {
   managedObjectType = OSP_WORLD;
 }
@@ -122,12 +123,13 @@ void World::commit()
 
     // Create shared buffers for instance pointers
     instanceArray = make_buffer_shared_unique<ispc::Instance *>(
-        getISPCDevice().getIspcrtDevice(),
+        getISPCDevice().getIspcrtContext(),
         sizeof(ispc::Instance *) * numInstances);
     getSh()->instances = instanceArray->sharedPtr();
 
     // Populate shared buffer with instance pointers,
     // create Embree instances
+    featureFlags.reset();
     unsigned int id = 0;
     for (auto &&inst : *instances) {
       getSh()->instances[id] = inst->getSh();
@@ -137,6 +139,7 @@ void World::commit()
       }
 #ifdef OSPRAY_ENABLE_VOLUMES
       if (inst->group->sceneVolumes) {
+        featureFlags.other |= FFO_VOLUME_IN_SCENE;
         addGeometryInstance(
             esVol, inst->group->sceneVolumes, inst, embreeDevice, id);
       }
@@ -147,7 +150,17 @@ void World::commit()
             esClip, inst->group->sceneClippers, inst, embreeDevice, id);
       }
 #endif
+      // Gather feature flags from all groups
+      const FeatureFlags &gff = inst->group->getFeatureFlags();
+      featureFlags |= gff;
       id++;
+    }
+  }
+
+  // Gather light types
+  if (lights) {
+    for (auto &&light : *lights) {
+      featureFlags |= light->getFeatureFlags();
     }
   }
 

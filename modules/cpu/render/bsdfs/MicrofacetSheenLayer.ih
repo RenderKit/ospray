@@ -25,8 +25,10 @@ struct MicrofacetSheenLayer
   float weight;
 };
 
-inline BSDF_EvalRes MicrofacetSheenLayer_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes MicrofacetSheenLayer_eval(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying MicrofacetSheenLayer *uniform self =
       (const varying MicrofacetSheenLayer *uniform)super;
@@ -48,9 +50,10 @@ inline BSDF_EvalRes MicrofacetSheenLayer_eval(
     // recursion (that we know will terminate) from the SYCL compiler we have
     // to call MultiBSDF directly here if we have a layer over a MultiBSDF
     if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-      substrate = MultiBSDF_eval(f, wo, wi); // f->eval(f, wo, wi);
+      substrate = MultiBSDF_eval(f, wo, wi, ffh); // f->eval(f, wo, wi);
     } else {
-      substrate = BSDF_dispatch_eval_base(f, wo, wi); // f->eval(f, wo, wi);
+      substrate =
+          BSDF_dispatch_eval_base(f, wo, wi, ffh); // f->eval(f, wo, wi);
     }
   }
 
@@ -99,7 +102,8 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss)
+    float ss,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const varying MicrofacetSheenLayer *uniform self =
       (const varying MicrofacetSheenLayer *uniform)super;
@@ -136,10 +140,10 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
       // recursion (that we know will terminate) from the SYCL compiler we have
       // to call MultiBSDF directly here if we have a layer over a MultiBSDF
       if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        substrate = MultiBSDF_eval(f, wo, res.wi); // f->eval(f, wo, wi);
+        substrate = MultiBSDF_eval(f, wo, res.wi, ffh); // f->eval(f, wo, wi);
       } else {
         substrate =
-            BSDF_dispatch_eval_base(f, wo, res.wi); // f->eval(f, wo, wi);
+            BSDF_dispatch_eval_base(f, wo, res.wi, ffh); // f->eval(f, wo, wi);
       }
     }
   } else {
@@ -156,10 +160,10 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
       // recursion (that we know will terminate) from the SYCL compiler we have
       // to call MultiBSDF directly here if we have a layer over a MultiBSDF
       if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        res = MultiBSDF_sample(f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+        res = MultiBSDF_sample(f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
       } else {
         res = BSDF_dispatch_sample_base(
-            f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+            f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
       }
     }
     if (reduce_max(res.weight) <= 0.f)

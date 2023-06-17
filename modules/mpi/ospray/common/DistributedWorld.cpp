@@ -15,7 +15,7 @@ namespace mpi {
 using namespace rkcommon;
 
 DistributedWorld::DistributedWorld(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device),
+    : AddStructShared(device.getIspcrtContext(), device),
       mpiGroup(mpicommon::worker.dup())
 {
   managedObjectType = OSP_WORLD;

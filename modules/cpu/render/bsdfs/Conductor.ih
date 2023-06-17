@@ -15,16 +15,19 @@ struct Conductor
   Fresnel *uniform fresnel;
 };
 
-inline BSDF_EvalRes Conductor_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes Conductor_eval(const varying BSDF *uniform,
+    const vec3f &,
+    const vec3f &,
+    const uniform FeatureFlagsHandler &)
 {
   return make_BSDF_EvalRes_zero();
 }
 
 inline BSDF_SampleRes Conductor_sample(const varying BSDF *uniform super,
     const vec3f &wo,
-    const vec2f &s,
-    float ss)
+    const vec2f &,
+    float,
+    const uniform FeatureFlagsHandler &)
 {
   const varying Conductor *uniform self =
       (const varying Conductor *uniform)super;

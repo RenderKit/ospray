@@ -51,8 +51,8 @@ void MultiDevice::commit()
     int numSubdevices =
         OSPRAY_NUM_SUBDEVICES.value_or(getParam("numSubdevices", 1));
     std::vector<int> deviceIndex(numSubdevices, 0);
-      for (int i = 0; i < numSubdevices; i++)
-          deviceIndex[i] = i%numPhyDevices;
+    for (int i = 0; i < numSubdevices; i++)
+      deviceIndex[i] = i % numPhyDevices;
 
     postStatusMsg(OSP_LOG_DEBUG) << "# of subdevices =" << numSubdevices;
 
@@ -411,7 +411,7 @@ OSPImageOperation MultiDevice::newImageOp(const char *type)
   // Same note for image ops as for framebuffers in terms of how they are
   // treated as shared. Eventually we would have per hardware device ones though
   // for cpu/gpus
-  auto *op = ImageOp::createInstance(type);
+  auto *op = ImageOp::createInstance(type, hostDevice);
   MultiDeviceObject *o = new MultiDeviceObject();
   for (size_t i = 0; i < subdevices.size(); ++i) {
     o->objects.push_back((OSPImageOperation)op);
@@ -525,6 +525,15 @@ float MultiDevice::getTaskDuration(OSPFuture _task)
 {
   auto *task = (Future *)_task;
   return task->getTaskDuration();
+}
+
+void *MultiDevice::getPostProcessingCommandQueuePtr()
+{
+  // TODO: Return appropriate command queue for post-processing here.
+  // Either one device will be statically selected for post-processing or
+  // dynamically load balancer will assign device based on current load
+  // distribution
+  return nullptr;
 }
 
 OSPPickResult MultiDevice::pick(OSPFrameBuffer _fb,

@@ -54,6 +54,7 @@ SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
   // transform to camera- and then to world-space
   vec3f dir;
   vec3f org;
+#ifndef OSPRAY_TARGET_SYCL
   if (self->super.motionBlur) {
     const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
 
@@ -66,7 +67,9 @@ SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
 
     dir = frameMB * make_vec3f(-localDir.y, -localDir.z, localDir.x);
     org = xfmPoint(xfm, self->org) + offset * cross(dir, frameMB.vy);
-  } else {
+  } else
+#endif
+  {
     dir = self->frame * make_vec3f(-localDir.y, -localDir.z, localDir.x);
     org = self->org + offset * cross(dir, self->frame.vy);
   }

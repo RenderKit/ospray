@@ -22,6 +22,7 @@
 #ifndef OSPRAY_TARGET_SYCL
 #include "render/distributed/DistributedRaycast_ispc.h"
 #else
+#include "common/FeatureFlags.ih"
 namespace ispc {
 SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(void *_self,
     void *_fb,
@@ -30,7 +31,8 @@ SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(void *_self,
     const void *_region,
     void *perFrameData,
     const void *_taskIDs,
-    const int taskIndex0);
+    const int taskIndex0,
+    const uniform FeatureFlagsHandler &ffh);
 }
 #endif
 
@@ -44,7 +46,7 @@ static bool DETAILED_LOGGING = false;
 // DistributedRaycastRenderer definitions /////////////////////////////////
 
 DistributedRaycastRenderer::DistributedRaycastRenderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device),
+    : AddStructShared(device.getIspcrtContext(), device),
       mpiGroup(mpicommon::worker.dup())
 {
   DETAILED_LOGGING =
@@ -107,8 +109,7 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
     DistributedWorld *world,
     const box3f &region,
     void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs,
-    sycl::queue &syclQueue) const
+    const utility::ArrayView<uint32_t> &taskIDs) const
 {
   auto *rendererSh = getSh();
   auto *fbSh = fb->getSh();
@@ -117,25 +118,33 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   const size_t numTasks = taskIDs.size();
 
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
-      const box3f regionCopy = region;
-      if (taskIndex.get_global_id(0) < numTasks) {
-        ispc::DistributedRaycast_renderRegionToTileTask(&rendererSh->super,
-            fbSh,
-            cameraSh,
-            worldSh,
-            (ispc::box3f *)&regionCopy,
-            perFrameData,
-            taskIDsPtr,
-            taskIndex.get_global_id(0));
-      }
-    });
+  auto event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
+    FeatureFlags ff = world->getFeatureFlags();
+    ff |= featureFlags;
+    ff |= fb->getFeatureFlags();
+    ff |= camera->getFeatureFlags();
+    cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
+
+    const sycl::nd_range<1> dispatchRange =
+        device.computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange,
+        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
+          const box3f regionCopy = region;
+          if (taskIndex.get_global_id(0) < numTasks) {
+            ispc::FeatureFlagsHandler ffh(kh);
+            ispc::DistributedRaycast_renderRegionToTileTask(&rendererSh->super,
+                fbSh,
+                cameraSh,
+                worldSh,
+                (ispc::box3f *)&regionCopy,
+                perFrameData,
+                taskIDsPtr,
+                taskIndex.get_global_id(0),
+                ffh);
+          }
+        });
   });
   event.wait_and_throw();
-  // For prints we have to flush the entire queue, because other stuff is queued
-  syclQueue.wait_and_throw();
 }
 #endif
 

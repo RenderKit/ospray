@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "common/FeatureFlags.ih"
 #include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -13,6 +14,7 @@ struct PathVertex;
 
 SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
-    PathVertex &pathVertex);
+    PathVertex &pathVertex,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

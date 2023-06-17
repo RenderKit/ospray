@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "../ImageOp.h"
+#include "fb/FrameOp.h"
 #include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
@@ -12,7 +12,12 @@ namespace ospray {
 // The blur frame op is a test which applies a Gaussian blur to the frame
 struct OSPRAY_SDK_INTERFACE BlurFrameOp : public FrameOp
 {
-  std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+  BlurFrameOp(api::Device &device)
+      : FrameOp(static_cast<api::ISPCDevice &>(device))
+  {}
+
+  std::unique_ptr<LiveFrameOpInterface> attach(
+      FrameBufferView &fbView) override;
 
   std::string toString() const override;
 };
@@ -20,17 +25,20 @@ struct OSPRAY_SDK_INTERFACE BlurFrameOp : public FrameOp
 template <typename T>
 struct OSPRAY_SDK_INTERFACE LiveBlurFrameOp : public LiveFrameOp
 {
-  LiveBlurFrameOp(FrameBufferView &_fbView) : LiveFrameOp(_fbView) {}
+  LiveBlurFrameOp(api::ISPCDevice &device, FrameBufferView &_fbView)
+      : LiveFrameOp(device, _fbView)
+  {}
 
-  void process(const Camera *) override;
+  void process(void *, const Camera *) override;
 };
 
 // Inlined definitions ////////////////////////////////////////////////////////
 
 template <typename T>
-inline void LiveBlurFrameOp<T>::process(const Camera *)
+inline void LiveBlurFrameOp<T>::process(void *, const Camera *)
 {
   // TODO: For SRGBA we actually need to convert to linear before filtering
+  const FrameBufferView &fbView = getFBView();
   T *color = static_cast<T *>(fbView.colorBuffer);
   const int blurRadius = 4;
   // variance = std-dev^2

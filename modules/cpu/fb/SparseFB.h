@@ -10,7 +10,7 @@
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "TileShared.h"
-#include "common/BufferShared.h"
+#include "common/ISPCRTBuffers.h"
 #include "fb/SparseFBShared.h"
 
 namespace ospray {
@@ -78,7 +78,14 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   void beginFrame() override;
 
-  void endFrame(const float errorThreshold, const Camera *camera) override;
+  void endFrame(const float, const Camera *) override {}
+
+  AsyncEvent postProcess(const Camera *, bool) override
+  {
+    AsyncEvent e;
+    // Do not run post-processing on sparse frame buffer
+    return e;
+  }
 
   // Mapping sparse framebuffers is not supported, will return null
   const void *mapBuffer(OSPFrameBufferChannel channel) override;

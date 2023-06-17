@@ -58,11 +58,11 @@ export void LiveSSAOFrameOp_set(void *uniform _self,
 }
 
 export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
-    void *uniform _fb,
+    const void *uniform _fb,
     float *uniform occlusionBuffer,
     const uniform float radius,
     const uniform float checkRadius,
-    int uniform kernelSize,
+    unsigned int uniform kernelSize,
     int uniform programID)
 {
   const LiveSSAOFrameOp *uniform self = (const LiveSSAOFrameOp *uniform)_self;
@@ -128,15 +128,17 @@ export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
   }
 }
 
-export void LiveSSAOFrameOp_applyOcclusion(void *uniform _self,
-    void *uniform _fb,
+export void LiveSSAOFrameOp_applyOcclusion(void *uniform,
+    const void *uniform _fb,
     void *uniform _color,
     float *uniform occlusionBuffer)
 {
   FrameBufferView *uniform fb = (FrameBufferView * uniform) _fb;
-  for (uint32 pixelID = 0; pixelID < fb->fbDims.x * fb->fbDims.y; pixelID++) {
+  for (uniform uint32 pixelID = 0;
+       pixelID < (uniform uint32)(fb->fbDims.x * fb->fbDims.y);
+       pixelID++) {
     if (occlusionBuffer[pixelID] >= 0) {
-      for (uint32 c = 0; c < 3; ++c) {
+      for (uniform uint32 c = 0; c < 3; ++c) {
         if ((fb->colorBufferFormat == OSP_FB_RGBA8)
             || (fb->colorBufferFormat == OSP_FB_SRGBA)) {
           uint8 *uniform color = (uint8 * uniform) _color;

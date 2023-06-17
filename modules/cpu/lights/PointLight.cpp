@@ -23,7 +23,7 @@ ISPCRTMemoryView PointLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
   ISPCRTMemoryView view = StructSharedCreate<ispc::PointLight>(
-      getISPCDevice().getIspcrtDevice().handle());
+      getISPCDevice().getIspcrtContext().handle());
   ispc::PointLight *sh = (ispc::PointLight *)ispcrtSharedPtr(view);
 
   sh->super.isVisible = visible;

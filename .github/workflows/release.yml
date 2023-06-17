@@ -39,11 +39,11 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: centos:7
+      image: rockylinux:8.7
       cmd: |
         module load cmake/3.15.2
         module load intel/2023.0
-        module load mpich/3.2
+        module load mpi/mpich-x86_64
         export CC=icx
         export CXX=icpx
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
@@ -95,7 +95,7 @@ jobs:
         module load cmake
         module load intel/2021.2
         echo "Configure dependencies"
-        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF
+        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF
         echo "Build dependencies"
         cmake --build build_deps
         INSTALL_DIR=$(pwd)/build_deps/install
@@ -139,10 +139,10 @@ jobs:
     needs: release-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: centos:7
+      image: rockylinux:8.7
       cmd: |
         module load cmake/3.15.2
-        module load mpich/3.2
+        module load mpi/mpich-x86_64
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX TEST_MPI

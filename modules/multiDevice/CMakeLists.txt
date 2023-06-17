@@ -74,25 +74,22 @@ if (OSPRAY_MODULE_GPU)
     message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
   endif()
 
-ospray_configure_dpcpp_target()
+  ospray_configure_dpcpp_target()
 
+  add_library(ospray_module_multidevice_gpu SHARED
+    ${OSPRAY_MULTIDEVICE_CPP_SOURCES})
 
-add_library(ospray_module_multidevice_gpu SHARED
-  ${OSPRAY_MULTIDEVICE_CPP_SOURCES})
-
-set_target_properties(ospray_module_multidevice_gpu PROPERTIES
+  set_target_properties(ospray_module_multidevice_gpu PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON)
 
-
-target_link_libraries(ospray_module_multidevice_gpu
+  target_link_libraries(ospray_module_multidevice_gpu
   PRIVATE
     rkcommon::rkcommon
     ospray_module_gpu
-    ospray_module_gpu_kernels
-)
+  )
 
-target_include_directories(ospray_module_multidevice_gpu
+  target_include_directories(ospray_module_multidevice_gpu
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -100,38 +97,17 @@ target_include_directories(ospray_module_multidevice_gpu
     ${CMAKE_CURRENT_BINARY_DIR}
     # For ISPC module generated ispc headers
     ${PROJECT_BINARY_DIR}/ospray/
-)
+  )
 
- target_compile_options(ospray_module_multidevice_gpu
+  target_compile_options(ospray_module_multidevice_gpu
   PRIVATE
     -x c++
   )
 
-  target_compile_options(ospray_module_multidevice_gpu PRIVATE
-    -fsycl
-    ${OSPRAY_CXX_FLAGS_SYCL}
-    -fsycl-targets=${OSPRAY_SYCL_TARGET}
+  target_compile_definitions(ospray_module_multidevice_gpu PRIVATE
+    OBJECTFACTORY_IMPORT
   )
 
-target_compile_definitions(ospray_module_multidevice_gpu PRIVATE
-  OBJECTFACTORY_IMPORT
-)
-
- if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
-    target_link_options(ospray_module_multidevice_gpu PRIVATE
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-    )
-  else()
-    target_link_options(ospray_module_multidevice_gpu PRIVATE
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-    )
-  endif()
-
-
-ospray_install_library(ospray_module_multidevice_gpu lib)
+  ospray_install_library(ospray_module_multidevice_gpu lib)
 
 endif()

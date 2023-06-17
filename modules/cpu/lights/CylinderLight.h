@@ -11,7 +11,7 @@ namespace ospray {
  * cylindrical area into outward space */
 struct OSPRAY_SDK_INTERFACE CylinderLight : public Light
 {
-  CylinderLight(api::ISPCDevice &device) : Light(device) {}
+  CylinderLight(api::ISPCDevice &device) : Light(device, FFO_LIGHT_CYLINDER) {}
   virtual ~CylinderLight() override = default;
   virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;

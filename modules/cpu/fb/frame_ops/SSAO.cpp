@@ -5,7 +5,8 @@
 
 namespace ospray {
 
-std::unique_ptr<LiveImageOp> SSAOFrameOp::attach(FrameBufferView &fbView)
+std::unique_ptr<LiveFrameOpInterface> SSAOFrameOp::attach(
+    FrameBufferView &fbView)
 {
   if (!fbView.colorBuffer) {
     throw std::runtime_error(
@@ -27,8 +28,14 @@ std::unique_ptr<LiveImageOp> SSAOFrameOp::attach(FrameBufferView &fbView)
 
   void *ispcEquiv = ispc::LiveSSAOFrameOp_create();
 
-  return rkcommon::make_unique<LiveSSAOFrameOp>(
-      fbView, ispcEquiv, ssaoStrength, radius, checkRadius, kernel, randomVecs);
+  return rkcommon::make_unique<LiveSSAOFrameOp>(device,
+      fbView,
+      ispcEquiv,
+      ssaoStrength,
+      radius,
+      checkRadius,
+      kernel,
+      randomVecs);
 }
 
 std::string SSAOFrameOp::toString() const
@@ -62,14 +69,15 @@ void SSAOFrameOp::commit()
   }
 }
 
-LiveSSAOFrameOp::LiveSSAOFrameOp(FrameBufferView &_fbView,
+LiveSSAOFrameOp::LiveSSAOFrameOp(api::ISPCDevice &device,
+    FrameBufferView &_fbView,
     void *ispcEquiv,
     float ssaoStrength,
     float radius,
     float checkRadius,
     std::vector<vec3f> kernel,
     std::vector<vec3f> randomVecs)
-    : LiveFrameOp(_fbView),
+    : LiveFrameOp(device, _fbView),
       ispcEquiv(ispcEquiv),
       ssaoStrength(ssaoStrength),
       radius(radius),
@@ -78,8 +86,9 @@ LiveSSAOFrameOp::LiveSSAOFrameOp(FrameBufferView &_fbView,
       randomVecs(randomVecs)
 {}
 
-void LiveSSAOFrameOp::process(const Camera *camera)
+void LiveSSAOFrameOp::process(void *, const Camera *camera)
 {
+  const FrameBufferView &fbView = getFBView();
   if (fbView.colorBufferFormat == OSP_FB_RGBA8
       || fbView.colorBufferFormat == OSP_FB_SRGBA) {
     // TODO: For SRGBA we actually need to convert to linear before filtering

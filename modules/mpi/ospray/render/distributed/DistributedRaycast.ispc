@@ -5,6 +5,7 @@
 
 #include "camera/Camera.ih"
 #include "camera/CameraDispatch.ih"
+#include "common/FeatureFlags.ih"
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
 #include "common/VolumeIntervals.ih"
@@ -39,11 +40,14 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
 // inside the region, not after.
-vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
+inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
     const VolumeInterval &interval,
     Ray &ray,
-    uniform float samplingRate)
+    uniform float samplingRate,
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+
   VolumetricModel *varying volModel = interval.volumetricModel;
   // Note: required to WA compiler dropping symbols on link incorrectly
   if (volModel == NULL) {
@@ -68,24 +72,44 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
     TransferFunction *uniform tf = vm->transferFunction;
 
     float time = 0.5f;
-    VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
+
 #if OPENVKL_VERSION_MAJOR == 1
-        vm->vklIntervalContext,
+    // We know if we have OpenVKL version 1 we're not targetting SYCL
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIteratorV(vm->vklIntervalContext,
+            (varying vkl_vec3f *)&ray.org,
+            (varying vkl_vec3f *)&ray.dir,
+            (varying vkl_range1f *)&interval.interval,
+            &time,
+            (void *uniform)intervalIteratorBuffer);
 #else
-        &vm->vklIntervalContext,
-#endif
-        (varying vkl_vec3f *)&ray.org,
-        (varying vkl_vec3f *)&ray.dir,
-        (varying vkl_range1f *)&interval.interval,
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIteratorV(&vm->vklIntervalContext,
+            (varying vkl_vec3f *)&ray.org,
+            (varying vkl_vec3f *)&ray.dir,
+            (varying vkl_range1f *)&interval.interval,
 #ifdef OSPRAY_TARGET_SYCL
-        time,
+            time,
 #else
-        &time,
+            &time,
 #endif
-        (void *uniform)intervalIteratorBuffer);
+            (void *uniform)intervalIteratorBuffer
+#ifdef OSPRAY_TARGET_SYCL
+            ,
+            ff.volume
+#endif
+        );
+#endif
 
     VKLInterval interval;
-    while (vklIterateIntervalV(intervalIterator, &interval) && alpha < 0.99f) {
+    while (vklIterateIntervalV(intervalIterator,
+               &interval
+#ifdef OSPRAY_TARGET_SYCL
+               ,
+               ff.volume
+#endif
+               )
+        && alpha < 0.99f) {
       const float nominalSamplingDt = interval.nominalDeltaT / samplingRate;
 
       // initial sub interval, based on our renderer-defined sampling rate
@@ -101,13 +125,21 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
 
         // Get volume sample
         vec3f p = transformedRay.org + transformedRay.t0 * transformedRay.dir;
-        const float sample = vklComputeSampleV(
 #if OPENVKL_VERSION_MAJOR == 1
-            volume->vklSampler,
+        // We know if we have OpenVKL version 1 we're not targetting SYCL
+        const float sample = vklComputeSampleV(
+            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 #else
-            &volume->vklSampler,
+        const float sample = vklComputeSampleV(&volume->vklSampler,
+            (const varying vkl_vec3f *uniform) & p
+#ifdef OSPRAY_TARGET_SYCL
+            ,
+            0,
+            time,
+            ff.volume
 #endif
-            (const varying vkl_vec3f *uniform) & p);
+        );
+#endif
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity =
@@ -139,7 +171,8 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     const varying vec3i &sampleID,
-    const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const uniform int &sampleCnt = self->aoSamples;
   const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
@@ -168,7 +201,7 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
 
     Ray ao_ray;
     setRay(ao_ray, dg.P, ao_dir, dg.epsilon, self->aoRadius);
-    if (isOccluded(world, ao_ray))
+    if (isOccluded(world, ao_ray, ffh))
       hits++;
   }
 
@@ -177,12 +210,13 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
   return 1.0f - (hits / (float)sampleCnt);
 }
 
-vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
+inline vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
     const FrameBuffer *uniform fb,
     const DistributedWorld *uniform world,
     const vec3i &sampleID,
     const Ray &ray,
-    const DifferentialGeometry &dg)
+    const DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh)
 {
   // TODO: DRR should have its own support for OBJ material and lighting model
 
@@ -209,7 +243,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
   const float eyeLightIntensity = absf(dot(dg.Ns, ray.dir));
   vec3f color = surfaceColor * eyeLightIntensity;
   if (self->aoSamples > 0) {
-    float ao = computeAO(self, fb, &world->super, sampleID, dg);
+    float ao = computeAO(self, fb, &world->super, sampleID, dg, ffh);
     color = color * ao;
   }
   return make_vec4f(color, opacity);
@@ -261,47 +295,55 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 #endif
 }
 
-SYCL_EXTERNAL void DRR_renderRegionSample(Renderer *uniform _self,
+// TODO: Better separate geometry and volume code in this function
+inline void DRR_renderRegionSample(Renderer *uniform _self,
     SparseFB *uniform fb,
     DistributedWorld *uniform world,
     const box3f *uniform region,
     const vec2f &regionInterval,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlagsHandler &ffh)
 {
   DistributedRaycastRenderer *uniform self =
       (DistributedRaycastRenderer * uniform) _self;
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
   Ray &geomRay = sample.ray;
   Ray volumeRay = sample.ray;
 
-  traceRay(&world->super, geomRay);
+  traceRay(&world->super, geomRay, ffh);
 #ifdef OSPRAY_ENABLE_VOLUMES
   VolumeInterval volumeInterval;
-  traceVolumeRay(&world->super, volumeRay, volumeInterval);
-  volumeInterval.interval.lower =
-      max(volumeInterval.interval.lower, regionInterval.x);
-  volumeInterval.interval.upper =
-      min(volumeInterval.interval.upper, regionInterval.y);
+  if (ff.volume) {
+    traceVolumeRay(&world->super, volumeRay, volumeInterval);
+    volumeInterval.interval.lower =
+        max(volumeInterval.interval.lower, regionInterval.x);
+    volumeInterval.interval.upper =
+        min(volumeInterval.interval.upper, regionInterval.y);
 
-  sample.z = min(geomRay.t, volumeInterval.interval.lower);
-#else
-  sample.z = geomRay.t;
+    sample.z = min(geomRay.t, volumeInterval.interval.lower);
+  } else
 #endif
+  {
+    sample.z = geomRay.t;
+  }
 
   // TODO: Doesn't seem like much jittering happens with the volume integration
   vec4f outputColor = make_vec4f(0.f);
   while (outputColor.w < 0.99f) {
-    const bool haveGeometryHit = hadHit(geomRay)
-        && geomRay.t >= regionInterval.x && geomRay.t <= regionInterval.y;
+    const bool haveGeometryHit = ff.geometry ? hadHit(geomRay)
+            && geomRay.t >= regionInterval.x && geomRay.t <= regionInterval.y
+                                             : false;
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    const bool haveVolumeHit = hasInterval(volumeInterval);
+    const bool haveVolumeHit = ff.volume ? hasInterval(volumeInterval) : false;
 
     const bool bothHit = haveGeometryHit && haveVolumeHit;
     const bool eitherHit = haveGeometryHit || haveVolumeHit;
 
-    const bool volumeFirst = volumeInterval.interval.lower < geomRay.t;
+    const bool volumeFirst =
+        ff.volume ? volumeInterval.interval.lower < geomRay.t : false;
 #else
     const bool bothHit = false;
     const bool eitherHit = haveGeometryHit;
@@ -314,20 +356,21 @@ SYCL_EXTERNAL void DRR_renderRegionSample(Renderer *uniform _self,
     vec4f volumeColor = make_vec4f(0.f);
     vec4f surfaceColor = make_vec4f(0.f);
     DifferentialGeometry dg;
-    if (haveGeometryHit) {
+    if (haveGeometryHit && ff.geometry) {
       postIntersect(&world->super,
           &self->super,
           dg,
           geomRay,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
-              | DG_TEXCOORD);
+              | DG_TEXCOORD,
+          ffh);
       surfaceColor = DRR_shadeSurface(
-          self, &fb->super, world, sample.sampleID, geomRay, dg);
+          self, &fb->super, world, sample.sampleID, geomRay, dg, ffh);
     }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
     // Always just integrate the volume when it comes in front of the geometry
-    if (haveVolumeHit && volumeFirst) {
+    if (haveVolumeHit && volumeFirst && ff.volume) {
       volumeInterval.interval.upper =
           min(geomRay.t, volumeInterval.interval.upper);
 
@@ -365,7 +408,7 @@ SYCL_EXTERNAL void DRR_renderRegionSample(Renderer *uniform _self,
           volumeInterval.interval.lower,
           volumeInterval.interval.upper);
       volumeColor = DRR_integrateVolumeInterval(
-          sample, volumeInterval, volumeRay, self->volumeSamplingRate);
+          sample, volumeInterval, volumeRay, self->volumeSamplingRate, ffh);
     }
 #endif
 
@@ -389,9 +432,11 @@ SYCL_EXTERNAL void DRR_renderRegionSample(Renderer *uniform _self,
     // Step the volume ray forwards as well
     volumeRay = geomRay;
 
-    traceRay(&world->super, geomRay);
+    traceRay(&world->super, geomRay, ffh);
 #ifdef OSPRAY_ENABLE_VOLUMES
-    traceVolumeRay(&world->super, volumeRay, volumeInterval);
+    if (ff.volume) {
+      traceVolumeRay(&world->super, volumeRay, volumeInterval);
+    }
 #endif
   }
   sample.rgb = make_vec3f(outputColor);
@@ -413,7 +458,8 @@ SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(
     const void *uniform _region,
     void *uniform perFrameData,
     const void *uniform _taskIDs,
-    const int taskIndex0)
+    const int taskIndex0,
+    const uniform FeatureFlagsHandler &ffh)
 {
   Renderer *uniform self = (Renderer * uniform) _self;
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
@@ -422,7 +468,7 @@ SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(
   const box3f *uniform region = (const box3f *uniform)_region;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   DR_default_renderRegionToTile(
-      self, fb, camera, world, region, perFrameData, taskIDs, taskIndex0);
+      self, fb, camera, world, region, perFrameData, taskIDs, taskIndex0, ffh);
 }
 #else
 export void DistributedRaycast_renderRegionToTileTask(void *uniform _self,
@@ -440,8 +486,9 @@ export void DistributedRaycast_renderRegionToTileTask(void *uniform _self,
   DistributedWorld *uniform world = (DistributedWorld * uniform) _world;
   const box3f *uniform region = (const box3f *uniform)_region;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  uniform FeatureFlagsHandler ffh;
   launch[numTasks] DR_default_renderRegionToTile(
-      self, fb, camera, world, region, perFrameData, taskIDs);
+      self, fb, camera, world, region, perFrameData, taskIDs, ffh);
   sync;
 }
 #endif

@@ -17,7 +17,7 @@ inline void PixelFilter_Constructor(PixelFilter *uniform self,
   self->sample = sample;
 }
 
-inline vec2f Point_sample(const PixelFilter *uniform self, const vec2f &s)
+inline vec2f Point_sample(const PixelFilter *uniform, const vec2f &)
 {
   return make_vec2f(0.0f);
 }

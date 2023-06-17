@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "common/Managed.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
 
@@ -11,7 +11,7 @@ struct FrameBuffer;
 
 /*! A view into a portion of the framebuffer to run the frame operation on
  */
-struct OSPRAY_SDK_INTERFACE FrameBufferView
+struct FrameBufferView
 {
   // TODO Replace w/ arrayview once LocalFB is updated
   // The total dimensions of the global framebuffer
@@ -44,10 +44,22 @@ struct OSPRAY_SDK_INTERFACE FrameBufferView
   //! Convenience method to make a view of the entire framebuffer
   FrameBufferView(FrameBuffer *fb,
       OSPFrameBufferFormat colorFormat,
+      const vec2i &dims,
       void *colorBuffer,
       float *depthBuffer,
       vec3f *normalBuffer,
-      vec3f *albedoBuffer);
+      vec3f *albedoBuffer)
+      : fbDims(dims),
+        viewDims(dims),
+        haloDims(0),
+        colorBufferFormat(colorFormat),
+        colorBuffer(colorBuffer),
+        depthBuffer(depthBuffer),
+        normalBuffer(normalBuffer),
+        albedoBuffer(albedoBuffer),
+        originalFB(fb)
+  {}
+
   FrameBufferView() = default;
 };
 

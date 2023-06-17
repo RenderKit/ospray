@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlagsEnum.h"
 #include "common/World.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
@@ -28,7 +29,8 @@ SYCL_EXTERNAL float computeAO(const Renderer *uniform renderer,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,
     const uniform float aoRadius,
-    const varying vec3i &sampleID)
+    const varying vec3i &sampleID,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
 
@@ -58,7 +60,7 @@ SYCL_EXTERNAL float computeAO(const Renderer *uniform renderer,
 
     Ray ao_ray;
     setRay(ao_ray, dg.P, ao_dir, dg.epsilon, aoRadius);
-    if (isOccluded(world, ao_ray))
+    if (isOccluded(world, ao_ray, ffh))
       hits++;
   }
 

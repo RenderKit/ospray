@@ -18,7 +18,7 @@ struct OSPRAY_SDK_INTERFACE TextureVolume
     : public AddStructShared<Texture, ispc::TextureVolume>
 {
   TextureVolume(api::ISPCDevice &device)
-      : AddStructShared(device.getIspcrtDevice(), device)
+      : AddStructShared(device.getIspcrtContext(), device)
   {}
 
   virtual std::string toString() const override;

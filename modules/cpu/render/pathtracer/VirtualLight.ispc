@@ -15,11 +15,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline box1f getMinMaxDistForVirtualLights(const PathContext &pathContext,
-    const PathState &pathState,
-    const PathVertex &lastVertex,
-    const PathVertex &pathVertex,
-    const Ray &ray)
+inline box1f getMinMaxDistForVirtualLights(
+    const PathVertex &lastVertex, const PathVertex &pathVertex, const Ray &ray)
 {
   box1f interval;
 
@@ -42,8 +39,11 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
-    Ray &ray)
+    Ray &ray,
+    const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+
   // add light from *virtual* lights by intersecting them
   vec3f L = make_vec3f(0.f);
 
@@ -53,12 +53,13 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
   if (pathContext.numLights <= pathtracerData.numGeoLights)
     return L; // return if no virtual lights at all
 
-  box1f intervalLightDist = getMinMaxDistForVirtualLights(
-      pathContext, pathState, lastVertex, pathVertex, ray);
+  box1f intervalLightDist =
+      getMinMaxDistForVirtualLights(lastVertex, pathVertex, ray);
 
   const uniform float selectionPDF =
       rcp((uniform float)pathContext.numLights - pathtracerData.numGeoLights);
-  for (uniform int i = pathtracerData.numGeoLights; i < pathContext.numLights;
+  for (uniform uint32 i = pathtracerData.numGeoLights;
+       i < pathContext.numLights;
        i++) {
     const Light *uniform light = pathtracerData.lights[i];
     if (!pathState.straightPath || light->isVisible) {
@@ -71,7 +72,8 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
           ray.dir,
           intervalLightDist.lower,
           intervalLightDist.upper,
-          pathState.time);
+          pathState.time,
+          ffh);
       if (reduce_max(le.radiance) > 0.0f) {
         Ray shadowRay;
         setRay(shadowRay,
@@ -83,17 +85,17 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
 
         // Trace ray in clipping geometries scene, fill array with ray intervals
         RayIntervals rayIntervals;
-        traceClippingRay(pathContext.world, shadowRay, rayIntervals);
+        traceClippingRay(pathContext.world, shadowRay, rayIntervals, ffh);
 
+        float T = 1.f;
 #ifdef OSPRAY_ENABLE_VOLUMES
-        const float T = volumeTransmittance(pathState,
-            pathContext.world,
-            shadowRay,
-            rayIntervals,
-            pathContext.ldSampler,
-            pathContext.randomSampler);
-#else
-        const float T = 1.f;
+        if (ff.other & FFO_VOLUME_IN_SCENE) {
+          T = volumeTransmittance(pathContext.world,
+              shadowRay,
+              rayIntervals,
+              pathContext.randomSampler,
+              ffh);
+        }
 #endif
         L = L
             + pathState.throughput * le.radiance

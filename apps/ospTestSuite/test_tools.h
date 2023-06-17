@@ -21,9 +21,9 @@
 
 #include "rkcommon/utility/multidim_index_sequence.h"
 
-using pixelColorValue = unsigned char;
+using pixelColorValue = float;
 
-const pixelColorValue pixelThreshold = 10;
+const pixelColorValue pixelThreshold = 13.f;
 const float errorRate = 0.1;
 
 enum class OsprayStatus
@@ -48,16 +48,29 @@ class OSPImageTools
   std::string fileFormat;
   std::string imgName;
 
+  std::string GetFileFormat() const
+  {
+    return fileFormat;
+  }
   // helper method to write the rendered image as PNG file
   OsprayStatus writePNG(std::string fileName, const uint32_t *pixel);
   // helper method to write the rendered image as HDR file
   OsprayStatus writeHDR(std::string fileName, const float *pixel);
   // helper method to write the image with given format
   OsprayStatus writeImg(std::string fileName, const void *pixel);
-  std::string GetFileFormat() const
-  {
-    return fileFormat;
-  }
+  // average pixels over some window
+  OsprayStatus verifyBaselineImage(const int sizeX,
+      const int sizeY,
+      const void *baselineImage,
+      const std::string &baselineName);
+  vec4f getAveragedPixel(const vec4f *image,
+      vec2i pixelIndex,
+      const rkcommon::index_sequence_2D &imageIndices);
+  // compare gold image with fb but with storage type abstraction
+  template <typename T>
+  OsprayStatus compareImgWithBaselineTmpl(const T *testImage,
+      const T *baselineImage,
+      const std::string &baselineName);
 
  public:
   OSPImageTools(vec2i imgSize,
@@ -68,8 +81,5 @@ class OSPImageTools
   // helper method to saved rendered file
   OsprayStatus saveTestImage(const void *pixel);
   // helper method to compare gold image with current framebuffer render
-  vec4f getAveragedPixel(const vec4i *image,
-      vec2i pixelIndex,
-      const rkcommon::index_sequence_2D &imageIndices);
-  OsprayStatus compareImgWithBaseline(const uint32_t *testImg);
+  OsprayStatus compareImgWithBaseline(const void *testImage);
 };

@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 CarPaint::CarPaint(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_CARPAINT)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(

@@ -8,7 +8,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL __noinline vec4f Texture_dispatch_get(
+SYCL_EXTERNAL vec4f Texture_dispatch_get(
     const uniform Texture *uniform self, const DifferentialGeometry &dg)
 {
   switch (self->type) {
@@ -28,7 +28,7 @@ SYCL_EXTERNAL __noinline vec4f Texture_dispatch_get(
   return make_vec4f(0.f);
 }
 
-SYCL_EXTERNAL __noinline vec3f Texture_dispatch_getNormal(
+SYCL_EXTERNAL vec3f Texture_dispatch_getNormal(
     const uniform Texture *const uniform self, const DifferentialGeometry &dg)
 {
   switch (self->type) {

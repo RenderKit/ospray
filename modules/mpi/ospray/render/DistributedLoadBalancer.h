@@ -30,10 +30,11 @@ struct DistributedLoadBalancer : public TiledLoadBalancer
 
   ~DistributedLoadBalancer() override;
 
-  void renderFrame(FrameBuffer *fb,
+  std::pair<AsyncEvent, AsyncEvent> renderFrame(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
-      World *world) override;
+      World *world,
+      bool wait = true) override;
 
   void renderFrameReplicated(DistributedFrameBuffer *dfb,
       Renderer *renderer,
@@ -41,10 +42,6 @@ struct DistributedLoadBalancer : public TiledLoadBalancer
       DistributedWorld *world);
 
   std::string toString() const override;
-
-#ifdef OSPRAY_TARGET_SYCL
-  void setQueue(sycl::queue *syclQueue);
-#endif
 
  private:
   void renderFrameReplicatedDynamicLB(DistributedFrameBuffer *dfb,
@@ -60,10 +57,6 @@ struct DistributedLoadBalancer : public TiledLoadBalancer
       void *perFrameData);
 
   ObjectHandle handle;
-
-#ifdef OSPRAY_TARGET_SYCL
-  sycl::queue *syclQueue = nullptr;
-#endif
 };
 
 } // namespace mpi

@@ -54,8 +54,8 @@ struct PathContext
   const varying vec2f *uniform pixel;
   varying LDSampler *uniform ldSampler;
   varying RandomSampler *uniform randomSampler;
-  uniform int numLights;
-  uniform int numLightSamples;
+  uniform uint32 numLights;
+  uniform uint32 numLightSamples;
   uniform float *uniform lightsCDF;
   uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light
                                       // samples (numLightSamples*(1D+2D))
@@ -63,21 +63,22 @@ struct PathContext
 
 struct PathState
 {
-  bool debug;
-  bool disableNEE; // turn off NEE contribution for debugging purposes
-  bool disableFWD; // turn off FWD contribution for debugging purposes
   bool straightPath; // path from camera did not change direction, for alpha and
                      // backplate
   bool specularTransmissionPath; // path from camera only has specular
                                  // transmissions, for alpha and backplate
   bool auxFree; // normal & albedo buffer were not yet written to
-  uniform uint32 depth;
-  uniform uint32 sampleDim; // skip: pixel (2D), lens (2D), time (1D)
   vec3f throughput;
   vec3f contribution;
   float time;
   Medium currentMedium;
   float shadowCatcherDist;
+  uniform uint32 sampleDim; // skip: pixel (2D), lens (2D), time (1D)
+  uint32 scatteringEvents; // counting diffuse and glossy bounces
+  uniform uint32 depth;
+  uniform bool disableNEE; // turn off NEE contribution for debugging purposes
+  uniform bool disableFWD; // turn off FWD contribution for debugging purposes
+  uniform bool debug;
 };
 
 OSPRAY_END_ISPC_NAMESPACE

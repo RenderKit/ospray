@@ -22,7 +22,7 @@ generate_export_header(ospray_module_denoiser)
 target_link_libraries(ospray_module_denoiser
 PRIVATE
   OpenImageDenoise
-  ospray_module_cpu
+  ospray
 )
 
 target_include_directories(ospray_module_denoiser

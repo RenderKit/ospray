@@ -21,7 +21,11 @@
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "render/RenderTaskSycl.h"
+#else
 #include "render/RenderTask.h"
+#endif
 #include "render/Renderer.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
@@ -282,12 +286,10 @@ void ISPCDevice::commit()
         reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
         true);
 
-    syclQueue = sycl::ext::oneapi::level_zero::make_queue(syclContext,
+    syclQueue = sycl::queue(syclContext,
         syclDevice,
-        reinterpret_cast<pi_native_handle>(ispcrtQueue.nativeTaskQueueHandle()),
-        true);
-
-    loadBalancer->setQueue(&syclQueue);
+        {sycl::property::queue::enable_profiling(),
+            sycl::property::queue::in_order()});
 #endif
   }
 
@@ -357,13 +359,8 @@ void ISPCDevice::commit()
 
 #ifndef OSPRAY_TARGET_SYCL
   // Output device info string
-  const char *isaNames[] = {"unknown",
-      "SSE2",
-      "SSE4",
-      "AVX",
-      "AVX2",
-      "AVX512SKX",
-      "NEON"};
+  const char *isaNames[] = {
+      "unknown", "SSE2", "SSE4", "AVX", "AVX2", "AVX512SKX", "NEON"};
   postStatusMsg(OSP_LOG_INFO)
       << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
       << " instruction set";
@@ -571,7 +568,7 @@ OSPFrameBuffer ISPCDevice::frameBufferCreate(
 
 OSPImageOperation ISPCDevice::newImageOp(const char *type)
 {
-  ospray::ImageOp *ret = ImageOp::createInstance(type);
+  ospray::ImageOp *ret = ImageOp::createImageOp(type, *this);
   return (OSPImageOperation)ret;
 }
 
@@ -619,6 +616,7 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   Camera *camera = (Camera *)_camera;
   World *world = (World *)_world;
 
+#ifndef OSPRAY_TARGET_SYCL
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 
   fb->refInc();
@@ -626,7 +624,7 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   camera->refInc();
   world->refInc();
 
-  auto *f = new RenderTask(fb, [=]() {
+  return (OSPFuture) new RenderTask(fb, [=]() {
     utility::CodeTimer timer;
     timer.start();
     loadBalancer->renderFrame(fb, renderer, camera, world);
@@ -639,8 +637,11 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
 
     return timer.seconds();
   });
-
-  return (OSPFuture)f;
+#else
+  std::pair<AsyncEvent, AsyncEvent> events =
+      loadBalancer->renderFrame(fb, renderer, camera, world, false);
+  return (OSPFuture) new RenderTask(events.first, events.second);
+#endif
 }
 
 int ISPCDevice::isReady(OSPFuture _task, OSPSyncEvent event)
@@ -685,6 +686,18 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
   World *world = (World *)_world;
   return renderer->pick(fb, camera, world, screenPos);
 }
+
+#ifdef OSPRAY_TARGET_SYCL
+sycl::nd_range<1> ISPCDevice::computeDispatchRange(
+    const size_t globalSize, const size_t workgroupSize) const
+{
+  // roundedRange global size must be at least workgroupSize
+  const size_t roundedRange =
+      std::max(size_t(1), (globalSize + workgroupSize - 1) / workgroupSize)
+      * workgroupSize;
+  return sycl::nd_range<1>(roundedRange, workgroupSize);
+}
+#endif
 
 } // namespace api
 } // namespace ospray

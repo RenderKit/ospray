@@ -13,13 +13,11 @@ task
         FrameBuffer *uniform fb,
         Camera *uniform camera,
         World *uniform world,
-        void *uniform perFrameData,
-        const uint32 *uniform taskIDs
+        const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
-        ,
-        const int taskIndex0
+        const int taskIndex0,
 #endif
-    )
+        const uniform FeatureFlagsHandler &ffh)
 {
   const uniform int32 spp = self->spp;
 
@@ -30,7 +28,7 @@ task
   CameraSample cameraSample;
 
   uniform RenderTaskDesc taskDesc =
-      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0]);
+      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0], ffh);
   const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
 
   if (fb->cancelRender || isEmpty(taskDesc.region)) {
@@ -50,7 +48,7 @@ task
       // set ray t value for early ray termination (from maximum depth texture)
       vec2f center =
           make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
-      const float tMax = Renderer_getMaxDepth(self, center * fb->rcpSize);
+      const float tMax = Renderer_getMaxDepth(self, center * fb->rcpSize, ffh);
       screenSample.z = tMax;
 
       vec3f col = make_vec3f(0.f);
@@ -87,7 +85,7 @@ task
         cameraSample.lens.y = 0.0f;
         cameraSample.time = 0.5f;
 
-        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample);
+        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample, ffh);
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         screenSample.z = inf;
@@ -95,7 +93,7 @@ task
         screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
         screenSample.instID = RTC_INVALID_GEOMETRY_ID;
         screenSample.albedo =
-            make_vec3f(Renderer_getBackground(self, screenSample.pos));
+            make_vec3f(Renderer_getBackground(self, screenSample.pos, ffh));
         screenSample.normal = make_vec3f(0.f);
 
 #ifdef OSPRAY_TARGET_SYCL
@@ -103,12 +101,12 @@ task
         // Dummy top level print so that prints at lower levels of the kernel
         // will work See JIRA https://jira.devtools.intel.com/browse/XDEPS-4729
         if (taskIndex0 == 0) {
-          sycl::ext::oneapi::experimental::printf("");
+          sycl::ext::oneapi::experimental::printf("0\n");
         }
 #endif
 #endif
 
-        renderSampleFn(self, fb, world, perFrameData, screenSample);
+        renderSampleFn(self, fb, world, screenSample, ffh);
 
         col = col + screenSample.rgb;
         alpha += screenSample.alpha;
@@ -124,7 +122,7 @@ task
       screenSample.normal = normal * rspp;
       screenSample.albedo = albedo * rspp;
 
-      FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc);
+      FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc, ffh);
     }
-  FrameBuffer_dispatch_completeTask(fb, taskDesc);
+  FrameBuffer_dispatch_completeTask(fb, taskDesc, ffh);
 }

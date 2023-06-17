@@ -7,8 +7,11 @@
 #include "common/Clipping.ih"
 #include "common/DGEnum.h"
 #include "common/DifferentialGeometry.ih"
+#include "common/FeatureFlags.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "common/Instance.ih"
 #include "common/Ray.ih"
+#include "common/RayQueryContext.ih"
 #include "common/VolumeIntervals.ih"
 #include "geometry/GeometryDispatch.ih"
 #include "volume/Volume.ih"
@@ -18,37 +21,30 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #ifdef OSPRAY_TARGET_SYCL
-// Define minimal subset of features used in Embree,
-// less features means smaller kernel on GPU
-#define FEATURE_MASK                                                           \
-  RTC_FEATURE_FLAG_TRIANGLE | RTC_FEATURE_FLAG_QUAD                            \
-      | RTC_FEATURE_FLAG_SUBDIVISION | RTC_FEATURE_FLAG_CURVES                 \
-      | RTC_FEATURE_FLAG_SPHERE_POINT | RTC_FEATURE_FLAG_INSTANCE              \
-      | RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS
-#else
-#define FEATURE_MASK RTC_FEATURE_FLAG_ALL
-#endif
-
-#ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
 
 struct Renderer;
 
-inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
+inline void traceGeometryRay(const World *uniform world,
+    varying Ray &ray,
+    const uniform FeatureFlagsHandler &ffh)
 {
   // Skip if no geometries scene
   if (!world->embreeSceneHandleGeometries)
     return;
 
-  uniform EmbreeRayQueryContextDefault context;
-  InitRayQueryContextDefault(&context);
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+
+  uniform RayQueryContextDefault context;
+  initRayQueryContextDefault(&context, ffh);
 
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Geometry_dispatch_intersect;
-  intersectArgs.feature_mask = (uniform RTCFeatureFlags)(FEATURE_MASK);
+  intersectArgs.feature_mask =
+      (uniform RTCFeatureFlags)(ff.geometry & ~FFG_OSPRAY_MASK);
 
   rtcIntersectV(world->embreeSceneHandleGeometries,
       (varying RTCRayHit * uniform) & ray,
@@ -74,14 +70,15 @@ inline void traceVolumeRay(
   allocVolumeIntervals(intervals);
 #endif
 
-  uniform EmbreeRayQueryContextVolume context;
+  uniform RayQueryContextVolume context;
   InitRayQueryContextVolume(&context, &intervals);
 
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
-  intersectArgs.feature_mask = (uniform RTCFeatureFlags)(FEATURE_MASK);
+  intersectArgs.feature_mask =
+      RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS;
 
   rtcIntersectV(world->embreeSceneHandleVolumes,
       (varying RTCRayHit * uniform) & ray,
@@ -107,21 +104,22 @@ inline void traceVolumeRay(
   if (!world->embreeSceneHandleVolumes)
     return;
 
-  uniform EmbreeRayQueryContextVolume context;
+  uniform RayQueryContextVolume context;
   InitRayQueryContextVolume(&context, &intervals);
 
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
-  intersectArgs.feature_mask = (uniform RTCFeatureFlags)(FEATURE_MASK);
+  intersectArgs.feature_mask =
+      RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS;
 
   rtcIntersectV(world->embreeSceneHandleVolumes,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
 
   if (intervals.numVolumeIntervals > 0) {
-    for (uniform int i = 0; i < intervals.numVolumeIntervals; ++i) {
+    for (uniform uint32 i = 0; i < intervals.numVolumeIntervals; ++i) {
       Instance *instance = *(world->instances + intervals.intervals[i].instID);
       intervals.intervals[i].instance = instance;
       intervals.intervals[i].volumetricModel =
@@ -132,9 +130,9 @@ inline void traceVolumeRay(
 #endif
 
 // Intersection context structure used for clipping geometries
-struct EmbreeRayQueryContextClipping
+struct RayQueryContextClipping
 {
-  uniform EmbreeRayQueryContextDefault super;
+  uniform RayQueryContextDefault super;
   const World *uniform world;
   varying int32 corrClippingDepth;
   varying uint32 hitsCount;
@@ -146,10 +144,13 @@ unmasked void clippingIntersectionFilterV(
 
 inline void traceClippingRay(const World *uniform world,
     varying Ray &ray,
-    varying RayIntervals &rayIntervals)
+    varying RayIntervals &rayIntervals,
+    const uniform FeatureFlagsHandler &ffh)
 {
   // Clipping disabled on GPU for now
 #ifdef OSPRAY_TARGET_SYCL
+  (void)world;
+  (void)ffh;
   rayIntervals.intervals[0] = make_box1f(ray.t0, ray.t);
   rayIntervals.count = 1;
   return;
@@ -162,9 +163,10 @@ inline void traceClippingRay(const World *uniform world,
   }
 
   // Create and initialize intersection context
-  EmbreeRayQueryContextClipping context;
+  RayQueryContextClipping context;
   rtcInitRayQueryContext(&context.super.ectx);
-  context.super.type = ERQCT_CLIPPING;
+  context.super.type = RQCT_CLIPPING;
+  context.super.ffh = &ffh;
   context.world = world;
   context.corrClippingDepth = 0;
   context.hitsCount = 0;
@@ -242,8 +244,10 @@ inline void traceClippingRay(const World *uniform world,
 #endif
 }
 
-inline void traceGeometryRayIntervals(
-    const World *uniform world, Ray &ray, RayIntervals &rayIntervals)
+inline void traceGeometryRayIntervals(const World *uniform world,
+    Ray &ray,
+    RayIntervals &rayIntervals,
+    const uniform FeatureFlagsHandler &ffh)
 {
   // Save the ray
   const float t0 = ray.t0;
@@ -267,7 +271,7 @@ inline void traceGeometryRayIntervals(
     ray.t = min(ray.t, t);
 
     // Shoot the ray
-    traceGeometryRay(world, ray);
+    traceGeometryRay(world, ray, ffh);
 
     // Exit loop if geometry hit
     if (hadHit(ray)) {
@@ -281,41 +285,47 @@ inline void traceGeometryRayIntervals(
   ray.t = t;
 }
 
-inline void traceRay(const World *uniform world, varying Ray &ray)
+inline void traceRay(const World *uniform world,
+    varying Ray &ray,
+    const uniform FeatureFlagsHandler &ffh)
 {
 #ifdef OSPRAY_TARGET_SYCL
   // Clipping disabled for now
-  traceGeometryRay(world, ray);
+  traceGeometryRay(world, ray, ffh);
 #else
   // Fast path if no clipping geometry
   if (!world->embreeSceneHandleClippers) {
-    traceGeometryRay(world, ray);
+    traceGeometryRay(world, ray, ffh);
     return;
   }
 
   // Trace ray in clipping geometries scene, fill array with ray intervals
   varying RayIntervals rayIntervals;
-  traceClippingRay(world, ray, rayIntervals);
+  traceClippingRay(world, ray, rayIntervals, ffh);
 
   // Trace ray intervals
-  traceGeometryRayIntervals(world, ray, rayIntervals);
+  traceGeometryRayIntervals(world, ray, rayIntervals, ffh);
 #endif
 }
 
-inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
+inline bool isOccludedNoClipping(const World *uniform world,
+    varying Ray &ray,
+    const uniform FeatureFlagsHandler &ffh)
 {
   // Skip if no geometries scene
   if (!world->embreeSceneHandleGeometries)
     return false;
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
-  uniform EmbreeRayQueryContextDefault context;
-  InitRayQueryContextDefault(&context);
+  uniform RayQueryContextDefault context;
+  initRayQueryContextDefault(&context, ffh);
 
   uniform RTCOccludedArguments occludedArgs;
   rtcInitOccludedArguments(&occludedArgs);
   occludedArgs.context = &context.ectx;
   occludedArgs.occluded = (RTCOccludedFunctionN)Geometry_dispatch_occluded;
-  occludedArgs.feature_mask = (uniform RTCFeatureFlags)(FEATURE_MASK);
+  occludedArgs.feature_mask =
+      (uniform RTCFeatureFlags)(ff.geometry & ~FFG_OSPRAY_MASK);
 
   rtcOccludedV(world->embreeSceneHandleGeometries,
       (varying RTCRay * uniform) & ray,
@@ -326,7 +336,8 @@ inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
 
 inline bool areIntervalsOccluded(const World *uniform world,
     varying Ray &ray,
-    varying RayIntervals &rayIntervals)
+    varying RayIntervals &rayIntervals,
+    const uniform FeatureFlagsHandler &ffh)
 {
   // Iterate through ray intervals
   for (uint32 i = 0; i < rayIntervals.count; i++) {
@@ -335,7 +346,7 @@ inline bool areIntervalsOccluded(const World *uniform world,
     ray.t = rayIntervals.intervals[i].upper;
 
     // Check for occluders
-    if (isOccludedNoClipping(world, ray))
+    if (isOccludedNoClipping(world, ray, ffh))
       return true;
   }
 
@@ -343,27 +354,28 @@ inline bool areIntervalsOccluded(const World *uniform world,
   return false;
 }
 
-inline bool isOccluded(const World *uniform world, varying Ray &ray)
+inline bool isOccluded(const World *uniform world,
+    varying Ray &ray,
+    const uniform FeatureFlagsHandler &ffh)
 {
 #ifdef OSPRAY_TARGET_SYCL
   // Clipping disabled for now
-  return isOccludedNoClipping(world, ray);
+  return isOccludedNoClipping(world, ray, ffh);
 #else
   // Fast path if no clipping geometry
   if (!world->embreeSceneHandleClippers) {
-    return isOccludedNoClipping(world, ray);
+    return isOccludedNoClipping(world, ray, ffh);
   }
 
-  // TODO: use new Embree4 callback setup for clipping when it's enabled
   // Allocate array for ray intervals
   varying RayIntervals rayIntervals;
   rayIntervals.count = 0;
 
   // Trace ray in clipping geometries scene, fill array with ray intervals
-  traceClippingRay(world, ray, rayIntervals);
+  traceClippingRay(world, ray, rayIntervals, ffh);
 
   // Is there any occluder within given ray intervals
-  return areIntervalsOccluded(world, ray, rayIntervals);
+  return areIntervalsOccluded(world, ray, rayIntervals, ffh);
 #endif
 }
 
@@ -378,7 +390,8 @@ inline void postIntersect(const World *uniform world,
     const Renderer *uniform renderer,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags)
+    uniform int64 flags,
+    const uniform FeatureFlagsHandler &ffh)
 {
   dg.primID = ray.primID;
   dg.st = make_vec2f(ray.u, ray.v);
@@ -406,7 +419,7 @@ inline void postIntersect(const World *uniform world,
 #endif
     if (instID != RTC_INVALID_GEOMETRY_ID) {
       Instance *uniform instance = *(world->instances + instID);
-      Instance_postIntersect(instance, renderer, dg, ray, flags);
+      Instance_postIntersect(instance, renderer, dg, ray, flags, false, ffh);
     } else {
       dg.Ns = dg.Ng = ray.Ng;
     }
@@ -447,4 +460,5 @@ inline void postIntersect(const World *uniform world,
 #undef DG_NG_NORMALIZE
 #undef DG_NS_NORMALIZE
 }
+
 OSPRAY_END_ISPC_NAMESPACE

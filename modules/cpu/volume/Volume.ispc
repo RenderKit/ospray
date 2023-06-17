@@ -41,8 +41,8 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
     ray->geomID = args->geomID;
     ray->primID = 0;
 
-    EmbreeRayQueryContextVolume *uniform ctx =
-        (EmbreeRayQueryContextVolume * uniform) args->context;
+    RayQueryContextVolume *uniform ctx =
+        (RayQueryContextVolume * uniform) args->context;
     varying VolumeIntervals *uniform vIntervals =
         (varying VolumeIntervals * uniform) ctx->intervals;
 

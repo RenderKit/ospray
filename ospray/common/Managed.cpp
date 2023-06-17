@@ -2,10 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Managed.h"
-#include "Data.h"
-#ifndef OSPRAY_TARGET_SYCL
-#include "common/OSPCommon_ispc.h"
-#endif
 
 namespace ospray {
 

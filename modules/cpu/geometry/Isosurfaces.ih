@@ -2,22 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifdef OSPRAY_ENABLE_VOLUMES
 
+#include "common/FeatureFlags.ih"
 #include "geometry/Geometry.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
+#ifdef OSPRAY_TARGET_SYCL
 void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args);
+#endif
 
 SYCL_EXTERNAL void Isosurfaces_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags);
+    uniform int64 flags,
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL void unmasked Isosurfaces_intersect_kernel(
     const RTCIntersectFunctionNArguments *uniform args,
-    const uniform bool isOcclusionTest);
+    const uniform bool isOcclusionTest,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE
 
 #endif
-

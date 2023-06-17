@@ -18,6 +18,12 @@ SYCL_EXTERNAL vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
     outColor = self->pixelOps[i]->processPixel(
         self->pixelOps[i], outColor, depth, normal, albedo);
   }
+#else
+  // Silence unused parameter warning
+  (void)self;
+  (void)depth;
+  (void)normal;
+  (void)albedo;
 #endif
   return outColor;
 }

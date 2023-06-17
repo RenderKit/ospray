@@ -17,8 +17,8 @@ SYCL_EXTERNAL const varying BSDF *varying Plastic_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium)
+    const Ray &,
+    const Medium &)
 {
   const uniform Plastic *uniform self = (const uniform Plastic *uniform)super;
 

@@ -7,8 +7,8 @@
 #include "rkcommon/utility/Optional.h"
 #include "rkcommon/utility/ParameterizedObject.h"
 // ospray
-#include "../common/OSPCommon.h"
-#include "../common/ObjectFactory.h"
+#include "common/OSPCommon.h"
+#include "common/ObjectFactory.h"
 #include "ospray/version.h"
 // std
 #include <functional>
@@ -130,6 +130,10 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
   virtual void cancel(OSPFuture) = 0;
   virtual float getProgress(OSPFuture) = 0;
   virtual float getTaskDuration(OSPFuture) = 0;
+
+  // Return pointer to command queue that is goint to be used by external
+  // post-processing kernels (e.g. OIDN)
+  virtual void *getPostProcessingCommandQueuePtr() = 0;
 
   virtual OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &)

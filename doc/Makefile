@@ -6,7 +6,7 @@ tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilatio
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow $(addprefix ospMPIDistribTutorial, Volume Spheres _firstFrame _accumulatedFrame)))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples renderSunSky))
 images_fig := spot_light c-gamma_coords quad_light hdri_light 
-images_svg := gitter_badge structured_spherical_coords vdb_structure
+images_svg := structured_spherical_coords vdb_structure
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_svg2pdf := $(addprefix images/, $(addsuffix .pdf, $(images_svg)))
@@ -186,7 +186,7 @@ tmp/compilation.md: prerequisites.md ../scripts/superbuild/README.md compilation
 tmp/tutorials.md: tutorials.md tmp/links_local.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
+../README.md: tmp/readme_head.md tmp/overview.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
 	$(PANDOC) --file-scope $+ --markdown-headings=setext -t gfm | $(convert_nbsp_width) > $@
 
 ### pdf

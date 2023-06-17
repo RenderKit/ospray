@@ -1,7 +1,8 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../ImageOp.h"
+#include "fb/PixelOp.h"
+// ispc shared
 #include "ToneMapperShared.h"
 
 using namespace rkcommon;
@@ -11,9 +12,13 @@ namespace ospray {
 /*! \brief Generic tone mapping operator approximating ACES by default. */
 struct OSPRAY_SDK_INTERFACE ToneMapper : public PixelOp
 {
+  ToneMapper(api::Device &device)
+      : PixelOp(static_cast<api::ISPCDevice &>(device))
+  {}
+
   void commit() override;
 
-  std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+  std::unique_ptr<LivePixelOp> attach() override;
 
   std::string toString() const override;
 
@@ -26,7 +31,7 @@ struct OSPRAY_SDK_INTERFACE ToneMapper : public PixelOp
 struct OSPRAY_SDK_INTERFACE LiveToneMapper
     : public AddStructShared<LivePixelOp, ispc::LiveToneMapper>
 {
-  LiveToneMapper(FrameBufferView &fbView,
+  LiveToneMapper(api::ISPCDevice &device,
       float exposure,
       float a,
       float b,

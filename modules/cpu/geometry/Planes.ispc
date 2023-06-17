@@ -121,10 +121,10 @@ export void Planes_occluded(
       (RTCIntersectFunctionNArguments * uniform) args, true);
 }
 
-SYCL_EXTERNAL void Planes_postIntersect(const Geometry *uniform geometry,
+SYCL_EXTERNAL void Planes_postIntersect(const Geometry *uniform,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags)
+    uniform int64)
 {
   dg.Ng = dg.Ns = ray.Ng;
 }

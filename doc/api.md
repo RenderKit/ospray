@@ -2046,8 +2046,7 @@ ambient lights cause ambient illumination (without occlusion).
 
 This renderer supports only a subset of the features of the [SciVis
 renderer] to gain performance. As the name suggest its main shading
-method is ambient occlusion (AO), [lights] are *not* considered at all
-and ,
+method is ambient occlusion (AO), [lights] are *not* considered at all.
 Volume rendering is supported.
 The Ambient Occlusion renderer is created by passing the  type string
 "`ao`" to `ospNewRenderer`. In addition to the [general
@@ -2086,6 +2085,9 @@ supports the following special parameters:
 
   int        roulettePathLength          5  ray recursion depth at which to
                                             start Russian roulette termination
+
+  int        maxScatteringEvents        20  maximum number of non-specular
+                                            (i.e., diffuse and glossy) bounces
 
   float      maxContribution             ∞  samples are clamped to this value
                                             before they are accumulated into
@@ -3052,11 +3054,14 @@ parameters to the values listed in the table below.
 
 #### Denoiser
 
-OSPRay comes with a module that adds support for Intel® Open Image Denoise.
-This is provided as an optional module as it creates an additional project
-dependency at compile time. The module implements a "`denoiser`"
-frame operation, which denoises the entire frame before the frame is
-completed.
+OSPRay comes with a module that adds support for Intel® Open Image
+Denoise (OIDN). This is provided as an optional module as it creates an
+additional project dependency at compile time. The module implements a
+"`denoiser`" frame operation, which denoises the entire frame before the
+frame is completed. OIDN will automatically select the fastest device,
+using a GPU when available. The device selection be overriden by the
+environment valiable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
+`sycl`, `cuda`, `hip`, or a physical device ID
 
 
 Rendering
