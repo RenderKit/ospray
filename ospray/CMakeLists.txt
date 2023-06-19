@@ -17,6 +17,9 @@ set(OSPRAY_SOURCES
   api/ospray_cpp_defs.cpp
 
   common/OSPCommon.cpp
+  common/Managed.cpp
+
+  fb/ImageOp.cpp
 
   include/ospray/ospray.h
   include/ospray/ospray_util.h

@@ -39,7 +39,7 @@ inline Scattering_EvalRes HenyeyGreenstein_eval(
 }
 
 inline Scattering_SampleRes HenyeyGreenstein_sample(
-    float anisotropy, const vec3f wo, const vec2f s, float /*ss*/)
+    float anisotropy, const vec3f wo, const vec2f s, float)
 {
   Scattering_SampleRes res;
 

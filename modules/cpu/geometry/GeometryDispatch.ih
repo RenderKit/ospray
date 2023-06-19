@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include "common/OSPCommon.ih"
+#include "common/FeatureFlags.ih"
+#include "common/FeatureFlagsEnum.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -18,21 +19,21 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // (DG_NORMALIZE/DG_FACEFORWARD) after Geometry_postIntersectFct is called.
 // Thus the material pointer only needs to be set if different to
 // geometry->material, or the color when different to vec4f(1.0f).
-SYCL_EXTERNAL __noinline void Geometry_dispatch_postIntersect(
-    const Geometry *uniform self,
+SYCL_EXTERNAL void Geometry_dispatch_postIntersect(const Geometry *uniform self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags);
+    uniform int64 flags,
+    const uniform FeatureFlagsHandler &ffh);
 
 // sample the given primitive uniformly wrt. area
-SYCL_EXTERNAL __noinline SampleAreaRes Geometry_dispatch_sampleArea(
+SYCL_EXTERNAL SampleAreaRes Geometry_dispatch_sampleArea(
     const Geometry *const uniform,
     const int32 primID,
     const uniform affine3f &xfm, // instance transformation (obj2world)
     const uniform affine3f &rcp_xfm, // inverse transformation (world2obj)
     const vec2f &s, // random numbers to generate the sample
-    const float time // for deformation motion blur
-);
+    const float time, // for deformation motion blur
+    const uniform FeatureFlagsHandler &ffh);
 
 RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
     RTCIntersectFunctionNArguments *uniform args);

@@ -16,6 +16,7 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
-    Ray &ray);
+    Ray &ray,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

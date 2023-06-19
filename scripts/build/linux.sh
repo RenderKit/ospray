@@ -11,7 +11,6 @@ cmake --version
 
 cmake -L \
   -D CMAKE_INSTALL_LIBDIR=lib \
-  -D BUILD_EMBREE_FROM_SOURCE=ON \
   "$@" \
  ../scripts/superbuild
 

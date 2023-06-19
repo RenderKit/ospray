@@ -5,6 +5,7 @@
 
 // ospray stuff
 #include "Data.h"
+#include "FeatureFlagsEnum.h"
 #include "ISPCDeviceObject.h"
 // stl
 #include <vector>
@@ -29,6 +30,8 @@ struct OSPRAY_SDK_INTERFACE World
 
   box3f getBounds() const override;
 
+  const FeatureFlags &getFeatureFlags() const;
+
   // Data members //
 
   Ref<const DataT<Instance *>> instances;
@@ -38,8 +41,16 @@ struct OSPRAY_SDK_INTERFACE World
 
   std::unique_ptr<SciVisData> scivisData;
   std::unique_ptr<PathTracerData> pathtracerData;
+
+ private:
+  FeatureFlags featureFlags;
 };
 
 OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);
+
+inline const FeatureFlags &World::getFeatureFlags() const
+{
+  return featureFlags;
+}
 
 } // namespace ospray

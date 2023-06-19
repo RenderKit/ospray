@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 Velvet::Velvet(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_VELVET)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =

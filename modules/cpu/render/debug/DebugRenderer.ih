@@ -1,6 +1,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlags.ih"
+
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #ifdef OSPRAY_TARGET_SYCL
@@ -8,9 +10,9 @@ SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
-    void *uniform perFrameData,
     const uint32 *uniform taskIDs,
-    const int taskIndex0);
+    const int taskIndex0,
+    const uniform FeatureFlagsHandler &ffh);
 #endif
 
 OSPRAY_END_ISPC_NAMESPACE

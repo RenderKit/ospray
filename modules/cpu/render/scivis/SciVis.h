@@ -15,16 +15,12 @@ struct SciVis : public AddStructShared<Renderer, ispc::SciVis>
   void commit() override;
   void *beginFrame(FrameBuffer *, World *) override;
 
-  virtual void renderTasks(FrameBuffer *fb,
+  virtual AsyncEvent renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs
-#ifdef OSPRAY_TARGET_SYCL
-      ,
-      sycl::queue &syclQueue
-#endif
-  ) const override;
+      const utility::ArrayView<uint32_t> &taskIDs,
+      bool wait) const override;
 };
 
 } // namespace ospray

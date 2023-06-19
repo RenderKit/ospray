@@ -24,7 +24,7 @@ ISPCRTMemoryView SpotLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
   ISPCRTMemoryView view = StructSharedCreate<ispc::SpotLight>(
-      getISPCDevice().getIspcrtDevice().handle());
+      getISPCDevice().getIspcrtContext().handle());
   ispc::SpotLight *sh = (ispc::SpotLight *)ispcrtSharedPtr(view);
 #ifndef OSPRAY_TARGET_SYCL
   sh->super.sample =

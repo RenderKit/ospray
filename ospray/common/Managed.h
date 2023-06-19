@@ -18,8 +18,8 @@ struct Data;
 template <typename T, int DIM>
 struct DataT;
 
-struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount,
-                                            public utility::ParameterizedObject
+struct OSPRAY_CORE_INTERFACE ManagedObject : public memory::RefCount,
+                                             public utility::ParameterizedObject
 {
   using OSP_PTR = ManagedObject *;
 
@@ -93,22 +93,6 @@ inline utility::Optional<T> ManagedObject::getOptParam(const char *name)
     }
   }
   return retval;
-}
-
-template <>
-inline Data *ManagedObject::getParam<Data *>(
-    const char *name, Data *valIfNotFound)
-{
-  auto *obj = ParameterizedObject::getParam<ManagedObject *>(
-      name, (ManagedObject *)valIfNotFound);
-  if (obj && obj->managedObjectType == OSP_DATA)
-    return (Data *)obj;
-  else {
-    // reset query status if object is not a Data*
-    if (obj)
-      findParam(name)->query = false;
-    return valIfNotFound;
-  }
 }
 
 } // namespace ospray

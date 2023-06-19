@@ -10,6 +10,7 @@
 #include "imgui.h"
 // std
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -143,7 +144,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
   glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
   // create GLFW window
   glfwWindow = glfwCreateWindow(
-      windowSize.x, windowSize.y, "OSPRay Tutorial", nullptr, nullptr);
+      windowSize.x, windowSize.y, "OSPRay Examples", nullptr, nullptr);
 
   if (!glfwWindow) {
     glfwTerminate();
@@ -355,21 +356,42 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
 
 void GLFWOSPRayWindow::display()
 {
+  static float totalRenderTime = 0.f;
+  static auto displayStart = std::chrono::steady_clock::now();
+
   if (showUi)
     buildUI();
 
   if (displayCallback)
     displayCallback(this);
 
-  updateTitleBar();
-
   glEnable(GL_FRAMEBUFFER_SRGB); // Turn on sRGB conversion for OSPRay frame
 
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
-    waitOnOSPRayFrame();
+    // display frame rate in window title
+    const auto displayEnd = std::chrono::steady_clock::now();
+    const auto displayMilliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            displayEnd - displayStart);
+    const auto renderTime = currentFrame.duration();
+    totalRenderTime += renderTime;
 
-    latestFPS = 1.f / currentFrame.duration();
+    // update fps every 10 frames or every second
+    framesCounter++;
+    if (framesCounter > 9 || totalRenderTime > 1.f
+        || displayMilliseconds > std::chrono::seconds(1)) {
+      displayFPS = 1000.f * float(framesCounter) / displayMilliseconds.count();
+      latestFPS = float(framesCounter) / totalRenderTime;
+
+      displayStart = displayEnd;
+      totalRenderTime = 0.f;
+      framesCounter = 0;
+
+      updateTitleBar();
+    }
+
+    waitOnOSPRayFrame();
 
     auto fbChannel = OSP_FB_COLOR;
     if (showDepth)
@@ -503,8 +525,9 @@ void GLFWOSPRayWindow::addObjectToCommit(OSPObject obj)
 void GLFWOSPRayWindow::updateTitleBar()
 {
   std::stringstream windowTitle;
-  windowTitle << "OSPRay: " << std::setprecision(3) << latestFPS << " fps";
-  if (latestFPS < 2.f) {
+  windowTitle << "OSPRay: " << std::setprecision(4) << " render: " << latestFPS
+              << " fps, app: " << displayFPS << " fps";
+  if (latestFPS > 0.f && latestFPS < 2.f) {
     float progress = currentFrame.progress();
     windowTitle << " | ";
     int barWidth = 20;
@@ -730,6 +753,12 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   if (rendererType == OSPRayRendererType::PATHTRACER) {
+    static int lightSamples = -1;
+    if (ImGui::SliderInt("lightSamples", &lightSamples, -1, 32)) {
+      renderer->setParam("lightSamples", lightSamples);
+      addObjectToCommit(renderer->handle());
+    }
+
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
       renderer->setParam("maxPathLength", maxDepth);

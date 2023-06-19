@@ -17,16 +17,19 @@ struct ThinDielectric
   vec3f attenuation;
 };
 
-inline BSDF_EvalRes ThinDielectric_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes ThinDielectric_eval(const varying BSDF *uniform,
+    const vec3f &,
+    const vec3f &,
+    const uniform FeatureFlagsHandler &)
 {
   return make_BSDF_EvalRes_zero();
 }
 
 inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF *uniform super,
     const vec3f &wo,
-    const vec2f &s,
-    float ss)
+    const vec2f &,
+    float ss,
+    const uniform FeatureFlagsHandler &)
 {
   const varying ThinDielectric *uniform self =
       (const varying ThinDielectric *uniform)super;

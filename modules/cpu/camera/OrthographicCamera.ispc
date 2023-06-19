@@ -20,6 +20,7 @@ SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
 
   vec3f dir;
   vec3f org;
+#ifndef OSPRAY_TARGET_SYCL
   if (self->super.motionBlur) {
     const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
     // we cannot just transform the final org & dir, because interpolated
@@ -33,7 +34,9 @@ SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
     const float x = (screen.x - 0.5f) * self->du_size.x;
     const float y = (screen.y - 0.5f) * self->du_size.y;
     org = org + x * du + y * dv;
-  } else {
+  } else
+#endif
+  {
     dir = self->dir;
     org = self->org + screen.x * self->du_size + screen.y * self->dv_up;
   }

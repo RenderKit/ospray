@@ -11,7 +11,8 @@ namespace ospray {
 
 // Light definitions //////////////////////////////////////////////////////////
 
-Light::Light(api::ISPCDevice &device) : ISPCDeviceObject(device)
+Light::Light(api::ISPCDevice &device, const FeatureFlagsOther ffo)
+    : ISPCDeviceObject(device), featureFlags(ffo)
 {
   managedObjectType = OSP_LIGHT;
 }

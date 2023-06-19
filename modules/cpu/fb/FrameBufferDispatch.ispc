@@ -1,6 +1,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlagsEnum.h"
 #include "fb/FrameBufferDispatch.ih"
 #include "fb/LocalFB.ih"
 #include "fb/RenderTaskDesc.ih"
@@ -11,20 +12,19 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL __noinline uniform RenderTaskDesc
-FrameBuffer_dispatch_getRenderTaskDesc(
-    FrameBuffer *uniform fb, const uniform uint32 taskID)
+SYCL_EXTERNAL uniform RenderTaskDesc FrameBuffer_dispatch_getRenderTaskDesc(
+    FrameBuffer *uniform fb,
+    const uniform uint32 taskID,
+    const uniform FeatureFlagsHandler &ffh)
 {
-  switch (fb->type) {
-  case FRAMEBUFFER_TYPE_LOCAL:
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+  if ((fb->type == FRAMEBUFFER_TYPE_LOCAL) && (ffo & FFO_FB_LOCAL)) {
     return LocalFB_getRenderTaskDesc(fb, taskID);
-  case FRAMEBUFFER_TYPE_SPARSE:
+  } else if ((fb->type == FRAMEBUFFER_TYPE_SPARSE) && (ffo & FFO_FB_SPARSE)) {
     return SparseFB_getRenderTaskDesc(fb, taskID);
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     return fb->getRenderTaskDesc(fb, taskID);
-#else
-    break;
 #endif
   }
   // TODO: Should be an error here
@@ -34,41 +34,37 @@ FrameBuffer_dispatch_getRenderTaskDesc(
   return rt;
 }
 
-SYCL_EXTERNAL __noinline void FrameBuffer_dispatch_accumulateSample(
+SYCL_EXTERNAL void FrameBuffer_dispatch_accumulateSample(
     FrameBuffer *uniform fb,
     const varying ScreenSample &screenSample,
-    uniform RenderTaskDesc &taskDesc)
+    uniform RenderTaskDesc &taskDesc,
+    const uniform FeatureFlagsHandler &ffh)
 {
-  switch (fb->type) {
-  case FRAMEBUFFER_TYPE_LOCAL:
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+  if ((fb->type == FRAMEBUFFER_TYPE_LOCAL) && (ffo & FFO_FB_LOCAL)) {
     LocalFB_accumulateSample(fb, screenSample, taskDesc);
-    break;
-  case FRAMEBUFFER_TYPE_SPARSE:
+  } else if ((fb->type == FRAMEBUFFER_TYPE_SPARSE) && (ffo & FFO_FB_SPARSE)) {
     SparseFB_accumulateSample(fb, screenSample, taskDesc);
-    break;
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     fb->accumulateSample(fb, screenSample, taskDesc);
 #endif
-    break;
   }
 }
 
-SYCL_EXTERNAL __noinline void FrameBuffer_dispatch_completeTask(
-    FrameBuffer *uniform fb, const uniform RenderTaskDesc &taskDesc)
+SYCL_EXTERNAL void FrameBuffer_dispatch_completeTask(FrameBuffer *uniform fb,
+    const uniform RenderTaskDesc &taskDesc,
+    const uniform FeatureFlagsHandler &ffh)
 {
-  switch (fb->type) {
-  case FRAMEBUFFER_TYPE_LOCAL:
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+  if ((fb->type == FRAMEBUFFER_TYPE_LOCAL) && (ffo & FFO_FB_LOCAL)) {
     LocalFB_completeTask(fb, taskDesc);
-    break;
-  case FRAMEBUFFER_TYPE_SPARSE:
+  } else if ((fb->type == FRAMEBUFFER_TYPE_SPARSE) && (ffo & FFO_FB_SPARSE)) {
     SparseFB_completeTask(fb, taskDesc);
-    break;
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     fb->completeTask(fb, taskDesc);
 #endif
-    break;
   }
 }
 

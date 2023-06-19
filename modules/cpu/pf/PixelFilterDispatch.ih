@@ -21,7 +21,7 @@ struct PixelFilter;
    Returns a 2D position in the domain [-w/2 .. w/2] distributed proportionally
    to the filter kernel.
 */
-SYCL_EXTERNAL __noinline vec2f PixelFilter_dispatch_sample(
+SYCL_EXTERNAL vec2f PixelFilter_dispatch_sample(
     const PixelFilter *uniform self, const vec2f &x);
 
 OSPRAY_END_ISPC_NAMESPACE

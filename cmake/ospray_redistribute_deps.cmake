@@ -60,7 +60,41 @@ macro(ospray_add_dependent_lib TARGET_NAME)
   endif()
 endmacro()
 
+macro(ospray_add_dependent_lib_plugins TARGET_NAME PLUGINS_PATTERN)
+  if (TARGET ${TARGET_NAME})
+    # retrieve library directory
+    get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION) # use first/default configuration
+    get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
+    get_filename_component(LIBRARY_DIR ${LIBRARY} DIRECTORY)
+
+    # search for plugins with given file pattern
+    if (WIN32)
+      file(GLOB LIBRARY_PLUGINS LIST_DIRECTORIES FALSE
+        "${LIBRARY_DIR}/${PLUGINS_PATTERN}.dll"
+      )
+    elseif (APPLE)
+      file(GLOB LIBRARY_PLUGINS LIST_DIRECTORIES FALSE
+        "${LIBRARY_DIR}/lib${PLUGINS_PATTERN}*.dylib"
+      )
+    else()
+      file(GLOB LIBRARY_PLUGINS LIST_DIRECTORIES FALSE
+        "${LIBRARY_DIR}/lib${PLUGINS_PATTERN}.so*"
+      )
+    endif()
+
+    # iterate over all found plugins and add them to DEPENDENT_LIBS list
+    foreach(LIBRARY_PLUGIN ${LIBRARY_PLUGINS})
+      list(APPEND DEPENDENT_LIBS ${LIBRARY_PLUGIN})
+      ospray_install_namelink(${LIBRARY_PLUGIN})
+    endforeach()
+  else()
+    message(STATUS "Skipping target '${TARGET_NAME}' plugins")
+  endif()
+endmacro()
+
 ospray_add_dependent_lib(ispcrt::ispcrt)
+ospray_add_dependent_lib_plugins(ispcrt::ispcrt "ispcrt_device_*")
 ospray_add_dependent_lib(rkcommon::rkcommon)
 if (RKCOMMON_TASKING_TBB)
   ospray_add_dependent_lib(TBB::tbb)
@@ -77,6 +111,8 @@ ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device_8)
 ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device_16)
 if (OSPRAY_MODULE_DENOISER)
   ospray_add_dependent_lib(OpenImageDenoise)
+  ospray_add_dependent_lib(OpenImageDenoise_core)
+  ospray_add_dependent_lib_plugins(OpenImageDenoise "OpenImageDenoise_device_*")
 endif()
 
 if (WIN32)

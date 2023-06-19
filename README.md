@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.11.0 of Intel® OSPRay. For changes and new features
+This is release v2.12.0 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -46,9 +46,6 @@ missing features please contact us via email at
 To receive release announcements simply [“Watch” the OSPRay
 repository](https://github.com/ospray/OSPRay) on GitHub.
 
-[![Join the chat at
-https://gitter.im/ospray/ospray](https://ospray.github.io/images/gitter_badge.svg)](https://gitter.im/ospray/ospray?utm_source=badge&utm_medium=badge&utm_content=badge)
-
 Building and Finding OSPRay
 ===========================
 
@@ -75,7 +72,7 @@ before you can build OSPRay you need the following prerequisites:
   Linux development tools.
 
 - Additionally you require a copy of the [Intel® Implicit SPMD Program
-  Compiler (ISPC)](http://ispc.github.io), version 1.19.0 or later.
+  Compiler (ISPC)](http://ispc.github.io), version 1.20.0 or later.
   Please obtain a release of ISPC from the [ISPC downloads
   page](https://ispc.github.io/downloads.html). If ISPC is not found by
   CMake its location can be hinted with the variable `ispcrt_DIR`.
@@ -104,7 +101,7 @@ before you can build OSPRay you need the following prerequisites:
 - OSPRay also provides an optional module implementing the `denoiser`
   image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
   module requires Intel [Open Image
-  Denoise](https://openimagedenoise.github.io/) in version 1.2.3 or
+  Denoise](https://openimagedenoise.github.io/) in version 2.0.0 or
   newer. You may need to hint the location of the library with the CMake
   variable `OpenImageDenoise_DIR`.
 
@@ -389,19 +386,19 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
+document](https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
 “[OSPRay – A CPU Ray Tracing Framework for Scientific
-Visualization](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper.pdf)”
+Visualization](https://www.ospray.org/talks/IEEEVis2016_OSPRay_paper.pdf)”
 (49MB, or get the [smaller
-version](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper_small.pdf)
+version](https://www.ospray.org/talks/IEEEVis2016_OSPRay_paper_small.pdf)
 1.8MB). The [slides of the
-talk](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_talk.pdf)
-(5.2MB) are also available.
+talk](https://www.ospray.org/talks/IEEEVis2016_OSPRay_talk.pdf) (5.2MB)
+are also available.
 
 OSPRay API
 ==========
@@ -2081,7 +2078,7 @@ occlusion).
 This renderer supports only a subset of the features of the [SciVis
 renderer](#scivis-renderer) to gain performance. As the name suggest its
 main shading method is ambient occlusion (AO), [lights](#lights) are
-*not* considered at all and , Volume rendering is supported. The Ambient
+*not* considered at all. Volume rendering is supported. The Ambient
 Occlusion renderer is created by passing the type string “`ao`” to
 `ospNewRenderer`. In addition to the [general parameters](#renderer)
 understood by all renderers the following parameters are supported as
@@ -2108,6 +2105,7 @@ supports the following special parameters:
 |:------|:---------------------|--------:|:------------------------------------------------------------------------------------------|
 | int   | lightSamples         |     all | number of random light samples per path vertex, per default all light sources are sampled |
 | int   | roulettePathLength   |       5 | ray recursion depth at which to start Russian roulette termination                        |
+| int   | maxScatteringEvents  |      20 | maximum number of non-specular (i.e., diffuse and glossy) bounces                         |
 | float | maxContribution      |       ∞ | samples are clamped to this value before they are accumulated into the framebuffer        |
 | bool  | backgroundRefraction |   false | allow for alpha blending even if background is seen through refractive objects like glass |
 
@@ -3085,10 +3083,13 @@ exposure bias to match 18% middle gray.
 #### Denoiser
 
 OSPRay comes with a module that adds support for Intel® Open Image
-Denoise. This is provided as an optional module as it creates an
+Denoise (OIDN). This is provided as an optional module as it creates an
 additional project dependency at compile time. The module implements a
 “`denoiser`” frame operation, which denoises the entire frame before the
-frame is completed.
+frame is completed. OIDN will automatically select the fastest device,
+using a GPU when available. The device selection be overriden by the
+environment valiable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
+`sycl`, `cuda`, `hip`, or a physical device ID
 
 Rendering
 ---------

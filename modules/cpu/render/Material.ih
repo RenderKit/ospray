@@ -4,15 +4,22 @@
 #pragma once
 
 #include "common/DifferentialGeometry.ih"
-#include "common/Ray.ih"
-#include "render/MaterialShared.h"
-#include "render/bsdfs/BSDF.ih"
-#include "render/bsdfs/ShadingContext.ih"
+#include "common/FeatureFlags.ih"
 #include "texture/TextureParam.ih"
-
+// c++ shared
 #include "MaterialShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#define define_texture_get_ff(fn, map, dg, val, ffh)                           \
+  ((getFeatureFlagsOther(ffh) & FFO_TEXTURE_IN_MATERIAL) ? fn(map, dg, val)    \
+                                                         : val)
+#define get1f_ff(map, dg, val, ff)                                             \
+  define_texture_get_ff(get1f, map, dg, val, ff)
+#define get3f_ff(map, dg, val, ff)                                             \
+  define_texture_get_ff(get3f, map, dg, val, ff)
+#define get4f_ff(map, dg, val, ff)                                             \
+  define_texture_get_ff(get4f, map, dg, val, ff)
 
 inline linear3f makeShadingFrame(const DifferentialGeometry &dg)
 {
@@ -69,6 +76,16 @@ inline linear3f makeShadingFrame(const DifferentialGeometry &dg,
   } else {
     return makeShadingFrame(dg);
   }
+}
+
+inline linear3f makeShadingFrame_ff(const DifferentialGeometry &dg,
+    const uniform TextureParam &normalMap,
+    const uniform linear2f &normalRot,
+    const uniform FeatureFlagsHandler &ffh)
+{
+  return (getFeatureFlagsOther(ffh) & FFO_TEXTURE_IN_MATERIAL)
+      ? makeShadingFrame(dg, normalMap, normalRot)
+      : makeShadingFrame(dg);
 }
 
 SYCL_EXTERNAL vec3f Material_getTransparency(

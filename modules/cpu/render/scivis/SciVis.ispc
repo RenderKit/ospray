@@ -4,6 +4,7 @@
 #include "SciVis.ih"
 #include "camera/Camera.ih"
 #include "camera/CameraDispatch.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
@@ -22,10 +23,12 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 static void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
-    void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlagsHandler &ffh)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
+
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
@@ -59,68 +62,71 @@ static void SciVis_renderSample(Renderer *uniform _self,
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
-  traceClippingRay(world, ray, rayIntervals);
+  traceClippingRay(world, ray, rayIntervals, ffh);
 
   // Iterate over all translucent geometry till we are fully opaque
   vec3f outColor = make_vec3f(0.f);
   vec3f outTransmission = make_vec3f(1.f);
-  int minVolIndex = 0; // interval index of closest volume
   while (true) {
-    // Then trace normal geometry using calculated ray intervals,
-    // if hit ray.t will be updated
-    traceGeometryRayIntervals(world, ray, rayIntervals);
+    if (ff.geometry) {
+      // Then trace normal geometry using calculated ray intervals,
+      // if hit ray.t will be updated
+      traceGeometryRayIntervals(world, ray, rayIntervals, ffh);
+    }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
-    traceVolumeRay(world, volumeRay, volumeIntervals);
+    if (ff.other & FFO_VOLUME_IN_SCENE) {
+      // Determine volume intervals by tracing ray in the volume scene
+      traceVolumeRay(world, volumeRay, volumeIntervals);
 
-    // Sample volumes across volume intervals (in front of geometry hit)
-    if (volumeIntervals.numVolumeIntervals > 0) {
-      SciVisRenderContext rc;
-      rc.renderer = self;
-      rc.fb = fb;
-      rc.world = world;
-      rc.sample = sample;
-      rc.ldSampler = ldSampler;
-      volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
-      vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
-          volumeIntervals,
-          rayIntervals,
-          volumeRay,
-          ldSampler,
-          self->volumeSamplingRate,
-          true);
+      // Sample volumes across volume intervals (in front of geometry hit)
+      if (volumeIntervals.numVolumeIntervals > 0) {
+        SciVisRenderContext rc;
+        rc.renderer = self;
+        rc.fb = fb;
+        rc.world = world;
+        rc.sample = sample;
+        rc.ldSampler = ldSampler;
+        volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
+        vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
+            volumeIntervals,
+            rayIntervals,
+            volumeRay,
+            ldSampler,
+            self->volumeSamplingRate,
+            ffh);
 
-      // Blend volume
-      outColor = outColor + outTransmission * make_vec3f(volumeColor);
-      outTransmission = outTransmission * volumeColor.w;
+        // Blend volume
+        outColor = outColor + outTransmission * make_vec3f(volumeColor);
+        outTransmission = outTransmission * volumeColor.w;
 
-      if (hadHit(volumeRay) && sample.geomID == RTC_INVALID_GEOMETRY_ID) {
-        sample.primID = 0;
+        if (hadHit(volumeRay) && sample.geomID == RTC_INVALID_GEOMETRY_ID) {
+          sample.primID = 0;
 #ifdef OSPRAY_TARGET_SYCL
-        {
-          const uint32 instID = volumeRay.instID;
+          {
+            const uint32 instID = volumeRay.instID;
 #else
-        foreach_unique (instID in volumeRay.instID) {
+          foreach_unique (instID in volumeRay.instID) {
 #endif
-          if (instID != RTC_INVALID_GEOMETRY_ID) {
-            const Instance *uniform instance = *(world->instances + instID);
-            sample.instID = (instance->userID == RTC_INVALID_GEOMETRY_ID)
-                ? instID
-                : instance->userID;
-            const VolumetricModel *volms =
-                *(instance->group->volumetricModels + volumeRay.geomID);
+            if (instID != RTC_INVALID_GEOMETRY_ID) {
+              const Instance *uniform instance = *(world->instances + instID);
+              sample.instID = (instance->userID == RTC_INVALID_GEOMETRY_ID)
+                  ? instID
+                  : instance->userID;
+              const VolumetricModel *volms =
+                  *(instance->group->volumetricModels + volumeRay.geomID);
 
 #ifdef OSPRAY_TARGET_SYCL
-            {
-              const VolumetricModel *uniform volm = volms;
+              {
+                const VolumetricModel *uniform volm = volms;
 #else
-            foreach_unique (volm in volms) {
+              foreach_unique (volm in volms) {
 #endif
-              sample.geomID = (volm->userID == RTC_INVALID_GEOMETRY_ID)
-                  ? volumeRay.geomID
-                  : volm->userID;
+                sample.geomID = (volm->userID == RTC_INVALID_GEOMETRY_ID)
+                    ? volumeRay.geomID
+                    : volm->userID;
+              }
             }
           }
         }
@@ -133,24 +139,26 @@ static void SciVis_renderSample(Renderer *uniform _self,
     DifferentialGeometry dg;
     if (self->visibleLights) {
       dg.P = ray.org;
-      outColor = outColor + outTransmission * evaluateLights(world, dg, ray);
+      outColor =
+          outColor + outTransmission * evaluateLights(world, dg, ray, ffh);
     }
 
     // If any geometry has been hit
     const bool rayHadHit = hadHit(ray);
-    if (rayHadHit) {
+    if (ff.geometry && rayHadHit) {
       // Prepare differential geometry structure
       postIntersect(world,
           &self->super,
           dg,
           ray,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
-              | DG_TEXCOORD);
+              | DG_TEXCOORD,
+          ffh);
 
       // Shade geometry
       SSI surfaceShading;
       surfaceShading = SciVis_computeShading(
-          self, fb, world, dg, sample, ldSampler, ray.dir);
+          self, world, dg, sample, ldSampler, ray.dir, ffh);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully
@@ -192,7 +200,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
       setRay(ray, ray.t + dg.epsilon, originalRayTFar);
     } else {
       // Blend background with output final color
-      vec4f backgroundColor = Renderer_getBackground(&self->super, sample.pos);
+      vec4f backgroundColor =
+          Renderer_getBackground(&self->super, sample.pos, ffh);
       outColor = outColor + outTransmission * make_vec3f(backgroundColor);
       outTransmission = outTransmission * (1.f - backgroundColor.w);
 
@@ -222,14 +231,13 @@ static void SciVis_renderSample(Renderer *uniform _self,
 }
 
 SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
-    ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,
     const uniform float aoRadius,
-    const varying vec3i &sampleID)
+    const varying vec3i &sampleID,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
 
@@ -262,15 +270,8 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
 
     hits = hits
         + (1.f
-            - lightAlpha(self,
-                ao_ray,
-                fb,
-                world,
-                sample,
-                ldSampler,
-                make_vec3f(1.f),
-                dg.epsilon,
-                0.1f));
+            - lightAlpha(
+                self, ao_ray, world, ldSampler, make_vec3f(1.f), 0.1f, ffh));
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
@@ -287,19 +288,18 @@ SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
-    void *uniform perFrameData,
     const uint32 *uniform taskIDs,
-    const int taskIndex0)
+    const int taskIndex0,
+    const uniform FeatureFlagsHandler &ffh)
 {
   Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, taskIndex0);
+      self, fb, camera, world, taskIDs, taskIndex0, ffh);
 }
 #else
 export void SciVis_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,
     void *uniform _world,
-    void *uniform perFrameData,
     void *uniform _taskIDs,
     uniform uint32 numTasks)
 {
@@ -308,8 +308,9 @@ export void SciVis_renderTasks(void *uniform _self,
   Camera *uniform camera = (Camera * uniform) _camera;
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  uniform FeatureFlagsHandler ffh;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs);
+      self, fb, camera, world, taskIDs, ffh);
   sync;
 }
 #endif

@@ -1,0 +1,39 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+// ospray
+#include "FeatureFlags.ih"
+// embree
+#include "Embree.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef OSPRAY_TARGET_SYCL
+using namespace ospray;
+#endif
+
+enum RayQueryContextType
+{
+  RQCT_DEFAULT,
+  RQCT_CLIPPING,
+  RQCT_UNKNOWN
+};
+
+struct RayQueryContextDefault
+{
+  RTCRayQueryContext ectx;
+  RayQueryContextType type;
+  const FeatureFlagsHandler *uniform ffh;
+};
+
+inline void initRayQueryContextDefault(RayQueryContextDefault *uniform context,
+    const uniform FeatureFlagsHandler &ffh)
+{
+  rtcInitRayQueryContext(&context->ectx);
+  context->type = RQCT_DEFAULT;
+  context->ffh = &ffh;
+}
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -1,6 +1,21 @@
 Version History
 ---------------
 
+### Changes in v2.12.0:
+
+-   Support denoising on the GPU with OIDN 2.0, which is the new minimum
+    version. The `denoiser` now uses HDR mode
+-   New parameter `maxScatteringEvents` for the `pathtracer` which
+    limits the number of non-specular (i.e., diffuse and glossy) bounces
+-   Optimized dynamic load balancing for MPI devices
+-   Fix crash when using small image resolution and many MPI ranks
+-   Fix crash in `pathtracer` when `lightSamples > 0` but lights in the
+    scene
+-   Fix transparent shadows with too high `minContribution` setting
+-   The new minimum version for ISPC is v1.20.0
+-   Release binaries on Linux are built on Rocky 8
+
+
 ### Changes in v2.11.0:
 
 -   Support single ISPC target on Windows

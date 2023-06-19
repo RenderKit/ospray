@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "common/FeatureFlags.ih"
 #include "common/OSPCommon.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -15,6 +16,7 @@ struct ScreenSample;
 SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     PathState &pathState,
     Ray &ray,
-    ScreenSample &sample);
+    ScreenSample &sample,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

@@ -15,12 +15,6 @@ Base::Base()
       ::testing::UnitTest::GetInstance()->current_test_case();
   const ::testing::TestInfo *const testInfo =
       ::testing::UnitTest::GetInstance()->current_test_info();
-  imgSize = ospEnv->GetImgSize();
-
-  framebuffer = cpp::FrameBuffer(imgSize.x,
-      imgSize.y,
-      frameBufferFormat,
-      OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
 
   {
     std::string testCaseName = testCase->name();
@@ -38,15 +32,21 @@ Base::Base()
         byte = '_';
   }
 
+  imgSize = ospEnv->GetImgSize();
   rendererType = "scivis";
   frames = 1;
   samplesPerPixel = 16;
-
-  imageTool.reset(new OSPImageTools(imgSize, GetTestName(), frameBufferFormat));
 }
 
 void Base::SetUp()
 {
+  framebuffer = cpp::FrameBuffer(imgSize.x,
+      imgSize.y,
+      frameBufferFormat,
+      OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
+
+  imageTool.reset(new OSPImageTools(imgSize, GetTestName(), frameBufferFormat));
+
   CreateEmptyScene();
 }
 
@@ -105,7 +105,7 @@ void Base::PerformRenderTest()
 
   RenderFrame();
 
-  auto *framebuffer_data = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
+  void *framebuffer_data = framebuffer.map(OSP_FB_COLOR);
 
   if (ospEnv->GetDumpImg()) {
     EXPECT_EQ(imageTool->saveTestImage(framebuffer_data), OsprayStatus::Ok);
@@ -149,8 +149,12 @@ void Base::SetLights()
 
 void Base::RenderFrame()
 {
-  for (int frame = 0; frame < frames; ++frame)
-    framebuffer.renderFrame(renderer, camera, world);
+  for (int frame = 0; frame < frames; ++frame) {
+    cpp::Future future = framebuffer.renderFrame(renderer, camera, world);
+    // TODO: Need to wait after every frame or variance
+    // is incorrectly calculated
+    future.wait();
+  }
 }
 
 FromOsprayTesting::FromOsprayTesting()
@@ -218,6 +222,13 @@ void FromOsprayTestingVariance::SetUp()
       OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
 
   renderer.setParam("varianceThreshold", 20.f);
+}
+
+void FromOsprayTestingLightSamples::SetUp()
+{
+  FromOsprayTesting::SetUp();
+
+  renderer.setParam("lightSamples", 8);
 }
 
 } // namespace OSPRayTestScenes

@@ -168,13 +168,12 @@ inline Light_SampleRes Sample(const CylinderLight *uniform self,
   return res;
 }
 
-
-
 SYCL_EXTERNAL Light_SampleRes CylinderLight_sample(
     const uniform Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float time)
+    const float,
+    const uniform FeatureFlagsHandler &)
 {
   const CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);
@@ -186,7 +185,8 @@ SYCL_EXTERNAL Light_SampleRes CylinderLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float time)
+    const float time,
+    const uniform FeatureFlagsHandler &)
 {
   const CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);
@@ -235,14 +235,13 @@ inline Light_EvalRes Eval(const CylinderLight *uniform self,
   return res;
 }
 
-
 SYCL_EXTERNAL Light_EvalRes CylinderLight_eval(
     const uniform Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
     const float maxDist,
-    const float time)
+    const float)
 {
   CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);

@@ -4,8 +4,9 @@
 #pragma once
 
 #include "Texture.ih"
-#include "TextureParamShared.h"
 #include "rkcommon/math/AffineSpace.ih"
+// c++ shared
+#include "TextureParamShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

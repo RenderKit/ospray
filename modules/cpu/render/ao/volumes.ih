@@ -5,6 +5,7 @@
 #pragma once
 
 #include "common/Clipping.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "common/Ray.ih"
 #include "common/VolumeIntervals.ih"
 
@@ -16,7 +17,8 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(const VolumeIntervals &intervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
-    const uniform float samplingRate);
+    const uniform float samplingRate,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE
 

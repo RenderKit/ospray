@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 MixMaterial::MixMaterial(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_MIX)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =

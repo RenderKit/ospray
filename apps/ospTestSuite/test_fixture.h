@@ -101,4 +101,10 @@ class FromOsprayTestingVariance : public FromOsprayTesting
   void SetUp() override;
 };
 
+class FromOsprayTestingLightSamples : public FromOsprayTesting
+{
+ public:
+  void SetUp() override;
+};
+
 } // namespace OSPRayTestScenes

@@ -59,14 +59,13 @@ inline void freeVolumeIntervals(VolumeIntervals &intervals)
 }
 #endif
 
-struct EmbreeRayQueryContextVolume
+struct RayQueryContextVolume
 {
   RTCRayQueryContext ectx;
   varying VolumeIntervals *intervals;
 };
 
-inline void InitRayQueryContextVolume(
-    EmbreeRayQueryContextVolume *uniform context,
+inline void InitRayQueryContextVolume(RayQueryContextVolume *uniform context,
     varying VolumeIntervals *uniform intervals)
 {
   rtcInitRayQueryContext(&context->ectx);

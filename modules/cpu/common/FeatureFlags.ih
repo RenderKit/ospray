@@ -1,0 +1,58 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#ifdef OSPRAY_TARGET_SYCL
+#include <sycl/sycl.hpp>
+#endif
+
+#include "FeatureFlagsEnum.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef OSPRAY_TARGET_SYCL
+using namespace ospray;
+
+inline constexpr sycl::specialization_id<FeatureFlags> specFeatureFlags;
+#endif
+
+struct FeatureFlagsHandler
+{
+#ifdef OSPRAY_TARGET_SYCL
+  sycl::kernel_handler &kernel_handler;
+
+  FeatureFlagsHandler(sycl::kernel_handler &kh) : kernel_handler(kh) {}
+#endif
+};
+
+inline uniform FeatureFlags ffAll()
+{
+  uniform FeatureFlags ff;
+  ff.geometry = FFG_ALL;
+#ifdef OSPRAY_ENABLE_VOLUMES
+  ff.volume = VKL_FEATURE_FLAGS_DEFAULT;
+#endif
+  ff.other = FFO_ALL;
+  return ff;
+}
+
+inline uniform FeatureFlags getFeatureFlags(
+    const uniform FeatureFlagsHandler &ffh)
+{
+#ifdef OSPRAY_TARGET_SYCL
+  return ffh.kernel_handler.get_specialization_constant<specFeatureFlags>();
+#else
+  return ffAll();
+#endif
+}
+
+// For working around https://github.com/ispc/ispc/issues/2533
+inline uniform FeatureFlagsOther getFeatureFlagsOther(
+    const uniform FeatureFlagsHandler &ffh)
+{
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  return ff.other;
+}
+
+OSPRAY_END_ISPC_NAMESPACE

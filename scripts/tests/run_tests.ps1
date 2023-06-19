@@ -28,7 +28,8 @@ cmake --build . --config Release --target ospray_test_data
 if ( $testMultiDevice ) {
   md failed-multidevice
   $Env:OSPRAY_NUM_SUBDEVICES = 2
-  ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice
+  $test_filters = "DebugOp/ImageOp.ImageOp/0" # post-processing not enabled on multidevice
+  ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice --gtest_filter="-$test_filters"
   $exitCode = $LastExitCode
   if ( $exitCode) {
     exit $exitCode
@@ -37,7 +38,9 @@ if ( $testMultiDevice ) {
 
 if ( $testMPI ) {
   md failed-mpi
-  mpiexec.exe -n 2 ospTestSuite.exe --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-TestScenesVariance/*" --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi
+  $test_filters = "DebugOp/ImageOp.ImageOp/0" # post-processing not enabled on mpi
+  $test_filters += ":TestScenesVariance/*"
+  mpiexec.exe -n 2 ospTestSuite.exe --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi --gtest_filter="-$test_filters"
   $exitCode = $LastExitCode
   if ( $exitCode) {
     exit $exitCode

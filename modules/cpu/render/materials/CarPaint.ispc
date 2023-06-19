@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/Ray.ih"
 #include "render/Material.ih"
 #include "render/bsdfs/Conductor.ih"
 #include "render/bsdfs/DielectricLayer.ih"
@@ -24,7 +25,7 @@ SYCL_EXTERNAL const varying BSDF *varying CarPaint_getBSDF(
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium)
+    const Medium &)
 {
   const uniform CarPaint *uniform self = (const uniform CarPaint *uniform)super;
   varying BSDF *varying bsdf = NULL;

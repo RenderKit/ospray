@@ -24,7 +24,7 @@ ISPCRTMemoryView CylinderLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
   ISPCRTMemoryView view = StructSharedCreate<ispc::CylinderLight>(
-      getISPCDevice().getIspcrtDevice().handle());
+      getISPCDevice().getIspcrtContext().handle());
   ispc::CylinderLight *sh = (ispc::CylinderLight *)ispcrtSharedPtr(view);
 
 #ifndef OSPRAY_TARGET_SYCL

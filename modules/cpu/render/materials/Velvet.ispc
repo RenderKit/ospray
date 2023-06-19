@@ -16,8 +16,8 @@ SYCL_EXTERNAL const varying BSDF *varying Velvet_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium)
+    const Ray &,
+    const Medium &)
 {
   const uniform Velvet *uniform self = (const uniform Velvet *uniform)super;
 

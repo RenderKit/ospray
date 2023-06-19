@@ -1,13 +1,14 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlagsEnum.h"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
 // SciVis renderer
 #include "surfaces.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
-#include "volumes.ih"
+#include "render/ao/volumes.ih"
 #endif
 // c++ shared
 #include "SciVisShared.h"
@@ -17,16 +18,16 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // Lighting functions //
 SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
-    ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     vec3f weight,
-    float rayOffset,
-    uniform float quality)
+    uniform float quality,
+    const uniform FeatureFlagsHandler &ffh)
 {
   vec3f alpha = make_vec3f(1.f);
   const float org_t_max = ray.t;
+
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
 #ifdef OSPRAY_ENABLE_VOLUMES
 #ifdef OSPRAY_TARGET_SYCL
@@ -42,45 +43,39 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
   allocVolumeIntervals(volumeIntervals);
 #endif
 #endif
+
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
-#ifndef OSPRAY_TARGET_SYCL
-  traceClippingRay(world, ray, rayIntervals);
-#endif
+  traceClippingRay(world, ray, rayIntervals, ffh);
 
   while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
     // WA for https://jira.devtools.intel.com/browse/XDEPS-4875
 #ifndef OSPRAY_TARGET_SYCL
-    traceGeometryRayIntervals(world, ray, rayIntervals);
+    traceGeometryRayIntervals(world, ray, rayIntervals, ffh);
 #else
-    traceGeometryRay(world, ray);
+    traceGeometryRay(world, ray, ffh);
 #endif
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    // Determine volume intervals by tracing ray in the volume scene
-    Ray volumeRay = ray;
-    traceVolumeRay(world, volumeRay, volumeIntervals);
+    if (ff.other & FFO_VOLUME_IN_SCENE) {
+      // Determine volume intervals by tracing ray in the volume scene
+      Ray volumeRay = ray;
+      traceVolumeRay(world, volumeRay, volumeIntervals);
 
-    // Sample volumes across volume intervals (in front of geometry hit)
-    if (volumeIntervals.numVolumeIntervals > 0) {
-      SciVisRenderContext rc;
-      rc.renderer = self;
-      rc.fb = fb;
-      rc.world = world;
-      rc.sample = sample;
-      rc.ldSampler = ldSampler;
-      vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
-          volumeIntervals,
-          rayIntervals,
-          volumeRay,
-          ldSampler,
-          self->volumeSamplingRate * quality,
-          false);
+      // Sample volumes across volume intervals (in front of geometry hit)
+      if (volumeIntervals.numVolumeIntervals > 0) {
+        vec4f volumeColor = integrateVolumeIntervals(volumeIntervals,
+            rayIntervals,
+            volumeRay,
+            ldSampler,
+            self->volumeSamplingRate * quality,
+            ffh);
 
-      alpha = alpha * make_vec3f(volumeColor.w);
+        alpha = alpha * make_vec3f(1.f - volumeColor.w);
+      }
     }
 #endif
 
@@ -89,9 +84,9 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     if (rayHadHit) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      postIntersect(world, &self->super, dg, ray, DG_COLOR | DG_TEXCOORD);
+      postIntersect(world, &self->super, dg, ray, DG_COLOR | DG_TEXCOORD, ffh);
 
-      const SciVisBSDF bsdf = evalMaterial(dg);
+      const SciVisBSDF bsdf = evalMaterial(dg, ffh);
       alpha = alpha * bsdf.transmission;
 
       // Prepare ray for next loop iteration,

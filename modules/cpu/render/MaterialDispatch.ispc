@@ -4,6 +4,7 @@
 #include "Material.ih"
 #include "MaterialDispatch.ih"
 
+#include "common/FeatureFlagsEnum.h"
 #include "render/materials/Alloy.ih"
 #include "render/materials/CarPaint.ih"
 #include "render/materials/Glass.ih"
@@ -24,38 +25,46 @@ SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium)
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh)
 {
-  switch (self->type) {
-  case MATERIAL_TYPE_ALLOY:
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+  if ((self->type == MATERIAL_TYPE_ALLOY) && (ffo & FFO_MATERIAL_ALLOY)) {
     return Alloy_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_CARPAINT:
+  } else if ((self->type == MATERIAL_TYPE_CARPAINT)
+      && (ffo & FFO_MATERIAL_CARPAINT)) {
     return CarPaint_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_GLASS:
+  } else if ((self->type == MATERIAL_TYPE_GLASS)
+      && (ffo & FFO_MATERIAL_GLASS)) {
     return Glass_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_LUMINOUS:
+  } else if ((self->type == MATERIAL_TYPE_LUMINOUS)
+      && (ffo & FFO_MATERIAL_LUMINOUS)) {
     return Luminous_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_METAL:
+  } else if ((self->type == MATERIAL_TYPE_METAL)
+      && (ffo & FFO_MATERIAL_METAL)) {
     return Metal_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_METALLICPAINT:
+  } else if ((self->type == MATERIAL_TYPE_METALLICPAINT)
+      && (ffo & FFO_MATERIAL_METALLICPAINT)) {
     return MetallicPaint_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_MIX:
+  } else if ((self->type == MATERIAL_TYPE_MIX) && (ffo & FFO_MATERIAL_MIX)) {
     return Mix_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_OBJ:
-    return OBJ_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_PLASTIC:
+  } else if ((self->type == MATERIAL_TYPE_OBJ) && (ffo & FFO_MATERIAL_OBJ)) {
+    return OBJ_getBSDF(self, ctx, dg, ray, currentMedium, ffh);
+  } else if ((self->type == MATERIAL_TYPE_PLASTIC)
+      && (ffo & FFO_MATERIAL_PLASTIC)) {
     return Plastic_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_PRINCIPLED:
+  } else if ((self->type == MATERIAL_TYPE_PRINCIPLED)
+      && (ffo & FFO_MATERIAL_PRINCIPLED)) {
     return Principled_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_THINGLASS:
+  } else if ((self->type == MATERIAL_TYPE_THINGLASS)
+      && (ffo & FFO_MATERIAL_THINGLASS)) {
     return ThinGlass_getBSDF(self, ctx, dg, ray, currentMedium);
-  case MATERIAL_TYPE_VELVET:
+  } else if ((self->type == MATERIAL_TYPE_VELVET)
+      && (ffo & FFO_MATERIAL_VELVET)) {
     return Velvet_getBSDF(self, ctx, dg, ray, currentMedium);
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     return self->getBSDF(self, ctx, dg, ray, currentMedium);
-#else
-    return NULL;
 #endif
   }
   return NULL;
@@ -65,22 +74,26 @@ SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium)
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh)
 {
-  switch (self->type) {
-  case MATERIAL_TYPE_GLASS:
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+  if ((self->type == MATERIAL_TYPE_GLASS) && (ffo & FFO_MATERIAL_GLASS)) {
     return Glass_getTransparency(self, dg, ray, currentMedium);
-  case MATERIAL_TYPE_LUMINOUS:
+  } else if ((self->type == MATERIAL_TYPE_LUMINOUS)
+      && (ffo & FFO_MATERIAL_LUMINOUS)) {
     return Luminous_getTransparency(self, dg, ray, currentMedium);
-  case MATERIAL_TYPE_MIX:
+  } else if ((self->type == MATERIAL_TYPE_MIX) && (ffo & FFO_MATERIAL_MIX)) {
     return Mix_getTransparency(self, dg, ray, currentMedium);
-  case MATERIAL_TYPE_OBJ:
-    return OBJ_getTransparency(self, dg, ray, currentMedium);
-  case MATERIAL_TYPE_PRINCIPLED:
+  } else if ((self->type == MATERIAL_TYPE_OBJ) && (ffo & FFO_MATERIAL_OBJ)) {
+    return OBJ_getTransparency(self, dg, ray, currentMedium, ffh);
+  } else if ((self->type == MATERIAL_TYPE_PRINCIPLED)
+      && (ffo & FFO_MATERIAL_PRINCIPLED)) {
     return Principled_getTransparency(self, dg, ray, currentMedium);
-  case MATERIAL_TYPE_THINGLASS:
+  } else if ((self->type == MATERIAL_TYPE_THINGLASS)
+      && (ffo & FFO_MATERIAL_THINGLASS)) {
     return ThinGlass_getTransparency(self, dg, ray, currentMedium);
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     return self->getTransparency(self, dg, ray, currentMedium);
 #else
@@ -92,22 +105,21 @@ SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
 SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
-    Medium &currentMedium)
+    Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh)
 {
-  switch (self->type) {
-  case MATERIAL_TYPE_GLASS:
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+  if ((self->type == MATERIAL_TYPE_GLASS) && (ffo & FFO_MATERIAL_GLASS)) {
     Glass_selectNextMedium(self, dg, currentMedium);
-    break;
-  case MATERIAL_TYPE_PRINCIPLED:
+  } else if ((self->type == MATERIAL_TYPE_PRINCIPLED)
+      && (ffo & FFO_MATERIAL_PRINCIPLED)) {
     Principled_selectNextMedium(self, dg, currentMedium);
-    break;
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     self->selectNextMedium(self, dg, currentMedium);
 #else
     Material_selectNextMedium(self, dg, currentMedium);
 #endif
-    break;
   }
 }
 

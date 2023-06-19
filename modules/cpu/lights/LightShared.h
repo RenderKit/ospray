@@ -3,6 +3,10 @@
 
 #pragma once
 
+#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
+#include "common/FeatureFlags.ih"
+#endif
+
 #ifdef __cplusplus
 namespace ispc {
 #endif // __cplusplus
@@ -31,7 +35,8 @@ struct Light_SampleRes
 typedef Light_SampleRes (*Light_SampleFunc)(const Light *uniform self,
     const DifferentialGeometry &dg, // point (&normal) to generate the sample
     const vec2f &s, // random numbers to generate the sample
-    const float time); // generate the sample at time (motion blur)
+    const float time, // generate the sample at time (motion blur)
+    const uniform FeatureFlagsHandler &ffh);
 
 struct Light_EvalRes
 {

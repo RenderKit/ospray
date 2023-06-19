@@ -94,7 +94,6 @@ add_definitions_ispc(
   -DOSPRAY_BEGIN_ISPC_NAMESPACE=
   -DOSPRAY_END_ISPC_NAMESPACE=
   -DSYCL_EXTERNAL=
-  -D__noinline=
 )
 
 if (OSPRAY_ENABLE_VOLUMES)
@@ -175,6 +174,7 @@ if (OSPRAY_MODULE_GPU)
     Snappy::snappy
     rkcommon::rkcommon
     ospray_mpi_common
+    ospray_module_gpu_kernels
     ospray_module_gpu
   )
 
@@ -193,12 +193,6 @@ if (OSPRAY_MODULE_GPU)
     -x c++
   )
 
-  target_compile_options(ospray_module_mpi_distributed_gpu PRIVATE
-    -fsycl
-    ${OSPRAY_CXX_FLAGS_SYCL}
-    -fsycl-targets=${OSPRAY_SYCL_TARGET}
-  )
-
   # Note: GPU hybrid code defines are brought in for us by linking the CPU module
   target_compile_definitions(ospray_module_mpi_distributed_gpu PRIVATE
     OSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
@@ -207,21 +201,6 @@ if (OSPRAY_MODULE_GPU)
     # from 'ospray' library
     OBJECTFACTORY_IMPORT
   )
-
-  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
-    target_link_options(ospray_module_mpi_distributed_gpu PRIVATE
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-    )
-  else()
-    target_link_options(ospray_module_mpi_distributed_gpu PRIVATE
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-    )
-  endif()
-
 
   ospray_install_library(ospray_module_mpi_distributed_gpu lib)
 endif()

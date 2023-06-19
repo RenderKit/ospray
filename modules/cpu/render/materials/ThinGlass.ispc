@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/Ray.ih"
 #include "render/Material.ih"
 #include "render/bsdfs/RobustThinDielectric.ih"
 #include "texture/TextureParam.ih"
@@ -29,8 +30,8 @@ SYCL_EXTERNAL const varying BSDF *varying ThinGlass_getBSDF(
     const Material *uniform super,
     ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
-    const Ray &ray,
-    const Medium &currentMedium)
+    const Ray &,
+    const Medium &)
 {
   const ThinGlass *uniform self = (const ThinGlass *uniform)super;
 
@@ -43,7 +44,7 @@ SYCL_EXTERNAL const varying BSDF *varying ThinGlass_getBSDF(
 SYCL_EXTERNAL vec3f ThinGlass_getTransparency(const Material *uniform material,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium)
+    const Medium &)
 {
   const ThinGlass *uniform self = (const ThinGlass *uniform)material;
 

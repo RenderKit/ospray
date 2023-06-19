@@ -6,6 +6,7 @@
 #include "Geometry.ih"
 #include "GeometryDispatch.ih"
 #include "common/Data.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "render/Renderer.ih"
 #include "rkcommon/math/AffineSpace.ih"
 // c++ shared
@@ -47,11 +48,12 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
     const Renderer *uniform renderer,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags)
+    uniform int64 flags,
+    const uniform FeatureFlagsHandler &ffh)
 {
   Geometry *uniform geom = self->geom;
 
-  Geometry_dispatch_postIntersect(geom, dg, ray, flags);
+  Geometry_dispatch_postIntersect(geom, dg, ray, flags, ffh);
 
   dg.areaPDF = self->areaPDF;
   dg.objID =

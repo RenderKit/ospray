@@ -73,9 +73,7 @@ cmake \
   -D BUILD_DEPENDENCIES_ONLY=ON \
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
   -D CMAKE_INSTALL_LIBDIR=lib \
-  -D BUILD_EMBREE_FROM_SOURCE=ON \
   -D BUILD_OIDN=ON \
-  -D BUILD_OIDN_FROM_SOURCE=OFF \
   -D BUILD_OSPRAY_MODULE_MPI=ON \
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   ../scripts/superbuild
@@ -116,9 +114,9 @@ make -j $THREADS preinstall
 # verify libs
 for lib in libospray.so libospray_module_cpu.so libospray_module_mpi_offload.so libospray_module_mpi_distributed_cpu.so ; do
   echo "checking $lib..."
-  check_symbols $lib GLIBC   2 17 0
-  check_symbols $lib GLIBCXX 3 4 19
-  check_symbols $lib CXXABI  1 3 7
+  check_symbols $lib GLIBC   2 28 0
+  check_symbols $lib GLIBCXX 3 4 22
+  check_symbols $lib CXXABI  1 3 11
   check_lib_dependency_error $lib libimf.so
   check_lib_dependency_error $lib libsvml.so
 done

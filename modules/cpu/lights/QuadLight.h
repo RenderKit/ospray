@@ -12,7 +12,7 @@ namespace ospray {
  * area into the positive half space */
 struct OSPRAY_SDK_INTERFACE QuadLight : public Light
 {
-  QuadLight(api::ISPCDevice &device) : Light(device) {}
+  QuadLight(api::ISPCDevice &device) : Light(device, FFO_LIGHT_QUAD) {}
   virtual ~QuadLight() override = default;
   virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;

@@ -4,6 +4,7 @@
 // ospray
 #include "DebugRenderer.h"
 #include "camera/Camera.h"
+#include "common/FeatureFlagsEnum.h"
 #include "common/World.h"
 #include "fb/FrameBuffer.h"
 #ifndef OSPRAY_TARGET_SYCL
@@ -54,7 +55,7 @@ static ispc::DebugRendererType typeFromString(const std::string &name)
 // DebugRenderer definitions ////////////////////////////////////////////////
 
 DebugRenderer::DebugRenderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {}
 
 std::string DebugRenderer::toString() const
@@ -70,17 +71,14 @@ void DebugRenderer::commit()
   getSh()->type = typeFromString(method);
 }
 
-void DebugRenderer::renderTasks(FrameBuffer *fb,
+AsyncEvent DebugRenderer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
-    void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs
-#ifdef OSPRAY_TARGET_SYCL
-    ,
-    sycl::queue &syclQueue
-#endif
-) const
+    void *,
+    const utility::ArrayView<uint32_t> &taskIDs,
+    bool wait) const
 {
+  AsyncEvent event;
   auto *rendererSh = getSh();
   auto *fbSh = fb->getSh();
   auto *cameraSh = camera->getSh();
@@ -89,32 +87,41 @@ void DebugRenderer::renderTasks(FrameBuffer *fb,
 
 #ifdef OSPRAY_TARGET_SYCL
   const uint32_t *taskIDsPtr = taskIDs.data();
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
-      if (taskIndex.get_global_id(0) < numTasks) {
-        ispc::DebugRenderer_renderTask(&rendererSh->super,
-            fbSh,
-            cameraSh,
-            worldSh,
-            perFrameData,
-            taskIDsPtr,
-            taskIndex.get_global_id(0));
-      }
-    });
+  event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
+    FeatureFlags ff = world->getFeatureFlags();
+    ff |= featureFlags;
+    ff |= fb->getFeatureFlags();
+    ff |= camera->getFeatureFlags();
+    cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
+
+    cgh.set_specialization_constant<debugRendererType>(rendererSh->type);
+
+    const sycl::nd_range<1> dispatchRange =
+        device.computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange,
+        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
+          if (taskIndex.get_global_id(0) < numTasks) {
+            ispc::FeatureFlagsHandler ffh(kh);
+            ispc::DebugRenderer_renderTask(&rendererSh->super,
+                fbSh,
+                cameraSh,
+                worldSh,
+                taskIDsPtr,
+                taskIndex.get_global_id(0),
+                ffh);
+          }
+        });
   });
-  event.wait_and_throw();
-  // For prints we have to flush the entire queue, because other stuff is queued
-  syclQueue.wait_and_throw();
+
+  if (wait)
+    event.wait_and_throw();
+
 #else
-  ispc::DebugRenderer_renderTasks(&rendererSh->super,
-      fbSh,
-      cameraSh,
-      worldSh,
-      perFrameData,
-      taskIDs.data(),
-      numTasks);
+  (void)wait;
+  ispc::DebugRenderer_renderTasks(
+      &rendererSh->super, fbSh, cameraSh, worldSh, taskIDs.data(), numTasks);
 #endif
+  return event;
 }
 
 } // namespace ospray

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "common/FeatureFlagsEnum.h"
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/volumes/HenyeyGreenstein.ih"
 #include "rkcommon/math/vec.ih"
@@ -16,22 +17,20 @@ struct RandomSampler;
 struct Ray;
 struct RayIntervals;
 
-SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
-    const World *uniform world,
+SYCL_EXTERNAL float volumeSampleFreePath(const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
-    varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler,
     const VolumetricModel *varying *uniform sampledInstance,
     float &sampledExtinctionCoefficient,
-    vec3f &sampledAlbedo);
+    vec3f &sampledAlbedo,
+    const uniform FeatureFlagsHandler &ffh);
 
-SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
-    const World *uniform world,
+SYCL_EXTERNAL float volumeTransmittance(const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
-    varying LDSampler *uniform ldSampler,
-    varying RandomSampler *uniform randomSampler);
+    varying RandomSampler *uniform randomSampler,
+    const uniform FeatureFlagsHandler &ffh);
 
 inline bool isSmoothVolumeVertex(const PathVertex &pathVertex)
 {

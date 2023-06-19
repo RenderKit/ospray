@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "common/FeatureFlags.ih"
 #include "render/materials/Medium.ih"
 #include "rkcommon/math/vec.ih"
 
@@ -18,5 +19,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     vec3f lightContrib,
     Ray &shadowRay,
     RayIntervals &rayIntervals,
-    Medium medium);
+    Medium medium,
+    const uniform FeatureFlagsHandler &ffh);
+
 OSPRAY_END_ISPC_NAMESPACE

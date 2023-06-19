@@ -40,14 +40,14 @@ Interpolation::Interpolation()
 
   if (attribute == 2)
     idBuffer = OSP_FB_NORMAL;
-
-  framebuffer =
-      cpp::FrameBuffer(imgSize.x, imgSize.y, frameBufferFormat, idBuffer);
 }
 
 void Interpolation::SetUp()
 {
   Base::SetUp();
+
+  framebuffer =
+      cpp::FrameBuffer(imgSize.x, imgSize.y, frameBufferFormat, idBuffer);
 
   instances.clear();
 

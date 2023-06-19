@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ISPCDeviceObject.h"
+#include "common/FeatureFlagsEnum.h"
 #include "common/ObjectFactory.h"
 #include "ispcrt.h"
 
@@ -19,7 +20,7 @@ struct OSPRAY_SDK_INTERFACE Light
     : public ISPCDeviceObject,
       public ObjectFactory<Light, api::ISPCDevice &>
 {
-  Light(api::ISPCDevice &device);
+  Light(api::ISPCDevice &device, const FeatureFlagsOther ffo);
   virtual ~Light() override = default;
 
   virtual uint32_t getShCount() const;
@@ -32,7 +33,11 @@ struct OSPRAY_SDK_INTERFACE Light
   vec3f coloredIntensity{1.0f, 1.0f, 1.0f};
   OSPIntensityQuantity intensityQuantity = OSP_INTENSITY_QUANTITY_UNKNOWN;
 
+  FeatureFlags getFeatureFlags() const;
+
  protected:
+  FeatureFlagsOther featureFlags;
+
   void queryIntensityQuantityType(const OSPIntensityQuantity &defaultIQ);
 };
 
@@ -43,6 +48,13 @@ OSPTYPEFOR_SPECIALIZATION(Light *, OSP_LIGHT);
 inline uint32_t Light::getShCount() const
 {
   return 1;
+}
+
+inline FeatureFlags Light::getFeatureFlags() const
+{
+  FeatureFlags ff;
+  ff.other = featureFlags;
+  return ff;
 }
 
 } // namespace ospray

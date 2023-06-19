@@ -11,7 +11,8 @@ namespace ospray {
 namespace pathtracer {
 
 Principled::Principled(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(
+        device.getIspcrtContext(), device, FFO_MATERIAL_PRINCIPLED)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(

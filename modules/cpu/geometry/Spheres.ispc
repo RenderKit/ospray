@@ -64,7 +64,7 @@ SYCL_EXTERNAL SampleAreaRes Spheres_sampleArea(
 }
 
 void Spheres_getAreas(const Geometry *const uniform _self,
-    const int32 *const uniform primIDs,
+    const int32 *const uniform,
     const uniform int32 numPrims,
     const uniform affine3f &xfm,
     float *const uniform areas)
@@ -74,9 +74,9 @@ void Spheres_getAreas(const Geometry *const uniform _self,
   // detect (non-uniform) scaling; get length of transformed unit-vectors
   const uniform vec3f scaling3 =
       make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
+#if 0
   const uniform float min_scaling = reduce_min(scaling3);
   const uniform float max_scaling = reduce_max(scaling3);
-#if 0
   if ((max_scaling - min_scaling) > 1e-4f * min_scaling) {
     postStatusMsg(ISPC_MSG_SPHERES, OSP_LOG_WARNING);
   }

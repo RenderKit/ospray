@@ -57,7 +57,8 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
 SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float time)
+    const float time,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const GeometryLight *uniform self = (GeometryLight * uniform) super;
   const GeometricModel *uniform model = self->model;
@@ -85,11 +86,12 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
     foreach_unique (utime in time) {
 #endif
       const uniform affine3f xfm = Instance_getTransform(instance, utime);
-      as = Geometry_dispatch_sampleArea(geo, primID, xfm, rcp(xfm), ns, time);
+      as = Geometry_dispatch_sampleArea(
+          geo, primID, xfm, rcp(xfm), ns, time, ffh);
     }
   } else {
     as = Geometry_dispatch_sampleArea(
-        geo, primID, instance->xfm, instance->rcp_xfm, ns, time);
+        geo, primID, instance->xfm, instance->rcp_xfm, ns, time, ffh);
   }
   // note that sample.pdf/primitives * sampleArea(worldspace).pdf == self->pdf
 

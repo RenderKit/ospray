@@ -398,4 +398,20 @@ std::vector<T *> createArrayOfSh(const DataT<U *, DIM> &data)
   return retval;
 }
 
+template <>
+inline Data *ManagedObject::getParam<Data *>(
+    const char *name, Data *valIfNotFound)
+{
+  auto *obj = ParameterizedObject::getParam<ManagedObject *>(
+      name, (ManagedObject *)valIfNotFound);
+  if (obj && obj->managedObjectType == OSP_DATA)
+    return (Data *)obj;
+  else {
+    // reset query status if object is not a Data*
+    if (obj)
+      findParam(name)->query = false;
+    return valIfNotFound;
+  }
+}
+
 } // namespace ospray

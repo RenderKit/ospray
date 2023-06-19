@@ -2,7 +2,7 @@
 [Embree]: https://www.embree.org/
 [Intel Embree]: https://www.embree.org/
 [Open Image Denoise]: https://openimagedenoise.github.io/
-[OSPRayReadme]: http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation"
+[OSPRayReadme]: https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation"
 [doc/ospray2_porting_guide.md]: https://www.ospray.org/ospray2_porting_guide.html
 
 [camera]: documentation.html#cameras

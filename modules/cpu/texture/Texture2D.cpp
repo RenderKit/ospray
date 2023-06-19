@@ -3,7 +3,6 @@
 
 #include "Texture2D.h"
 #ifndef OSPRAY_TARGET_SYCL
-#include "common/OSPCommon_ispc.h"
 #include "texture/Texture2D_ispc.h"
 #endif
 

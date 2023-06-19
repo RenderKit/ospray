@@ -8,16 +8,16 @@
 namespace ospray {
 
 MathConstants::MathConstants(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice())
+    : AddStructShared(device.getIspcrtContext())
 {
   haltonPerm3Buf =
-      make_buffer_shared_unique<unsigned int>(device.getIspcrtDevice(), 243);
+      make_buffer_shared_unique<unsigned int>(device.getIspcrtContext(), 243);
   haltonPerm5Buf =
-      make_buffer_shared_unique<unsigned int>(device.getIspcrtDevice(), 125);
+      make_buffer_shared_unique<unsigned int>(device.getIspcrtContext(), 125);
   haltonPerm7Buf =
-      make_buffer_shared_unique<unsigned int>(device.getIspcrtDevice(), 343);
+      make_buffer_shared_unique<unsigned int>(device.getIspcrtContext(), 343);
   sobolMatricesBuf = make_buffer_shared_unique<unsigned int>(
-      device.getIspcrtDevice(), Sobol_numDimensions * Sobol_numBits);
+      device.getIspcrtContext(), Sobol_numDimensions * Sobol_numBits);
 
   std::memcpy(haltonPerm3Buf->begin(),
       halton_perm3,

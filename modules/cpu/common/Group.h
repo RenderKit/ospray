@@ -5,6 +5,7 @@
 
 // ospray stuff
 #include "Data.h"
+#include "FeatureFlagsEnum.h"
 #include "ISPCDeviceObject.h"
 #include "StructShared.h"
 // stl
@@ -48,7 +49,11 @@ struct OSPRAY_SDK_INTERFACE Group
 #endif
   RTCScene sceneClippers{nullptr};
 
+  const FeatureFlags &getFeatureFlags() const;
+
  private:
+  FeatureFlags featureFlags;
+
   std::unique_ptr<BufferShared<ispc::GeometricModel *>> geometricModelsArray;
 #ifdef OSPRAY_ENABLE_VOLUMES
   std::unique_ptr<BufferShared<ispc::VolumetricModel *>> volumetricModelsArray;
@@ -57,5 +62,10 @@ struct OSPRAY_SDK_INTERFACE Group
 };
 
 OSPTYPEFOR_SPECIALIZATION(Group *, OSP_GROUP);
+
+inline const FeatureFlags &Group::getFeatureFlags() const
+{
+  return featureFlags;
+}
 
 } // namespace ospray

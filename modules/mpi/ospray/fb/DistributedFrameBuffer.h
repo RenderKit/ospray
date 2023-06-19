@@ -101,6 +101,8 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
 
   void endFrame(const float errorThreshold, const Camera *camera) override;
 
+  AsyncEvent postProcess(const Camera *camera, bool wait) override;
+
   void setTileOperation(
       std::shared_ptr<TileOperation> tileOp, const Renderer *renderer);
 

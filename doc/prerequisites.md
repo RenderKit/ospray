@@ -21,7 +21,7 @@ before you can build OSPRay you need the following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools.
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.19.0 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.20.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
     If ISPC is not found by CMake its location can be hinted with the
@@ -47,7 +47,7 @@ before you can build OSPRay you need the following prerequisites:
     the variable `openvkl_DIR`, or disable `OSPRAY_ENABLE_VOLUMES`.
 -   OSPRay also provides an optional module implementing the `denoiser`
     image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
-    module requires Intel [Open Image Denoise] in version 1.2.3 or
+    module requires Intel [Open Image Denoise] in version 2.0.0 or
     newer. You may need to hint the location of the library with the
     CMake variable `OpenImageDenoise_DIR`.
 -   For the optional MPI modules (enabled by `OSPRAY_MODULE_MPI`), which

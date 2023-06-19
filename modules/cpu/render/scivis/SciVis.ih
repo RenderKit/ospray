@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "common/FeatureFlags.ih"
 #include "render/ScreenSample.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -24,27 +25,21 @@ struct SciVisRenderContext
   varying LDSampler *uniform ldSampler;
 };
 
-// Note: Making lightAlpha and SciVis_computeAO __noinline helps performance
-// on DG2 but the code then hangs if tracing secondary rays (shadows or AO),
-// likely same issue as the XDEPS-4374 and XDEPS-4422
 SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
-    ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     vec3f weight,
-    float rayOffset,
-    uniform float quality);
+    uniform float quality,
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
-    ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,
     const uniform float aoRadius,
-    const varying vec3i &sampleID);
+    const varying vec3i &sampleID,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

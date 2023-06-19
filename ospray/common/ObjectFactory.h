@@ -9,8 +9,12 @@
 #include <stdexcept>
 #include <string>
 
-#if defined(OBJECTFACTORY_IMPORT) && defined(_WIN32)
+#ifdef _WIN32
+#ifdef OBJECTFACTORY_IMPORT
 #define OF_DECLSPEC __declspec(dllimport)
+#else
+#define OF_DECLSPEC __declspec(dllexport)
+#endif
 #else
 #define OF_DECLSPEC
 #endif

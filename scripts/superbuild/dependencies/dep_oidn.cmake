@@ -32,7 +32,7 @@ if (BUILD_OIDN_FROM_SOURCE)
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
       $<$<BOOL:${DOWNLOAD_TBB}>:-DTBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
-      -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
+      -DCMAKE_BUILD_TYPE=Release # XXX debug builds are currently broken
       -DOIDN_APPS=OFF
       -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
       -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
@@ -56,7 +56,7 @@ else()
   if (APPLE)
     set(OIDN_OSSUFFIX "x86_64.macos.tar.gz")
   elseif (WIN32)
-    set(OIDN_OSSUFFIX "x64.vc14.windows.zip")
+    set(OIDN_OSSUFFIX "x64.windows.zip")
   else()
     set(OIDN_OSSUFFIX "x86_64.linux.tar.gz")
   endif()

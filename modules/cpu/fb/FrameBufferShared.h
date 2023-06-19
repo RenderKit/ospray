@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "fb/ImageOpShared.h"
+#include "fb/PixelOpShared.h"
 #include "ospray/OSPEnums.h"
 
 #ifdef __cplusplus
@@ -75,6 +75,7 @@ struct FrameBuffer
   // The default size of each each render task, in pixels
   vec2i renderTaskSize;
 
+  // Not used on GPU to avoid USM thrashing
   int32 frameID;
 
   // The channels stored in the framebuffer
@@ -91,6 +92,7 @@ struct FrameBuffer
   uint32 cancelRender;
 
   // The number of pixels rendered this frame, for tracking rendering progress
+  // Not used on GPU to avoid USM thrashing
   uint32 numPixelsRendered;
 
 #ifdef __cplusplus

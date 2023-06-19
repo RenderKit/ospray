@@ -54,4 +54,5 @@ or do the following steps:
 call md5sum on the resulting .png files.  Add a .png.md5 file to
 tests/baseling/TESTNAME.png.md5 with the value of the checksum.  rename
 the .png file to be the checksum value, and then send this to OSPRay Devs who
-will upload it to sdvis.org under /var/www/html/ospray/download/baseline/benchmark-data/MD5.
+will add it to https://github.com/ospray/ospray-test-data /
+https://www.ospray.org/ospray-test-data/.

@@ -1,11 +1,12 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/FeatureFlagsEnum.h"
+#include "lights/LightDispatch.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
 #include "surfaces.ih"
-#include "lights/LightDispatch.ih"
 // c++ shared
 #include "SciVisDataShared.h"
 #include "SciVisShared.h"
@@ -14,13 +15,13 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 vec3f directIllumination(const uniform SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
     const varying DifferentialGeometry &dg,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     const varying SciVisBSDF &bsdf,
-    const varying vec3f &inDir)
+    const varying vec3f &inDir,
+    const uniform FeatureFlagsHandler &ffh)
 {
   vec3f color = make_vec3f(0.f);
 
@@ -30,14 +31,14 @@ vec3f directIllumination(const uniform SciVis *uniform self,
     return color;
 
   // calculate shading for all lights
-  for (uniform int i = scivisData.numLightsVisibleOnly;
+  for (uniform uint32 i = scivisData.numLightsVisibleOnly;
        i < scivisData.numLights;
        i++) {
     const Light *uniform l = scivisData.lights[i];
     const vec2f s = make_vec2f(0.0f); // sample center of area lights
 
     const Light_SampleRes light =
-        Light_dispatch_sample(l, dg, s, sample.ray.time);
+        Light_dispatch_sample(l, dg, s, sample.ray.time, ffh);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
       const float cosNL = dot(light.dir, dg.Ns);
@@ -59,15 +60,8 @@ vec3f directIllumination(const uniform SciVis *uniform self,
           Ray shadowRay;
           setRay(shadowRay, P, light.dir, 0.0f, light.dist);
 
-          vec3f light_alpha = lightAlpha(self,
-              shadowRay,
-              fb,
-              world,
-              sample,
-              ldSampler,
-              light_contrib,
-              dg.epsilon,
-              0.25f);
+          vec3f light_alpha = lightAlpha(
+              self, shadowRay, world, ldSampler, light_contrib, 0.25f, ffh);
 
           color = color + light_alpha * light_contrib;
         }
@@ -81,20 +75,20 @@ vec3f directIllumination(const uniform SciVis *uniform self,
 }
 
 SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
-    const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
-    const varying vec3f &inDir)
+    const varying vec3f &inDir,
+    const uniform FeatureFlagsHandler &ffh)
 {
   SSI retval;
 
-  const SciVisBSDF bsdf = evalMaterial(dg);
+  const SciVisBSDF bsdf = evalMaterial(dg, ffh);
   retval.albedo = bsdf.albedo;
 
   vec3f color =
-      directIllumination(self, fb, world, dg, sample, ldSampler, bsdf, inDir);
+      directIllumination(self, world, dg, sample, ldSampler, bsdf, inDir, ffh);
 
   vec3f ao = make_vec3f(1.f);
   const uniform SciVisData &scivisData =
@@ -102,14 +96,13 @@ SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
   if (self->aoSamples > 0
       && luminance(scivisData.aoColorPi) > self->super.minContribution)
     ao = SciVis_computeAO(self,
-        fb,
         world,
-        sample,
         ldSampler,
         dg,
         self->aoSamples,
         self->aoRadius,
-        sample.sampleID);
+        sample.sampleID,
+        ffh);
 
   color = color + bsdf.diffuse * ao * scivisData.aoColorPi;
 
@@ -120,14 +113,16 @@ SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
   return retval;
 }
 
-SYCL_EXTERNAL vec3f evaluateLights(
-    const World *uniform world, const DifferentialGeometry &dg, const Ray &ray)
+SYCL_EXTERNAL vec3f evaluateLights(const World *uniform world,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const uniform FeatureFlagsHandler &ffh)
 {
   // Iterate through all lights
   vec3f color = make_vec3f(0.f);
   const uniform SciVisData &scivisData =
       *((const uniform SciVisData *)world->scivisData);
-  for (uniform int i = 0; i < scivisData.numLights; i++) {
+  for (uniform uint32 i = 0; i < scivisData.numLights; i++) {
     // Skip lights with disabled visibility via parameter
     const Light *uniform l = scivisData.lights[i];
     if (!l->isVisible)
@@ -135,7 +130,7 @@ SYCL_EXTERNAL vec3f evaluateLights(
 
     // Evaluate light contribution
     const Light_EvalRes le =
-        Light_dispatch_eval(l, dg, ray.dir, ray.t0, ray.t, ray.time);
+        Light_dispatch_eval(l, dg, ray.dir, ray.t0, ray.t, ray.time, ffh);
     color = color + le.radiance;
   }
   return color;

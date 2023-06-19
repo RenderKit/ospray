@@ -5,7 +5,10 @@
 #include "Renderer.h"
 #include "LoadBalancer.h"
 #include "Material.h"
+#include "camera/Camera.h"
 #include "common/Instance.h"
+#include "common/World.h"
+#include "fb/FrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
@@ -24,7 +27,7 @@ namespace ospray {
 // Renderer definitions ///////////////////////////////////////////////////////
 
 Renderer::Renderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device), device(device)
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
@@ -40,12 +43,15 @@ std::string Renderer::toString() const
 void Renderer::commit()
 {
   spp = std::max(1, getParam<int>("pixelSamples", 1));
-  const int32 maxDepth = std::max(0, getParam<int>("maxPathLength", 20));
+  const uint32_t maxDepth = std::max(0, getParam<int>("maxPathLength", 20));
   const float minContribution = getParam<float>("minContribution", 0.001f);
   errorThreshold = getParam<float>("varianceThreshold", 0.f);
 
   maxDepthTexture = (Texture2D *)getParamObject("map_maxDepth");
   backplate = (Texture2D *)getParamObject("map_backplate");
+  featureFlags.reset();
+  if (maxDepthTexture || backplate)
+    featureFlags.other |= FFO_TEXTURE_IN_RENDERER;
 
   if (maxDepthTexture) {
     if (maxDepthTexture->format != OSP_TEXTURE_R32F
@@ -66,8 +72,11 @@ void Renderer::commit()
   getSh()->material = nullptr;
   materialData = getParamDataT<Material *>("material");
   if (materialData) {
+    for (auto &&mat : *materialData)
+      featureFlags |= mat->getFeatureFlags();
+
     materialArray = make_buffer_shared_unique<ispc::Material *>(
-        getISPCDevice().getIspcrtDevice(),
+        getISPCDevice().getIspcrtContext(),
         createArrayOfSh<ispc::Material>(*materialData));
     getSh()->numMaterials = materialArray->size();
     getSh()->material = materialArray->sharedPtr();
@@ -86,18 +95,6 @@ void Renderer::commit()
 
   ispc::precomputeZOrder();
 }
-
-#ifdef OSPRAY_TARGET_SYCL
-sycl::nd_range<1> Renderer::computeDispatchRange(
-    const size_t globalSize, const size_t workgroupSize) const
-{
-  // roundedRange global size must be at least workgroupSize
-  const size_t roundedRange =
-      std::max(size_t(1), (globalSize + workgroupSize - 1) / workgroupSize)
-      * workgroupSize;
-  return sycl::nd_range<1>(roundedRange, workgroupSize);
-}
-#endif
 
 OSPPickResult Renderer::pick(
     FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos)
@@ -140,6 +137,12 @@ OSPPickResult Renderer::pick(
     res.model = (OSPGeometricModel)model;
     res.primID = static_cast<uint32_t>(primID);
   }
+#else
+  // Silence unused parameter warning
+  (void)fb;
+  (void)camera;
+  (void)world;
+  (void)screenPos;
 #endif
 
   return res;
