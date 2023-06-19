@@ -102,11 +102,17 @@ void Mesh::commit()
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
     isTexcoordFaceVarying = false;
   }
-  indexData = getParamDataT<vec3ui>("index");
-  if (!indexData)
-    indexData = getParamDataT<vec4ui>("index", true);
 
-  const bool isTri = indexData->type == OSP_VEC3UI;
+  Data* indexDataPreliminary = getParam<Data*>("index");
+  if (!indexDataPreliminary)
+    throw std::runtime_error(toString() + " must have 'index' 1D array with element "
+                             "type vec3ui for triangle meshes or vec4ui for quad meshes.");
+
+  const bool isTri = indexDataPreliminary->type == OSP_VEC3UI;
+  if (isTri)
+    indexData = getParamDataT<vec3ui>("index", true);
+  else
+    indexData = getParamDataT<vec4ui>("index", true);
 
   getSh()->super.type =
       isTri ? ispc::GEOMETRY_TYPE_TRIANGLE_MESH : ispc::GEOMETRY_TYPE_QUAD_MESH;
