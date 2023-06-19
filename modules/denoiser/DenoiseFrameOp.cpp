@@ -7,20 +7,39 @@
 
 namespace ospray {
 
+void checkError(OIDNDevice oidnDevice)
+{
+  const char *errorMessage = nullptr;
+  auto error = oidnGetDeviceError(oidnDevice, &errorMessage);
+
+  if (error != OIDN_ERROR_NONE && error != OIDN_ERROR_CANCELLED) {
+    throw std::runtime_error(
+        "Error running OIDN: " + std::string(errorMessage));
+  }
+}
+
 struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
     : public LiveFrameOpInterface
 {
-  LiveDenoiseFrameOp(
-      FrameBufferView &fbView, OIDNDevice oidnDevice, const bool sharedMem)
+  LiveDenoiseFrameOp(FrameBufferView &fbView, OIDNDevice oidnDevice)
       : fbView(fbView),
         oidnDevice(oidnDevice),
-        filter(oidnNewFilter(oidnDevice, "RT")),
-        sharedMem(sharedMem)
+        filter(oidnNewFilter(oidnDevice, "RT"))
 
   {
     oidnRetainDevice(oidnDevice);
+    oidnSetFilterBool(filter, "hdr", true);
+  }
 
-    if (sharedMem) {
+  ~LiveDenoiseFrameOp() override
+  {
+    oidnReleaseFilter(filter);
+    oidnReleaseDevice(oidnDevice);
+  }
+
+  void process(void *waitEvent, const Camera *) override
+  {
+    if (!filterCommited) {
       float *fbColor = static_cast<float *>(fbView.colorBuffer);
       oidnSetSharedFilterImage(filter,
           "color",
@@ -41,7 +60,63 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
           0,
           sizeof(float) * 4,
           0);
-    } else {
+
+      if (fbView.normalBuffer)
+        oidnSetSharedFilterImage(filter,
+            "normal",
+            fbView.normalBuffer,
+            OIDN_FORMAT_FLOAT3,
+            fbView.fbDims.x,
+            fbView.fbDims.y,
+            0,
+            0,
+            0);
+
+      if (fbView.albedoBuffer)
+        oidnSetSharedFilterImage(filter,
+            "albedo",
+            fbView.albedoBuffer,
+            OIDN_FORMAT_FLOAT3,
+            fbView.fbDims.x,
+            fbView.fbDims.y,
+            0,
+            0,
+            0);
+
+      oidnCommitFilter(filter);
+      filterCommited = true;
+    }
+
+    if (waitEvent)
+      oidnExecuteSYCLFilterAsync(filter, nullptr, 0, (sycl::event *)waitEvent);
+    else
+      oidnExecuteFilter(filter);
+
+    checkError(oidnDevice);
+  }
+
+  FrameBufferView fbView;
+  bool filterCommited{false};
+  OIDNDevice oidnDevice;
+  OIDNFilter filter;
+};
+
+struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
+    : public LiveDenoiseFrameOp
+{
+  LiveDenoiseFrameOpCopy(FrameBufferView &fbView, OIDNDevice oidnDevice)
+      : LiveDenoiseFrameOp(fbView, oidnDevice)
+  {}
+
+  ~LiveDenoiseFrameOpCopy() override
+  {
+    oidnReleaseBuffer(input);
+    oidnReleaseBuffer(output);
+  }
+
+  void process(void * /*waitEvent*/, const Camera *) override
+  {
+    if (!filterCommited) {
       byteFloatBufferSize = sizeof(float) * fbView.fbDims.product();
       size_t sz = 4 * byteFloatBufferSize;
       output = oidnNewBufferWithStorage(oidnDevice, sz, OIDN_STORAGE_DEVICE);
@@ -75,20 +150,8 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
           0,
           sizeof(float) * 4,
           0);
-    }
 
-    if (fbView.normalBuffer) {
-      if (sharedMem)
-        oidnSetSharedFilterImage(filter,
-            "normal",
-            fbView.normalBuffer,
-            OIDN_FORMAT_FLOAT3,
-            fbView.fbDims.x,
-            fbView.fbDims.y,
-            0,
-            0,
-            0);
-      else
+      if (fbView.normalBuffer)
         oidnSetFilterImage(filter,
             "normal",
             input,
@@ -98,20 +161,8 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
             byteNormalOffset,
             0,
             0);
-    }
 
-    if (fbView.albedoBuffer) {
-      if (sharedMem)
-        oidnSetSharedFilterImage(filter,
-            "albedo",
-            fbView.albedoBuffer,
-            OIDN_FORMAT_FLOAT3,
-            fbView.fbDims.x,
-            fbView.fbDims.y,
-            0,
-            0,
-            0);
-      else
+      if (fbView.albedoBuffer)
         oidnSetFilterImage(filter,
             "albedo",
             input,
@@ -121,67 +172,35 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
             byteAlbedoOffset,
             0,
             0);
+
+      oidnCommitFilter(filter);
+      filterCommited = true;
     }
-
-    oidnSetFilterBool(filter, "hdr", true);
-
-    oidnCommitFilter(filter);
-  }
-
-  ~LiveDenoiseFrameOp() override
-  {
-    if (!sharedMem) {
-      oidnReleaseBuffer(input);
-      oidnReleaseBuffer(output);
-    }
-    oidnReleaseFilter(filter);
-    oidnReleaseDevice(oidnDevice);
-  }
-
-  void process(void *waitEvent, const Camera *) override
-  {
-    if (waitEvent)
-      oidnExecuteSYCLFilterAsync(filter, nullptr, 0, (sycl::event *)waitEvent);
-    else {
 // TODO if (!fbView.originalFB->getSh()->numPixelsRendered)
 //        return; // skip denoising when no new pixels XXX only works on CPU
 
-      if (!sharedMem) {
-        oidnWriteBuffer(input, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
+    oidnWriteBufferAsync(input, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
 
-        if (fbView.normalBuffer)
-          oidnWriteBuffer(input,
-              byteNormalOffset,
-              3 * byteFloatBufferSize,
-              fbView.normalBuffer);
-        if (fbView.albedoBuffer)
-          oidnWriteBuffer(input,
-              byteAlbedoOffset,
-              3 * byteFloatBufferSize,
-              fbView.albedoBuffer);
-      }
+    if (fbView.normalBuffer)
+      oidnWriteBufferAsync(input,
+          byteNormalOffset,
+          3 * byteFloatBufferSize,
+          fbView.normalBuffer);
+    if (fbView.albedoBuffer)
+      oidnWriteBufferAsync(input,
+          byteAlbedoOffset,
+          3 * byteFloatBufferSize,
+          fbView.albedoBuffer);
 
-      oidnExecuteFilter(filter);
+    oidnExecuteFilterAsync(filter);
 
-      if (!sharedMem)
-        oidnReadBuffer(output, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
-    }
+    oidnReadBufferAsync(output, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
 
-    const char *errorMessage = nullptr;
-    auto error = oidnGetDeviceError(oidnDevice, &errorMessage);
+    oidnSyncDevice(oidnDevice);
 
-    if (error != OIDN_ERROR_NONE && error != OIDN_ERROR_CANCELLED) {
-      throw std::runtime_error(
-          "Error running OIDN: " + std::string(errorMessage));
-    }
+    checkError(oidnDevice);
   }
 
-  FrameBufferView fbView;
-
-  OIDNDevice oidnDevice;
-  OIDNFilter filter;
-  bool sharedMem;
-  // needed only without shared mem:
   OIDNBuffer input;
   OIDNBuffer output;
   size_t byteFloatBufferSize;
@@ -199,13 +218,7 @@ DenoiseFrameOp::DenoiseFrameOp(api::Device &device)
   else
     oidnDevice = oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT);
 
-  const char *errorMessage = nullptr;
-  auto error = oidnGetDeviceError(oidnDevice, &errorMessage);
-
-  if (error != OIDN_ERROR_NONE) {
-    throw std::runtime_error(
-        "Error running OIDN: " + std::string(errorMessage));
-  }
+  checkError(oidnDevice);
 
   // OIDN has inverted verbose levels vs. OSPRay
   oidnSetDeviceInt(oidnDevice, "verbose", OSP_LOG_NONE - device.logLevel);
@@ -229,8 +242,9 @@ std::unique_ptr<LiveFrameOpInterface> DenoiseFrameOp::attach(
         "DenoiseFrameOp must be used with an RGBA32F "
         "color format framebuffer!");
 
-  return rkcommon::make_unique<LiveDenoiseFrameOp>(
-      fbView, oidnDevice, sharedMem);
+  return sharedMem
+      ? rkcommon::make_unique<LiveDenoiseFrameOp>(fbView, oidnDevice)
+      : rkcommon::make_unique<LiveDenoiseFrameOpCopy>(fbView, oidnDevice);
 }
 
 std::string DenoiseFrameOp::toString() const
