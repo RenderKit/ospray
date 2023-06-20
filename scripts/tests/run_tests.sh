@@ -44,24 +44,31 @@ case $key in
 esac
 done
 
+exitCode=0
+
 make -j 4 ospray_test_data
+let exitCode+=$?
 
 mkdir failed
-ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed || exit 2
+ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
+let exitCode+=$?
 
 if [ $TEST_MULTIDEVICE ]; then
   mkdir failed-multidevice
   test_filters="DebugOp/ImageOp.ImageOp/0" # post-processing not enabled on multidevice
-  OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --gtest_filter="-$test_filters" --osp:load-modules=multidevice_cpu --osp:device=multidevice || exit 2
+  OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --gtest_filter="-$test_filters" --osp:load-modules=multidevice_cpu --osp:device=multidevice
+  let exitCode+=$?
 fi
 
 if [ $TEST_MPI ]; then
   mkdir failed-mpi
   test_filters="TestScenesVariance/*"
-  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi --gtest_filter="-$test_filters" --osp:load-modules=mpi_offload --osp:device=mpiOffload : $MPI_WORKER_CONFIG ospray_mpi_worker || exit 2
+  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi --gtest_filter="-$test_filters" --osp:load-modules=mpi_offload --osp:device=mpiOffload : $MPI_WORKER_CONFIG ospray_mpi_worker
+  let exitCode+=$?
 
   mkdir failed-mpi-data-parallel
-  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-data-parallel || exit 2
+  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-data-parallel
+  let exitCode+=$?
 fi
 
-exit $?
+exit $exitCode

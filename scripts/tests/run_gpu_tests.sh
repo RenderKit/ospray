@@ -35,8 +35,11 @@ done
 mkdir build_regression_tests
 cd build_regression_tests
 
+exitCode=0
+
 cmake -D OSPRAY_TEST_ISA=AVX512SKX "${SOURCEDIR}/test_image_data"
 make -j 4 ospray_test_data
+let exitCode+=$?
 
 # Excluded tests on GPU
 test_filters="ClippingParallel.planes"
@@ -95,16 +98,21 @@ export ONEAPI_DEVICE_SELECTOR=level_zero:*
 
 mkdir failed-gpu
 
-ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters" || exit 2
+ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters"
+let exitCode+=$?
 
 if [ $TEST_MPI ]; then
   mkdir failed-mpi-gpu
+  test_filters+=":DebugOp/ImageOp.ImageOp/0" # post-processing not enabled on mpi
   # Need to export, not just set for MPI to pick it up
   export OSPRAY_MPI_DISTRIBUTED_GPU=1
-  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-$test_filters" : $MPI_WORKER_CONFIG ospray_mpi_worker || exit 2
+  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-$test_filters" : $MPI_WORKER_CONFIG ospray_mpi_worker
+  let exitCode+=$?
 
   mkdir failed-mpi-gpu-data-parallel
-  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="MPIDistribTestScenesGeometry*:MPIDistribTestScenesVolumes*test_scenes/0" || exit 2 
+  test_filters="MPIDistribTestScenesVolumes/MPIFromOsprayTesting.test_scenes/1"
+  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="-$test_filters"
+  let exitCode+=$?
 fi
 
-exit $?
+exit $exitCode
