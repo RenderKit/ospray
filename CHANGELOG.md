@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v2.13.0:
+
+-   Add implicit indexing for `mesh` geometry
+
+
 ### Changes in v2.12.0:
 
 -   Support denoising on the GPU with OIDN 2.0, which is the new minimum

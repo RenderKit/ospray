@@ -1100,6 +1100,7 @@ recognizes the following parameters:
   vec2f[]              texcoord                [data] array of face-varying texture coordinates
   vec2f[]              vertex.texcoord         [data] array of vertex-varying texture coordinates
   vec3ui[] / vec4ui[]  index                   [data] array of (either triangle or quad) indices (into the vertex array(s))
+  bool                 quadSoup                when no explicit `index` is given, indicates whether to assume a 'soup' of quads instead of triangles, default false
   vec3f[][]            motion.vertex.position  [data] array of vertex position arrays (uniformly distributed keys for deformation motion blur)
   vec3f[][]            motion.normal           [data] array of face-varying normal arrays (uniformly distributed keys for deformation motion blur)
   vec3f[][]            motion.vertex.normal    [data] array of vertex-varying normal arrays (uniformly distributed keys for deformation motion blur)
@@ -1114,8 +1115,14 @@ triangles, thus mixing triangles and quads is supported by encoding some
 triangle as a quad with the last two vertex indices being identical
 (`w=z`).
 
-The `vertex.position` and `index` arrays are mandatory to create a valid
-mesh.
+The `vertex.position` array is mandatory to create a valid mesh.
+
+The `index` array is optional. If none is provided, a 'triangle soup' is
+assumed, i.e., each three consecutive vertices form one triangle; unless
+the boolean `quadSoup` is set to true, then a 'quad soup' is assumed
+i.e., each four subsequent vertices form one quad. If the size of the
+`vertex.position` array is not a multiple of three for triangles or four
+for quads, the remainder vertices are ignored.
 
 ### Subdivision
 

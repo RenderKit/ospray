@@ -110,26 +110,6 @@ static std::vector<vec3f> vertices = {
     {0.14f, -1.00f, 0.67f},
     {0.71f, -1.00f, 0.49f}};
 
-static std::vector<vec4ui> indices = {
-    {0, 1, 2, 3}, // Floor
-    {4, 5, 6, 7}, // Ceiling
-    {8, 9, 10, 11}, // Backwall
-    {12, 13, 14, 15}, // RightWall
-    {16, 17, 18, 19}, // LeftWall
-    {20, 21, 22, 23}, // ShortBox Top Face
-    {24, 25, 26, 27}, // ShortBox Left Face
-    {28, 29, 30, 31}, // ShortBox Front Face
-    {32, 33, 34, 35}, // ShortBox Right Face
-    {36, 37, 38, 39}, // ShortBox Back Face
-    {40, 41, 42, 43}, // ShortBox Bottom Face
-    {44, 45, 46, 47}, // TallBox Top Face
-    {48, 49, 50, 51}, // TallBox Left Face
-    {52, 53, 54, 55}, // TallBox Front Face
-    {56, 57, 58, 59}, // TallBox Right Face
-    {60, 61, 62, 63}, // TallBox Back Face
-    {64, 65, 66, 67} // TallBox Bottom Face
-};
-
 static std::vector<vec4f> colors = {
     // Floor
     {0.725f, 0.710f, 0.68f, 1.0f},
@@ -231,7 +211,7 @@ cpp::Group CornellBox::buildGroup() const
 
   quadMesh.setParam("vertex.position", cpp::CopiedData(vertices));
   quadMesh.setParam("vertex.color", cpp::CopiedData(colors));
-  quadMesh.setParam("index", cpp::CopiedData(indices));
+  quadMesh.setParam("quadSoup", true);
   quadMesh.commit();
 
   cpp::GeometricModel model(quadMesh);
