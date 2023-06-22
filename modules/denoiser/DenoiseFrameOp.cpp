@@ -220,8 +220,8 @@ DenoiseFrameOp::DenoiseFrameOp(api::Device &device)
 
   checkError(oidnDevice);
 
-  // OIDN has inverted verbose levels vs. OSPRay
-  oidnSetDeviceInt(oidnDevice, "verbose", OSP_LOG_NONE - device.logLevel);
+  if (device.debugMode)
+    oidnSetDeviceInt(oidnDevice, "verbose", 2);
 
   oidnCommitDevice(oidnDevice);
 
