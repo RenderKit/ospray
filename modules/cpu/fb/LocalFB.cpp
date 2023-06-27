@@ -369,12 +369,10 @@ void LocalFrameBuffer::writeTiles(SparseFrameBuffer *sparseFb)
   // Now we do need the tile memory on the host to read the region information
   // TODO: This information never changes between frames, so maybe we can split
   // it out to separate the rendered tile data and this metadata?
-  const auto tiles = sparseFb->getTiles();
+  const auto tileIDs = sparseFb->getTileIDs();
   uint32_t renderTaskID = 0;
-  for (size_t i = 0; i < tiles.size(); ++i) {
-    const auto &tile = tiles[i];
-    const box2i taskRegion(
-        tile.region.lower / renderTaskSize, tile.region.upper / renderTaskSize);
+  for (size_t i = 0; i < tileIDs.size(); ++i) {
+    const box2i taskRegion = sparseFb->getTileRegion(tileIDs[i]);
     for (int y = taskRegion.lower.y; y < taskRegion.upper.y; ++y) {
       for (int x = taskRegion.lower.x; x < taskRegion.upper.x;
            ++x, ++renderTaskID) {

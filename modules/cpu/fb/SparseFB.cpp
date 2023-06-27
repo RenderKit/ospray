@@ -286,16 +286,10 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
     const vec2f rcpSize = rcp(vec2f(size));
     // TODO: Could run as a kernel later
     for (size_t i = 0; i < tiles->size(); ++i) {
-      vec2i tilePos;
-      const uint32_t tid = (*tileIDs)[i];
-      tilePos.x = tid % totalTiles.x;
-      tilePos.y = tid / totalTiles.x;
-
       Tile &t = (*tiles)[i];
       t.fbSize = size;
       t.rcp_fbSize = rcpSize;
-      t.region.lower = tilePos * TILE_SIZE;
-      t.region.upper = min(t.region.lower + TILE_SIZE, size);
+      t.region = getTileRegion((*tileIDs)[i]);
       t.accumID = 0;
       std::fill(t.r, t.r + TILE_SIZE * TILE_SIZE, 1.f);
     }
@@ -349,6 +343,9 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
   const uint32_t nTasksPerTile = getNumTasksPerTile();
 
   // Sort each tile's tasks in Z order
+  // TODO: is this worth doing in the dynamicLB case? We make
+  // a new sparseFb for each tile set we receive, it seems like
+  // this won't be worth it.
   if (tiles) {
     rkcommon::tasking::parallel_for(tiles->size(), [&](const size_t i) {
       std::sort(renderTaskIDs->begin() + i * nTasksPerTile,
@@ -389,6 +386,15 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
       varianceBuffer ? varianceBuffer->devicePtr() : nullptr;
   getSh()->taskRegionError =
       taskErrorBuffer ? taskErrorBuffer->data() : nullptr;
+}
+
+box2i SparseFrameBuffer::getTileRegion(uint32_t tileID) const
+{
+  const vec2i tilePos(tileID % totalTiles.x, tileID / totalTiles.x);
+  box2i region;
+  region.lower = tilePos * TILE_SIZE;
+  region.upper = min(region.lower + TILE_SIZE, size);
+  return region;
 }
 
 vec2i SparseFrameBuffer::getTaskPosInTile(const uint32_t taskID) const

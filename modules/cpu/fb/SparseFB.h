@@ -112,6 +112,9 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
    */
   void setTiles(const std::vector<uint32_t> &tileIDs);
 
+  // Return the image region for the tile
+  box2i getTileRegion(uint32_t tileID) const;
+
   //// Data ////
  protected:
   // Get the position of a task in its tile
