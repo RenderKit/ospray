@@ -18,6 +18,7 @@
 #include "fb/ImageOp.h"
 #include "fb/LocalFB.h"
 #include "geometry/GeometricModel.h"
+#include "ispc_tasksys.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
@@ -294,6 +295,7 @@ void ISPCDevice::commit()
   }
 
   tasking::initTaskingSystem(numThreads, true);
+  setIspcrtTaskingCallbacks();
 
   if (!embreeDevice) {
 #ifdef OSPRAY_TARGET_SYCL

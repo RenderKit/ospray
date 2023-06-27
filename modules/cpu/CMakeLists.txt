@@ -32,6 +32,7 @@ set(OSPRAY_CPP_SOURCES
 
   ModuleInit.cpp
   ispc_tasksys.cpp
+  ispc_tasksys.h
 
   ISPCDevice.h
   ISPCDevice.cpp
