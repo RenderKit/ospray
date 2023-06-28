@@ -96,9 +96,11 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
   }
 
   FrameBufferView fbView;
-  bool filterCommited{false};
   OIDNDevice oidnDevice;
   OIDNFilter filter;
+
+ private:
+  bool filterCommited{false};
 };
 
 struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
@@ -106,7 +108,65 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
 {
   LiveDenoiseFrameOpCopy(FrameBufferView &fbView, OIDNDevice oidnDevice)
       : LiveDenoiseFrameOp(fbView, oidnDevice)
-  {}
+  {
+    byteFloatBufferSize = sizeof(float) * fbView.fbDims.product();
+    size_t sz = 4 * byteFloatBufferSize;
+    output = oidnNewBufferWithStorage(oidnDevice, sz, OIDN_STORAGE_DEVICE);
+
+    if (fbView.normalBuffer) {
+      byteNormalOffset = sz;
+      sz += 3 * byteFloatBufferSize;
+    }
+    if (fbView.albedoBuffer) {
+      byteAlbedoOffset = sz;
+      sz += 3 * byteFloatBufferSize;
+    }
+    input = oidnNewBufferWithStorage(oidnDevice, sz, OIDN_STORAGE_DEVICE);
+
+    oidnSetFilterImage(filter,
+        "color",
+        input,
+        OIDN_FORMAT_FLOAT3,
+        fbView.fbDims.x,
+        fbView.fbDims.y,
+        0,
+        sizeof(float) * 4,
+        0);
+
+    oidnSetFilterImage(filter,
+        "output",
+        output,
+        OIDN_FORMAT_FLOAT3,
+        fbView.fbDims.x,
+        fbView.fbDims.y,
+        0,
+        sizeof(float) * 4,
+        0);
+
+    if (fbView.normalBuffer)
+      oidnSetFilterImage(filter,
+          "normal",
+          input,
+          OIDN_FORMAT_FLOAT3,
+          fbView.fbDims.x,
+          fbView.fbDims.y,
+          byteNormalOffset,
+          0,
+          0);
+
+    if (fbView.albedoBuffer)
+      oidnSetFilterImage(filter,
+          "albedo",
+          input,
+          OIDN_FORMAT_FLOAT3,
+          fbView.fbDims.x,
+          fbView.fbDims.y,
+          byteAlbedoOffset,
+          0,
+          0);
+
+    oidnCommitFilter(filter);
+  }
 
   ~LiveDenoiseFrameOpCopy() override
   {
@@ -116,68 +176,8 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
 
   void process(void * /*waitEvent*/, const Camera *) override
   {
-    if (!filterCommited) {
-      byteFloatBufferSize = sizeof(float) * fbView.fbDims.product();
-      size_t sz = 4 * byteFloatBufferSize;
-      output = oidnNewBufferWithStorage(oidnDevice, sz, OIDN_STORAGE_DEVICE);
-
-      if (fbView.normalBuffer) {
-        byteNormalOffset = sz;
-        sz += 3 * byteFloatBufferSize;
-      }
-      if (fbView.albedoBuffer) {
-        byteAlbedoOffset = sz;
-        sz += 3 * byteFloatBufferSize;
-      }
-      input = oidnNewBufferWithStorage(oidnDevice, sz, OIDN_STORAGE_DEVICE);
-
-      oidnSetFilterImage(filter,
-          "color",
-          input,
-          OIDN_FORMAT_FLOAT3,
-          fbView.fbDims.x,
-          fbView.fbDims.y,
-          0,
-          sizeof(float) * 4,
-          0);
-
-      oidnSetFilterImage(filter,
-          "output",
-          output,
-          OIDN_FORMAT_FLOAT3,
-          fbView.fbDims.x,
-          fbView.fbDims.y,
-          0,
-          sizeof(float) * 4,
-          0);
-
-      if (fbView.normalBuffer)
-        oidnSetFilterImage(filter,
-            "normal",
-            input,
-            OIDN_FORMAT_FLOAT3,
-            fbView.fbDims.x,
-            fbView.fbDims.y,
-            byteNormalOffset,
-            0,
-            0);
-
-      if (fbView.albedoBuffer)
-        oidnSetFilterImage(filter,
-            "albedo",
-            input,
-            OIDN_FORMAT_FLOAT3,
-            fbView.fbDims.x,
-            fbView.fbDims.y,
-            byteAlbedoOffset,
-            0,
-            0);
-
-      oidnCommitFilter(filter);
-      filterCommited = true;
-    }
-// TODO if (!fbView.originalFB->getSh()->numPixelsRendered)
-//        return; // skip denoising when no new pixels XXX only works on CPU
+    // TODO if (!fbView.originalFB->getSh()->numPixelsRendered)
+    //        return; // skip denoising when no new pixels XXX only works on CPU
 
     oidnWriteBufferAsync(input, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
 
