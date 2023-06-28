@@ -447,17 +447,10 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       // termination we have nothing to render locally so just mark the tasks
       // complete
       if (!taskTileIDs.empty()) {
-        sparseFb->setTiles(taskTileIDs);
+        // Set the tiles and fill the right accumID for them
+        sparseFb->setTiles(
+            taskTileIDs, sparseFbTrackAccumIDs ? dfb->getFrameID() : 0);
         sparseFb->beginFrame();
-
-        // Set the right accumID for the tiles we're going to render
-        // TODO: would be nice if there was a more efficient way to run this as
-        // well.
-        if (sparseFbTrackAccumIDs) {
-          for (uint32_t i = 0; i < sparseFb->getTotalRenderTasks(); ++i) {
-            sparseFb->setTaskAccumID(i, dfb->getFrameID());
-          }
-        }
 
         renderer->renderTasks(sparseFb.get(),
             camera,

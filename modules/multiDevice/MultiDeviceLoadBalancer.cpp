@@ -62,7 +62,9 @@ void MultiDeviceLoadBalancer::renderFrame(
       const auto tileIDs = fbi->getTileIDs();
       uint32_t renderTaskID = 0;
       for (size_t tid = 0; tid < tileIDs.size(); ++tid) {
-        const box2i taskRegion = fbi->getTileRegion(tileIDs[i]);
+        const box2i tileRegion = fbi->getTileRegion(tileIDs[i]);
+        const box2i taskRegion(tileRegion.lower / renderTaskSize,
+            tileRegion.upper / renderTaskSize);
         for (int y = taskRegion.lower.y; y < taskRegion.upper.y; ++y) {
           for (int x = taskRegion.lower.x; x < taskRegion.upper.x;
                ++x, ++renderTaskID) {
