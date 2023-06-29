@@ -90,20 +90,20 @@ jobs:
 
   static-analysis:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@devel
     with:
-      project: ospray
-      prebuild: |
-        module load cmake
-        module load intel/2021.2
-        echo "Configure dependencies"
-        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF
-        echo "Build dependencies"
-        cmake --build build_deps
-        INSTALL_DIR=$(pwd)/build_deps/install
-        export CMAKE_PREFIX_PATH=${INSTALL_DIR}
-        echo "Configure OSPRay"
-        cmake -L -S . -B build -DISPC_EXECUTABLE=$INSTALL_DIR/bin/ispc -DTBB_ROOT=$INSTALL_DIR -DOSPRAY_MODULE_DENOISER=ON -DOSPRAY_MODULE_BILINEAR_PATCH=ON -DOSPRAY_MODULE_MPI=ON
+      coverity: true
+      project: OSPRay
+      prebuild: >
+        module load impi/latest &&
+        echo "Configure dependencies" &&
+        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF &&
+        echo "Build dependencies" &&
+        cmake --build build_deps &&
+        INSTALL_DIR=$(pwd)/build_deps/install &&
+        export CMAKE_PREFIX_PATH=${INSTALL_DIR} &&
+        echo "Configure OSPRay" &&
+        cmake -L -S . -B build -DISPC_EXECUTABLE=$INSTALL_DIR/bin/ispc -DTBB_ROOT=$INSTALL_DIR -DOSPRAY_MODULE_DENOISER=ON -DOSPRAY_MODULE_BILINEAR_PATCH=ON -DOSPRAY_MODULE_MPI=ON &&
         echo "Done: Configure OSPRay"
       build: cmake --build build
 
