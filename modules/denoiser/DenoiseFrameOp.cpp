@@ -111,7 +111,6 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
   {
     byteFloatBufferSize = sizeof(float) * fbView.fbDims.product();
     size_t sz = 4 * byteFloatBufferSize;
-    output = oidnNewBufferWithStorage(oidnDevice, sz, OIDN_STORAGE_DEVICE);
 
     if (fbView.normalBuffer) {
       byteNormalOffset = sz;
@@ -121,11 +120,11 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
       byteAlbedoOffset = sz;
       sz += 3 * byteFloatBufferSize;
     }
-    input = oidnNewBufferWithStorage(oidnDevice, sz, OIDN_STORAGE_DEVICE);
+    buffer = oidnNewBufferWithStorage(oidnDevice, sz, OIDN_STORAGE_DEVICE);
 
     oidnSetFilterImage(filter,
         "color",
-        input,
+        buffer,
         OIDN_FORMAT_FLOAT3,
         fbView.fbDims.x,
         fbView.fbDims.y,
@@ -135,7 +134,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
 
     oidnSetFilterImage(filter,
         "output",
-        output,
+        buffer,
         OIDN_FORMAT_FLOAT3,
         fbView.fbDims.x,
         fbView.fbDims.y,
@@ -146,7 +145,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
     if (fbView.normalBuffer)
       oidnSetFilterImage(filter,
           "normal",
-          input,
+          buffer,
           OIDN_FORMAT_FLOAT3,
           fbView.fbDims.x,
           fbView.fbDims.y,
@@ -157,7 +156,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
     if (fbView.albedoBuffer)
       oidnSetFilterImage(filter,
           "albedo",
-          input,
+          buffer,
           OIDN_FORMAT_FLOAT3,
           fbView.fbDims.x,
           fbView.fbDims.y,
@@ -170,8 +169,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
 
   ~LiveDenoiseFrameOpCopy() override
   {
-    oidnReleaseBuffer(input);
-    oidnReleaseBuffer(output);
+    oidnReleaseBuffer(buffer);
   }
 
   void process(void * /*waitEvent*/, const Camera *) override
@@ -179,30 +177,29 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
     // TODO if (!fbView.originalFB->getSh()->numPixelsRendered)
     //        return; // skip denoising when no new pixels XXX only works on CPU
 
-    oidnWriteBufferAsync(input, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
+    oidnWriteBufferAsync(buffer, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
 
     if (fbView.normalBuffer)
-      oidnWriteBufferAsync(input,
+      oidnWriteBufferAsync(buffer,
           byteNormalOffset,
           3 * byteFloatBufferSize,
           fbView.normalBuffer);
     if (fbView.albedoBuffer)
-      oidnWriteBufferAsync(input,
+      oidnWriteBufferAsync(buffer,
           byteAlbedoOffset,
           3 * byteFloatBufferSize,
           fbView.albedoBuffer);
 
     oidnExecuteFilterAsync(filter);
 
-    oidnReadBufferAsync(output, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
+    oidnReadBufferAsync(buffer, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
 
     oidnSyncDevice(oidnDevice);
 
     checkError(oidnDevice);
   }
 
-  OIDNBuffer input;
-  OIDNBuffer output;
+  OIDNBuffer buffer;
   size_t byteFloatBufferSize;
   size_t byteNormalOffset;
   size_t byteAlbedoOffset;
