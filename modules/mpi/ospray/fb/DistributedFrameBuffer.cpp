@@ -8,8 +8,8 @@
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "ISPCDevice.h"
 #include "TileOperation.h"
-#include "common/Profiling.h"
 #include "fb/FrameBufferView.h"
+#include "rkcommon/tracing/Tracing.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
 #endif
@@ -137,6 +137,7 @@ void DFB::startNewFrame(const float errorThreshold)
     tileBufferOffsets.clear();
   }
   if (getSh()->colorBufferFormat != OSP_FB_NONE) {
+    rkTraceBeginEvent("DFB::startFrame::reserveTileGatherBuf");
     // Allocate a conservative upper bound of space which we'd need to
     // store the compressed tiles
     const size_t uncompressedSize = masterMsgSize(getSh()->colorBufferFormat,
@@ -146,8 +147,10 @@ void DFB::startNewFrame(const float errorThreshold)
         hasIDBuf());
     const size_t compressedSize = snappy::MaxCompressedLength(uncompressedSize);
     tileGatherBuffer.resize(myTiles.size() * compressedSize, 0);
+    rkTraceEndEvent();
   }
 
+  rkTraceBeginEvent("DFB::startFrame::initTilesInfo");
   {
     std::lock_guard<std::mutex> fbLock(mutex);
     std::lock_guard<std::mutex> numTilesLock(numTilesMutex);
@@ -204,6 +207,7 @@ void DFB::startNewFrame(const float errorThreshold)
 
     frameIsActive = true;
   }
+  rkTraceEndEvent();
   mpicommon::barrier(mpiGroup.comm).wait();
 
   if (isFrameComplete(0))
@@ -437,19 +441,13 @@ void DFB::waitUntilFinished()
   using namespace mpicommon;
   using namespace std::chrono;
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint start;
-#endif
+  rkTraceBeginEvent("DFB::waitUntilDoneCond");
   std::unique_lock<std::mutex> lock(mutex);
   frameDoneCond.wait(lock, [&] { return frameIsDone; });
 
   frameIsActive = false;
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint end;
-  std::cout << "Waiting for completion and sync of cancellation status: "
-            << elapsedTimeMs(start, end) << "ms\n";
-#endif
+  rkTraceEndEvent();
 
   setCompletedEvent(OSP_WORLD_RENDERED);
 
@@ -457,19 +455,13 @@ void DFB::waitUntilFinished()
     return;
   }
 
-#ifdef ENABLE_PROFILING
-  start = ProfilingPoint();
-#endif
+  rkTraceBeginEvent("DFB::finalGather");
   if (getSh()->colorBufferFormat != OSP_FB_NONE) {
     gatherFinalTiles();
   } else if (hasVarianceBuffer) {
     gatherFinalErrors();
   }
-#ifdef ENABLE_PROFILING
-  end = ProfilingPoint();
-  std::cout << "Gather final tiles took: " << elapsedTimeMs(start, end)
-            << "ms\n";
-#endif
+  rkTraceEndEvent();
 }
 
 void DFB::processMessage(WriteTileMessage *msg)
@@ -741,9 +733,7 @@ void DFB::gatherFinalTiles()
   using namespace mpicommon;
   using namespace std::chrono;
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint preGatherComputeStart;
-#endif
+  rkTraceBeginEvent("DFB::preGatherComputeStart");
 
   const size_t tileSize = masterMsgSize(getSh()->colorBufferFormat,
       hasDepthBuffer,
@@ -764,13 +754,9 @@ void DFB::gatherFinalTiles()
       recvOffset += numTilesExpected[i];
     }
   }
+  rkTraceEndEvent();
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint startGather;
-  std::cout << "Pre-gather took: "
-            << elapsedTimeMs(preGatherComputeStart, startGather) << "ms\n";
-#endif
-
+  rkTraceBeginEvent("DFB::gatherTileData");
   // Each rank sends us the offset lists of the individually compressed tiles
   // in its compressed data buffer
   std::vector<uint32_t> compressedTileOffsets;
@@ -828,21 +814,16 @@ void DFB::gatherFinalTiles()
       .wait();
 
   tileOffsetsGather.wait();
-
-#ifdef ENABLE_PROFILING
-  ProfilingPoint endGather;
-  std::cout << "Gather time: " << elapsedTimeMs(startGather, endGather)
-            << "ms\n";
-#endif
+  rkTraceEndEvent();
 
   // Now we must decompress each ranks data to process it, though we
   // already know how much data each is sending us and where to write it.
   if (IamTheMaster()) {
-#ifdef ENABLE_PROFILING
-    ProfilingPoint startFbWrite;
-#endif
+    rkTraceBeginEvent("DFB::masterTileWrite");
     tasking::parallel_for(workerSize(), [&](int i) {
       tasking::parallel_for(numTilesExpected[i], [&](int tid) {
+        // Mostly tracing these to test tracing multiple threads properly
+        // rkTraceBeginEvent("DFB::masterTileWrite-tile");
         int processTileOffset = processOffsets[i] + tid;
         int compressedSize = 0;
         if (tid + 1 < numTilesExpected[i]) {
@@ -866,13 +847,10 @@ void DFB::gatherFinalTiles()
         } else {
           throw std::runtime_error("#dfb: non-master tile in final gather!");
         }
+        // rkTraceEndEvent();
       });
     });
-#ifdef ENABLE_PROFILING
-    ProfilingPoint endFbWrite;
-    std::cout << "Master tile write time: "
-              << elapsedTimeMs(startFbWrite, endFbWrite) << "ms\n";
-#endif
+    rkTraceEndEvent();
     // not accurate, did we render something at all
     localFBonMaster->getSh()->super.numPixelsRendered = totalTilesExpected;
   }

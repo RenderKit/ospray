@@ -18,6 +18,7 @@
 #include "common/OSPWork.h"
 #include "common/maml/maml.h"
 #include "rkcommon/networking/DataStreaming.h"
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/FixedArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
@@ -149,6 +150,7 @@ void createMPI_RanksBecomeWorkers(
   // Note: here we don't run this collective through MAML, since we
   // haven't started it yet.
   MPI_CALL(Barrier(world.comm));
+  rkTraceSetMarker("clockSync");
 
   throwIfNotMpiParallel();
 
@@ -189,26 +191,30 @@ MPIOffloadDevice::~MPIOffloadDevice()
   if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
     postStatusMsg(OSP_LOG_INFO) << "shutting down mpi device";
 
-#ifdef ENABLE_PROFILING
-    {
-      ProfilingPoint masterEnd;
-      char hostname[512] = {0};
-      gethostname(hostname, 511);
-      const std::string master_log_file = std::string(hostname) + "_master.txt";
-      std::ofstream fout(master_log_file.c_str(), std::ios::app);
-      fout << "Shutting down, final /proc/self/status:\n"
-           << getProcStatus() << "\n=====\n"
-           << "Avg. CPU % during run: "
-           << cpuUtilization(masterStart, masterEnd) << "%\n";
-    }
-#endif
-
     sendWork([](networking::WriteStream &writer) { writer << work::FINALIZE; },
         true);
     fabric = nullptr;
     maml::shutdown();
+
     MPI_Finalize();
   }
+
+#ifdef ENABLE_PROFILING
+  {
+    char hostname[512] = {0};
+    gethostname(hostname, 511);
+    const std::string masterTraceFile = std::string(hostname) + "_master.json";
+    rkTraceSaveLog(masterTraceFile.c_str(), masterTraceFile.c_str());
+    /*
+    const std::string master_log_file = std::string(hostname) + "_master.txt";
+    std::ofstream fout(master_log_file.c_str(), std::ios::app);
+    fout << "Shutting down, final /proc/self/status:\n"
+         << getProcStatus() << "\n=====\n"
+         << "Avg. CPU % during run: "
+         << cpuUtilization(masterStart, masterEnd) << "%\n";
+    */
+  }
+#endif
 }
 
 void MPIOffloadDevice::initializeDevice()
@@ -230,6 +236,7 @@ void MPIOffloadDevice::initializeDevice()
     createMPI_RanksBecomeWorkers(&_ac, _av, this);
 
 #ifdef ENABLE_PROFILING
+    /*
     char hostname[512] = {0};
     gethostname(hostname, 511);
     const std::string master_log_file = std::string(hostname) + "_master.txt";
@@ -237,7 +244,7 @@ void MPIOffloadDevice::initializeDevice()
     fout << "Master on '" << hostname << "' before commit\n"
          << "/proc/self/status:\n"
          << getProcStatus() << "\n=====\n";
-    masterStart = ProfilingPoint();
+         */
 #endif
 
     // Only the master returns from this call
@@ -843,9 +850,7 @@ const void *MPIOffloadDevice::frameBufferMap(
     OSPFrameBuffer _fb, OSPFrameBufferChannel channel)
 {
   using namespace utility;
-#ifdef ENABLE_PROFILING
-  ProfilingPoint start;
-#endif
+  rkTraceBeginEvent("master_mapFramebuffer");
 
   ObjectHandle handle = (ObjectHandle &)_fb;
   sendWork(
@@ -870,11 +875,16 @@ const void *MPIOffloadDevice::frameBufferMap(
 
   void *ptr = mapping->data();
   framebufferMappings[handle.i64] = std::move(mapping);
-#ifdef ENABLE_PROFILING
-  ProfilingPoint end;
-  std::cout << "OffloadDevice::frameBufferMap took "
-            << elapsedTimeMs(start, end) << "\n";
-#endif
+
+  rkTraceEndEvent();
+
+  {
+    // Save a snapshot of the trace
+    char hostname[512] = {0};
+    gethostname(hostname, 511);
+    const std::string masterTraceFile = std::string(hostname) + "_master.json";
+    rkTraceSaveLog(masterTraceFile.c_str(), masterTraceFile.c_str());
+  }
 
   return ptr;
 }

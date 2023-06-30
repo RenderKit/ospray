@@ -20,7 +20,8 @@
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
-#include "common/Profiling.h"
+// Only temporary location for these files anyways
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/getEnvVar.h"
 
 #ifndef HOST_NAME_MAX
@@ -74,17 +75,19 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
 
     char hostname[HOST_NAME_MAX] = {0};
     gethostname(hostname, HOST_NAME_MAX);
-    postStatusMsg(OSP_LOG_DEBUG)
-        << "#w: running MPI worker process " << workerRank() << "/"
-        << workerSize() << " on pid " << getpid() << "@" << hostname;
+
+    rkTraceBeginEvent("runMPIOffloadWorker");
 
 #ifdef ENABLE_PROFILING
+    // TODO: Add this data to the JSON trace file? Or separate file
+    /*
     const std::string worker_log_file =
         std::string(hostname) + "_" + std::to_string(workerRank()) + ".txt";
     std::ofstream fout(worker_log_file.c_str());
     fout << "Worker rank " << workerRank() << " on '" << hostname << "'\n"
          << "/proc/self/status:\n"
          << getProcStatus() << "\n=====\n";
+         */
 #endif
 
     std::unique_ptr<networking::Fabric> fabric;
@@ -102,9 +105,8 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
     std::shared_ptr<utility::OwnedArray<uint8_t>> recvBuffer =
         std::make_shared<utility::OwnedArray<uint8_t>>();
 
-#ifdef ENABLE_PROFILING
-    ProfilingPoint workerStart;
-#endif
+    rkTraceSetThreadName("main");
+
     bool exitWorker = false;
     while (!exitWorker) {
       fabric->recvBcast(cmdView);
@@ -118,34 +120,24 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
         work::TAG workTag = work::NONE;
         reader >> workTag;
 
-        postStatusMsg(OSP_LOG_DEBUG)
-            << "#osp.mpi.worker: processing work " << workTag << ": "
-            << work::tagName(workTag);
-
-        // We're exiting so sync out our debug log info
-#ifdef ENABLE_PROFILING
-        if (workTag == work::FINALIZE) {
-          ProfilingPoint workerEnd;
-          fout << "Worker exiting, /proc/self/status:\n"
-               << getProcStatus() << "\n======\n"
-               << "Avg. CPU % during run: "
-               << cpuUtilization(workerStart, workerEnd) << "%\n"
-               << std::flush;
-          fout.close();
-        }
-#endif
-
+        rkTraceSetMarker(work::tagName(workTag));
         if (workTag == work::FINALIZE) {
           exitWorker = true;
         } else {
           dispatchWork(workTag, ospState, reader, *fabric);
         }
+        rkTraceRecordMemUse();
 
-        postStatusMsg(OSP_LOG_DEBUG)
-            << "#osp.mpi.worker: completed work " << workTag << ": "
-            << work::tagName(workTag);
+        // Snapshot after each renderframe for bentley, not sure on what input
+        // to cleanly exit the server. Need to ask Alok
+        if (workTag == work::MAP_FRAMEBUFFER) {
+          const std::string workerTraceFile = std::string(hostname) + "_"
+              + std::to_string(mpicommon::workerRank()) + ".json";
+          rkTraceSaveLog(workerTraceFile.c_str(), workerTraceFile.c_str());
+        }
       }
     }
+    rkTraceEndEvent();
 
     // The API no longer knows about the offload device and we won't return back
     // to the app to release it, so we need to free it now
@@ -153,7 +145,17 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
     // Explicitly release the distributed device by unsetting the current
     // device, to avoid it attempting to be freed again on exit
     ospray::api::Device::current = nullptr;
+
+    /*
+    fout << "Worker exiting, /proc/self/status:\n"
+         << getProcStatus() << "\n======\n"
+         << "Avg. CPU % during run: "
+         << cpuUtilization(workerStart, workerEnd) << "%\n"
+         << std::flush;
+    fout.close();
+    */
   }
+
   MPI_CALL(Comm_free(&worker.comm));
   // The offload device initialized MPI, so the distributed device will see
   // the "app" as having already initialized MPI and assume it should not call

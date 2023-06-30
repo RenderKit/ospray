@@ -6,7 +6,7 @@
 #include "DynamicLoadBalancer.h"
 #include <math.h>
 #include "Messaging.h"
-#include "common/Profiling.h"
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/ArrayView.h"
 
 namespace ospray {
@@ -175,13 +175,16 @@ void DynamicLoadBalancer::incoming(
   auto *header = (DynamicLBMessage *)message->data;
 
   if (header->type == TERMINATED) {
+    rkTraceSetMarker("DLB::TERMINATED");
     int numTerm = ((DynamicLBTerminatedMessage *)message->data)->numTerm;
     updateActiveTasks(numTerm);
   } // TERMINATED
   else if (header->type == NEED_WORK) {
+    rkTraceSetMarker("DLB::NEED_WORK");
     sendWork(header->senderRank);
   } // NEED_WORK
   else if (header->type == RECV_WORK) {
+    rkTraceSetMarker("DLB::RECV_WORK");
     auto *workMsg = (DynamicLBSendWorkMessage *)message->data;
     int numRecvWork = workMsg->numWorkItems;
     auto *workItems =
@@ -208,6 +211,7 @@ void DynamicLoadBalancer::incoming(
 // --------------------------------------------------------------------
 void DynamicLoadBalancer::requestWork()
 {
+  rkTraceSetMarker("DLB::requestWork");
   const int msgSize = sizeof(DynamicLBMessage);
 
   int base, power;
@@ -251,6 +255,7 @@ void DynamicLoadBalancer::sendMultiWork()
   if (stolenWork.empty()) {
     return;
   }
+  rkTraceSetMarker("DLB::sendMultiWork");
 
   // Each thief will be sent workPerRank work items
   const size_t workPerThief = stolenWork.size() / thiefIds.size();

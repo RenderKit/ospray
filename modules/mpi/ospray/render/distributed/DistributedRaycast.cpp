@@ -15,7 +15,6 @@
 #include "AlphaCompositeTileOperation.h"
 #include "DistributedRaycast.h"
 #include "common/DistributedWorld.h"
-#include "common/Profiling.h"
 #include "fb/DistributedFrameBuffer.h"
 
 // ispc exports

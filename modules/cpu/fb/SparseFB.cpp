@@ -8,6 +8,7 @@
 #include "render/util.h"
 #include "rkcommon/common.h"
 #include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/ArrayView.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/SparseFB_ispc.h"
@@ -102,13 +103,16 @@ utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs(
     return utility::ArrayView<uint32_t>(nullptr, 0);
 
   if (errorThreshold > 0.0f && hasVarianceBuffer) {
+    rkTraceBeginEvent("SparseFB::buildActiveTaskIDs");
     auto last = std::copy_if(renderTaskIDs->begin(),
         renderTaskIDs->end(),
         activeTaskIDs->begin(),
         [=](uint32_t i) { return taskError(i) > errorThreshold; });
+    rkTraceEndEvent();
     return utility::ArrayView<uint32_t>(
         activeTaskIDs->data(), last - activeTaskIDs->begin());
   } else {
+    rkTraceSetMarker("SparseFB::returnAllTaskIDs");
     return utility::ArrayView<uint32_t>(
         renderTaskIDs->data(), renderTaskIDs->size());
   }

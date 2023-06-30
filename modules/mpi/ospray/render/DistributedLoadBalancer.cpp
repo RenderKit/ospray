@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedLoadBalancer.h"
+#include <rkcommon/tasking/AsyncTask.h>
 #include <algorithm>
 #include <limits>
 #include <map>
@@ -11,10 +12,10 @@
 #include "common/DistributedWorld.h"
 #include "common/DynamicLoadBalancer.h"
 #include "common/MPICommon.h"
-#include "common/Profiling.h"
 #include "distributed/DistributedRenderer.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/getEnvVar.h"
 
@@ -61,14 +62,13 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
     dfb->setTileOperation(renderer->tileOperation(), renderer);
   }
 
+  rkTraceBeginEvent("renderFrameDistributed");
+
   dfb->startNewFrame(renderer->errorThreshold);
   void *perFrameData = renderer->beginFrame(dfb, world);
   const size_t numRegions = world->allRegions.size();
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint start = ProfilingPoint();
-#endif
-
+  rkTraceBeginEvent("determineTilesForFrame");
   std::vector<std::vector<uint32_t>> regionTileIds(world->myRegionIds.size());
   const vec2i numTiles = dfb->getGlobalNumTiles();
   const vec2i fbSize = dfb->getNumPixels();
@@ -138,12 +138,9 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
     }
   }
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint end = ProfilingPoint();
-  std::cout << "Initial tile for frame determination "
-            << elapsedTimeMs(start, end) << "ms\n";
-#endif
+  rkTraceEndEvent();
 
+  rkTraceBeginEvent("renderLocalData");
   // Note: Later this will be a set of tasks we enqueue at the same time and
   // want to run in parallel to each other. For now this still runs as a
   // parallel for here so we don't end up having to do a more sync/blocking
@@ -268,15 +265,22 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
       });
     }
   });
+  rkTraceEndEvent();
 
+  rkTraceBeginEvent("waitUntilFinished");
   dfb->waitUntilFinished();
   renderer->endFrame(dfb, perFrameData);
+  rkTraceEndEvent();
 
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
   dfb->postProcess(camera, true);
+  rkTraceBeginEvent("endFrame");
   dfb->endFrame(renderer->errorThreshold, camera);
+  rkTraceEndEvent();
+
+  rkTraceEndEvent();
   return std::make_pair(AsyncEvent(), AsyncEvent());
 }
 
@@ -291,6 +295,8 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
 
   enableStaticBalancer = OSPRAY_STATIC_BALANCER.value_or(0);
 
+  rkTraceBeginEvent("renderFrameReplicated");
+
   std::shared_ptr<TileOperation> tileOperation = nullptr;
   if (dfb->getLastRenderer() != renderer) {
     tileOperation = std::make_shared<WriteMultipleTileOperation>();
@@ -299,52 +305,32 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
     tileOperation = dfb->getTileOperation();
   }
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint start;
-#endif
+  rkTraceBeginEvent("startNewFrame");
   dfb->startNewFrame(renderer->errorThreshold);
   void *perFrameData = renderer->beginFrame(dfb, world);
-#ifdef ENABLE_PROFILING
-  ProfilingPoint end;
-  std::cout << "Start new frame took: " << elapsedTimeMs(start, end) << "ms\n";
-#endif
+  rkTraceEndEvent();
 
+  rkTraceBeginEvent("renderLocalTiles");
   if (enableStaticBalancer) {
     renderFrameReplicatedStaticLB(dfb, renderer, camera, world, perFrameData);
   } else {
     renderFrameReplicatedDynamicLB(dfb, renderer, camera, world, perFrameData);
   }
+  rkTraceEndEvent();
 
-#ifdef ENABLE_PROFILING
-  end = ProfilingPoint();
-  std::cout << "Render loop took: " << elapsedTimeMs(start, end)
-            << "ms, CPU %: " << cpuUtilization(start, end) << "%\n";
-
-  start = ProfilingPoint();
-#endif
-
+  rkTraceBeginEvent("waitUntilFinished");
   dfb->waitUntilFinished();
+  rkTraceEndEvent();
 
-#ifdef ENABLE_PROFILING
-  end = ProfilingPoint();
-  std::cout << "Wait finished took: " << elapsedTimeMs(start, end)
-            << "ms, CPU %: " << cpuUtilization(start, end) << "%\n";
-
-  start = ProfilingPoint();
-#endif
-
+  rkTraceBeginEvent("endFrame");
   renderer->endFrame(dfb, perFrameData);
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
   dfb->postProcess(camera, true);
   dfb->endFrame(renderer->errorThreshold, camera);
-
-#ifdef ENABLE_PROFILING
-  end = ProfilingPoint();
-  std::cout << "End frame took: " << elapsedTimeMs(start, end)
-            << "ms, CPU %: " << cpuUtilization(start, end) << "%\n";
-#endif
+  rkTraceEndEvent();
+  rkTraceEndEvent();
 }
 
 std::string DistributedLoadBalancer::toString() const
@@ -418,9 +404,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
     dynamicLB->addWork(myWork);
   }
 
-#ifdef ENABLE_PROFILING
-  auto start = ProfilingPoint();
-#endif
+  rkTraceBeginEvent("dynamicLBLocalRenderLoop");
 
   const int sparseFbChannelFlags =
       dfb->getChannelFlags() & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE);
@@ -432,6 +416,9 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       sparseFbChannelFlags,
       sparseFbTrackAccumIDs);
 
+  // TODO: asynctask can't take void as return type
+  std::vector<std::shared_ptr<tasking::AsyncTask<int>>> tileWriteTasks;
+
   while (0 < totalActiveTiles) {
     Work currentWorkItem;
     if (0 < dynamicLB->getWorkSize()) {
@@ -440,6 +427,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
     }
 
     if (0 < currentWorkItem.ntasks) {
+      rkTraceBeginEvent("initTaskTileIDs");
       // Allocate a sparse framebuffer to hold the render output data
       std::vector<uint32_t> taskTileIDs;
       taskTileIDs.reserve(currentWorkItem.ntasks);
@@ -451,6 +439,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
           taskTileIDs.push_back(tileID);
         }
       }
+      rkTraceEndEvent();
       // If all the tiles we were assigned are already finished due to adaptive
       // termination we have nothing to render locally so just mark the tasks
       // complete
@@ -460,11 +449,13 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
             taskTileIDs, sparseFbTrackAccumIDs ? dfb->getFrameID() : 0);
         sparseFb->beginFrame();
 
+        rkTraceBeginEvent("renderTasks");
         renderer->renderTasks(sparseFb.get(),
             camera,
             world,
             perFrameData,
             sparseFb->getRenderTaskIDs(renderer->errorThreshold));
+        rkTraceEndEvent();
 
         // TODO: Now the tile setting happens as a bulk-sync operation after
         // rendering, because we still need to send them through the compositing
@@ -474,13 +465,27 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
         // sparseFb's, one is being rendered into while tiles from the previous
         // task set are sent out
         const utility::ArrayView<Tile> tiles = sparseFb->getTiles();
-        tasking::parallel_for(tiles.size(), [&](size_t i) {
-          // TODO: Same note as distributed case, would be nice here to not have
-          // to copy the tile to change the accum ID.
-          Tile tile = tiles[i];
+        auto ownedTiles = std::make_shared<utility::OwnedArray<Tile>>(
+            tiles.data(), tiles.size());
+#if 0
+        tileWriteTasks.push_back(
+            std::make_shared<tasking::AsyncTask<int>>([ownedTiles, dfb]() {
+              rkTraceBeginEvent("setTileAsync");
+#endif
+        tasking::parallel_for(ownedTiles->size(), [&](size_t i) {
+          // rkTraceBeginEvent("setTile");
+          //  TODO: Same note as distributed case, would be nice here to
+          //  not have to copy the tile to change the accum ID.
+          Tile tile = (*ownedTiles)[i];
           tile.accumID = dfb->getFrameID();
           dfb->setTile(tile);
+          // rkTraceEndEvent();
         });
+#if 0
+              rkTraceEndEvent();
+              return 0;
+            }));
+#endif
       }
       // Mark the set of tasks as complete
       dynamicLB->sendTerm(currentWorkItem.ntasks);
@@ -502,6 +507,14 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       askedForWork = true;
     }
   }
+  // Wait for all the DFB tile write tasks to finish
+  rkTraceBeginEvent("waitTileWriteTasks");
+  for (auto &t : tileWriteTasks) {
+    t->wait();
+  }
+  rkTraceEndEvent();
+
+  rkTraceEndEvent();
   // We need to wait for the other ranks to finish here to keep our local DLB
   // alive to respond to any work requests that come in while other ranks
   // finish their final local set of tasks
@@ -520,21 +533,17 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
   // Note: these views are already in USM
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
 
-#ifdef ENABLE_PROFILING
-  auto startRenderTasks = ProfilingPoint();
-#endif
-
+  rkTraceBeginEvent("staticLBLocalRenderLoop");
   renderer->renderTasks(ownedTilesFb,
       camera,
       world,
       perFrameData,
       ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold));
+  rkTraceEndEvent();
 
-#ifdef ENABLE_PROFILING
-  auto endRenderTasks = ProfilingPoint();
-#endif
   const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
 
+  rkTraceBeginEvent("staticLBWriteTiles");
   // TODO: Now the tile setting happens as a bulk-sync operation after
   // rendering, because we still need to send them through the compositing
   // pipeline. The ISPC-side rendering code doesn't know about this and in the
@@ -547,18 +556,7 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     }
     dfb->setTile(tiles[i]);
   });
-#ifdef ENABLE_PROFILING
-  auto endWriteTiles = ProfilingPoint();
-
-  std::cout << "Render tasks took: "
-            << elapsedTimeMs(startRenderTasks, endRenderTasks)
-            << "ms, CPU %: " << cpuUtilization(startRenderTasks, endRenderTasks)
-            << "%\n"
-            << "Parallel write tiles took: "
-            << elapsedTimeMs(endRenderTasks, endWriteTiles)
-            << "ms, CPU %: " << cpuUtilization(endRenderTasks, endWriteTiles)
-            << "%\n";
-#endif
+  rkTraceEndEvent();
 }
 
 } // namespace mpi

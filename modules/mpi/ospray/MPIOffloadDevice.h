@@ -8,7 +8,6 @@
 #include "common/ApplicationData.h"
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
-#include "common/Profiling.h"
 #include "rkcommon/utility/FixedArray.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
@@ -171,10 +170,6 @@ struct MPIOffloadDevice : public api::Device
   rkcommon::networking::FixedBufferWriter commandBuffer;
 
   bool initialized{false};
-
-#ifdef ENABLE_PROFILING
-  mpicommon::ProfilingPoint masterStart;
-#endif
 };
 
 template <typename Fcn>

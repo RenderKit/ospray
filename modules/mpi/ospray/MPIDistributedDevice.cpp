@@ -4,6 +4,14 @@
 #include <map>
 #include <memory>
 
+#ifdef _WIN32
+#include <WinSock2.h>
+#include <process.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "ISPCDevice.h"
 #include "MPIDistributedDevice.h"
 #include "camera/Camera.h"
@@ -12,7 +20,6 @@
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/MPICommon.h"
-#include "common/Profiling.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
@@ -21,12 +28,17 @@
 #include "render/ThreadedRenderTask.h"
 #include "render/distributed/DistributedRaycast.h"
 #include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/CodeTimer.h"
 #include "rkcommon/utility/getEnvVar.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
+#endif
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 4096
 #endif
 
 namespace ospray {
@@ -178,6 +190,13 @@ MPIDistributedDevice::~MPIDistributedDevice()
     } catch (...) {
       // Silently move on if finalize fails
     }
+  }
+  {
+    char hostname[HOST_NAME_MAX] = {0};
+    gethostname(hostname, HOST_NAME_MAX);
+    const std::string workerTraceFile = std::string(hostname) + "_"
+        + std::to_string(mpicommon::workerRank()) + ".json";
+    rkTraceSaveLog(workerTraceFile.c_str(), workerTraceFile.c_str());
   }
 }
 
@@ -397,7 +416,9 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
     OSPCamera _camera,
     OSPWorld _world)
 {
+  rkTraceBeginEvent("MPIDD::renderFrame");
   mpicommon::barrier(mpicommon::worker.comm).wait();
+
   auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
   auto *renderer = lookupDistributedObject<Renderer>(_renderer);
   auto *camera = lookupObject<Camera>(_camera);
@@ -413,20 +434,15 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   camera->refInc();
   world->refInc();
 
+  rkTraceSetMarker("MPIDD::spawnRenderThread");
   auto *f = new ThreadedRenderTask(fb, loadBalancer, [=]() {
-#ifdef ENABLE_PROFILING
-    using namespace mpicommon;
-    ProfilingPoint start;
-#endif
+    rkTraceSetThreadName("MPIDD::threadedRenderTask");
+    rkTraceBeginEvent("MPIDD::renderFrameTask");
     utility::CodeTimer timer;
     timer.start();
     loadBalancer->renderFrame(fb, renderer, camera, world);
     timer.stop();
-#ifdef ENABLE_PROFILING
-    ProfilingPoint end;
-    std::cout << "Frame took " << elapsedTimeMs(start, end)
-              << "ms, CPU: " << cpuUtilization(start, end) << "%\n";
-#endif
+    rkTraceEndEvent();
 
     fb->refDec();
     renderer->refDec();
@@ -435,6 +451,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
 
     return timer.seconds();
   });
+  rkTraceEndEvent();
 
   return (OSPFuture)f;
 }

@@ -8,6 +8,11 @@
 set(OSPRAY_RESOURCE ${CMAKE_CURRENT_SOURCE_DIR}/ospray.rc)
 set(OSPRAY_RESOURCE ${OSPRAY_RESOURCE} PARENT_SCOPE)
 
+option(OSPRAY_ENABLE_PROFILING
+  "Enable performance tracing"
+  OFF
+)
+
 set(OSPRAY_SOURCES
   ${OSPRAY_RESOURCE}
 
@@ -73,6 +78,13 @@ target_include_directories(ospray
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+if (OSPRAY_ENABLE_PROFILING)
+  target_compile_definitions(ospray
+    PUBLIC
+      -DENABLE_PROFILING
+  )
+endif()
 
 ##############################################################
 # Configure find_package files
