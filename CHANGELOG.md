@@ -14,8 +14,8 @@ Version History
     limits the number of non-specular (i.e., diffuse and glossy) bounces
 -   Optimized dynamic load balancing for MPI devices
 -   Fix crash when using small image resolution and many MPI ranks
--   Fix crash in `pathtracer` when `lightSamples > 0` but lights in the
-    scene
+-   Fix crash in `pathtracer` when `lightSamples > 0` but there are
+    lights in the scene
 -   Fix transparent shadows with too high `minContribution` setting
 -   The new minimum version for ISPC is v1.20.0
 -   Release binaries on Linux are built on Rocky 8

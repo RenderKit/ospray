@@ -103,7 +103,9 @@ let exitCode+=$?
 
 if [ $TEST_MPI ]; then
   mkdir failed-mpi-gpu
-  test_filters+=":DebugOp/ImageOp.ImageOp/0" # post-processing not enabled on mpi
+  # post-processing not enabled on MPI
+  test_filters+=":DenoiserOp.DenoiserOp"
+  test_filters+=":DebugOp/ImageOp.ImageOp/0"
   # Need to export, not just set for MPI to pick it up
   export OSPRAY_MPI_DISTRIBUTED_GPU=1
   mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-$test_filters" : $MPI_WORKER_CONFIG ospray_mpi_worker

@@ -32,7 +32,7 @@ void ImageOpBase::SetUp()
   world = ospray::testing::buildWorld(builder);
   ospray::testing::release(builder);
 
-  camera.setParam("position", vec3f(0.f, 0.f, -2.f));
+  camera.setParam("position", vec3f(0.f, 0.f, -2.5f));
 
   cpp::ImageOperation imgOp(imageOp);
   framebuffer.setParam("imageOperation", cpp::CopiedData(imgOp));

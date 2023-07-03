@@ -72,6 +72,7 @@ jobs:
       cmd: |
         export DYLD_FALLBACK_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        export OIDN_VERBOSE=2
         scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-osx-arm
       artifact-out: test-osx-arm
@@ -86,6 +87,7 @@ jobs:
       cmd: |
         export DYLD_FALLBACK_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        export OIDN_VERBOSE=2
         scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-osx-x64
       artifact-out: test-osx-x64

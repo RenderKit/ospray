@@ -106,6 +106,7 @@ jobs:
         export CXX=clang++
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        export OIDN_VERBOSE=2
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
   test-ubuntu2204-pvc:
@@ -128,6 +129,7 @@ jobs:
         export CXX=clang++
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        export OIDN_VERBOSE=2
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
   test-ubuntu2204-devel-dg2:
@@ -150,6 +152,7 @@ jobs:
         export CXX=clang++
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        export OIDN_VERBOSE=2
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
   test-ubuntu2204-mpi:
@@ -171,4 +174,5 @@ jobs:
       cmd: |
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        export OIDN_VERBOSE=2
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI

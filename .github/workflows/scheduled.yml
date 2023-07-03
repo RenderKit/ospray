@@ -67,6 +67,7 @@ jobs:
       image: ospray/docker-images:arch
       runs-on: '"avx512"'
       cmd: |
+        export OIDN_VERBOSE=2
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-linux-debug-all
       artifact-out: test-linux-debug-all
