@@ -36,6 +36,9 @@ INSTALL_IN_SEPARATE_DIRECTORIES
 :   toggles installation of all libraries in separate or the same
     directory.
 
+BUILD_OPENVKL
+:   whether to enable volume rendering via Open VKL
+
 BUILD_EMBREE_FROM_SOURCE
 :   set to OFF will download a pre-built version of Embree.
 
