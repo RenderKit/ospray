@@ -163,16 +163,13 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
 
     // Explicitly avoiding std::vector<bool> because we need to match ISPC's
     // memory layout
-    // TODO: need to separate tile count/position data on host from
-    // tile rendered data
-    const utility::ArrayView<Tile> tiles = sparseFb->getTiles();
     const utility::ArrayView<uint32_t> tileIDs = sparseFb->getTileIDs();
 
     // We use uint8 instead of bool to avoid hitting UB with differing "true"
     // values used by ISPC and C++
     BufferShared<uint8_t> regionVisible(
         sparseFb->getISPCDevice().getIspcrtContext(),
-        numRegions * tiles.size());
+        numRegions * sparseFb->getNumTiles());
     std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
 
     // Compute visibility for the tasks we're rendering
@@ -187,16 +184,20 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
 
     // If we're rendering the background tiles send them over now
     if (layer == 0) {
-      tasking::parallel_for(tiles.size(), [&](size_t i) {
+      tasking::parallel_for(sparseFb->getNumTiles(), [&](size_t i) {
         // Don't send anything if this tile was finished due to adaptive
         // refinement
         if (dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
           return;
         }
 
-        // TODO: Would be nice to not copy here, but not sure about making the
-        // tiles modifiable either in SparseFrameBuffer::getTile.
-        Tile bgtile = tiles[i];
+        // Just generate the bgtile properties the same way as the SparseFB
+        // does to avoid having to read them back to the host
+        Tile bgtile;
+        bgtile.fbSize = sparseFb->getNumPixels();
+        bgtile.rcp_fbSize = rcp(vec2f(sparseFb->getNumPixels()));
+        bgtile.region = sparseFb->getTileRegion(tileIDs[i]);
+        bgtile.accumID = 0;
 
         bgtile.sortOrder = std::numeric_limits<int32_t>::max();
         bgtile.generation = 0;
@@ -225,6 +226,7 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
       });
     } else {
       // If we're rendering a region, render it and send over the tile data
+      sparseFb->beginFrame();
 
       // Remove any tasks for tiles that we found the region isn't actually
       // visible to. The region projection is conservative in its bounds, so
@@ -252,15 +254,13 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
           utility::ArrayView<uint32_t>(
               activeTasksShared.data(), activeTasksShared.size()));
 
+      const auto tiles = sparseFb->getTiles();
       tasking::parallel_for(tiles.size(), [&](size_t i) {
         if (!regionVisible[numRegions * i + rid]
             || dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
           return;
         }
-        // TODO: Would be nice to not copy here, but not sure about making
-        // the tiles modifiable either in SparseFrameBuffer::getTile.
         Tile regionTile = tiles[i];
-
         regionTile.generation = 1;
         regionTile.children = 0;
         regionTile.accumID = dfb->getFrameID();

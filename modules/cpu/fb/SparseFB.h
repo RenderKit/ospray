@@ -90,6 +90,8 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   void clear() override;
 
+  size_t getNumTiles() const;
+
   const utility::ArrayView<Tile> getTiles();
 
   // Get a view of the device memory of the tiles
@@ -105,7 +107,8 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
    * storage. New tiles will be allocated if the size of the tileIDs passed
    * exceeds those currently stored in the SparseFrameBuffer
    */
-  void setTiles(const std::vector<uint32_t> &tileIDs, const int initialTaskAccumID = 0);
+  void setTiles(
+      const std::vector<uint32_t> &tileIDs, const int initialTaskAccumID = 0);
 
   // Return the image region for the tile
   box2i getTileRegion(uint32_t tileID) const;

@@ -205,6 +205,11 @@ void SparseFrameBuffer::clear()
   }
 }
 
+size_t SparseFrameBuffer::getNumTiles() const
+{
+  return tiles->size();
+}
+
 const utility::ArrayView<Tile> SparseFrameBuffer::getTiles()
 {
   if (!tiles) {
