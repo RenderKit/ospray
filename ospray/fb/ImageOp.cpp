@@ -22,6 +22,11 @@ std::string ImageOp::toString() const
   return "ospray::ImageOp(base class)";
 }
 
+// explicitly create a key function to merge typeinfo from dynamically loaded
+// modules (to reliably dynamic_cast<> for the denoiser)
+// see https://github.com/android/ndk/issues/533#issuecomment-335977747
+FrameOpInterface::~FrameOpInterface() {};
+
 OSPTYPEFOR_DEFINITION(ImageOp *);
 
 } // namespace ospray

@@ -51,7 +51,7 @@ struct OSPRAY_CORE_INTERFACE LiveFrameOpInterface : public LiveImageOp
 
 struct OSPRAY_CORE_INTERFACE FrameOpInterface : public ImageOp
 {
-  ~FrameOpInterface() override = default;
+  ~FrameOpInterface() override; // no =default!
 
   // Attach an image op to an existing framebuffer. Use this
   // to pass the params from the API to the instance of the image op
