@@ -137,7 +137,8 @@ void DFB::startNewFrame(const float errorThreshold)
     tileBufferOffsets.clear();
   }
   if (getSh()->colorBufferFormat != OSP_FB_NONE) {
-    rkTraceBeginEvent("DFB::startFrame::reserveTileGatherBuf");
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
+        "startFrame::reserveTileGatherBuf", "DFB"));
     // Allocate a conservative upper bound of space which we'd need to
     // store the compressed tiles
     const size_t uncompressedSize = masterMsgSize(getSh()->colorBufferFormat,
@@ -147,10 +148,11 @@ void DFB::startNewFrame(const float errorThreshold)
         hasIDBuf());
     const size_t compressedSize = snappy::MaxCompressedLength(uncompressedSize);
     tileGatherBuffer.resize(myTiles.size() * compressedSize, 0);
-    rkTraceEndEvent();
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
   }
 
-  rkTraceBeginEvent("DFB::startFrame::initTilesInfo");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("startFrame::initTilesInfo", "DFB"));
   {
     std::lock_guard<std::mutex> fbLock(mutex);
     std::lock_guard<std::mutex> numTilesLock(numTilesMutex);
@@ -207,7 +209,7 @@ void DFB::startNewFrame(const float errorThreshold)
 
     frameIsActive = true;
   }
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
   mpicommon::barrier(mpiGroup.comm).wait();
 
   if (isFrameComplete(0))
@@ -441,13 +443,14 @@ void DFB::waitUntilFinished()
   using namespace mpicommon;
   using namespace std::chrono;
 
-  rkTraceBeginEvent("DFB::waitUntilDoneCond");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("waitUntilDoneCond", "DFB"));
   std::unique_lock<std::mutex> lock(mutex);
   frameDoneCond.wait(lock, [&] { return frameIsDone; });
 
   frameIsActive = false;
 
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   setCompletedEvent(OSP_WORLD_RENDERED);
 
@@ -455,13 +458,14 @@ void DFB::waitUntilFinished()
     return;
   }
 
-  rkTraceBeginEvent("DFB::finalGather");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("finalGather", "DFB"));
   if (getSh()->colorBufferFormat != OSP_FB_NONE) {
     gatherFinalTiles();
   } else if (hasVarianceBuffer) {
     gatherFinalErrors();
   }
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 }
 
 void DFB::processMessage(WriteTileMessage *msg)
@@ -733,7 +737,8 @@ void DFB::gatherFinalTiles()
   using namespace mpicommon;
   using namespace std::chrono;
 
-  rkTraceBeginEvent("DFB::preGatherComputeStart");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("preGatherComputeStart", "DFB"));
 
   const size_t tileSize = masterMsgSize(getSh()->colorBufferFormat,
       hasDepthBuffer,
@@ -754,9 +759,12 @@ void DFB::gatherFinalTiles()
       recvOffset += numTilesExpected[i];
     }
   }
-  rkTraceEndEvent();
 
-  rkTraceBeginEvent("DFB::gatherTileData");
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("gatherTileData", "DFB");
+  });
+
   // Each rank sends us the offset lists of the individually compressed tiles
   // in its compressed data buffer
   std::vector<uint32_t> compressedTileOffsets;
@@ -814,16 +822,16 @@ void DFB::gatherFinalTiles()
       .wait();
 
   tileOffsetsGather.wait();
-  rkTraceEndEvent();
+
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   // Now we must decompress each ranks data to process it, though we
   // already know how much data each is sending us and where to write it.
   if (IamTheMaster()) {
-    rkTraceBeginEvent("DFB::masterTileWrite");
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::beginEvent("masterTileWrite", "DFB"));
     tasking::parallel_for(workerSize(), [&](int i) {
       tasking::parallel_for(numTilesExpected[i], [&](int tid) {
-        // Mostly tracing these to test tracing multiple threads properly
-        // rkTraceBeginEvent("DFB::masterTileWrite-tile");
         int processTileOffset = processOffsets[i] + tid;
         int compressedSize = 0;
         if (tid + 1 < numTilesExpected[i]) {
@@ -847,10 +855,9 @@ void DFB::gatherFinalTiles()
         } else {
           throw std::runtime_error("#dfb: non-master tile in final gather!");
         }
-        // rkTraceEndEvent();
       });
     });
-    rkTraceEndEvent();
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
     // not accurate, did we render something at all
     localFBonMaster->getSh()->super.numPixelsRendered = totalTilesExpected;
   }

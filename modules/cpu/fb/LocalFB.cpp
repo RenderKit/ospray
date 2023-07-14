@@ -113,15 +113,18 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
   // TODO: Better way to pass the task IDs that doesn't require just storing
   // them all? Maybe as blocks/tiles similar to when we just had tiles? Will
   // make task ID lookup more expensive for sparse case though
-  renderTaskIDs = make_buffer_shared_unique<uint32_t>(
-      device.getIspcrtContext(), getTotalRenderTasks());
+  renderTaskIDs = make_buffer_device_shadowed_unique<uint32_t>(
+      device.getIspcrtDevice(), getTotalRenderTasks());
   std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
   if (hasVarianceBuffer)
-    activeTaskIDs = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtContext(), getTotalRenderTasks());
+    activeTaskIDs = make_buffer_device_shadowed_unique<uint32_t>(
+        device.getIspcrtDevice(), getTotalRenderTasks());
 
-  // TODO: Could use TBB parallel sort here if it's exposed through the rkcommon
-  // tasking system
+    // TODO: Could use TBB parallel sort here if it's exposed through the
+    // rkcommon tasking system
+#ifndef OSPRAY_TARGET_SYCL
+  // We use a 1x1 task size in SYCL and this sorting may not pay off for the
+  // cost it adds
   std::sort(renderTaskIDs->begin(),
       renderTaskIDs->end(),
       [&](const uint32_t &a, const uint32_t &b) {
@@ -129,6 +132,13 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
         const vec2i p_b = getTaskStartPos(b);
         return interleaveZOrder(p_a.x, p_a.y) < interleaveZOrder(p_b.x, p_b.y);
       });
+#endif
+  {
+    // Upload the task IDs to the device
+    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+    tq.copyToDevice(*renderTaskIDs);
+    tq.sync();
+  }
 
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.accumulateSample =
@@ -195,11 +205,15 @@ utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
         renderTaskIDs->end(),
         activeTaskIDs->begin(),
         [=](uint32_t i) { return taskError(i) > errorThreshold; });
-    return utility::ArrayView<uint32_t>(
-        activeTaskIDs->data(), last - activeTaskIDs->begin());
+
+    const size_t numActive = last - activeTaskIDs->begin();
+    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+    tq.copyToDevice(*activeTaskIDs);
+    tq.sync();
+    return utility::ArrayView<uint32_t>(activeTaskIDs->devicePtr(), numActive);
   } else
     return utility::ArrayView<uint32_t>(
-        renderTaskIDs->data(), renderTaskIDs->size());
+        renderTaskIDs->devicePtr(), renderTaskIDs->size());
 }
 
 std::string LocalFrameBuffer::toString() const

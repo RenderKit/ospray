@@ -5,9 +5,8 @@
 #include <memory>
 
 #ifdef _WIN32
+#define NOMINMAX
 #include <WinSock2.h>
-#include <process.h>
-#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -35,10 +34,6 @@
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
-#endif
-
-#ifndef HOST_NAME_MAX
-#define HOST_NAME_MAX 4096
 #endif
 
 namespace ospray {
@@ -191,13 +186,14 @@ MPIDistributedDevice::~MPIDistributedDevice()
       // Silently move on if finalize fails
     }
   }
-  {
-    char hostname[HOST_NAME_MAX] = {0};
-    gethostname(hostname, HOST_NAME_MAX);
+  RKCOMMON_IF_TRACING_ENABLED({
+    char hostname[512] = {0};
+    gethostname(hostname, 511);
     const std::string workerTraceFile = std::string(hostname) + "_"
         + std::to_string(mpicommon::workerRank()) + ".json";
-    rkTraceSaveLog(workerTraceFile.c_str(), workerTraceFile.c_str());
-  }
+    rkcommon::tracing::saveLog(
+        workerTraceFile.c_str(), workerTraceFile.c_str());
+  });
 }
 
 static void internalDeviceErrorFunc(
@@ -256,6 +252,19 @@ void MPIDistributedDevice::commit()
     internalDevice->setParam<void *>("zeContext", appZeCtx);
     void *appZeDevice = getParam<void *>("zeDevice", nullptr);
     internalDevice->setParam<void *>("zeDevice", appZeDevice);
+
+    RKCOMMON_IF_TRACING_ENABLED({
+      mpicommon::barrier(mpicommon::worker.comm).wait();
+      rkcommon::tracing::setMarker("clockSync", "mpiDistributed");
+
+      char hostname[512] = {0};
+      gethostname(hostname, 511);
+      const std::string worker_log_file = std::string(hostname) + "_"
+          + std::to_string(mpicommon::workerRank()) + "_worker_proc_status.txt";
+      std::ofstream fout(worker_log_file.c_str());
+      fout << "Worker on '" << hostname << "' /proc/self/status:\n"
+           << rkcommon::tracing::getProcStatus() << "\n";
+    });
   }
 
   internalDevice->commit();
@@ -416,16 +425,32 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
     OSPCamera _camera,
     OSPWorld _world)
 {
-  rkTraceBeginEvent("MPIDD::renderFrame");
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::beginEvent("renderFrame", "MPIDD");
+    rkcommon::tracing::beginEvent("renderFrame-mpibarrier", "MPIDD");
+  });
+
   mpicommon::barrier(mpicommon::worker.comm).wait();
+
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("renderFrame-lookupObjects", "MPIDD");
+  });
 
   auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
   auto *renderer = lookupDistributedObject<Renderer>(_renderer);
   auto *camera = lookupObject<Camera>(_camera);
   auto *world = lookupObject<DistributedWorld>(_world);
 
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("renderFrame-createDLB", "MPIDD");
+  });
+
   auto loadBalancer =
       std::make_shared<DistributedLoadBalancer>(allocateHandle());
+
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 
@@ -434,15 +459,20 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   camera->refInc();
   world->refInc();
 
-  rkTraceSetMarker("MPIDD::spawnRenderThread");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::setMarker("renderFrame-spawnRenderThread", "MPIDD"));
   auto *f = new ThreadedRenderTask(fb, loadBalancer, [=]() {
-    rkTraceSetThreadName("MPIDD::threadedRenderTask");
-    rkTraceBeginEvent("MPIDD::renderFrameTask");
+    RKCOMMON_IF_TRACING_ENABLED({
+      rkcommon::tracing::setThreadName("MPIDD::threadedRenderTask");
+      rkcommon::tracing::beginEvent("renderFrameTask", "MPIDD");
+    });
+
     utility::CodeTimer timer;
     timer.start();
     loadBalancer->renderFrame(fb, renderer, camera, world);
     timer.stop();
-    rkTraceEndEvent();
+
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
     fb->refDec();
     renderer->refDec();
@@ -451,7 +481,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
 
     return timer.seconds();
   });
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   return (OSPFuture)f;
 }

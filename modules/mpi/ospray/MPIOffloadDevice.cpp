@@ -150,7 +150,8 @@ void createMPI_RanksBecomeWorkers(
   // Note: here we don't run this collective through MAML, since we
   // haven't started it yet.
   MPI_CALL(Barrier(world.comm));
-  rkTraceSetMarker("clockSync");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::setMarker("clockSync", "mpiOffload"));
 
   throwIfNotMpiParallel();
 
@@ -197,24 +198,16 @@ MPIOffloadDevice::~MPIOffloadDevice()
     maml::shutdown();
 
     MPI_Finalize();
-  }
 
-#ifdef ENABLE_PROFILING
-  {
-    char hostname[512] = {0};
-    gethostname(hostname, 511);
-    const std::string masterTraceFile = std::string(hostname) + "_master.json";
-    rkTraceSaveLog(masterTraceFile.c_str(), masterTraceFile.c_str());
-    /*
-    const std::string master_log_file = std::string(hostname) + "_master.txt";
-    std::ofstream fout(master_log_file.c_str(), std::ios::app);
-    fout << "Shutting down, final /proc/self/status:\n"
-         << getProcStatus() << "\n=====\n"
-         << "Avg. CPU % during run: "
-         << cpuUtilization(masterStart, masterEnd) << "%\n";
-    */
+    RKCOMMON_IF_TRACING_ENABLED({
+      char hostname[512] = {0};
+      gethostname(hostname, 511);
+      const std::string masterTraceFile =
+          std::string(hostname) + "_master.json";
+      rkcommon::tracing::saveLog(
+          masterTraceFile.c_str(), masterTraceFile.c_str());
+    });
   }
-#endif
 }
 
 void MPIOffloadDevice::initializeDevice()
@@ -235,17 +228,15 @@ void MPIOffloadDevice::initializeDevice()
   if (mode == "mpi") {
     createMPI_RanksBecomeWorkers(&_ac, _av, this);
 
-#ifdef ENABLE_PROFILING
-    /*
-    char hostname[512] = {0};
-    gethostname(hostname, 511);
-    const std::string master_log_file = std::string(hostname) + "_master.txt";
-    std::ofstream fout(master_log_file.c_str());
-    fout << "Master on '" << hostname << "' before commit\n"
-         << "/proc/self/status:\n"
-         << getProcStatus() << "\n=====\n";
-         */
-#endif
+    RKCOMMON_IF_TRACING_ENABLED({
+      char hostname[512] = {0};
+      gethostname(hostname, 511);
+      const std::string master_log_file =
+          std::string(hostname) + "_master_proc_status.txt";
+      std::ofstream fout(master_log_file.c_str());
+      fout << "Master on '" << hostname << "' /proc/self/status:\n"
+           << rkcommon::tracing::getProcStatus() << "\n";
+    });
 
     // Only the master returns from this call
     fabric = rkcommon::make_unique<MPIFabric>(world, 0);
@@ -522,20 +513,17 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
 {
   ObjectHandle handle = allocateHandle();
 
-  Ref<ApplicationData> appData =
-      new ApplicationData(sharedData, format, numItems, byteStride);
-  this->sharedData[handle.i64] = appData;
+  this->sharedData[handle.i64] =
+      ApplicationData(sharedData, format, numItems, byteStride);
 
   sendWork(
       [&](networking::WriteStream &writer) {
         // Data on the workers is always compact, so we don't send the stride
         writer << work::NEW_SHARED_DATA << handle.i64 << format << numItems;
-        sendDataWork(writer, *this->sharedData[handle.i64]);
+        sendDataWork(writer, this->sharedData[handle.i64]);
       },
       false);
 
-  // Release the local ref to the appData, see issue about Ref<T>
-  appData->refDec();
   return (OSPData)(int64)handle;
 }
 
@@ -755,8 +743,8 @@ void MPIOffloadDevice::commit(OSPObject _object)
         writer << work::COMMIT << handle.i64
                << (d != sharedData.end() ? uint32_t(1) : uint32_t(0));
         if (d != sharedData.end()) {
-          writer << d->second->type << d->second->numItems;
-          sendDataWork(writer, *d->second);
+          writer << d->second.type << d->second.numItems;
+          sendDataWork(writer, d->second);
         }
       },
       false);
@@ -765,6 +753,14 @@ void MPIOffloadDevice::commit(OSPObject _object)
 void MPIOffloadDevice::release(OSPObject _object)
 {
   const ObjectHandle handle = (const ObjectHandle &)_object;
+
+  appRefCount[handle.i64]--;
+  // If the app still has references to the object there's no need to
+  // cleanup or send a release command
+  if (appRefCount[handle.i64] > 0) {
+    return;
+  }
+
   if (futures.find(handle.i64) != futures.end()) {
     wait((OSPFuture)_object, OSP_TASK_FINISHED);
     futures.erase(handle.i64);
@@ -783,19 +779,15 @@ void MPIOffloadDevice::release(OSPObject _object)
   // buffer we aren't actually sharing the pointer with the app anymore
   auto d = sharedData.find(handle.i64);
   if (d != sharedData.end()) {
-    if (d->second->useCount() == 1) {
-      // Make sure there's no pending send referencing this data if we're going
-      // to delete it
-      if (d->second->releaseHazard) {
-        postStatusMsg(OSP_LOG_DEBUG)
-            << "#osp.mpi.app: ospRelease: data reference hazard exists, "
-            << " flushing pending sends";
-        fabric->flushBcastSends();
-      }
-      sharedData.erase(handle.i64);
-    } else {
-      d->second->refDec();
+    // Make sure there's no pending send referencing this data if we're going
+    // to delete it
+    if (d->second.releaseHazard) {
+      postStatusMsg(OSP_LOG_DEBUG)
+          << "#osp.mpi.app: ospRelease: data reference hazard exists, "
+          << " flushing pending sends";
+      fabric->flushBcastSends();
     }
+    sharedData.erase(handle.i64);
   }
 }
 
@@ -803,17 +795,7 @@ void MPIOffloadDevice::retain(OSPObject _obj)
 {
   const ObjectHandle handle = (const ObjectHandle &)_obj;
 
-  sendWork(
-      [&](networking::WriteStream &writer) {
-        writer << work::RETAIN << handle.i64;
-      },
-      false);
-
-  // Increment the local shared data ref count so we match the app
-  auto d = sharedData.find(handle.i64);
-  if (d != sharedData.end()) {
-    d->second->refInc();
-  }
+  appRefCount[handle.i64]++;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -850,7 +832,8 @@ const void *MPIOffloadDevice::frameBufferMap(
     OSPFrameBuffer _fb, OSPFrameBufferChannel channel)
 {
   using namespace utility;
-  rkTraceBeginEvent("master_mapFramebuffer");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("mapFramebuffer", "mpiOffloadDevice"));
 
   ObjectHandle handle = (ObjectHandle &)_fb;
   sendWork(
@@ -876,15 +859,7 @@ const void *MPIOffloadDevice::frameBufferMap(
   void *ptr = mapping->data();
   framebufferMappings[handle.i64] = std::move(mapping);
 
-  rkTraceEndEvent();
-
-  {
-    // Save a snapshot of the trace
-    char hostname[512] = {0};
-    gethostname(hostname, 511);
-    const std::string masterTraceFile = std::string(hostname) + "_master.json";
-    rkTraceSaveLog(masterTraceFile.c_str(), masterTraceFile.c_str());
-  }
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   return ptr;
 }
@@ -1164,9 +1139,12 @@ int MPIOffloadDevice::rootWorkerRank() const
   return 1;
 }
 
-ObjectHandle MPIOffloadDevice::allocateHandle() const
+ObjectHandle MPIOffloadDevice::allocateHandle()
 {
-  return ObjectHandle::allocateLocalHandle();
+  auto handle = ObjectHandle::allocateLocalHandle();
+  // Assign an app refcount of 1 for new handles
+  appRefCount[handle.i64] = 1;
+  return handle;
 }
 
 } // namespace mpi

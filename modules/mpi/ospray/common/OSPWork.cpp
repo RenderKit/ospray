@@ -383,7 +383,8 @@ void mapFramebuffer(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
 {
-  rkTraceBeginEvent("mapFramebuffer");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("mapFramebuffer", "mpiOffloadWorker"));
   // Map the channel and send the image back over the fabric
   int64_t handle = 0;
   uint32_t channel = 0;
@@ -411,7 +412,7 @@ void mapFramebuffer(OSPState &state,
       ospUnmapFrameBuffer(map, fb);
     }
   }
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 }
 
 void getVariance(OSPState &state,

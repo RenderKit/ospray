@@ -62,13 +62,16 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
     dfb->setTileOperation(renderer->tileOperation(), renderer);
   }
 
-  rkTraceBeginEvent("renderFrameDistributed");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("renderFrameDistributed", "DistributedLB"));
 
   dfb->startNewFrame(renderer->errorThreshold);
   void *perFrameData = renderer->beginFrame(dfb, world);
   const size_t numRegions = world->allRegions.size();
 
-  rkTraceBeginEvent("determineTilesForFrame");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("determineTilesForFrame", "DistributedLB"));
+
   std::vector<std::vector<uint32_t>> regionTileIds(world->myRegionIds.size());
   const vec2i numTiles = dfb->getGlobalNumTiles();
   const vec2i fbSize = dfb->getNumPixels();
@@ -138,13 +141,11 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
     }
   }
 
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("renderLocalData", "DistributedLB");
+  });
 
-  rkTraceBeginEvent("renderLocalData");
-  // Note: Later this will be a set of tasks we enqueue at the same time and
-  // want to run in parallel to each other. For now this still runs as a
-  // parallel for here so we don't end up having to do a more sync/blocking
-  // style render
 #ifdef OSPRAY_TARGET_SYCL
   /* For GPU: Need further refactoring to run rendering async for multiple
    * region per rank configs. Right now this is serial to avoid a race condition
@@ -157,6 +158,12 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
     // Just render the background color and compute visibility information for
     // the tiles we own for layer "0"
     SparseFrameBuffer *sparseFb = dfb->getSparseFBLayer(layer);
+    if (sparseFb->getNumTiles() == 0) {
+      return;
+    }
+
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::beginEvent("setupLayerRendering", "DistributedLB"));
 
     // Explicitly avoiding std::vector<bool> because we need to match ISPC's
     // memory layout
@@ -170,17 +177,24 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
     std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
 
     // Compute visibility for the tasks we're rendering
-    auto renderTaskIDs = sparseFb->getRenderTaskIDs(0.0f);
+    RKCOMMON_IF_TRACING_ENABLED({
+      rkcommon::tracing::endEvent();
+      rkcommon::tracing::beginEvent("computeRegionVisibility", "DistributedLB");
+    });
 
     renderer->computeRegionVisibility(sparseFb,
         camera,
         world,
         regionVisible.sharedPtr(),
         perFrameData,
-        renderTaskIDs);
+        sparseFb->getRenderTaskIDs(0.f));
+
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
     // If we're rendering the background tiles send them over now
     if (layer == 0) {
+      RKCOMMON_IF_TRACING_ENABLED(
+          rkcommon::tracing::beginEvent("sendLayer0Tiles", "DistributedLB"));
       tasking::parallel_for(sparseFb->getNumTiles(), [&](size_t i) {
         // Don't send anything if this tile was finished due to adaptive
         // refinement
@@ -221,66 +235,83 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
             std::numeric_limits<float>::infinity());
         dfb->setTile(bgtile);
       });
+      RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
     } else {
       // If we're rendering a region, render it and send over the tile data
+      RKCOMMON_IF_TRACING_ENABLED({
+        rkcommon::tracing::beginEvent("renderRegionData", "DistributedLB");
+        rkcommon::tracing::beginEvent("initRegionTaskIDs", "DistributedLB");
+        rkcommon::tracing::setCounter(
+            "regionTileCount", sparseFb->getNumTiles());
+      });
+
       sparseFb->beginFrame();
-
-      // Remove any tasks for tiles that we found the region isn't actually
-      // visible to. The region projection is conservative in its bounds, so
-      // we can often remove a substantial number of tasks, resulting in better
-      // utilization. This also removes tasks that have completed due to
-      // adaptive refinement
       const size_t rid = world->myRegionIds[layer - 1];
-      std::vector<uint32_t> activeTasks(
-          renderTaskIDs.begin(), renderTaskIDs.end());
-      auto removeTasks = std::partition(
-          activeTasks.begin(), activeTasks.end(), [&](const uint32_t taskID) {
-            const uint32_t tileIdx = sparseFb->getTileIndexForTask(taskID);
-            return regionVisible[numRegions * tileIdx + rid]
-                && dfb->tileError(tileIDs[tileIdx]) > renderer->errorThreshold;
-          });
-      activeTasks.erase(removeTasks, activeTasks.end());
-      BufferShared<uint32_t> activeTasksShared(
-          sparseFb->getISPCDevice().getIspcrtContext(), activeTasks);
 
+      RKCOMMON_IF_TRACING_ENABLED({
+        rkcommon::tracing::endEvent();
+        rkcommon::tracing::beginEvent("renderRegionTasks", "DistributedLB");
+      });
       renderer->renderRegionTasks(sparseFb,
           camera,
           world,
           world->allRegions[rid],
           perFrameData,
-          utility::ArrayView<uint32_t>(
-              activeTasksShared.data(), activeTasksShared.size()));
+          sparseFb->getRenderTaskIDs(0.f));
+
+      RKCOMMON_IF_TRACING_ENABLED({
+        rkcommon::tracing::endEvent();
+        rkcommon::tracing::beginEvent("readbackRegionTiles", "DistributedLB");
+      });
 
       const auto tiles = sparseFb->getTiles();
+
+      RKCOMMON_IF_TRACING_ENABLED({
+        rkcommon::tracing::endEvent();
+        rkcommon::tracing::beginEvent("sendRegionTiles", "DistributedLB");
+      });
       tasking::parallel_for(tiles.size(), [&](size_t i) {
         if (!regionVisible[numRegions * i + rid]
             || dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
           return;
         }
-        Tile regionTile = tiles[i];
+        Tile &regionTile = tiles[i];
         regionTile.generation = 1;
         regionTile.children = 0;
         regionTile.accumID = dfb->getFrameID();
         dfb->setTile(regionTile);
       });
+
+      RKCOMMON_IF_TRACING_ENABLED({
+        rkcommon::tracing::endEvent();
+        rkcommon::tracing::endEvent();
+      });
     }
   });
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("waitUntilFinished", "DistributedLB");
+  });
 
-  rkTraceBeginEvent("waitUntilFinished");
   dfb->waitUntilFinished();
   renderer->endFrame(dfb, perFrameData);
-  rkTraceEndEvent();
 
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
   dfb->postProcess(camera, true);
-  rkTraceBeginEvent("endFrame");
-  dfb->endFrame(renderer->errorThreshold, camera);
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("endFrame", "DistributedLB");
+  });
 
-  rkTraceEndEvent();
+  dfb->endFrame(renderer->errorThreshold, camera);
+
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::endEvent();
+  });
+
   return std::make_pair(AsyncEvent(), AsyncEvent());
 }
 
@@ -295,7 +326,8 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
 
   enableStaticBalancer = OSPRAY_STATIC_BALANCER.value_or(0);
 
-  rkTraceBeginEvent("renderFrameReplicated");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("renderFrameReplicated", "DistributedLB"));
 
   std::shared_ptr<TileOperation> tileOperation = nullptr;
   if (dfb->getLastRenderer() != renderer) {
@@ -305,32 +337,45 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
     tileOperation = dfb->getTileOperation();
   }
 
-  rkTraceBeginEvent("startNewFrame");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("startNewFrame", "DistributedLB"));
+
   dfb->startNewFrame(renderer->errorThreshold);
   void *perFrameData = renderer->beginFrame(dfb, world);
-  rkTraceEndEvent();
 
-  rkTraceBeginEvent("renderLocalTiles");
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("renderLocalTiles", "DistributedLB");
+  });
+
   if (enableStaticBalancer) {
     renderFrameReplicatedStaticLB(dfb, renderer, camera, world, perFrameData);
   } else {
     renderFrameReplicatedDynamicLB(dfb, renderer, camera, world, perFrameData);
   }
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("waitUntilFinished", "DistributedLB");
+  });
 
-  rkTraceBeginEvent("waitUntilFinished");
   dfb->waitUntilFinished();
-  rkTraceEndEvent();
 
-  rkTraceBeginEvent("endFrame");
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("endFrame", "DistributedLB");
+  });
+
   renderer->endFrame(dfb, perFrameData);
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
   dfb->postProcess(camera, true);
   dfb->endFrame(renderer->errorThreshold, camera);
-  rkTraceEndEvent();
-  rkTraceEndEvent();
+
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::endEvent();
+  });
 }
 
 std::string DistributedLoadBalancer::toString() const
@@ -404,7 +449,8 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
     dynamicLB->addWork(myWork);
   }
 
-  rkTraceBeginEvent("dynamicLBLocalRenderLoop");
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
+      "localRenderLoop", "DistributedLB,Dynamic"));
 
   const int sparseFbChannelFlags =
       dfb->getChannelFlags() & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE);
@@ -416,9 +462,6 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       sparseFbChannelFlags,
       sparseFbTrackAccumIDs);
 
-  // TODO: asynctask can't take void as return type
-  std::vector<std::shared_ptr<tasking::AsyncTask<int>>> tileWriteTasks;
-
   while (0 < totalActiveTiles) {
     Work currentWorkItem;
     if (0 < dynamicLB->getWorkSize()) {
@@ -427,7 +470,8 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
     }
 
     if (0 < currentWorkItem.ntasks) {
-      rkTraceBeginEvent("initTaskTileIDs");
+      RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
+          "initTaskTileIDs", "DistributedLB,Dynamic"));
       // Allocate a sparse framebuffer to hold the render output data
       std::vector<uint32_t> taskTileIDs;
       taskTileIDs.reserve(currentWorkItem.ntasks);
@@ -439,23 +483,34 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
           taskTileIDs.push_back(tileID);
         }
       }
-      rkTraceEndEvent();
+      RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
       // If all the tiles we were assigned are already finished due to adaptive
       // termination we have nothing to render locally so just mark the tasks
       // complete
       if (!taskTileIDs.empty()) {
+        RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
+            "setSparseFBTiles", "DistributedLB,Dynamic"));
         // Set the tiles and fill the right accumID for them
         sparseFb->setTiles(
             taskTileIDs, sparseFbTrackAccumIDs ? dfb->getFrameID() : 0);
         sparseFb->beginFrame();
 
-        rkTraceBeginEvent("renderTasks");
+        RKCOMMON_IF_TRACING_ENABLED({
+          rkcommon::tracing::endEvent();
+          rkcommon::tracing::beginEvent("renderTasks", "DistributedLB,Dynamic");
+        });
+
         renderer->renderTasks(sparseFb.get(),
             camera,
             world,
             perFrameData,
             sparseFb->getRenderTaskIDs(renderer->errorThreshold));
-        rkTraceEndEvent();
+
+        RKCOMMON_IF_TRACING_ENABLED({
+          rkcommon::tracing::endEvent();
+          rkcommon::tracing::beginEvent(
+              "readbackTiles", "DistributedLB,Dynamic");
+        });
 
         // TODO: Now the tile setting happens as a bulk-sync operation after
         // rendering, because we still need to send them through the compositing
@@ -465,28 +520,20 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
         // sparseFb's, one is being rendered into while tiles from the previous
         // task set are sent out
         const utility::ArrayView<Tile> tiles = sparseFb->getTiles();
-        auto ownedTiles = std::make_shared<utility::OwnedArray<Tile>>(
-            tiles.data(), tiles.size());
-#if 0
-        tileWriteTasks.push_back(
-            std::make_shared<tasking::AsyncTask<int>>([ownedTiles, dfb]() {
-              rkTraceBeginEvent("setTileAsync");
-#endif
-        tasking::parallel_for(ownedTiles->size(), [&](size_t i) {
-          // rkTraceBeginEvent("setTile");
-          //  TODO: Same note as distributed case, would be nice here to
-          //  not have to copy the tile to change the accum ID.
-          Tile tile = (*ownedTiles)[i];
+
+        RKCOMMON_IF_TRACING_ENABLED({
+          rkcommon::tracing::endEvent();
+          rkcommon::tracing::beginEvent("sendTiles", "DistributedLB,Dynamic");
+        });
+
+        tasking::parallel_for(tiles.size(), [&](size_t i) {
+          Tile &tile = tiles[i];
           tile.accumID = dfb->getFrameID();
           dfb->setTile(tile);
-          // rkTraceEndEvent();
         });
-#if 0
-              rkTraceEndEvent();
-              return 0;
-            }));
-#endif
       }
+      RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
+
       // Mark the set of tasks as complete
       dynamicLB->sendTerm(currentWorkItem.ntasks);
       terminatedTiles = terminatedTiles + currentWorkItem.ntasks;
@@ -507,14 +554,9 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       askedForWork = true;
     }
   }
-  // Wait for all the DFB tile write tasks to finish
-  rkTraceBeginEvent("waitTileWriteTasks");
-  for (auto &t : tileWriteTasks) {
-    t->wait();
-  }
-  rkTraceEndEvent();
 
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
+
   // We need to wait for the other ranks to finish here to keep our local DLB
   // alive to respond to any work requests that come in while other ranks
   // finish their final local set of tasks
@@ -533,17 +575,26 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
   // Note: these views are already in USM
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
 
-  rkTraceBeginEvent("staticLBLocalRenderLoop");
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("localRenderLoop", "DistributedLB,Static"));
   renderer->renderTasks(ownedTilesFb,
       camera,
       world,
       perFrameData,
       ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold));
-  rkTraceEndEvent();
+
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("readbackTiles", "DistributedLB,Static");
+  });
 
   const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
 
-  rkTraceBeginEvent("staticLBWriteTiles");
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("sendTiles", "DistributedLB,Static");
+  });
+
   // TODO: Now the tile setting happens as a bulk-sync operation after
   // rendering, because we still need to send them through the compositing
   // pipeline. The ISPC-side rendering code doesn't know about this and in the
@@ -556,7 +607,7 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     }
     dfb->setTile(tiles[i]);
   });
-  rkTraceEndEvent();
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 }
 
 } // namespace mpi

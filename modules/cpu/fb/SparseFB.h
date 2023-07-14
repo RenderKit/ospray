@@ -160,7 +160,7 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   // access to error data for the entire framebuffer
   std::unique_ptr<BufferShared<float>> taskErrorBuffer;
 
-  std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
-  std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
 };
 } // namespace ospray

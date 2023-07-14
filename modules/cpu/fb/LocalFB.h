@@ -108,8 +108,8 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   vec2i numRenderTasks;
 
-  std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
-  std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
   // holds accumID per render task, for adaptive accumulation
   std::unique_ptr<BufferDeviceShadowed<int32_t>> taskAccumID;
 

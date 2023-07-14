@@ -19,7 +19,7 @@ using namespace rkcommon::math;
  * local data objects see them as OSP_ULONG types, while the worker type
  * is the true managed object type
  */
-struct ApplicationData : memory::RefCountedObject
+struct ApplicationData
 {
   std::shared_ptr<utility::ArrayView<uint8_t>> sharedData;
   OSPDataType type = OSP_UNKNOWN;

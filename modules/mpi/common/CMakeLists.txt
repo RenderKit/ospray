@@ -8,7 +8,6 @@ add_library(ospray_mpi_common SHARED
     ObjectHandle.cpp
     maml/maml.cpp
     maml/Context.cpp
-    Profiling.cpp
 )
 
 include(GenerateExportHeader)

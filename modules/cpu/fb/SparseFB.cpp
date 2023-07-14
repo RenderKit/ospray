@@ -19,6 +19,14 @@
 
 namespace ospray {
 
+// A global function so we can call it from the tile initialization SYCL kernel
+box2i getTileRegion(uint32_t tileID, const vec2i fbSize, const vec2i totalTiles)
+{
+  const vec2i tilePos(tileID % totalTiles.x, tileID / totalTiles.x);
+  return box2i(
+      tilePos * TILE_SIZE, min(tilePos * TILE_SIZE + TILE_SIZE, fbSize));
+}
+
 SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
@@ -103,18 +111,27 @@ utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs(
     return utility::ArrayView<uint32_t>(nullptr, 0);
 
   if (errorThreshold > 0.0f && hasVarianceBuffer) {
-    rkTraceBeginEvent("SparseFB::buildActiveTaskIDs");
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::beginEvent("buildActiveTaskIDs", "SparseFb"));
+
     auto last = std::copy_if(renderTaskIDs->begin(),
         renderTaskIDs->end(),
         activeTaskIDs->begin(),
         [=](uint32_t i) { return taskError(i) > errorThreshold; });
-    rkTraceEndEvent();
-    return utility::ArrayView<uint32_t>(
-        activeTaskIDs->data(), last - activeTaskIDs->begin());
+
+    const size_t numActive = last - activeTaskIDs->begin();
+    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+    tq.copyToDevice(*activeTaskIDs);
+    tq.sync();
+
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
+
+    return utility::ArrayView<uint32_t>(activeTaskIDs->devicePtr(), numActive);
   } else {
-    rkTraceSetMarker("SparseFB::returnAllTaskIDs");
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::setMarker("returnAllTaskIDs", "SparseFB"));
     return utility::ArrayView<uint32_t>(
-        renderTaskIDs->data(), renderTaskIDs->size());
+        renderTaskIDs->devicePtr(), renderTaskIDs->size());
   }
 }
 
@@ -211,7 +228,7 @@ void SparseFrameBuffer::clear()
 
 size_t SparseFrameBuffer::getNumTiles() const
 {
-  return tiles->size();
+  return tiles ? tiles->size() : 0;
 }
 
 const utility::ArrayView<Tile> SparseFrameBuffer::getTiles()
@@ -220,10 +237,15 @@ const utility::ArrayView<Tile> SparseFrameBuffer::getTiles()
     return utility::ArrayView<Tile>(nullptr, 0);
   }
   if (tilesDirty) {
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::beginEvent("SparseFB::getTiles", "ospray"));
+
     tilesDirty = false;
     ispcrt::TaskQueue &tq = device.getIspcrtQueue();
     tq.copyToHost(*tiles);
     tq.sync();
+
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
   }
 
   return utility::ArrayView<Tile>(tiles->hostPtr(), tiles->size());
@@ -256,10 +278,16 @@ uint32_t SparseFrameBuffer::getTileIndexForTask(uint32_t taskID) const
 void SparseFrameBuffer::setTiles(
     const std::vector<uint32_t> &_tileIDs, const int initialTaskAccumID)
 {
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::beginEvent("SparseFB::setTiles", "ospray");
+    rkcommon::tracing::setCounter("SparseFB::numTiles", _tileIDs.size());
+  });
   // (Re-)configure the sparse framebuffer based on the tileIDs we're passed
   tileIDs = _tileIDs;
   numRenderTasks =
       vec2i(tileIDs.size() * TILE_SIZE, TILE_SIZE) / getRenderTaskSize();
+
+  ispcrt::TaskQueue &tq = device.getIspcrtQueue();
 
   if (hasVarianceBuffer && !tileIDs.empty()) {
     taskErrorBuffer = make_buffer_shared_unique<float>(
@@ -273,18 +301,46 @@ void SparseFrameBuffer::setTiles(
     tiles = make_buffer_device_shadowed_unique<Tile>(
         getISPCDevice().getIspcrtDevice(), tileIDs.size());
     const vec2f rcpSize = rcp(vec2f(size));
-    // TODO: Could run as a kernel later
-    for (size_t i = 0; i < tiles->size(); ++i) {
+#ifndef OSPRAY_TARGET_SYCL
+    rkcommon::tasking::parallel_for(tiles->size(), [&](size_t i) {
       Tile &t = (*tiles)[i];
       t.fbSize = size;
       t.rcp_fbSize = rcpSize;
       t.region = getTileRegion(tileIDs[i]);
       t.accumID = 0;
-      std::fill(t.r, t.r + TILE_SIZE * TILE_SIZE, 1.f);
-    }
-    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
-    tq.copyToDevice(*tiles);
+    });
+#else
+    BufferDeviceShadowed<uint32_t> deviceTileIDs(
+        device.getIspcrtDevice(), tileIDs);
+    tq.copyToDevice(deviceTileIDs);
     tq.sync();
+
+    // In SYCL, populate the tiles on the device.
+    // TODO: Best to unify the codepaths more here and do the ISPC device
+    // tile population in ISPC so it also runs on the "device"
+    const uint32_t *deviceTileIDsPtr = deviceTileIDs.devicePtr();
+    const size_t numTasks = tiles->size();
+    const vec2i fbSize = size;
+    const vec2i fbTotalTiles = totalTiles;
+    Tile *tilesDevice = tiles->devicePtr();
+    device.getSyclQueue()
+        .submit([&](sycl::handler &cgh) {
+          const sycl::nd_range<1> dispatchRange =
+              device.computeDispatchRange(numTasks, 16);
+          cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
+            if (taskIndex.get_global_id(0) < numTasks) {
+              const size_t tid = taskIndex.get_global_id(0);
+              tilesDevice[tid].fbSize = fbSize;
+              tilesDevice[tid].rcp_fbSize = rcpSize;
+              tilesDevice[tid].region = ospray::getTileRegion(
+                  deviceTileIDsPtr[tid], fbSize, fbTotalTiles);
+              tilesDevice[tid].accumID = 0;
+            }
+          });
+        })
+        .wait_and_throw();
+#endif
+    tilesDirty = true;
   } else {
     tiles = nullptr;
   }
@@ -308,9 +364,7 @@ void SparseFrameBuffer::setTiles(
     taskAccumID = make_buffer_device_shadowed_unique<int>(
         getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
     std::fill(taskAccumID->begin(), taskAccumID->end(), initialTaskAccumID);
-    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
     tq.copyToDevice(*taskAccumID);
-    tq.sync();
   } else {
     taskAccumID = nullptr;
   }
@@ -319,15 +373,15 @@ void SparseFrameBuffer::setTiles(
   // here we have this array b/c the tasks will be filtered down based on
   // variance termination
   if (!tileIDs.empty()) {
-    renderTaskIDs = make_buffer_shared_unique<uint32_t>(
-        getISPCDevice().getIspcrtContext(), getTotalRenderTasks());
+    renderTaskIDs = make_buffer_device_shadowed_unique<uint32_t>(
+        getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
     std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
   } else {
     renderTaskIDs = nullptr;
   }
   if (hasVarianceBuffer && !tileIDs.empty()) {
-    activeTaskIDs = make_buffer_shared_unique<uint32_t>(
-        getISPCDevice().getIspcrtContext(), getTotalRenderTasks());
+    activeTaskIDs = make_buffer_device_shadowed_unique<uint32_t>(
+        getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
   } else {
     activeTaskIDs = nullptr;
   }
@@ -339,6 +393,9 @@ void SparseFrameBuffer::setTiles(
   // a new sparseFb for each tile set we receive, it seems like
   // this won't be worth it.
   if (tiles) {
+#ifndef OSPRAY_TARGET_SYCL
+    // We use a 1x1 task size in SYCL and this sorting may not pay off for the
+    // cost it adds
     rkcommon::tasking::parallel_for(tiles->size(), [&](const size_t i) {
       std::sort(renderTaskIDs->begin() + i * nTasksPerTile,
           renderTaskIDs->begin() + (i + 1) * nTasksPerTile,
@@ -349,7 +406,12 @@ void SparseFrameBuffer::setTiles(
                 < interleaveZOrder(p_b.x, p_b.y);
           });
     });
+#endif
+
+    // Upload the task IDs to the device
+    tq.copyToDevice(*renderTaskIDs);
   }
+  tq.sync();
 
   // We don't call SparseFB::clear here because we've populated
   // taskAccumID with the initial accumID to use. We just want
@@ -381,15 +443,13 @@ void SparseFrameBuffer::setTiles(
       varianceBuffer ? varianceBuffer->devicePtr() : nullptr;
   getSh()->taskRegionError =
       taskErrorBuffer ? taskErrorBuffer->data() : nullptr;
+
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 }
 
 box2i SparseFrameBuffer::getTileRegion(uint32_t tileID) const
 {
-  const vec2i tilePos(tileID % totalTiles.x, tileID / totalTiles.x);
-  box2i region;
-  region.lower = tilePos * TILE_SIZE;
-  region.upper = min(region.lower + TILE_SIZE, size);
-  return region;
+  return ospray::getTileRegion(tileID, size, totalTiles);
 }
 
 vec2i SparseFrameBuffer::getTaskPosInTile(const uint32_t taskID) const
