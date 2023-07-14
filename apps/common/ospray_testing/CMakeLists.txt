@@ -7,27 +7,27 @@ add_library(ospray_testing SHARED
   ${OSPRAY_RESOURCE}
 
   ospray_testing.cpp
+  builders/Builder.cpp
 
   builders/Boxes.cpp
-  builders/Interpolation.cpp
-  builders/Builder.cpp
+  builders/ClippingGeometries.cpp
   builders/CornellBox.cpp
   builders/Curves.cpp
   builders/Empty.cpp
   builders/GravitySpheresVolume.cpp
+  builders/Instancing.cpp
+  builders/Interpolation.cpp
   builders/Noise.cpp
+  builders/ParticleVolume.cpp
   builders/PerlinNoiseVolumes.cpp
+  builders/Planes.cpp
   builders/RandomSpheres.cpp
   builders/Streamlines.cpp
   builders/SubdivisionCube.cpp
-  builders/UnstructuredVolumeSimple.cpp
-  builders/UnstructuredVolumeGen.cpp
-  builders/Planes.cpp
-  builders/ClippingGeometries.cpp
-  builders/ParticleVolume.cpp
-  builders/VdbVolume.cpp
   builders/Transparency.cpp
-  builders/Instancing.cpp
+  builders/UnstructuredVolumeGen.cpp
+  builders/UnstructuredVolumeSimple.cpp
+  builders/VdbVolume.cpp
 
   # regression test scenes
   builders/test_pt_glass.cpp
