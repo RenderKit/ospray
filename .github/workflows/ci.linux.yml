@@ -257,7 +257,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
         module load cmake
         I_MPI_OFI_LIBRARY_INTERNAL=no module load impi/2021.6
@@ -287,7 +287,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-centos7-icx
@@ -300,7 +300,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-centos7-icx
@@ -313,7 +313,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:8
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-centos8
@@ -326,7 +326,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: rockylinux:8.7
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
         module load cmake/3.15.2
         module load mpi/mpich-x86_64
@@ -354,7 +354,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:18.04
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-ubuntu1804-gcc
@@ -367,7 +367,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:20.04
-      runs-on: '["Linux", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-ubuntu2004-gcc
@@ -380,7 +380,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:20.04
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MULTIDEVICE
       artifact-in: build-ubuntu2004-gcc
@@ -397,7 +397,7 @@ jobs:
       env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
       submodules: true
       options: --device=/dev/dri:/dev/dri
-      runs-on: '[ "Linux", "docker", "dg2" ]'
+      runs-on: '"dg2"'
       cmd: |
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
       artifact-in: build-ubuntu2204-oidn-mpi

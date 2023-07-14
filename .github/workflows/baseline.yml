@@ -32,7 +32,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:20.04
-      runs-on: '["Linux", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
         export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH

@@ -95,7 +95,7 @@ jobs:
       env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
       submodules: true
       options: --device=/dev/dri:/dev/dri
-      runs-on: '[ "Linux", "docker", "dg2" ]'
+      runs-on: '"dg2"'
       artifact-in: build-ubuntu2204
       artifact-out: test-ubuntu2204-dg2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -117,7 +117,7 @@ jobs:
       env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
       submodules: true
       options: --device=/dev/dri:/dev/dri
-      runs-on: '[ "Linux", "docker", "pvc" ]'
+      runs-on: '"pvc"'
       artifact-in: build-ubuntu2204
       artifact-out: test-ubuntu2204-pvc
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -139,7 +139,7 @@ jobs:
       env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22-internal.env
       submodules: true
       options: --device=/dev/dri:/dev/dri
-      runs-on: '[ "Linux", "docker", "dg2" ]'
+      runs-on: '"dg2"'
       artifact-in: build-ubuntu2204-devel
       artifact-out: test-ubuntu2204-devel-dg2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -163,7 +163,7 @@ jobs:
       level-zero-version: public/1.9.9
       submodules: true
       options: --device=/dev/dri:/dev/dri
-      runs-on: '[ "Linux", "docker", "dg2" ]'
+      runs-on: '"dg2"'
       artifact-in: build-ubuntu2204-mpi
       artifact-out: test-ubuntu2204-mpi
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*

@@ -62,7 +62,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "macOS", "sign", "x86_64" ]'
+      runs-on: '["sign", "x86_64"]'
       cmd: |
         export CC=clang
         export CXX=clang++
@@ -78,7 +78,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '["Windows", "build", "mpi"]'
+      runs-on: '["build", "mpi"]'
       cmd: |
         scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
         & $env:SIGN_FILE_WINDOWS ospray*.msi
@@ -154,7 +154,7 @@ jobs:
     needs: release-osx-clang
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "x86_64", "build", "avx2" ]'
+      runs-on: '["x86_64", "build", "avx2"]'
       cmd: |
         unzip build_release/*.zip
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
@@ -177,7 +177,7 @@ jobs:
     needs: release-osx-clang
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "sign", "x86_64" ]'
+      runs-on: '["sign", "x86_64" ]'
       cmd: |
         unzip build_release/*.zip
         $SIGN_FILE_MAC -t ./ospray-*/bin/* ./ospray-*/lib/*.dylib ./build_release/*.pkg
@@ -187,7 +187,7 @@ jobs:
     needs: release-windows
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["Windows", "avx512", "mpi"]'
+      runs-on: '["avx512", "mpi"]'
       cmd: |
         Expand-Archive build_release/*.zip -DestinationPath .
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
@@ -199,7 +199,7 @@ jobs:
     needs: release-windows
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["Windows", "avx512", "mpi"]'
+      runs-on: '["avx512", "mpi"]'
       cmd: |
         msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$env:GITHUB_WORKSPACE
         $env:Path += ";$env:GITHUB_WORKSPACE\Intel\OSPRay v2\bin"
