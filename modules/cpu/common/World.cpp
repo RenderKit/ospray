@@ -29,9 +29,8 @@ static void addGeometryInstance(RTCScene &scene,
   // Create geometry instance
   auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
   rtcSetGeometryInstancedScene(eInst, instScene);
-  inst->setEmbreeGeom(eInst);
-
   rtcAttachGeometryByID(scene, eInst, id);
+  inst->setEmbreeGeom(scene, id);
   rtcReleaseGeometry(eInst);
 }
 

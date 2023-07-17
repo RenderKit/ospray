@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
-#include "common/MotionTransform.ih"
+#include "common/Embree.h"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
 // c++ shared
 #include "PanoramicCameraShared.h"
+
+#include "rkcommon/math/AffineSpace.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -54,9 +56,10 @@ SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
   // transform to camera- and then to world-space
   vec3f dir;
   vec3f org;
-#ifndef OSPRAY_TARGET_SYCL
   if (self->super.motionBlur) {
-    const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
+    AffineSpace3f xfm;
+    rtcGetGeometryTransformFromScene(
+        self->super.scene, 0, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
 
     // we cannot just transform the final org & dir, because interpolated
     // transforms can scale (even if original transforms are without scale)
@@ -67,9 +70,7 @@ SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
 
     dir = frameMB * make_vec3f(-localDir.y, -localDir.z, localDir.x);
     org = xfmPoint(xfm, self->org) + offset * cross(dir, frameMB.vy);
-  } else
-#endif
-  {
+  } else {
     dir = self->frame * make_vec3f(-localDir.y, -localDir.z, localDir.x);
     org = self->org + offset * cross(dir, self->frame.vy);
   }

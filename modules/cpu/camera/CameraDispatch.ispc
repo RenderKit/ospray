@@ -19,7 +19,10 @@ SYCL_EXTERNAL void Camera_dispatch_initRay(const Camera *uniform self,
   const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if ((self->type == CAMERA_TYPE_PERSPECTIVE)
       && (ffo & FFO_CAMERA_PERSPECTIVE)) {
-    PerspectiveCamera_initRay(self, ray, sample);
+    if (self->motionBlur)
+      PerspectiveCamera_initRayMB(self, ray, sample);
+    else
+      PerspectiveCamera_initRay(self, ray, sample);
   } else if ((self->type == CAMERA_TYPE_ORTHOGRAPHIC)
       && (ffo & FFO_CAMERA_ORTHOGRAPHIC)) {
     OrthographicCamera_initRay(self, ray, sample);

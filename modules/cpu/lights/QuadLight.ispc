@@ -143,7 +143,6 @@ SYCL_EXTERNAL Light_SampleRes QuadLight_sample(const Light *uniform super,
   return Sample(self, self->pre, dg, sp);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -166,7 +165,6 @@ SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
   }
   return res;
 }
-#endif
 
 inline Light_EvalRes Eval(const QuadLight *uniform self,
     const uniform QuadLightDynamic &dyn,
@@ -228,7 +226,6 @@ SYCL_EXTERNAL Light_EvalRes QuadLight_eval(const Light *uniform super,
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
@@ -251,7 +248,6 @@ SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
   }
   return res;
 }
-#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////

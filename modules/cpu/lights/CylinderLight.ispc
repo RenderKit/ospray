@@ -180,7 +180,6 @@ SYCL_EXTERNAL Light_SampleRes CylinderLight_sample(
   return Sample(self, self->pre, dg, s);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_SampleRes CylinderLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -203,7 +202,6 @@ SYCL_EXTERNAL Light_SampleRes CylinderLight_sample_instanced(
   }
   return res;
 }
-#endif
 
 inline Light_EvalRes Eval(const CylinderLight *uniform self,
     const uniform CylinderLightDynamic &dyn,
@@ -248,7 +246,6 @@ SYCL_EXTERNAL Light_EvalRes CylinderLight_eval(
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_EvalRes CylinderLight_eval_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -264,7 +261,6 @@ SYCL_EXTERNAL Light_EvalRes CylinderLight_eval_instanced(
   assert(instance);
 
   Light_EvalRes res;
-
   foreach_unique (utime in time) {
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform CylinderLightDynamic dyn;
@@ -273,7 +269,7 @@ SYCL_EXTERNAL Light_EvalRes CylinderLight_eval_instanced(
   }
   return res;
 }
-#endif
+
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 

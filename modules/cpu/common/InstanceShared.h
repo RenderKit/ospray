@@ -12,7 +12,10 @@ struct Group;
 struct Instance
 {
   Group *group;
-  RTCGeometry geom; // only to access rtcGetGeometryTransform
+
+  // Scene and geomID are used to call rtcGetGeometryTransformFromScene only
+  RTCScene scene;
+  unsigned int geomID;
 
   AffineSpace3f xfm;
   AffineSpace3f rcp_xfm;
@@ -23,7 +26,8 @@ struct Instance
 #ifdef __cplusplus
   Instance()
       : group(nullptr),
-        geom(nullptr),
+        scene(nullptr),
+        geomID(0),
         xfm(one),
         rcp_xfm(one),
         motionBlur(false),

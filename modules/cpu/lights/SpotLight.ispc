@@ -105,7 +105,6 @@ SYCL_EXTERNAL Light_SampleRes SpotLight_sample(const Light *uniform super,
   return Sample(self, self->pre, dg, s);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_SampleRes SpotLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -128,7 +127,6 @@ SYCL_EXTERNAL Light_SampleRes SpotLight_sample_instanced(
   }
   return res;
 }
-#endif
 
 inline Light_EvalRes Eval(const SpotLight *uniform self,
     const uniform SpotLightDynamic &dyn,
@@ -184,7 +182,6 @@ SYCL_EXTERNAL Light_EvalRes SpotLight_eval(const Light *uniform super,
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
@@ -207,7 +204,6 @@ SYCL_EXTERNAL Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
   }
   return res;
 }
-#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////

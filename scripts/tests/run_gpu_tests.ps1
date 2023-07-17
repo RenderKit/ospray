@@ -34,6 +34,9 @@ $test_filters="ClippingParallel.planes"
 $test_filters+=":TestScenesClipping/FromOsprayTesting.*"
 $test_filters+=":TestScenesMaxDepth/FromOsprayTestingMaxDepth.test_scenes/1"
 $test_filters+=":TestScenesMaxDepth/FromOsprayTestingMaxDepth.test_scenes/2"
+$test_filters+=":TestMotionBlur/MotionBlurBoxes.*"
+$test_filters+=":CameraRollingShutter/MotionBlurBoxes.*"
+$test_filters+=":CameraStereoRollingShutter/MotionBlurBoxes.*"
 # Subdivision surfaces unsupported
 $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/15"
 $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/16"
@@ -51,15 +54,7 @@ $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/5"
 $test_filters+=":TestScenesVolumesStrictParams/FromOsprayTesting.*"
 # Requires non-overlapping multiple volume support on GPU
 $test_filters+=":ObjectInstance/IDBuffer.*"
-# Motion blur unsupported
-$test_filters+=":TestMotionBlur/MotionBlurBoxes.*"
-$test_filters+=":CameraRollingShutter/MotionBlurBoxes.*"
-$test_filters+=":CameraStereoRollingShutter/MotionBlurBoxes.*"
-$test_filters+=":Camera/MotionCamera.*"
-$test_filters+=":CameraOrtho/MotionCamera.*"
-$test_filters+=":CameraStereoRollingShutter/MotionCamera.*"
-$test_filters+=":LightMotionBlur/*"
-# Instancing test also makes use of motion blur
+# Instancing test includes multiple volumes
 $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/24"
 $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/25"
 $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/26"

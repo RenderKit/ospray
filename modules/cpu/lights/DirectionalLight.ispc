@@ -41,7 +41,6 @@ SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample(
   return Sample(self, self->frame, s);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -62,7 +61,6 @@ SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample_instanced(
   }
   return res;
 }
-#endif
 
 inline Light_EvalRes Eval(const DirectionalLight *uniform self,
     const uniform linear3f &frame,
@@ -93,7 +91,6 @@ SYCL_EXTERNAL Light_EvalRes DirectionalLight_eval(const Light *uniform super,
   return Eval(self, self->frame, dir, maxDist);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_EvalRes DirectionalLight_eval_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -115,7 +112,6 @@ SYCL_EXTERNAL Light_EvalRes DirectionalLight_eval_instanced(
   }
   return res;
 }
-#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
