@@ -1023,10 +1023,6 @@ float DFB::tileError(const uint32_t tileID)
 
 void DFB::endFrame(const float errorThreshold, const Camera *camera)
 {
-  if (localFBonMaster)
-    for (auto &p : frameOps)
-      p->process(nullptr, camera);
-
   // only refine on master
   if (mpicommon::IamTheMaster()) {
     frameVariance = tileErrorRegion.refine(errorThreshold);
@@ -1038,11 +1034,49 @@ void DFB::endFrame(const float errorThreshold, const Camera *camera)
   setCompletedEvent(OSP_FRAME_FINISHED);
 }
 
-AsyncEvent DFB::postProcess(const Camera *, bool)
+AsyncEvent DFB::postProcess(const Camera *camera, bool)
 {
   AsyncEvent event;
-  // TODO: Modify DistributedLoadBalancer and move here post-processing loop
-  // from endFrame()
+  if (localFBonMaster && !frameOps.empty()) {
+    // FrameOps are run on the device, but the DFB receives the final image
+    // data over MPI into host-memory, and returns host-memory pointers
+    // directly. So, we need to copy the host data to the device, run the frame
+    // ops, then copy it back. If we can receive with MPI directly into device
+    // memory we can drop this first copy step. When running on the CPU device,
+    // these copies will become no-ops.
+    ispcrt::TaskQueue &tq = getISPCDevice().getIspcrtQueue();
+    if (localFBonMaster->colorBuffer) {
+      tq.copyToDevice(*localFBonMaster->colorBuffer);
+    }
+    if (localFBonMaster->depthBuffer) {
+      tq.copyToDevice(*localFBonMaster->depthBuffer);
+    }
+    if (localFBonMaster->normalBuffer) {
+      tq.copyToDevice(*localFBonMaster->normalBuffer);
+    }
+    if (localFBonMaster->albedoBuffer) {
+      tq.copyToDevice(*localFBonMaster->albedoBuffer);
+    }
+    tq.sync();
+
+    for (auto &p : frameOps) {
+      p->process(nullptr, camera);
+    }
+
+    if (localFBonMaster->colorBuffer) {
+      tq.copyToHost(*localFBonMaster->colorBuffer);
+    }
+    if (localFBonMaster->depthBuffer) {
+      tq.copyToHost(*localFBonMaster->depthBuffer);
+    }
+    if (localFBonMaster->normalBuffer) {
+      tq.copyToHost(*localFBonMaster->normalBuffer);
+    }
+    if (localFBonMaster->albedoBuffer) {
+      tq.copyToHost(*localFBonMaster->albedoBuffer);
+    }
+    tq.sync();
+  }
   return event;
 }
 

@@ -272,6 +272,10 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
   dfb->waitUntilFinished();
   renderer->endFrame(dfb, perFrameData);
 
+  // TODO: We can start to pipeline the post processing here,
+  // but needs support from the rest of the async tasking from
+  // MPI tasks. Right now we just run on a separate thread.
+  dfb->postProcess(camera, true);
   dfb->endFrame(renderer->errorThreshold, camera);
   return std::make_pair(AsyncEvent(), AsyncEvent());
 }
@@ -330,6 +334,10 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
 #endif
 
   renderer->endFrame(dfb, perFrameData);
+  // TODO: We can start to pipeline the post processing here,
+  // but needs support from the rest of the async tasking from
+  // MPI tasks. Right now we just run on a separate thread.
+  dfb->postProcess(camera, true);
   dfb->endFrame(renderer->errorThreshold, camera);
 
 #ifdef ENABLE_PROFILING
