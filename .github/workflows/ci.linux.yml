@@ -182,6 +182,7 @@ jobs:
 
   build-rocky8-oidn-mpi:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: rockylinux:8.7
@@ -230,6 +231,7 @@ jobs:
 
   build-ubuntu2204-oidn-mpi:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04

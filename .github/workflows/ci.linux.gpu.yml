@@ -16,7 +16,7 @@ jobs:
 ### BUILD JOBS ###
 
   build-ubuntu2204:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/driver-download
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
@@ -28,12 +28,12 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=gpu-devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   build-ubuntu2204-devel:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/driver-download
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
@@ -45,12 +45,12 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=gpu-devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-devel
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   build-ubuntu2204-mpi:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/driver-download
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
@@ -62,12 +62,12 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=gpu-devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-mpi
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   build-suse:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/driver-download
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
@@ -79,7 +79,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -DBUILD_GLFW=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=gpu-devel -DRKCOMMON_VERSION=devel
+        scripts/build/linux.sh -DBUILD_GLFW=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_VERSION=gpu-devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-suse
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -88,7 +88,7 @@ jobs:
 
   test-ubuntu2204-dg2:
     needs: [build-ubuntu2204]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/driver-download
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       image: ubuntu:22.04
@@ -111,7 +111,7 @@ jobs:
 
   test-ubuntu2204-pvc:
     needs: [build-ubuntu2204]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/driver-download
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       image: ubuntu:22.04
@@ -134,7 +134,7 @@ jobs:
 
   test-ubuntu2204-devel-dg2:
     needs: [build-ubuntu2204-devel]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/driver-download
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       image: ubuntu:22.04
@@ -157,7 +157,7 @@ jobs:
 
   test-ubuntu2204-mpi:
     needs: build-ubuntu2204-mpi
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/driver-download
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
