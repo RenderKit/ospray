@@ -19,11 +19,7 @@ fi
 
 # Expand relative paths.
 SOURCEDIR=$([[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}")
-
-mkdir build_regression_tests
-cd build_regression_tests
-
-cmake -D OSPRAY_TEST_ISA=$2 ${SOURCEDIR}/test_image_data
+TESTISA=$2
 
 # optional command line arguments
 while [[ $# -gt 0 ]]
@@ -44,9 +40,14 @@ case $key in
 esac
 done
 
+mkdir build_regression_tests
+cd build_regression_tests
+
 exitCode=0
 
-make -j 4 ospray_test_data
+cmake -D OSPRAY_TEST_ISA=$TESTISA ${SOURCEDIR}/test_image_data
+let exitCode+=$?
+cmake --build . --target ospray_test_data
 let exitCode+=$?
 
 mkdir failed
