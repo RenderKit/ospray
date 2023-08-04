@@ -4,6 +4,8 @@ Version History
 ### Changes in v2.13.0:
 
 -   Add implicit indexing for `mesh` geometry
+-   The new minimum version for Embree is v4.2.0 and for ISPC it is
+    v1.21.0
 
 
 ### Changes in v2.12.0:

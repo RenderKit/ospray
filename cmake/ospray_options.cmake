@@ -11,9 +11,9 @@ include(CMakeDependentOption)
 set(OSPRAY_CMAKECONFIG_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
-set(ISPC_VERSION_REQUIRED 1.20.0)
+set(ISPC_VERSION_REQUIRED 1.21.0)
 set(RKCOMMON_VERSION_REQUIRED 1.11.0)
-set(EMBREE_VERSION_REQUIRED 4.0.0)
+set(EMBREE_VERSION_REQUIRED 4.2.0)
 set(OPENVKL_GPU_VERSION_REQUIRED 2.0.0)
 set(OPENVKL_1_VERSION_REQUIRED 1.3.2)
 if (OSPRAY_MODULE_GPU)
@@ -87,7 +87,6 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
 # Embree
 ospray_find_embree(${EMBREE_VERSION_REQUIRED} FALSE)
 ospray_verify_embree_features()
-ospray_determine_embree_isa_support()
 
 # Open VKL
 if (OSPRAY_ENABLE_VOLUMES)
