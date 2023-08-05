@@ -113,7 +113,7 @@ static void sampleVolume(SciVisRenderContext &rc,
   vc.sample = TransferFunction_dispatch_get(tf, sampleVal);
 
   // compute gradient shading lighting
-  if (m->gradientShadingScale > 0.0f) {
+  if (m->gradientShadingScale > 0.0f && vc.sample.w > 0.0f) {
     vec3f ns = Volume_getGradient(m->volume, p, ffh);
     if (dot(ns, ns) > 1e-6f) {
       // assume that opacity directly correlates to volume scalar field, i.e.
