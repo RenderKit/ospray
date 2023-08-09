@@ -52,15 +52,10 @@ inline float fresnelDielectricEx(float cosI, float &cosT, float eta)
 // Imageworks"]
 inline float fresnelDielectricAvg(float eta)
 {
-  const float rcpEta = rcp(eta);
+  if (eta < 1.f)
+    eta = rcp(eta);
 
-  if (rcpEta >= 1.f)
-    return (rcpEta - 1.f) / (4.08567f + 1.00071f * rcpEta);
-
-  const float rcpEta2 = sqr(rcpEta);
-  const float rcpEta3 = rcpEta2 * rcpEta;
-  return 0.997118f + 0.1014f * rcpEta - 0.965241f * rcpEta2
-      - 0.130607f * rcpEta3;
+  return (eta - 1.f) / (4.08567f + 1.00071f * eta);
 }
 
 /*! Computes fresnel coefficient for conductor medium with complex
