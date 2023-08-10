@@ -130,6 +130,9 @@ enum FeatureFlagsOther
   // code paths or just needing the isosurface traversal code path.
   FFO_VOLUME_IN_SCENE = 1 << 27,
 
+  // Volume shading in SciVis renderer
+  FFO_VOLUME_SCIVIS_SHADING = 1 << 28,
+
   FFO_ALL = 0xffffffff
 };
 

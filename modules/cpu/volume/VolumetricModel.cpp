@@ -83,6 +83,10 @@ void VolumetricModel::commit()
   getSh()->anisotropy = getParam<float>("anisotropy", 0.f);
   getSh()->gradientShadingScale = getParam<float>("gradientShadingScale", 0.f);
   getSh()->userID = getParam<uint32>("id", RTC_INVALID_GEOMETRY_ID);
+
+  featureFlagsOther = FFO_VOLUME_IN_SCENE;
+  if (getSh()->gradientShadingScale > 0.f)
+    featureFlagsOther |= FFO_VOLUME_SCIVIS_SHADING;
 }
 
 RTCGeometry VolumetricModel::embreeGeometryHandle() const

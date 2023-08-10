@@ -38,13 +38,17 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
   Ref<Volume> volume;
   const Ref<Volume> volumeAPI;
   VKLIntervalIteratorContext vklIntervalContext = VKLIntervalIteratorContext();
+
+  FeatureFlagsOther featureFlagsOther{FFO_VOLUME_IN_SCENE};
 };
 
 OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);
 
 inline FeatureFlags VolumetricModel::getFeatureFlags() const
 {
-  return volume->getFeatureFlags();
+  FeatureFlags ff = volume->getFeatureFlags();
+  ff.other |= featureFlagsOther;
+  return ff;
 }
 
 } // namespace ospray
