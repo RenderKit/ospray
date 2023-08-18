@@ -13,13 +13,17 @@ Data::Data(api::ISPCDevice &device,
     const void *sharedData,
     OSPDataType type,
     const vec3ul &numItems,
-    const vec3l &byteStride)
+    const vec3l &byteStride,
+    OSPDeleterCallback freeFunction,
+    const void *userData)
     : ISPCDeviceObject(device),
       appSharedPtr((char *)sharedData),
       shared(true),
       type(type),
       numItems(numItems),
-      byteStride(byteStride)
+      byteStride(byteStride),
+      freeFunction(freeFunction),
+      userData(userData)
 {
   if (sharedData == nullptr) {
     throw std::runtime_error("OSPData: shared buffer is NULL");
@@ -60,6 +64,9 @@ Data::~Data()
       if (child)
         child->refDec();
     }
+  }
+  if (freeFunction) {
+    freeFunction(userData, appSharedPtr);
   }
 }
 

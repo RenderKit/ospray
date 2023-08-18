@@ -12,35 +12,39 @@ extern "C" {
 // OSPData helpers //////////////////////////////////////////////////////////
 
 OSPRAY_INTERFACE OSPData ospNewSharedData1D(
-    const void *sharedData, OSPDataType type, uint64_t numItems);
+    const void *sharedData, OSPDataType, uint64_t numItems);
 
-OSPRAY_INTERFACE OSPData ospNewSharedData1DStride(const void *sharedData,
-    OSPDataType type,
+OSPRAY_INTERFACE OSPData ospNewAssignedData1D(const void *sharedData,
+    OSPDataType,
     uint64_t numItems,
-    int64_t byteStride);
+    OSPDeleterCallback,
+    const void *userPtr);
+
+OSPRAY_INTERFACE OSPData ospNewSharedData1DStride(
+    const void *sharedData, OSPDataType, uint64_t numItems, int64_t byteStride);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData2D(const void *sharedData,
-    OSPDataType type,
+    OSPDataType,
     uint64_t numItems1,
     uint64_t numItems2);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData2DStride(const void *sharedData,
-    OSPDataType type,
+    OSPDataType,
     uint64_t numItems1,
     int64_t byteStride1,
     uint64_t numItems2,
     int64_t byteStride2);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData3D(const void *sharedData,
-    OSPDataType type,
+    OSPDataType,
     uint64_t numItems1,
     uint64_t numItems2,
     uint64_t numItems3);
 
-OSPRAY_INTERFACE OSPData ospNewData1D(OSPDataType type, uint64_t numItems);
+OSPRAY_INTERFACE OSPData ospNewData1D(OSPDataType, uint64_t numItems);
 
 OSPRAY_INTERFACE OSPData ospNewData2D(
-    OSPDataType type, uint64_t numItems1, uint64_t numItems2);
+    OSPDataType, uint64_t numItems1, uint64_t numItems2);
 
 OSPRAY_INTERFACE void ospCopyData1D(
     const OSPData source, OSPData destination, uint64_t destinationIndex);
@@ -76,7 +80,7 @@ OSPRAY_INTERFACE void ospSetVec4i(OSPObject, const char *n, int x, int y, int z,
 // Take 'obj' and put it in an opaque OSPData array with given element type, then set on 'target'
 OSPRAY_INTERFACE void ospSetObjectAsData(OSPObject target,
                                          const char *n,
-                                         OSPDataType type,
+                                         OSPDataType,
                                          OSPObject obj);
 // clang-format on
 

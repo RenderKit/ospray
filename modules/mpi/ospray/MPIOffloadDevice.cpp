@@ -508,12 +508,14 @@ box3f MPIOffloadDevice::getBounds(OSPObject _obj)
 OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
     OSPDataType format,
     const vec3ul &numItems,
-    const vec3l &byteStride)
+    const vec3l &byteStride,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr)
 {
   ObjectHandle handle = allocateHandle();
 
-  this->sharedData[handle.i64] =
-      ApplicationData(sharedData, format, numItems, byteStride);
+  this->sharedData[handle.i64] = ApplicationData(
+      sharedData, format, numItems, byteStride, freeFunction, userPtr);
 
   sendWork(
       [&](networking::WriteStream &writer) {
@@ -786,6 +788,7 @@ void MPIOffloadDevice::release(OSPObject _object)
           << " flushing pending sends";
       fabric->flushBcastSends();
     }
+    d->second.release();
     sharedData.erase(handle.i64);
   }
 }

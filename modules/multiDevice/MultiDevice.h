@@ -37,7 +37,9 @@ struct MultiDevice : public Device
   OSPData newSharedData(const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
-      const vec3l &byteStride) override;
+      const vec3l &byteStride,
+      OSPDeleterCallback,
+      const void *userPtr) override;
 
   OSPData newData(OSPDataType, const vec3ul &numItems) override;
 

@@ -3,7 +3,7 @@
 
 #include <rkcommon/memory/IntrusivePtr.h>
 #include <memory>
-#include "ospray/OSPEnums.h"
+#include "ospray/ospray.h"
 #include "rkcommon/math/vec.h"
 #include "rkcommon/utility/ArrayView.h"
 
@@ -25,6 +25,8 @@ struct ApplicationData
   OSPDataType type = OSP_UNKNOWN;
   vec3ul numItems = 0;
   vec3l byteStride = 0;
+  OSPDeleterCallback freeFunction = nullptr;
+  const void *userData = nullptr;
 
   bool releaseHazard = false;
 
@@ -33,7 +35,11 @@ struct ApplicationData
   ApplicationData(const void *sharedData,
       OSPDataType type,
       const vec3ul &numItems,
-      const vec3l &byteStride);
+      const vec3l &byteStride,
+      OSPDeleterCallback,
+      const void *userData);
+
+  void release();
 
   uint8_t *data(const vec3ul &idx) const;
 

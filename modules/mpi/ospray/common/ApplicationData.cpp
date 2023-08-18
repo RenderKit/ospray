@@ -14,8 +14,14 @@ namespace mpi {
 ApplicationData::ApplicationData(const void *appData,
     OSPDataType type,
     const vec3ul &nItems,
-    const vec3l &bStride)
-    : type(type), numItems(nItems), byteStride(bStride)
+    const vec3l &bStride,
+    OSPDeleterCallback freeFunction,
+    const void *userData)
+    : type(type),
+      numItems(nItems),
+      byteStride(bStride),
+      freeFunction(freeFunction),
+      userData(userData)
 {
   // compute strides if requested
   if (byteStride.x == 0)
@@ -28,6 +34,12 @@ ApplicationData::ApplicationData(const void *appData,
   sharedData = std::make_shared<utility::ArrayView<uint8_t>>(
       const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(appData)),
       byteStride.z * numItems.z);
+}
+
+void ApplicationData::release()
+{
+  if (freeFunction)
+    freeFunction(userData, sharedData->data());
 }
 
 bool ApplicationData::compact() const

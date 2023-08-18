@@ -43,6 +43,7 @@ add_executable(ospTestSuite
   test_geometry.cpp
   test_volumetric.cpp
   test_appearance.cpp
+  test_assigned_data.cpp
   test_light.cpp
   test_enums.cpp
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:test_glm_compat.cpp>

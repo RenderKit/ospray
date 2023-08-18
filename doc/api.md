@@ -404,7 +404,9 @@ application is to created a shared data array, which is done with
         uint64_t numItems2 = 1,
         int64_t byteStride2 = 0,
         uint64_t numItems3 = 1,
-        int64_t byteStride3 = 0);
+        int64_t byteStride3 = 0,
+        OSPDeleterCallback = NULL,
+        void *userData = NULL);
 
 The call returns an `OSPData` handle to the created array. The calling
 program guarantees that the `sharedData` pointer will remain valid for
@@ -419,6 +421,19 @@ ordered, i.e., `byteStride2` can be smaller than `byteStride1`, which is
 equivalent to a transpose. However, if the stride should be calculated,
 then an ordering in dimensions is assumed to disambiguate, i.e.,
 `byteStride1 < byteStride2 < byteStride3`.
+
+An application can pass ownership of shared data to OSPRay (for example,
+when it temporarily created a modified version of its data only to make
+it compatible with OSPRay) by providing a deleter function that OSPRay
+will call whenever the time comes to deallocate the shared buffer. The
+deleter function has the following signature:
+
+    typedef void (*OSPDeleterCallback)(const void *userData, const void *sharedData);
+
+where `sharedData` will receive the address of the buffer and `userData`
+will receive whatever additional state the function needs to perform the
+deletion (both provided to `ospNewSharedData` when sharing the data with
+OSPRay).
 
 The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table

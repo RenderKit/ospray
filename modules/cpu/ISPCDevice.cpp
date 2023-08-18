@@ -384,9 +384,12 @@ int ISPCDevice::loadModule(const char *name)
 OSPData ISPCDevice::newSharedData(const void *sharedData,
     OSPDataType type,
     const vec3ul &numItems,
-    const vec3l &byteStride)
+    const vec3l &byteStride,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr)
 {
-  return (OSPData) new Data(*this, sharedData, type, numItems, byteStride);
+  return (OSPData) new Data(
+      *this, sharedData, type, numItems, byteStride, freeFunction, userPtr);
 }
 
 OSPData ISPCDevice::newData(OSPDataType type, const vec3ul &numItems)

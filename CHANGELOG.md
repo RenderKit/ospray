@@ -18,6 +18,8 @@ Version History
     -   `gridSpacing` of spherical regular volume defaults to full
         sphere
     -   Remove deprecated parameters and API calls
+-   Add support for transferring ownership of temporary buffers:
+    `ospNewSharedData` accepts an optional deleter callback
 
 
 ### Changes in v2.12.0:

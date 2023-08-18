@@ -206,6 +206,10 @@ OSPRAY_INTERFACE OSPError ospLoadModule(const char *name);
 
 // OSPRay Data Arrays ///////////////////////////////////////////////////////
 
+// Memory deleter callback function type
+typedef void (*OSPDeleterCallback)(
+    const void *userData, const void *sharedData);
+
 OSPRAY_INTERFACE OSPData ospNewSharedData(const void *sharedData,
     OSPDataType,
     uint64_t numItems1,
@@ -213,7 +217,9 @@ OSPRAY_INTERFACE OSPData ospNewSharedData(const void *sharedData,
     uint64_t numItems2 OSP_DEFAULT_VAL(1),
     int64_t byteStride2 OSP_DEFAULT_VAL(0),
     uint64_t numItems3 OSP_DEFAULT_VAL(1),
-    int64_t byteStride3 OSP_DEFAULT_VAL(0));
+    int64_t byteStride3 OSP_DEFAULT_VAL(0),
+    OSPDeleterCallback OSP_DEFAULT_VAL(NULL),
+    const void *userPtr OSP_DEFAULT_VAL(NULL));
 
 OSPRAY_INTERFACE OSPData ospNewData(OSPDataType,
     uint64_t numItems1,

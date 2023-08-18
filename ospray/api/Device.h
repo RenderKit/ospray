@@ -48,7 +48,9 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
   virtual OSPData newSharedData(const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
-      const vec3l &byteStride) = 0;
+      const vec3l &byteStride,
+      OSPDeleterCallback,
+      const void *userPtr) = 0;
 
   virtual OSPData newData(OSPDataType, const vec3ul &numItems) = 0;
 

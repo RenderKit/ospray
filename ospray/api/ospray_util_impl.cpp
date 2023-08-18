@@ -14,6 +14,16 @@ OSPData ospNewSharedData1D(
   return ospNewSharedData(sharedData, type, numItems, 0, 1, 0, 1, 0);
 }
 
+OSPData ospNewAssignedData1D(const void *sharedData,
+    OSPDataType type,
+    uint64_t numItems,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr)
+{
+  return ospNewSharedData(
+      sharedData, type, numItems, 0, 1, 0, 1, 0, freeFunction, userPtr);
+}
+
 OSPData ospNewSharedData1DStride(const void *sharedData,
     OSPDataType type,
     uint64_t numItems,

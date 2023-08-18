@@ -36,7 +36,9 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
       const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
-      const vec3l &byteStride);
+      const vec3l &byteStride,
+      OSPDeleterCallback freeFunction = nullptr,
+      const void *userData = nullptr);
   Data(api::ISPCDevice &device, OSPDataType, const vec3ul &numItems);
 
   virtual ~Data() override;
@@ -93,6 +95,10 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
 
  private:
   void init(); // init dimensions and byteStride
+
+ protected:
+  OSPDeleterCallback freeFunction{nullptr};
+  const void *userData{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Data *, OSP_DATA);

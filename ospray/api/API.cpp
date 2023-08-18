@@ -336,13 +336,17 @@ extern "C" OSPData ospNewSharedData(const void *sharedData,
     uint64_t numItems2,
     int64_t byteStride2,
     uint64_t numItems3,
-    int64_t byteStride3) OSPRAY_CATCH_BEGIN
+    int64_t byteStride3,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPData data = currentDevice().newSharedData(sharedData,
       type,
       ospray::vec3ul(numItems1, numItems2, numItems3),
-      ospray::vec3l(byteStride1, byteStride2, byteStride3));
+      ospray::vec3l(byteStride1, byteStride2, byteStride3),
+      freeFunction,
+      userPtr);
   return data;
 }
 OSPRAY_CATCH_END(nullptr)

@@ -336,9 +336,12 @@ box3f MPIDistributedDevice::getBounds(OSPObject _obj)
 OSPData MPIDistributedDevice::newSharedData(const void *sharedData,
     OSPDataType type,
     const vec3ul &numItems,
-    const vec3l &byteStride)
+    const vec3l &byteStride,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr)
 {
-  return internalDevice->newSharedData(sharedData, type, numItems, byteStride);
+  return internalDevice->newSharedData(
+      sharedData, type, numItems, byteStride, freeFunction, userPtr);
 }
 
 OSPData MPIDistributedDevice::newData(OSPDataType type, const vec3ul &numItems)
