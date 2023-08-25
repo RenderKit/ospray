@@ -353,6 +353,12 @@ static void DebugRenderer_volume(Renderer *uniform self,
       }
     }
   }
+#else
+  (void)self;
+  (void)fb;
+  (void)world;
+  (void)sample;
+  (void)ffh;
 #endif
 }
 

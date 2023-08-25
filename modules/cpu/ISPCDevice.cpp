@@ -442,6 +442,7 @@ OSPVolume ISPCDevice::newVolume(const char *type)
 #ifdef OSPRAY_ENABLE_VOLUMES
   return (OSPVolume) new Volume(*this, type);
 #else
+  (void)type;
   return (OSPVolume) nullptr;
 #endif
 }
@@ -460,6 +461,7 @@ OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
   auto *model = new VolumetricModel(*this, volume);
   return (OSPVolumetricModel)model;
 #else
+  (void)_volume;
   return (OSPVolumetricModel) nullptr;
 #endif
 }
@@ -478,6 +480,7 @@ OSPTransferFunction ISPCDevice::newTransferFunction(const char *type)
 #ifdef OSPRAY_ENABLE_VOLUMES
   return (OSPTransferFunction)TransferFunction::createInstance(type, *this);
 #else
+  (void)type;
   return (OSPTransferFunction) nullptr;
 #endif
 }

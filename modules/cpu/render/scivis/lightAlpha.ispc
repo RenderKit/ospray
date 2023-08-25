@@ -27,9 +27,8 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
   vec3f alpha = make_vec3f(1.f);
   const float org_t_max = ray.t;
 
-  const uniform FeatureFlags ff = getFeatureFlags(ffh);
-
 #ifdef OSPRAY_ENABLE_VOLUMES
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
 #ifdef OSPRAY_TARGET_SYCL
   // We only support a single volume interval on the GPU
   VolumeInterval vInterval;
@@ -77,6 +76,9 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
         alpha = alpha * make_vec3f(1.f - volumeColor.w);
       }
     }
+#else
+    (void)ldSampler;
+    (void)quality;
 #endif
 
     // If any geometry has been hit
