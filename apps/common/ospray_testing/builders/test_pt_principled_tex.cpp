@@ -6,10 +6,10 @@
 namespace ospray {
 namespace testing {
 
-struct PtTexMaterial : public PtTex
+struct PtPrincipledTex : public PtTex
 {
-  PtTexMaterial() = default;
-  ~PtTexMaterial() override = default;
+  PtPrincipledTex() = default;
+  ~PtPrincipledTex() override = default;
 
   std::vector<cpp::Material> buildMaterials(
       const cpp::Texture &texR, const cpp::Texture &texRGBA) const override;
@@ -17,7 +17,7 @@ struct PtTexMaterial : public PtTex
 
 // Inlined definitions ////////////////////////////////////////////////////
 
-std::vector<cpp::Material> PtTexMaterial::buildMaterials(
+std::vector<cpp::Material> PtPrincipledTex::buildMaterials(
     const cpp::Texture &texR, const cpp::Texture &texRGBA) const
 {
   std::vector<cpp::Material> materials;
@@ -141,69 +141,14 @@ std::vector<cpp::Material> PtTexMaterial::buildMaterials(
     setTexture<float>(materials.back(), "backlight", texR, 2.f);
   }
 
-  // carPaint
-  {
-    // roughness
-    materials.push_back(cpp::Material("carPaint"));
-    materials.back().setParam("baseColor", vec3f(0.0177f, 0.189f, 0.590f));
-    setTexture<float>(materials.back(), "roughness", texR);
-
-    // flakeDensity
-    materials.push_back(cpp::Material("carPaint"));
-    materials.back().setParam("baseColor", vec3f(0.0177f, 0.189f, 0.590f));
-    materials.back().setParam("flakeColor", vec3f(0.277f, 0.717f, 0.990f));
-    materials.back().setParam("flakeScale", 2000.f);
-    setTexture<float>(materials.back(), "flakeDensity", texR);
-
-    // flakeRoughness
-    materials.push_back(cpp::Material("carPaint"));
-    materials.back().setParam("baseColor", vec3f(0.0177f, 0.189f, 0.590f));
-    materials.back().setParam("flakeDensity", 1.f);
-    materials.back().setParam("flakeColor", vec3f(0.277f, 0.717f, 0.990f));
-    materials.back().setParam("flakeScale", 2000.f);
-    setTexture<float>(materials.back(), "flakeRoughness", texR);
-
-    // coat
-    materials.push_back(cpp::Material("carPaint"));
-    materials.back().setParam("baseColor", vec3f(0.0177f, 0.189f, 0.590f));
-    setTexture<float>(materials.back(), "coat", texR);
-
-    // coatRoughness
-    materials.push_back(cpp::Material("carPaint"));
-    materials.back().setParam("baseColor", vec3f(0.0177f, 0.189f, 0.590f));
-    setTexture<float>(materials.back(), "coatRoughness", texR);
-  }
-
-  // obj & metal
-  {
-    // kd
-    materials.push_back(cpp::Material("obj"));
-    setTexture<vec3f>(materials.back(), "kd", texRGBA);
-
-    // ks
-    materials.push_back(cpp::Material("obj"));
-    setTexture<vec3f>(materials.back(), "ks", texRGBA);
-
-    // ns
-    materials.push_back(cpp::Material("obj"));
-    materials.back().setParam("ks", vec3f(1.f));
-    setTexture<float>(materials.back(), "ns", texR);
-
-    // d
-    materials.push_back(cpp::Material("obj"));
-    setTexture<float>(materials.back(), "d", texR);
-
-    // roughness
-    materials.push_back(cpp::Material("metal"));
-    materials.back().setParam("eta", vec3f(0.051, 0.043, 0.041));
-    materials.back().setParam("k", vec3f(5.3f, 3.6f, 2.3f));
-    setTexture<float>(materials.back(), "roughness", texR);
-  }
+  materials.push_back(cpp::Material("principled"));
+  materials.back().setParam("baseColor", vec3f(1.f, 0.8f, 0.7f));
+  setTexture<vec3f>(materials.back(), "emissiveColor", texRGBA);
 
   return materials;
 }
 
-OSP_REGISTER_TESTING_BUILDER(PtTexMaterial, test_pt_tex_material);
+OSP_REGISTER_TESTING_BUILDER(PtPrincipledTex, test_pt_principled_tex);
 
 } // namespace testing
 } // namespace ospray

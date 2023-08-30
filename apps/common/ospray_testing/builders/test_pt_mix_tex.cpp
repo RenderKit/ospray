@@ -6,10 +6,10 @@
 namespace ospray {
 namespace testing {
 
-struct PtTexMix : public PtTex
+struct PtMixTex : public PtTex
 {
-  PtTexMix() = default;
-  ~PtTexMix() override = default;
+  PtMixTex() = default;
+  ~PtMixTex() override = default;
 
   std::vector<cpp::Material> buildMaterials(
       const cpp::Texture &texR, const cpp::Texture &texRGBA) const override;
@@ -17,7 +17,7 @@ struct PtTexMix : public PtTex
 
 // Inlined definitions ////////////////////////////////////////////////////
 
-std::vector<cpp::Material> PtTexMix::buildMaterials(
+std::vector<cpp::Material> PtMixTex::buildMaterials(
     const cpp::Texture &texR, const cpp::Texture &) const
 {
   std::vector<cpp::Material> materials;
@@ -83,7 +83,7 @@ std::vector<cpp::Material> PtTexMix::buildMaterials(
   return materials;
 }
 
-OSP_REGISTER_TESTING_BUILDER(PtTexMix, test_pt_tex_mix);
+OSP_REGISTER_TESTING_BUILDER(PtMixTex, test_pt_mix_tex);
 
 } // namespace testing
 } // namespace ospray

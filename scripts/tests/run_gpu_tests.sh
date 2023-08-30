@@ -79,8 +79,8 @@ test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/25"
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/26"
 # Variance termination is not quite right
 test_filters+=":TestScenesVariance/FromOsprayTestingVariance.testScenes/0"
-# 'mix' material not supported on GPU (difficult to implement without fn ptr)
-test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/13"
+# 'mix' material not supported on GPU (not practical to implement without fn ptr)
+test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/8"
 # Crashing FIXME
 test_filters+=":Primitive/IDBuffer.*"
 

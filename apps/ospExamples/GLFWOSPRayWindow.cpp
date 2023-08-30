@@ -63,15 +63,16 @@ static const std::vector<std::string> g_scenes = {"boxes_lit",
     "test_pt_glass",
     "test_pt_thinglass",
     "test_pt_luminous",
+    "test_pt_material_tex",
     "test_pt_metal_roughness",
     "test_pt_metallic_flakes",
+    "test_pt_mix_tex",
     "test_pt_obj",
     "test_pt_plastic",
     "test_pt_principled_metal",
     "test_pt_principled_plastic",
     "test_pt_principled_glass",
-    "test_pt_tex_material",
-    "test_pt_tex_mix",
+    "test_pt_principled_tex",
     "test_pt_velvet"};
 
 static const std::vector<std::string> g_curveVariant = {
