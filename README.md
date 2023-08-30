@@ -1,5 +1,5 @@
 ".$_-0/build.js"
-`"OSPRay
+`"# OSPRay
 ======
 
 This is release v2.12.0 of Intel® OSPRay. For changes and new features
