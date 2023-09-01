@@ -265,28 +265,6 @@ extern "C" void ospDeviceSetErrorCallback(OSPDevice _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSetStatusFunc(
-    OSPDevice _object, OSPStatusFunc legacyCallback) OSPRAY_CATCH_BEGIN
-{
-  ospDeviceSetStatusCallback(
-      _object,
-      [](void *fcn, const char *msg) { ((OSPStatusFunc)fcn)(msg); },
-      &legacyCallback);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospDeviceSetErrorFunc(
-    OSPDevice _object, OSPErrorFunc legacyCallback) OSPRAY_CATCH_BEGIN
-{
-  ospDeviceSetErrorCallback(
-      _object,
-      [](void *fcn, OSPError e, const char *msg) {
-        ((OSPErrorFunc)fcn)(e, msg);
-      },
-      &legacyCallback);
-}
-OSPRAY_CATCH_END()
-
 extern "C" OSPError ospDeviceGetLastErrorCode(
     OSPDevice _object) OSPRAY_CATCH_BEGIN
 {

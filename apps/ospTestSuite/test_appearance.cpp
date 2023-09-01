@@ -416,7 +416,7 @@ void PTBackgroundRefraction::SetUp()
 
   cpp::Light light("sunSky");
   light.setParam("turbidity", 8.0f);
-  light.setParam("intensity", 0.2f);
+  light.setParam("intensity", 0.005f);
   AddLight(light);
   cpp::Light mirrorlight("sunSky");
   mirrorlight.setParam("up", vec3f(0.0f, -1.0f, 0.0f));

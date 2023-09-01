@@ -46,21 +46,10 @@ std::string Isosurfaces::toString() const
 void Isosurfaces::commit()
 {
   isovaluesData = getParamDataT<float>("isovalue", true, true);
-  model = nullptr;
 
   volume = dynamic_cast<Volume *>(getParamObject("volume"));
-  if (!volume) {
-    model = dynamic_cast<VolumetricModel *>(getParamObject("volume"));
-    if (!model) {
-      throw std::runtime_error(
-          "the 'volume' parameter must be set for isosurfaces");
-    }
-    postStatusMsg(
-        "ospray::Isosurfaces deprecated parameter use. Isosurfaces "
-        "will begin taking an OSPVolume directly, with appearance set through "
-        "the GeometricModel instead.",
-        OSP_LOG_DEBUG);
-  }
+  if (!volume)
+    throw std::runtime_error(toString() + "must have 'volume'");
 
   if (!isovaluesData->compact()) {
     // get rid of stride
@@ -75,9 +64,7 @@ void Isosurfaces::commit()
     vklRelease(vklHitContext);
   }
 
-  vklHitContext = (volume)
-      ? vklNewHitIteratorContext(volume->vklSampler)
-      : vklNewHitIteratorContext(model->getVolume()->vklSampler);
+  vklHitContext = vklNewHitIteratorContext(volume->vklSampler);
 
   if (isovaluesData->size() > 0) {
     VKLData valuesData = vklNewData(getISPCDevice().getVklDevice(),
@@ -92,8 +79,7 @@ void Isosurfaces::commit()
 
   createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Isosurfaces_bounds);
   getSh()->isovalues = isovaluesData->data();
-  getSh()->volumetricModel = model ? model->getSh() : nullptr;
-  getSh()->volume = volume ? volume->getSh() : nullptr;
+  getSh()->volume = volume->getSh();
   getSh()->super.numPrimitives = numPrimitives();
   getSh()->vklHitContext = vklHitContext;
 

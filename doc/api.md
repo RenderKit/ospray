@@ -3334,16 +3334,18 @@ participate in rendering.
   : Parameters specific to the distributed `OSPWorld`.
 
 
-  ------ ----------- ---------  ------------------------------------------------
-  Type   Name          Default  Description
-  ------ ----------- ---------  ------------------------------------------------
-  int    aoSamples           0  The number of AO samples to take per-pixel
+  ------ ------------------- ---------  ------------------------------------------------
+  Type   Name                  Default  Description
+  ------ ------------------- ---------  ------------------------------------------------
+  int    aoSamples                   0  The number of AO samples to take per-pixel
 
-  float  aoDistance     10^20^  The AO ray length to use. Note that if the AO
-                                ray would have crossed a rank boundary and ghost
-                                geometry is not available, there will be visible
-                                artifacts in the shading
-  ------ ----------- ---------  ------------------------------------------------
+  float  aoDistance             10^20^  The AO ray length to use. Note that if the AO
+                                        ray would have crossed a rank boundary and ghost
+                                        geometry is not available, there will be visible
+                                        artifacts in the shading
+
+  float  volumeSamplingRate          1  sampling rate for volumes
+  ------ ------------------- ---------  ------------------------------------------------
   : Parameters specific to the `mpiRaycast` renderer.
 
 ### Image Parallel Rendering in the MPI Distributed Device

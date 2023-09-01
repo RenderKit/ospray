@@ -17,9 +17,7 @@ struct TextureVolume
 {
   Texture super;
 
-  const Volume *volume; // instanced Volume
-
-  // Color and opacity transfer function.
+  const Volume *volume;
   const TransferFunction *transferFunction;
 
 #ifdef __cplusplus

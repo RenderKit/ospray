@@ -157,14 +157,7 @@ utility::Optional<affine2f> Material::getTextureTransform2f(
       getOptParam<linear2f>((texname + "transform").c_str());
   if (transf.has_value())
     xform = xform.value_or(affine2f(one)) * affine2f(transf.value());
-  const utility::Optional<vec4f> transf4 = // legacy / backwards compatible
-      getOptParam<vec4f>((texname + "transform").c_str());
-  if (transf4.has_value()) {
-    const linear2f transform = (const linear2f &)transf4.value();
-    xform = xform.value_or(affine2f(one)) * affine2f(transform);
-  }
 
-  // Return optional transformation
   return xform;
 }
 

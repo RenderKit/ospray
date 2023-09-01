@@ -85,7 +85,7 @@ void SunSkyLight::commit()
       clamp(getParam<float>("horizonExtension", 0.01f), 0.0f, 1.f);
   const float sunTheta = dot(up, direction);
 
-  queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_RADIANCE);
+  queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_SCALE);
   processIntensityQuantityType();
 
   frame.vz = up;
@@ -193,9 +193,6 @@ void SunSkyLight::processIntensityQuantityType()
   if (intensityQuantity == OSP_INTENSITY_QUANTITY_SCALE) {
     coloredIntensity = getParam<vec3f>("color", vec3f(1.f));
     intensityScale = getParam<float>("intensity", 0.025f);
-  } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_RADIANCE) {
-    coloredIntensity = getParam<vec3f>("color", vec3f(1.f));
-    intensityScale = 0.025f * getParam<float>("intensity", 1.0f);
   } else {
     postStatusMsg(OSP_LOG_WARNING)
         << toString() << " unsupported 'intensityQuantity' value";

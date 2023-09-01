@@ -116,8 +116,7 @@ void HDRILight::commit()
 void HDRILight::processIntensityQuantityType()
 {
   // validate the correctness of the light quantity type
-  if (intensityQuantity != OSP_INTENSITY_QUANTITY_SCALE
-      && intensityQuantity != OSP_INTENSITY_QUANTITY_RADIANCE) {
+  if (intensityQuantity != OSP_INTENSITY_QUANTITY_SCALE) {
     postStatusMsg(OSP_LOG_WARNING)
         << toString() << " unsupported 'intensityQuantity' value";
     coloredIntensity = vec3f(0.0f);

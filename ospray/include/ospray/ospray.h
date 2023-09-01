@@ -187,14 +187,6 @@ typedef void (*OSPErrorCallback)(
 OSPRAY_INTERFACE void ospDeviceSetErrorCallback(
     OSPDevice, OSPErrorCallback, void *userData);
 
-// deprecated callback prototypes and setters
-typedef void (*OSPStatusFunc)(const char *messageText);
-OSPRAY_INTERFACE OSP_DEPRECATED void ospDeviceSetStatusFunc(
-    OSPDevice, OSPStatusFunc);
-typedef void (*OSPErrorFunc)(OSPError, const char *errorDetails);
-OSPRAY_INTERFACE OSP_DEPRECATED void ospDeviceSetErrorFunc(
-    OSPDevice, OSPErrorFunc);
-
 // Get the OSPError code for the last error that has occurred on the device
 OSPRAY_INTERFACE OSPError ospDeviceGetLastErrorCode(OSPDevice);
 

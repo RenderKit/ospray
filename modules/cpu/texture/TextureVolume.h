@@ -6,7 +6,6 @@
 
 #include "Texture.h"
 #include "volume/Volume.h"
-#include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
 // ispc shared
 #include "TextureVolumeShared.h"
@@ -28,9 +27,6 @@ struct OSPRAY_SDK_INTERFACE TextureVolume
  private:
   Ref<Volume> volume;
   Ref<TransferFunction> transferFunction;
-
-  // Deprecated interface.
-  Ref<VolumetricModel> volumetricModel;
 };
 
 } // namespace ospray
