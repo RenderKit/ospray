@@ -14,7 +14,7 @@ namespace ospray {
 
 // Material definitions ///////////////////////////////////////////////////////
 
-Ref<MicrofacetAlbedoTables> Material::microfacetAlbedoTables = nullptr;
+Ref<MicrofacetAlbedoTables> Material::microfacetAlbedoTables;
 
 Material::Material(api::ISPCDevice &device, const FeatureFlagsOther ffo)
     : AddStructShared(device.getIspcrtContext(), device), featureFlags(ffo)
@@ -65,7 +65,7 @@ void Material::commit() {}
 ispc::TextureParam Material::getTextureParam(const char *texture_name)
 {
   // Get texture pointer
-  Texture *ptr = (Texture *)getParamObject(texture_name);
+  Texture *ptr = getParamObject<Texture>(texture_name);
   if (ptr)
     featureFlags |= FFO_TEXTURE_IN_MATERIAL;
 

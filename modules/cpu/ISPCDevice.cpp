@@ -526,7 +526,7 @@ void ISPCDevice::setObjectParam(
 void ISPCDevice::removeObjectParam(OSPObject _object, const char *name)
 {
   ManagedObject *object = (ManagedObject *)_object;
-  ManagedObject *existing = object->getParam<ManagedObject *>(name, nullptr);
+  ManagedObject *existing = object->getParamObject<ManagedObject>(name);
   if (existing)
     existing->refDec();
   object->removeParam(name);

@@ -14,17 +14,6 @@
 //////////////////////////////////////////////////////////////////////////////
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// sample function used when no environment map is given: black
-Light_SampleRes HDRILight_sample_dummy(const Light *uniform,
-    const DifferentialGeometry &,
-    const vec2f &,
-    const float)
-{
-  Light_SampleRes res;
-  memset(&res, 0, sizeof(Light_SampleRes));
-  return res;
-}
-
 inline Light_SampleRes Sample(const HDRILight *uniform self,
     const uniform linear3f &light2world,
     const vec2f &s)
@@ -202,11 +191,6 @@ task
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
-
-export void *uniform HDRILight_sample_dummy_addr()
-{
-  return (void *uniform)HDRILight_sample_dummy;
-}
 
 export void *uniform HDRILight_sample_addr()
 {

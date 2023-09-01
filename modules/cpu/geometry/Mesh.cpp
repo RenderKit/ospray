@@ -90,10 +90,10 @@ void Mesh::commit()
     }
   }
 
-  colorData = getParam<Data *>("color");
+  colorData = getParamObject<Data>("color");
   bool isColorFaceVarying = true;
   if (!colorData) {
-    colorData = getParam<Data *>("vertex.color");
+    colorData = getParamObject<Data>("vertex.color");
     isColorFaceVarying = false;
   }
   bool isTexcoordFaceVarying = true;

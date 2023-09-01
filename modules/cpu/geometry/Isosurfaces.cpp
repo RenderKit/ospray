@@ -47,7 +47,7 @@ void Isosurfaces::commit()
 {
   isovaluesData = getParamDataT<float>("isovalue", true, true);
 
-  volume = dynamic_cast<Volume *>(getParamObject("volume"));
+  volume = getParamObject<Volume>("volume");
   if (!volume)
     throw std::runtime_error(toString() + "must have 'volume'");
 

@@ -16,12 +16,11 @@ std::string TextureVolume::toString() const
 
 void TextureVolume::commit()
 {
-  volume = dynamic_cast<Volume *>(getParamObject("volume"));
+  volume = getParamObject<Volume>("volume");
   if (!volume)
     throw std::runtime_error(toString() + " must have 'volume' object");
 
-  auto *transferFunction =
-      (TransferFunction *)getParamObject("transferFunction", nullptr);
+  transferFunction = getParamObject<TransferFunction>("transferFunction");
   if (!transferFunction)
     throw std::runtime_error(toString() + " must have 'transferFunction'");
 

@@ -47,8 +47,8 @@ void Renderer::commit()
   const float minContribution = getParam<float>("minContribution", 0.001f);
   errorThreshold = getParam<float>("varianceThreshold", 0.f);
 
-  maxDepthTexture = (Texture2D *)getParamObject("map_maxDepth");
-  backplate = (Texture2D *)getParamObject("map_backplate");
+  maxDepthTexture = getParamObject<Texture2D>("map_maxDepth");
+  backplate = getParamObject<Texture2D>("map_backplate");
   featureFlags.reset();
   if (maxDepthTexture || backplate)
     featureFlags.other |= FFO_TEXTURE_IN_RENDERER;

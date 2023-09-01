@@ -27,7 +27,7 @@ struct OSPRAY_SDK_INTERFACE LUTPixelFilter
       ispc::LUTPixelFilterType lutFilterType,
       api::ISPCDevice &device);
 
-  Ref<Distribution2D> distribution = nullptr;
+  Ref<Distribution2D> distribution;
 };
 
 struct OSPRAY_SDK_INTERFACE PointPixelFilter : public PixelFilter

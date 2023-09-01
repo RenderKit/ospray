@@ -11,6 +11,7 @@
 #if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
 #endif
+#include "transferFunction/TransferFunction.h"
 // ispc shared
 #include "volume/VolumetricModelShared.h"
 
@@ -36,6 +37,7 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
  private:
   box3f volumeBounds;
   Ref<Volume> volume;
+  Ref<TransferFunction> transferFunction;
   const Ref<Volume> volumeAPI;
   VKLIntervalIteratorContext vklIntervalContext = VKLIntervalIteratorContext();
 

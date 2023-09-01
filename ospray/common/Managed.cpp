@@ -40,12 +40,6 @@ box3f ManagedObject::getBounds() const
   return box3f(empty);
 }
 
-ManagedObject *ManagedObject::getParamObject(
-    const char *name, ManagedObject *valIfNotFound)
-{
-  return getParam<ManagedObject *>(name, valIfNotFound);
-}
-
 OSPTYPEFOR_DEFINITION(ManagedObject *);
 
 } // namespace ospray

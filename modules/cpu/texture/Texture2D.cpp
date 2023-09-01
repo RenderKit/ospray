@@ -51,7 +51,7 @@ std::string Texture2D::toString() const
 
 void Texture2D::commit()
 {
-  texData = getParam<Data *>("data");
+  texData = getParamObject<Data>("data");
 
   if (!texData || texData->numItems.z > 1) {
     throw std::runtime_error(toString()

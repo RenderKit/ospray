@@ -9,8 +9,6 @@
 
 namespace ospray {
 
-/*! a SpotLight is a singular light emitting from a point uniformly into a
- *  cone of directions bounded by halfAngle */
 struct OSPRAY_SDK_INTERFACE HDRILight : public Light
 {
   HDRILight(api::ISPCDevice &device) : Light(device, FFO_LIGHT_HDRI) {}
@@ -23,8 +21,8 @@ struct OSPRAY_SDK_INTERFACE HDRILight : public Light
   void processIntensityQuantityType();
 
   linear3f frame{one}; // light orientation
-  Texture2D *map{nullptr}; //!< environment map in latitude / longitude format
-  Ref<Distribution2D> distribution = nullptr;
+  Ref<Texture2D> map;
+  Ref<Distribution2D> distribution;
 };
 
 } // namespace ospray
