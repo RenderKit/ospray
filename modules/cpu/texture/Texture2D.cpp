@@ -71,9 +71,9 @@ void Texture2D::commit()
   }
 
   format = static_cast<OSPTextureFormat>(
-      getParam<int>("format", OSP_TEXTURE_FORMAT_INVALID));
+      getParam<uint32_t>("format", OSP_TEXTURE_FORMAT_INVALID));
   filter = static_cast<OSPTextureFilter>(
-      getParam<int>("filter", OSP_TEXTURE_FILTER_BILINEAR));
+      getParam<uint32_t>("filter", OSP_TEXTURE_FILTER_BILINEAR));
 
   if (format == OSP_TEXTURE_FORMAT_INVALID)
     throw std::runtime_error(toString() + ": invalid 'format'");

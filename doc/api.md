@@ -104,7 +104,7 @@ exactly the same as `ospSetParam`, which is documented below in the
   ------ ------------ ----------------------------------------------------------
   int    numThreads   number of threads which OSPRay should use
 
-  int    logLevel     logging level; valid values (in order of severity) are
+  uint   logLevel     logging level; valid values (in order of severity) are
                       `OSP_LOG_NONE`, `OSP_LOG_ERROR`, `OSP_LOG_WARNING`,
                       `OSP_LOG_INFO`, and `OSP_LOG_DEBUG`
 
@@ -599,7 +599,7 @@ table below.
                                                         and
                                                         `OSP_VOLUME_FILTER_CUBIC`
 
-  int     gradientFilter              same as `filter`  filter used during
+  uint    gradientFilter              same as `filter`  filter used during
                                                         gradient computations
 
   float   background                             `NaN`  value that is used when
@@ -647,7 +647,7 @@ summarized below.
                                                         also allowed is
                                                         `OSP_VOLUME_FILTER_NEAREST`
 
-  int     gradientFilter              same as `filter`  filter used during
+  uint    gradientFilter              same as `filter`  filter used during
                                                         gradient computations
 
   float   background                             `NaN`  value that is used when
@@ -693,7 +693,7 @@ Note that cell widths are defined _per refinement level_, not per block.
   -------------- --------------- -----------------  -----------------------------------
   Type           Name                      Default  Description
   -------------- --------------- -----------------  -----------------------------------
-  `OSPAMRMethod` method          `OSP_AMR_CURRENT`  `OSPAMRMethod` sampling method.
+  uint           method          `OSP_AMR_CURRENT`  `OSPAMRMethod` sampling method.
                                                     Supported methods are:
 
                                                     `OSP_AMR_CURRENT`
@@ -924,7 +924,7 @@ VDB volumes have the following parameters:
                                `OSP_VOLUME_FILTER_NEAREST`, or
                                `OSP_VOLUME_FILTER_CUBIC`.
 
-  int        gradientFilter    filter used for reconstructing the field during
+  uint       gradientFilter    filter used for reconstructing the field during
                                gradient computations, default same as `filter`
 
   float      background        value that is used when sampling an undefined
@@ -1166,7 +1166,7 @@ the following parameters:
 
   float[] vertexCrease.weight optional [data] array of vertex crease weights
 
-  uchar   mode                subdivision edge boundary mode, supported modes
+  uint    mode                `OSPSubdivisionMode` subdivision edge boundary mode, supported modes
                               are:
 
                               `OSP_SUBDIVISION_NO_BOUNDARY`
@@ -1238,7 +1238,7 @@ this geometry are listed in the table below.
   uint32[]           index                  [data] array of indices to the first vertex
                                             or tangent of a curve segment
 
-  uchar              type                   `OSPCurveType` for rendering the curve.
+  uint               type                   `OSPCurveType` for rendering the curve.
                                             Supported types are:
 
                                             `OSP_FLAT`
@@ -1249,7 +1249,7 @@ this geometry are listed in the table below.
 
                                             `OSP_DISJOINT`
 
-  uchar              basis                  `OSPCurveBasis` for defining the curve.
+  uint               basis                  `OSPCurveBasis` for defining the curve.
                                              Supported bases are:
 
                                             `OSP_LINEAR`
@@ -1446,7 +1446,7 @@ All light sources accept the following parameters:
 
   float     intensity                 1  intensity of the light (a factor)
 
-  uchar     intensityQuantity            `OSPIntensityQuantity` to set the radiometric
+  uint      intensityQuantity            `OSPIntensityQuantity` to set the radiometric
                                          quantity represented by `intensity`. The
                                          default value depends on the light source.
 
@@ -1960,7 +1960,7 @@ General parameters of all renderers are
                                                              which can be indexed by a
                                                              [GeometricModel]'s `material` parameter
 
-  uchar          pixelFilter        `OSP_PIXELFILTER_GAUSS`  `OSPPixelFilterType` to select the pixel
+  uint           pixelFilter        `OSP_PIXELFILTER_GAUSS`  `OSPPixelFilterType` to select the pixel
                                                              filter used by the renderer for
                                                              antialiasing. Possible pixel filters
                                                              are listed below.
@@ -2562,8 +2562,8 @@ its parameters are as follows
 
   Type    Name         Description
   ------- ------------ ----------------------------------
-  int     format       `OSPTextureFormat` for the texture
-  int     filter       default `OSP_TEXTURE_FILTER_BILINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
+  uint    format       `OSPTextureFormat` for the texture
+  uint    filter       default `OSP_TEXTURE_FILTER_BILINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
   OSPData data         the actual texel 2D [data]
   ------- ------------ ----------------------------------
   : Parameters of `texture2d` texture type.
@@ -2705,7 +2705,7 @@ All cameras accept these parameters:
   box1f       shutter                            [0.5, 0.5]  start and end of shutter time (for motion
                                                              blur), in [0, 1]
 
-  uchar       shutterType              `OSP_SHUTTER_GLOBAL`  `OSPShutterType` for motion blur, also
+  uint        shutterType              `OSP_SHUTTER_GLOBAL`  `OSPShutterType` for motion blur, also
                                                              allowed are:
 
                                                              `OSP_SHUTTER_ROLLING_RIGHT`
@@ -2767,7 +2767,7 @@ supports the special parameters listed in the table below.
   bool  architectural                       false  vertical edges are projected to be
                                                    parallel
 
-  uchar stereoMode              `OSP_STEREO_NONE`  `OSPStereoMode` for stereo rendering,
+  uint  stereoMode              `OSP_STEREO_NONE`  `OSPStereoMode` for stereo rendering,
                                                    also allowed are:
 
                                                    `OSP_STEREO_LEFT`
@@ -2843,7 +2843,7 @@ by using the [general parameters](#cameras) understood by all cameras.
   ----- ---------------------- -----------------------------------------
   Type  Name                   Description
   ----- ---------------------- -----------------------------------------
-  uchar stereoMode             `OSPStereoMode` for stereo rendering,
+  uint  stereoMode             `OSPStereoMode` for stereo rendering,
                                possible values are:
 
                                `OSP_STEREO_NONE` (default)

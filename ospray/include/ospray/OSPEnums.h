@@ -277,7 +277,7 @@ typedef enum
 // OSPRay camera stereo image modes
 typedef enum
 #if __cplusplus >= 201103L
-    : uint8_t
+    : uint32_t
 #endif
 {
   OSP_STEREO_NONE,
@@ -290,7 +290,7 @@ typedef enum
 
 typedef enum
 #if __cplusplus >= 201103L
-    : uint8_t
+    : uint32_t
 #endif
 {
   OSP_SHUTTER_GLOBAL,
@@ -303,7 +303,7 @@ typedef enum
 
 typedef enum
 #if __cplusplus >= 201103L
-    : uint8_t
+    : uint32_t
 #endif
 {
   OSP_ROUND,
@@ -315,7 +315,7 @@ typedef enum
 
 typedef enum
 #if __cplusplus >= 201103L
-    : uint8_t
+    : uint32_t
 #endif
 {
   OSP_LINEAR,
@@ -328,7 +328,7 @@ typedef enum
 
 typedef enum
 #if __cplusplus >= 201103L
-    : uint8_t
+    : uint32_t
 #endif
 {
   OSP_SUBDIVISION_NO_BOUNDARY,
@@ -341,7 +341,7 @@ typedef enum
 // AMR Volume rendering methods
 typedef enum
 #if __cplusplus >= 201103L
-    : uint8_t
+    : uint32_t
 #endif
 {
   OSP_AMR_CURRENT,
@@ -373,7 +373,7 @@ typedef enum
 // OSPRay pixel filter types
 typedef enum
 #if __cplusplus >= 201103L
-    : uint8_t
+    : uint32_t
 #endif
 {
   OSP_PIXELFILTER_POINT,
@@ -381,12 +381,12 @@ typedef enum
   OSP_PIXELFILTER_GAUSS,
   OSP_PIXELFILTER_MITCHELL,
   OSP_PIXELFILTER_BLACKMAN_HARRIS
-} OSPPixelFilterTypes;
+} OSPPixelFilterType;
 
 // OSPRay light quantity types
 typedef enum
 #if __cplusplus >= 201103L
-    : uint8_t
+    : uint32_t
 #endif
 {
   OSP_INTENSITY_QUANTITY_RADIANCE, // unit W/sr/m^2

@@ -8,8 +8,9 @@ namespace OSPRayTestScenes {
 // Test all texture image formats (and filter modes)
 class Texture2D
     : public Base,
-      public ::testing::TestWithParam<
-          std::tuple<int /*filter*/, bool /*lightset*/, bool /*use texcoords*/>>
+      public ::testing::TestWithParam<std::tuple<OSPTextureFilter /*filter*/,
+          bool /*lightset*/,
+          bool /*use texcoords*/>>
 {
  public:
   Texture2D();

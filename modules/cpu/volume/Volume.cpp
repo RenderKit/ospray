@@ -129,6 +129,8 @@ void Volume::handleParams()
       vklSetFloat(vklVolume, param.name.c_str(), param.data.get<float>());
     } else if (param.data.is<int>()) {
       vklSetInt(vklVolume, param.name.c_str(), param.data.get<int>());
+    } else if (param.data.is<uint32_t>()) {
+      vklSetInt(vklVolume, param.name.c_str(), param.data.get<uint32_t>());
     } else if (param.data.is<vec3f>()) {
       vklSetVec3f(vklVolume,
           param.name.c_str(),

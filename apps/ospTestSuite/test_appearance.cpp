@@ -21,7 +21,7 @@ void Texture2D::SetUp()
   camera.setParam("imageStart", vec2f(1.f, 1.f));
   camera.setParam("imageEnd", vec2f(0.f, 0.f));
   auto params = GetParam();
-  int filter = std::get<0>(params);
+  OSPTextureFilter filter = std::get<0>(params);
 
   // create (4*2) x 4 grid
   constexpr int cols = 8;

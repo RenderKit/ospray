@@ -71,7 +71,7 @@ void Device::commit()
 
   apiTraceEnabled = traceAPI;
 
-  logLevel = getParam<int>("logLevel", OSP_LOG_NONE);
+  logLevel = (OSPLogLevel)getParam<uint32_t>("logLevel", OSP_LOG_NONE);
 
   auto logLevelStr =
       utility::getEnvVar<std::string>("OSPRAY_LOG_LEVEL").value_or("");

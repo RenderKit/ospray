@@ -150,29 +150,27 @@ OSPPickResult Renderer::pick(
 
 void Renderer::setupPixelFilter()
 {
-  OSPPixelFilterTypes pixelFilterType =
-      (OSPPixelFilterTypes)getParam<uint8_t>("pixelFilter",
-          getParam<int32_t>(
-              "pixelFilter", OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS));
+  OSPPixelFilterType pixelFilterType = getParam<OSPPixelFilterType>(
+      "pixelFilter", OSPPixelFilterType::OSP_PIXELFILTER_GAUSS);
   pixelFilter = nullptr;
   switch (pixelFilterType) {
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_BOX: {
+  case OSPPixelFilterType::OSP_PIXELFILTER_BOX: {
     pixelFilter = new BoxPixelFilter(getISPCDevice());
     break;
   }
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_POINT: {
+  case OSPPixelFilterType::OSP_PIXELFILTER_POINT: {
     pixelFilter = new PointPixelFilter(getISPCDevice());
     break;
   }
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS: {
+  case OSPPixelFilterType::OSP_PIXELFILTER_BLACKMAN_HARRIS: {
     pixelFilter = new BlackmanHarrisLUTPixelFilter(getISPCDevice());
     break;
   }
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL: {
+  case OSPPixelFilterType::OSP_PIXELFILTER_MITCHELL: {
     pixelFilter = new MitchellNetravaliLUTPixelFilter(getISPCDevice());
     break;
   }
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS:
+  case OSPPixelFilterType::OSP_PIXELFILTER_GAUSS:
   default: {
     pixelFilter = new GaussianLUTPixelFilter(getISPCDevice());
     break;

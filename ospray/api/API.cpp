@@ -209,6 +209,9 @@ extern "C" void ospDeviceSetParam(OSPDevice _object,
   case OSP_INT:
     object->setParam<int>(id, *(int *)mem);
     break;
+  case OSP_UINT:
+    object->setParam<uint32_t>(id, *(uint32_t *)mem);
+    break;
   case OSP_BOOL:
     object->setParam<bool>(id, *(bool *)mem);
     break;

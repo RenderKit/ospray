@@ -46,7 +46,7 @@ void Camera::commit()
   if (shutter.lower > shutter.upper)
     shutter.lower = shutter.upper;
   shutterType =
-      (OSPShutterType)getParam<uint8_t>("shutterType", OSP_SHUTTER_GLOBAL);
+      (OSPShutterType)getParam<uint32_t>("shutterType", OSP_SHUTTER_GLOBAL);
   rollingShutterDuration = clamp(
       getParam<float>("rollingShutterDuration", 0.0f), 0.0f, shutter.size());
 

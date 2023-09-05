@@ -199,10 +199,9 @@ void FromOsprayTestingMaxDepth::SetUp()
     cpp::Texture maxDepthTex("texture2d");
 
     std::vector<float> maxDepth = {3.f, 3.f, 3.f, 3.f};
-    OSPTextureFormat texFmt = OSP_TEXTURE_R32F;
     maxDepthTex.setParam(
         "data", cpp::CopiedData(maxDepth.data(), vec2ul(2, 2)));
-    maxDepthTex.setParam("format", OSP_INT, &texFmt);
+    maxDepthTex.setParam("format", OSP_TEXTURE_R32F);
     maxDepthTex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
     maxDepthTex.commit();
 

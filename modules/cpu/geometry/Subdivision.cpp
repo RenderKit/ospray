@@ -61,8 +61,8 @@ void Subdivision::commit()
   vertex_crease_indicesData = getParamDataT<uint32_t>("vertexCrease.index");
   vertex_crease_weightsData = getParamDataT<float>("vertexCrease.weight");
 
-  mode = (OSPSubdivisionMode)getParam<uint8_t>(
-      "mode", getParam<int32_t>("mode", OSP_SUBDIVISION_SMOOTH_BOUNDARY));
+  mode = (OSPSubdivisionMode)getParam<uint32_t>(
+      "mode", OSP_SUBDIVISION_SMOOTH_BOUNDARY);
 
   if (!facesData) {
     if (indexData->size() % 4 != 0)

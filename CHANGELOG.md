@@ -11,6 +11,7 @@ Version History
 -   Breaking API changes
     -   Renamed `OSP_VOLUME_FILTER_TRI[LINEAR|CUBIC]` to
         `OSP_VOLUME_FILTER_[LINEAR|CUBIC]`
+    -   Most enums have storage type uint32 now
     -   Remove deprecated parameters and API calls
 
 
