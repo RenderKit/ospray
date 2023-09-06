@@ -1,24 +1,21 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/PixelOp.h"
+#include "fb/FrameOp.h"
 // ispc shared
 #include "ToneMapperShared.h"
-
-using namespace rkcommon;
 
 namespace ospray {
 
 /*! \brief Generic tone mapping operator approximating ACES by default. */
-struct OSPRAY_SDK_INTERFACE ToneMapper : public PixelOp
+struct OSPRAY_SDK_INTERFACE ToneMapperFrameOp : public FrameOp
 {
-  ToneMapper(api::Device &device)
-      : PixelOp(static_cast<api::ISPCDevice &>(device))
-  {}
+  ToneMapperFrameOp(api::Device &device);
 
   void commit() override;
 
-  std::unique_ptr<LivePixelOp> attach() override;
+  std::unique_ptr<LiveFrameOpInterface> attach(
+      FrameBufferView &fbView) override;
 
   std::string toString() const override;
 
@@ -28,16 +25,20 @@ struct OSPRAY_SDK_INTERFACE ToneMapper : public PixelOp
   float exposure;
 };
 
-struct OSPRAY_SDK_INTERFACE LiveToneMapper
-    : public AddStructShared<LivePixelOp, ispc::LiveToneMapper>
+struct OSPRAY_SDK_INTERFACE LiveToneMapperFrameOp
+    : public AddStructShared<LiveFrameOp, ispc::LiveToneMapper>
 {
-  LiveToneMapper(api::ISPCDevice &device,
+  LiveToneMapperFrameOp(api::ISPCDevice &device,
+      FrameBufferView &fbView,
       float exposure,
       float a,
       float b,
       float c,
       float d,
       bool acesColor);
+
+  // Execute FrameOp kernel
+  void process(void *waitEvent) override;
 };
 
 } // namespace ospray

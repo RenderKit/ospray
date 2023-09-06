@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "fb/PixelOpShared.h"
 #include "ospray/OSPEnums.h"
 
 #ifdef __cplusplus
@@ -83,9 +82,6 @@ struct FrameBuffer
 
   OSPFrameBufferFormat colorBufferFormat;
 
-  LivePixelOp **pixelOps;
-  uint32 numPixelOps;
-
   // If the frame has been cancelled or not. Note: we don't share bools between
   // ISPC and C++ as the true value representation may differ (as it does with
   // gcc)
@@ -107,8 +103,6 @@ struct FrameBuffer
         frameID(-1),
         channels(0),
         colorBufferFormat(OSP_FB_NONE),
-        pixelOps(nullptr),
-        numPixelOps(0),
         cancelRender(0),
         numPixelsRendered(0)
   {}

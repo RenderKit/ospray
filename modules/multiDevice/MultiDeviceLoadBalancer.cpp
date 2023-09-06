@@ -46,8 +46,7 @@ void MultiDeviceLoadBalancer::renderFrame(
   // which subdevice?) or borrow them here from a subdevice, which also doesn't
   // fit well
   Renderer *r0 = (Renderer *)renderer->objects[0];
-  Camera *c0 = (Camera *)camera->objects[0];
-  framebuffer->rowmajorFb->endFrame(r0->errorThreshold, c0);
+  framebuffer->rowmajorFb->endFrame(r0->errorThreshold);
 
   // Now copy the task error data back into the sparse fb's task error buffer,
   // since the rowmajorFb has done the task error region refinement on the full

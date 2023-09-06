@@ -41,11 +41,11 @@ std::pair<AsyncEvent, AsyncEvent> LocalTiledLoadBalancer::renderFrame(
   }
 
   // But we can queue FB post-processing kernel
-  AsyncEvent fbEvent = fb->postProcess(camera, wait);
+  AsyncEvent fbEvent = fb->postProcess(wait);
 
   // Can't call fb->endFrame() because we might still post-process
   if (wait) {
-    fb->endFrame(renderer->errorThreshold, camera);
+    fb->endFrame(renderer->errorThreshold);
     fb->setCompletedEvent(OSP_FRAME_FINISHED);
   }
 

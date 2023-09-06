@@ -2,22 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ToneMapper.h"
-#include "fb/FrameBuffer.h"
+#include "ISPCDevice.h"
+
 #ifndef OSPRAY_TARGET_SYCL
-#include "fb/pixel_ops/ToneMapper_ispc.h"
-#else
+extern "C" {
+#endif
 namespace ispc {
-void *LiveToneMapper_processPixel_addr();
+void ToneMapper_kernelLauncher(
+    const void *, void *, const LiveFrameOp *, void *, void *);
+}
+#ifndef OSPRAY_TARGET_SYCL
 }
 #endif
 
-using namespace rkcommon;
-
 namespace ospray {
 
-void ToneMapper::commit()
+#include "fb/FrameBufferView.h"
+
+ToneMapperFrameOp::ToneMapperFrameOp(api::Device &device)
+    : FrameOp(static_cast<api::ISPCDevice &>(device))
+{}
+
+void ToneMapperFrameOp::commit()
 {
-  ImageOp::commit();
+  FrameOp::commit();
 
   exposure = getParam<float>("exposure", 1.f);
   // Default parameters fitted to the ACES 1.0 grayscale curve
@@ -54,35 +62,51 @@ void ToneMapper::commit()
       0.f);
 }
 
-std::unique_ptr<LivePixelOp> ToneMapper::attach()
+std::unique_ptr<LiveFrameOpInterface> ToneMapperFrameOp::attach(
+    FrameBufferView &fbView)
 {
-  return rkcommon::make_unique<LiveToneMapper>(
-      device, exposure, a, b, c, d, acesColor);
+  if (!fbView.colorBuffer) {
+    throw std::runtime_error(
+        "tone mapper frame operation must be attached to framebuffer with color "
+        "data");
+  }
+
+  return rkcommon::make_unique<LiveToneMapperFrameOp>(
+      device, fbView, exposure, a, b, c, d, acesColor);
 }
 
-std::string ToneMapper::toString() const
+std::string ToneMapperFrameOp::toString() const
 {
-  return "ospray::ToneMapper";
+  return "ospray::ToneMapperFrameOp";
 }
 
-LiveToneMapper::LiveToneMapper(api::ISPCDevice &device,
+LiveToneMapperFrameOp::LiveToneMapperFrameOp(api::ISPCDevice &device,
+    FrameBufferView &fbView,
     float exposure,
     float a,
     float b,
     float c,
     float d,
     bool acesColor)
-    : AddStructShared(device.getIspcrtContext(), device)
+    : AddStructShared(device.getIspcrtContext(), device, fbView)
 {
-  getSh()->super.processPixel =
-      reinterpret_cast<ispc::LivePixelOp_processPixel>(
-          ispc::LiveToneMapper_processPixel_addr());
   getSh()->exposure = exposure;
   getSh()->a = a;
   getSh()->b = b;
   getSh()->c = c;
   getSh()->d = d;
   getSh()->acesColor = acesColor;
+}
+
+void LiveToneMapperFrameOp::process(void *waitEvent)
+{
+  void *cmdQueue = nullptr;
+#ifdef OSPRAY_TARGET_SYCL
+  cmdQueue = &device.getSyclQueue();
+#endif
+  vec4f *colorBuffer = getSh()->super.fbView.colorBuffer;
+  ispc::ToneMapper_kernelLauncher(
+      colorBuffer, colorBuffer, &getSh()->super, cmdQueue, waitEvent);
 }
 
 } // namespace ospray

@@ -303,13 +303,13 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
-  dfb->postProcess(camera, true);
+  dfb->postProcess(true);
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();
     rkcommon::tracing::beginEvent("endFrame", "DistributedLB");
   });
 
-  dfb->endFrame(renderer->errorThreshold, camera);
+  dfb->endFrame(renderer->errorThreshold);
 
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();
@@ -373,8 +373,8 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
-  dfb->postProcess(camera, true);
-  dfb->endFrame(renderer->errorThreshold, camera);
+  dfb->postProcess(true);
+  dfb->endFrame(renderer->errorThreshold);
 
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();

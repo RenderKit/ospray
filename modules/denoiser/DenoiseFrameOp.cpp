@@ -3,9 +3,10 @@
 
 #include "DenoiseFrameOp.h"
 #include "api/Device.h"
-#include "fb/FrameBufferView.h"
 
 namespace ospray {
+
+#include "fb/FrameBufferView.h"
 
 void checkError(OIDNDevice oidnDevice)
 {
@@ -37,13 +38,12 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
     oidnReleaseDevice(oidnDevice);
   }
 
-  void process(void *waitEvent, const Camera *) override
+  void process(void *waitEvent) override
   {
     if (!filterCommited) {
-      float *fbColor = static_cast<float *>(fbView.colorBuffer);
       oidnSetSharedFilterImage(filter,
           "color",
-          fbColor,
+          fbView.colorBuffer,
           OIDN_FORMAT_FLOAT3,
           fbView.fbDims.x,
           fbView.fbDims.y,
@@ -53,7 +53,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
 
       oidnSetSharedFilterImage(filter,
           "output",
-          fbColor,
+          fbView.colorBuffer,
           OIDN_FORMAT_FLOAT3,
           fbView.fbDims.x,
           fbView.fbDims.y,
@@ -172,12 +172,13 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
     oidnReleaseBuffer(buffer);
   }
 
-  void process(void * /*waitEvent*/, const Camera *) override
+  void process(void * /*waitEvent*/) override
   {
     // TODO if (!fbView.originalFB->getSh()->numPixelsRendered)
     //        return; // skip denoising when no new pixels XXX only works on CPU
 
-    oidnWriteBufferAsync(buffer, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
+    oidnWriteBufferAsync(
+        buffer, 0, 4 * byteFloatBufferSize, fbView.colorBuffer);
 
     if (fbView.normalBuffer)
       oidnWriteBufferAsync(buffer,
@@ -234,11 +235,6 @@ DenoiseFrameOp::~DenoiseFrameOp()
 std::unique_ptr<LiveFrameOpInterface> DenoiseFrameOp::attach(
     FrameBufferView &fbView)
 {
-  if (fbView.colorBufferFormat != OSP_FB_RGBA32F)
-    throw std::runtime_error(
-        "DenoiseFrameOp must be used with an RGBA32F "
-        "color format framebuffer!");
-
   return sharedMem
       ? rkcommon::make_unique<LiveDenoiseFrameOp>(fbView, oidnDevice)
       : rkcommon::make_unique<LiveDenoiseFrameOpCopy>(fbView, oidnDevice);

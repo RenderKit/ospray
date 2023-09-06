@@ -34,8 +34,6 @@ export uniform float DFB_computeErrorForTile(
     const VaryingTile *uniform variance,
     const uniform float accumID);
 
-void DFB_runPixelOpsForTile(void *_self, void *_tile);
-
 void DFB_writeTile_RGBA8(const VaryingTile *tile, void *_color);
 void DFB_writeTile_SRGBA(const VaryingTile *tile, void *_color);
 void DFB_writeTile_RGBA32F(const VaryingTile *tile, void *_color);

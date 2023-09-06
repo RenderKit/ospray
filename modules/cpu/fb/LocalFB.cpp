@@ -9,7 +9,6 @@
 #include "FrameOp.h"
 #include "LocalFB.h"
 #include "SparseFB.h"
-#include "fb/FrameBufferView.h"
 #include "render/util.h"
 #include "rkcommon/common.h"
 #include "rkcommon/tasking/parallel_for.h"
@@ -47,6 +46,8 @@ void LocalFrameBuffer_writeIDTile(void *uniform _fb,
 #endif
 
 namespace ospray {
+
+#include "fb/FrameBufferView.h"
 
 LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
@@ -172,10 +173,8 @@ void LocalFrameBuffer::commit()
   FrameBuffer::commit();
 
   if (imageOpData) {
-    FrameBufferView fbv(this,
-        getColorBufferFormat(),
-        getNumPixels(),
-        colorBuffer ? colorBuffer->devicePtr() : nullptr,
+    FrameBufferView fbv(getNumPixels(),
+        (vec4f *)(colorBuffer ? colorBuffer->devicePtr() : nullptr),
         depthBuffer ? depthBuffer->devicePtr() : nullptr,
         normalBuffer ? normalBuffer->devicePtr() : nullptr,
         albedoBuffer ? albedoBuffer->devicePtr() : nullptr);
@@ -419,16 +418,16 @@ void LocalFrameBuffer::beginFrame()
   }
 }
 
-void LocalFrameBuffer::endFrame(const float errorThreshold, const Camera *)
+void LocalFrameBuffer::endFrame(const float errorThreshold)
 {
   frameVariance = taskErrorRegion.refine(errorThreshold);
 }
 
-AsyncEvent LocalFrameBuffer::postProcess(const Camera *camera, bool wait)
+AsyncEvent LocalFrameBuffer::postProcess(bool wait)
 {
   AsyncEvent event;
   for (auto &p : frameOps)
-    p->process((wait) ? nullptr : &event, camera);
+    p->process((wait) ? nullptr : &event);
   return event;
 }
 

@@ -81,10 +81,6 @@ void FrameBuffer::commit()
 {
   // Erase all image operations arrays
   frameOps.clear();
-  pixelOps.clear();
-  pixelOpShs.clear();
-  getSh()->pixelOps = nullptr;
-  getSh()->numPixelOps = 0;
 
   // Read image operations array set by user
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
@@ -182,29 +178,15 @@ bool FrameBuffer::frameCancelled() const
   return cancelRender;
 }
 
-void FrameBuffer::prepareLiveOpsForFBV(
-    FrameBufferView &fbv, bool fillFrameOps, bool fillPixelOps)
+void FrameBuffer::prepareLiveOpsForFBV(FrameBufferView &fbv)
 {
   // Iterate through all image operations set on commit
   for (auto &&obj : *imageOpData) {
-    // Populate pixel operations
-    PixelOp *pop = dynamic_cast<PixelOp *>(obj);
-    if (pop) {
-      if (fillPixelOps) {
-        pixelOps.push_back(pop->attach());
-        pixelOpShs.push_back(pixelOps.back()->getSh());
-      }
-    } else {
-      // Populate frame operations
-      FrameOpInterface *fopi = dynamic_cast<FrameOpInterface *>(obj);
-      if (fillFrameOps && fopi)
-        frameOps.push_back(fopi->attach(fbv));
-    }
+    // Populate frame operations
+    FrameOpInterface *fopi = dynamic_cast<FrameOpInterface *>(obj);
+    if (fopi)
+      frameOps.push_back(fopi->attach(fbv));
   }
-
-  // Prepare shared parameters for kernel
-  getSh()->pixelOps = pixelOpShs.empty() ? nullptr : pixelOpShs.data();
-  getSh()->numPixelOps = pixelOpShs.size();
 }
 
 bool FrameBuffer::hasAccumBuf() const

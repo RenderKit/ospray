@@ -1,0 +1,62 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#ifndef OSPRAY_TARGET_SYCL
+
+#define DEFINE_KERNEL_LAUNCHER(kernel_name)                                    \
+  task static void kernel_name##Task(const vec4f *uniform inputBuffer,         \
+      vec4f *uniform outputBuffer,                                             \
+      const LiveFrameOp *uniform self)                                         \
+  {                                                                            \
+    const vec2ui id =                                                          \
+        make_vec2ui(taskIndex0 * programCount + programIndex, taskIndex1);     \
+    kernel_name(self, id, inputBuffer, outputBuffer);                          \
+  }                                                                            \
+                                                                               \
+  export void kernel_name##Launcher(const void *uniform inputBuffer,           \
+      void *uniform outputBuffer,                                              \
+      const LiveFrameOp *uniform self,                                         \
+      void *uniform,                                                           \
+      void *uniform)                                                           \
+  {                                                                            \
+    launch[self->fbView.viewDims.x / programCount,                             \
+        self->fbView.viewDims.y] kernel_name##Task((const vec4f *)inputBuffer, \
+        (vec4f *)outputBuffer,                                                 \
+        self);                                                                 \
+    sync;                                                                      \
+  }
+
+#else
+
+#define DEFINE_KERNEL_LAUNCHER(kernel_name)                                    \
+  void kernel_name##Launcher(const void *inputBuffer,                          \
+      void *outputBuffer,                                                      \
+      const LiveFrameOp *self,                                                 \
+      void *cmdQueue,                                                          \
+      void *waitEvent)                                                         \
+  {                                                                            \
+    const vec2ui globalSize = self->fbView.viewDims;                           \
+    const vec2ui workgroupSize = vec2ui(16, 1);                                \
+    const vec2ui roundedSize =                                                 \
+        ((globalSize - 1) / workgroupSize + 1) * workgroupSize;                \
+    sycl::nd_range<2> dispatchRange(                                           \
+        {roundedSize.x, roundedSize.y}, {workgroupSize.x, workgroupSize.y});   \
+    sycl::queue *syclQueue = static_cast<sycl::queue *>(cmdQueue);             \
+    sycl::event event = syclQueue->submit([&](sycl::handler &cgh) {            \
+      cgh.parallel_for(dispatchRange, [=](sycl::nd_item<2> taskIndex) {        \
+        kernel_name(self,                                                      \
+            vec2ui(taskIndex.get_global_id(0), taskIndex.get_global_id(1)),    \
+            reinterpret_cast<const vec4f *>(inputBuffer),                      \
+            reinterpret_cast<vec4f *>(outputBuffer));                          \
+      });                                                                      \
+    });                                                                        \
+    sycl::event *syclEvent = static_cast<sycl::event *>(waitEvent);            \
+    if (!syclEvent)                                                            \
+      event.wait_and_throw();                                                  \
+    else                                                                       \
+      *syclEvent = event;                                                      \
+  }
+
+#endif

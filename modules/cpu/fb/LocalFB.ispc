@@ -183,27 +183,18 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
         LocalFB_accumulateColorSample(fb, screenSample, pixelID, taskDesc);
   }
 
-  float depth = inf;
   if (fb->depthBuffer) {
     LocalFB_accumulateDepth(fb, screenSample.z, pixelID, taskDesc.accumID);
-
-    depth = fb->depthBuffer[pixelID];
   }
 
-  vec3f normal = make_vec3f(0.f);
   if (fb->normalBuffer) {
     LocalFB_accumulateAux(
         fb->normalBuffer, screenSample.normal, pixelID, taskDesc.accumID);
-
-    normal = fb->normalBuffer[pixelID];
   }
 
-  vec3f albedo = make_vec3f(0.f);
   if (fb->albedoBuffer) {
     LocalFB_accumulateAux(
         fb->albedoBuffer, screenSample.albedo, pixelID, taskDesc.accumID);
-
-    albedo = fb->albedoBuffer[pixelID];
   }
 
   if (fb->primitiveIDBuffer) {
@@ -220,11 +211,6 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     if (taskDesc.accumID == 0)
       fb->instanceIDBuffer[pixelID] = screenSample.instID;
   }
-
-  // Run any pixel ops for this pixel
-  // TODO: Best as inline in this kernel? Or a separate kernel?
-  finalColor =
-      FrameBuffer_runPixelOps(&fb->super, finalColor, depth, normal, albedo);
 
   // Write the final color out to the color buffer in the color format
   // requested by the app

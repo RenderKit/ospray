@@ -46,7 +46,8 @@ struct OSPRAY_CORE_INTERFACE LiveFrameOpInterface : public LiveImageOp
 {
   ~LiveFrameOpInterface() override = default;
 
-  virtual void process(void *waitEvent, const Camera *camera) = 0;
+  // Execute FrameOp kernel
+  virtual void process(void *waitEvent) = 0;
 };
 
 struct OSPRAY_CORE_INTERFACE FrameOpInterface : public ImageOp

@@ -1,66 +1,40 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma once
+// This header is shared with ISPC
+// No pragma once because this struct is defined twice, both in `ospray` and
+// `ispc` namespace
 
-#include "common/OSPCommon.h"
-
-namespace ospray {
-
-struct FrameBuffer;
-
-/*! A view into a portion of the framebuffer to run the frame operation on
- */
+// A view into a portion of the framebuffer to run the frame operation on
 struct FrameBufferView
 {
-  // TODO Replace w/ arrayview once LocalFB is updated
   // The total dimensions of the global framebuffer
-  vec2i fbDims = vec2i(0);
+  vec2ui fbDims;
   // The dimensions of this view of the framebuffer
-  vec2i viewDims = vec2i(0);
-  // The additional halo region pixels included in the view, if requested
-  vec2i haloDims = vec2i(0);
+  vec2ui viewDims;
 
-  OSPFrameBufferFormat colorBufferFormat = OSP_FB_SRGBA;
+  // Accumulated color
+  vec4f *colorBuffer;
+  // One float per pixel, may be NULL
+  float *depthBuffer;
+  // Accumulated world-space normal per pixel
+  vec3f *normalBuffer;
+  // Accumulated albedo, one RGBF32 per pixel
+  vec3f *albedoBuffer;
 
-  /*! Color buffer of the image, exact pixel format depends
-   * on `colorBufferFormat`
-   */
-  void *colorBuffer = nullptr;
-  //! One float per pixel, may be NULL
-  float *depthBuffer = nullptr;
-  // TODO: Should we pass the accum and variance buffers?
-  //! one RGBA per pixel, may be NULL
-  // vec4f *accumBuffer;
-  //! one RGBA per pixel, may be NULL
-  // vec4f *varianceBuffer;
-  //! accumulated world-space normal per pixel
-  vec3f *normalBuffer = nullptr;
-  //! accumulated albedo, one RGBF32 per pixel
-  vec3f *albedoBuffer = nullptr;
-
-  FrameBuffer *originalFB = nullptr;
-
-  //! Convenience method to make a view of the entire framebuffer
-  FrameBufferView(FrameBuffer *fb,
-      OSPFrameBufferFormat colorFormat,
-      const vec2i &dims,
-      void *colorBuffer,
+  // Convenience method to make a view of the entire framebuffer
+#ifdef __cplusplus
+  FrameBufferView(const vec2ui &dims,
+      vec4f *colorBuffer,
       float *depthBuffer,
       vec3f *normalBuffer,
       vec3f *albedoBuffer)
       : fbDims(dims),
         viewDims(dims),
-        haloDims(0),
-        colorBufferFormat(colorFormat),
         colorBuffer(colorBuffer),
         depthBuffer(depthBuffer),
         normalBuffer(normalBuffer),
-        albedoBuffer(albedoBuffer),
-        originalFB(fb)
+        albedoBuffer(albedoBuffer)
   {}
-
-  FrameBufferView() = default;
+#endif // __cplusplus
 };
-
-} // namespace ospray

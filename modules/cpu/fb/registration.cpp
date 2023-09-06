@@ -9,9 +9,7 @@
 
 #include "frame_ops/Blur.h"
 #include "frame_ops/Debug.h"
-#include "frame_ops/Depth.h"
-#include "frame_ops/SSAO.h"
-#include "pixel_ops/ToneMapper.h"
+#include "frame_ops/ToneMapper.h"
 
 namespace ospray {
 
@@ -19,9 +17,7 @@ void registerAllImageOps()
 {
   ImageOp::registerType<BlurFrameOp>("blur");
   ImageOp::registerType<DebugFrameOp>("debug");
-  ImageOp::registerType<DepthFrameOp>("depth");
-  ImageOp::registerType<SSAOFrameOp>("ssao");
-  ImageOp::registerType<ToneMapper>("tonemapper");
+  ImageOp::registerType<ToneMapperFrameOp>("tonemapper");
 }
 
 } // namespace ospray

@@ -6,9 +6,9 @@
 #include <atomic>
 // ospray
 #include "ISPCDeviceObject.h"
-#include "PixelOp.h"
 #include "common/Data.h"
 #include "common/FeatureFlagsEnum.h"
+#include "fb/ImageOp.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
@@ -70,10 +70,10 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual void beginFrame();
 
   // end the frame and run any final post-processing frame ops
-  virtual void endFrame(const float errorThreshold, const Camera *camera) = 0;
+  virtual void endFrame(const float errorThreshold) = 0;
 
   // Invoke post-processing by calling all FrameOps
-  virtual AsyncEvent postProcess(const Camera *camera, bool wait) = 0;
+  virtual AsyncEvent postProcess(bool wait) = 0;
 
   // common function to help printf-debugging, every derived class should
   // override this
@@ -104,8 +104,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
  protected:
   // Fill vectors with instantiated live objects
-  void prepareLiveOpsForFBV(
-      FrameBufferView &fbv, bool fillFrameOps = true, bool fillPixelOps = true);
+  void prepareLiveOpsForFBV(FrameBufferView &fbv);
 
   const vec2i size;
 
@@ -130,8 +129,6 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   Ref<const DataT<ImageOp *>> imageOpData;
   std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;
-  std::vector<std::unique_ptr<LivePixelOp>> pixelOps;
-  std::vector<ispc::LivePixelOp *> pixelOpShs;
 
   FeatureFlagsOther featureFlags{FFO_NONE};
 };

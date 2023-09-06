@@ -74,9 +74,9 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   void beginFrame() override;
 
-  void endFrame(const float, const Camera *) override {}
+  void endFrame(const float) override {}
 
-  AsyncEvent postProcess(const Camera *, bool) override
+  AsyncEvent postProcess(bool) override
   {
     AsyncEvent e;
     // Do not run post-processing on sparse frame buffer

@@ -53,9 +53,9 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   void beginFrame() override;
 
-  void endFrame(const float errorThreshold, const Camera *camera) override;
+  void endFrame(const float errorThreshold) override;
 
-  AsyncEvent postProcess(const Camera *camera, bool wait) override;
+  AsyncEvent postProcess(bool wait) override;
 
   const void *mapBuffer(OSPFrameBufferChannel channel) override;
 
@@ -88,7 +88,8 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   std::unique_ptr<BufferDeviceShadowed<float>> depthBuffer;
   // one RGBA per pixel
   std::unique_ptr<BufferDevice<vec4f>> accumBuffer;
-  // one RGBA per pixel, does not accumulate all samples, for variance estimation
+  // one RGBA per pixel, does not accumulate all samples, for variance
+  // estimation
   std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
   // accumulated world-space normal per pixel
   std::unique_ptr<BufferDeviceShadowed<vec3f>> normalBuffer;

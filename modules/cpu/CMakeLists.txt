@@ -41,16 +41,12 @@ set(OSPRAY_CPP_SOURCES
   fb/LocalFB.cpp
   fb/SparseFB.cpp
   fb/FrameOp.cpp
-  fb/PixelOp.cpp
   fb/TaskError.cpp
   fb/registration.cpp
 
   fb/frame_ops/Blur.cpp
   fb/frame_ops/Debug.cpp
-  fb/frame_ops/Depth.cpp
-  fb/frame_ops/SSAO.cpp
-
-  fb/pixel_ops/ToneMapper.cpp
+  fb/frame_ops/ToneMapper.cpp
 
   pf/PixelFilter.cpp
 
@@ -128,14 +124,13 @@ set(OSPRAY_ISPC_SOURCES
 
   common/World.ispc
 
-  fb/FrameBuffer.ispc
   fb/FrameBufferDispatch.ispc
   fb/LocalFB.ispc
   fb/SparseFB.ispc
 
-  fb/frame_ops/SSAO.ispc
-
-  fb/pixel_ops/ToneMapper.ispc
+  fb/frame_ops/Blur.ispc
+  fb/frame_ops/Debug.ispc
+  fb/frame_ops/ToneMapper.ispc
 
   pf/PixelFilterDispatch.ispc
   pf/LUTPixelFilter.ispc

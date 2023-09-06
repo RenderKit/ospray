@@ -3,8 +3,7 @@
 
 #include "SparseFB.h"
 #include "OSPConfig.h"
-#include "PixelOp.h"
-#include "fb/FrameBufferView.h"
+#include "fb/ImageOp.h"
 #include "render/util.h"
 #include "rkcommon/common.h"
 #include "rkcommon/tasking/parallel_for.h"
@@ -18,6 +17,8 @@
 #include <numeric>
 
 namespace ospray {
+
+#include "fb/FrameBufferView.h"
 
 // A global function so we can call it from the tile initialization SYCL kernel
 box2i getTileRegion(uint32_t tileID, const vec2i fbSize, const vec2i totalTiles)
@@ -79,18 +80,7 @@ void SparseFrameBuffer::commit()
   FrameBuffer::commit();
 
   if (imageOpData) {
-    FrameBufferView fbv(this,
-        getColorBufferFormat(),
-        getNumPixels(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr);
-
-    // Sparse framebuffer cannot execute frame operations because it doesn't
-    // have the full framebuffer. This is handled by the parent object managing
-    // the set of sparse framebuffer's, so here we just ignore them
-    prepareLiveOpsForFBV(fbv, false, true);
+    FrameBufferView fbv(getNumPixels(), nullptr, nullptr, nullptr, nullptr);
   }
 }
 

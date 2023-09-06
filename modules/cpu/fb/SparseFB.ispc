@@ -85,13 +85,10 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
     acc = acc * accScale;
   }
 
-  const vec4f finalColor =
-      FrameBuffer_runPixelOps(&fb->super, acc, depth, normal, albedo);
-
-  tile->r[tilePixelIdx] = finalColor.x;
-  tile->g[tilePixelIdx] = finalColor.y;
-  tile->b[tilePixelIdx] = finalColor.z;
-  tile->a[tilePixelIdx] = finalColor.w;
+  tile->r[tilePixelIdx] = acc.x;
+  tile->g[tilePixelIdx] = acc.y;
+  tile->b[tilePixelIdx] = acc.z;
+  tile->a[tilePixelIdx] = acc.w;
 
   tile->z[tilePixelIdx] = depth;
 

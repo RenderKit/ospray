@@ -8,7 +8,6 @@
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "ISPCDevice.h"
 #include "TileOperation.h"
-#include "fb/FrameBufferView.h"
 #include "rkcommon/tracing/Tracing.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
@@ -24,6 +23,8 @@
 using namespace std::chrono;
 
 namespace ospray {
+
+#include "fb/FrameBufferView.h"
 
 // Helper types /////////////////////////////////////////////////////////////
 
@@ -113,15 +114,14 @@ void DFB::commit()
           : nullptr;
     }
 
-    FrameBufferView fbv(fb,
-        getColorBufferFormat(),
-        getNumPixels(),
-        colorBuffer,
+    FrameBufferView fbv(getNumPixels(),
+        (vec4f *)colorBuffer,
         depthBuffer,
         normalBuffer,
         albedoBuffer);
 
-    prepareLiveOpsForFBV(fbv, localFBonMaster != nullptr, true);
+    if (localFBonMaster)
+      prepareLiveOpsForFBV(fbv);
   }
 }
 
@@ -588,11 +588,6 @@ bool DFB::hasIDBuf() const
 
 void DFB::tileIsFinished(LiveTileOperation *tile)
 {
-  // Run any pixel operations we have for this tile
-  if (!pixelOpShs.empty()) {
-    ispc::DFB_runPixelOpsForTile(getSh(), (ispc::Tile *)&tile->finished);
-  }
-
   // Write the final colors into the color buffer
   // normalize and write final color, and compute error
   if (getSh()->colorBufferFormat != OSP_FB_NONE) {
@@ -1006,20 +1001,20 @@ float DFB::tileError(const uint32_t tileID)
   return tileErrorRegion[tileID];
 }
 
-void DFB::endFrame(const float errorThreshold, const Camera *camera)
+void DFB::endFrame(const float errorThreshold)
 {
   // only refine on master
   if (mpicommon::IamTheMaster()) {
     frameVariance = tileErrorRegion.refine(errorThreshold);
   }
   for (auto &l : layers) {
-    l->endFrame(errorThreshold, camera);
+    l->endFrame(errorThreshold);
   }
 
   setCompletedEvent(OSP_FRAME_FINISHED);
 }
 
-AsyncEvent DFB::postProcess(const Camera *camera, bool)
+AsyncEvent DFB::postProcess(bool)
 {
   AsyncEvent event;
   if (localFBonMaster && !frameOps.empty()) {
@@ -1045,7 +1040,7 @@ AsyncEvent DFB::postProcess(const Camera *camera, bool)
     tq.sync();
 
     for (auto &p : frameOps) {
-      p->process(nullptr, camera);
+      p->process(nullptr);
     }
 
     if (localFBonMaster->colorBuffer) {
