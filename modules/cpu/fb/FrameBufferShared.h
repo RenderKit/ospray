@@ -75,7 +75,7 @@ struct FrameBuffer
   // The default size of each each render task, in pixels
   vec2i renderTaskSize;
 
-  // Not used on GPU to avoid USM thrashing
+  // Rendered frame index
   int32 frameID;
 
   // The channels stored in the framebuffer

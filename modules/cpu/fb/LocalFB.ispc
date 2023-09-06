@@ -14,7 +14,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // this buffer _must_ exist when this fct is called, and it
 // _must_ have format 'name'
 #define template_writeTile(name, type, cvt)                                    \
-export SYCL_EXTERNAL void LocalFrameBuffer_writeTile_##name(                   \
+  export SYCL_EXTERNAL void LocalFrameBuffer_writeTile_##name(                 \
       void *uniform _fb, const void *uniform _tile)                            \
   {                                                                            \
     Tile *uniform tile = (Tile * uniform) _tile;                               \
@@ -100,13 +100,9 @@ inline vec4f LocalFB_accumulateColorSample(LocalFB *uniform fb,
     const int pixelID,
     uniform RenderTaskDesc &taskDesc)
 {
+  // Update accumulation buffer
   uniform vec4f *uniform accum = fb->accumBuffer;
-  uniform vec4f *uniform variance = fb->varianceBuffer;
-  const uniform float accScale = rcpf(taskDesc.accumID + 1);
-  const uniform float accHalfScale = rcpf(taskDesc.accumID / 2 + 1);
-
   const vec4f sampleValue = make_vec4f(screenSample.rgb, screenSample.alpha);
-
   vec4f acc = make_vec4f(0.f);
   if (taskDesc.accumID > 0) {
     acc = accum[pixelID];
@@ -114,28 +110,32 @@ inline vec4f LocalFB_accumulateColorSample(LocalFB *uniform fb,
   acc = acc + sampleValue;
   accum[pixelID] = acc;
 
+  // Normalize accumulated color
+  const uniform float accScale = rcpf(taskDesc.accumID + 1);
   acc = acc * accScale;
 
-  // Variance and error buffers accumulate every other frame to ensure we get a
-  // monotonically decreasing sequence of error values
-  if (variance && (taskDesc.accumID & 1)) {
+  // Update variance accumulation buffer if exists
+  uniform vec4f *uniform variance = fb->varianceBuffer;
+  if (variance && fb->accumulateVariance) {
+    // Accumulate variance buffer
     vec4f vari = make_vec4f(0.f);
-    if (taskDesc.accumID > 1) {
+    if (fb->varianceAccumCount > 1)
       vari = variance[pixelID];
-    }
     vari = vari + sampleValue;
     variance[pixelID] = vari;
 
+    // Calculate error
     float err = 0.f;
-    // Invert alpha (bright alpha is more important)
-    const float den2 = reduce_add(make_vec3f(acc)) + (1.f - acc.w);
+    const float den2 = reduce_add(make_vec3f(acc))
+        + (1.f - acc.w); // invert alpha (bright alpha is more important)
     if (den2 > 0.f) {
-      const vec4f diff = absf(acc - accHalfScale * vari);
-      err += reduce_add(diff) * rsqrtf(den2);
+      const uniform float variScale = rcpf(fb->varianceAccumCount);
+      const vec4f diff = absf(acc - variScale * vari);
+      err = reduce_add(diff) * rsqrtf(den2);
     }
-    // We sum over the task because we may have more pixels in the task than
+    // We max over the task because we may have more pixels in the task than
     // the SIMD width
-    taskDesc.error += reduce_add(err);
+    taskDesc.error = max(taskDesc.error, reduce_max(err));
   }
   return acc;
 }
@@ -256,7 +256,7 @@ SYCL_EXTERNAL uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
   LocalFB *uniform fb = (LocalFB * uniform) _fb;
   uniform RenderTaskDesc desc;
   desc.taskID = taskID;
-  desc.accumID = fb->taskAccumID ? fb->taskAccumID[taskID] : 0;
+  desc.accumID = fb->super.frameID ? fb->taskAccumID[taskID] : 0;
   desc.error = 0.f;
 
   uniform vec2i renderTaskSize = fb->super.renderTaskSize;
@@ -270,23 +270,14 @@ SYCL_EXTERNAL uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
 SYCL_EXTERNAL void LocalFB_completeTask(
     FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc)
 {
-  LocalFB *uniform fb = (LocalFB * uniform) _fb;
-
-  // Write error for the task every other frame to get a monotonically
-  // decreasing sequence of error values
-  if (fb->varianceBuffer && (taskDesc.accumID & 1)) {
-    // Scale to be backwards compatible with the old default tile/task
-    // size of 64x64
-    const uniform vec2i dia = box_size(taskDesc.region);
-    const uniform float taskSize = (uniform float)dia.x * dia.y;
-    fb->taskRegionError[taskDesc.taskID] =
-        taskDesc.error * rcp(taskSize) * 64.f;
-  }
-
   // Increment accumID for this task
-  if (fb->taskAccumID) {
+  LocalFB *uniform fb = (LocalFB * uniform) _fb;
+  if (fb->taskAccumID)
     fb->taskAccumID[taskDesc.taskID] = taskDesc.accumID + 1;
-  }
+
+  // Write error for the task
+  if (fb->varianceBuffer && fb->accumulateVariance)
+    fb->taskRegionError[taskDesc.taskID] = taskDesc.error;
 }
 
 // Write the input tile into the row-major framebuffer's depth buffer

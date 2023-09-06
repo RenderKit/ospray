@@ -88,7 +88,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   std::unique_ptr<BufferDeviceShadowed<float>> depthBuffer;
   // one RGBA per pixel
   std::unique_ptr<BufferDevice<vec4f>> accumBuffer;
-  // one RGBA per pixel, accumulates every other sample, for variance estimation
+  // one RGBA per pixel, does not accumulate all samples, for variance estimation
   std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
   // accumulated world-space normal per pixel
   std::unique_ptr<BufferDeviceShadowed<vec3f>> normalBuffer;
@@ -111,10 +111,12 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
   std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
   // holds accumID per render task, for adaptive accumulation
-  std::unique_ptr<BufferDeviceShadowed<int32_t>> taskAccumID;
+  std::unique_ptr<BufferDevice<int32_t>> taskAccumID;
 
   // holds error per tile and adaptive regions
   TaskError taskErrorRegion;
+  uint32_t skipVarianceCounter{1};
+  uint32_t skipVarianceFrameCounter{1};
 };
 
 } // namespace ospray

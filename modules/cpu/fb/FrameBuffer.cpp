@@ -92,7 +92,7 @@ void FrameBuffer::commit()
 
 void FrameBuffer::clear()
 {
-  frameID = -1; // we increment at the start of the frame
+  getSh()->frameID = -1; // we increment at the start of the frame
 }
 
 vec2i FrameBuffer::getRenderTaskSize() const
@@ -118,13 +118,12 @@ float FrameBuffer::getVariance() const
 void FrameBuffer::beginFrame()
 {
   cancelRender = false;
-  frameID++;
-  // TODO: Cancellation isn't supported on the GPU
+  getSh()->frameID++;
 #ifndef OSPRAY_TARGET_SYCL
+  // TODO: Cancellation isn't supported on the GPU
   getSh()->cancelRender = 0;
   // TODO: Maybe better as a kernel to avoid USM thrash to host
   getSh()->numPixelsRendered = 0;
-  getSh()->frameID = frameID;
 #endif
 }
 

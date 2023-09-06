@@ -109,8 +109,6 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   const vec2i size;
 
-  int32_t frameID{-1};
-
   // indicates whether the app requested this frame buffer to have
   // an (application-mappable) depth buffer
   bool hasDepthBuffer;
@@ -142,7 +140,7 @@ OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
 
 inline int32_t FrameBuffer::getFrameID() const
 {
-  return frameID;
+  return getSh()->frameID;
 }
 
 inline FeatureFlags FrameBuffer::getFeatureFlags() const

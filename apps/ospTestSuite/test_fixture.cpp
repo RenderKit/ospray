@@ -220,7 +220,7 @@ void FromOsprayTestingVariance::SetUp()
       frameBufferFormat,
       OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
 
-  renderer.setParam("varianceThreshold", 20.f);
+  renderer.setParam("varianceThreshold", 1.f);
 }
 
 void FromOsprayTestingLightSamples::SetUp()

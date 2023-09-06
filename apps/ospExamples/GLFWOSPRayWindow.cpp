@@ -687,7 +687,7 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   static float varianceThreshold = 0.0f;
-  if (ImGui::SliderFloat("varianceThreshold", &varianceThreshold, 0.f, 10.f)) {
+  if (ImGui::SliderFloat("varianceThreshold", &varianceThreshold, 0.f, .5f)) {
     renderer->setParam("varianceThreshold", varianceThreshold);
     addObjectToCommit(renderer->handle());
   }
@@ -774,6 +774,12 @@ void GLFWOSPRayWindow::buildUI()
     static float minContribution = 0.001f;
     if (ImGui::SliderFloat("minContribution", &minContribution, 0.f, 1.f)) {
       renderer->setParam("minContribution", minContribution);
+      addObjectToCommit(renderer->handle());
+    }
+
+    static float maxContribution = 10000.f;
+    if (ImGui::SliderFloat("maxContribution", &maxContribution, 0.f, 10000.f)) {
+      renderer->setParam("maxContribution", maxContribution);
       addObjectToCommit(renderer->handle());
     }
 

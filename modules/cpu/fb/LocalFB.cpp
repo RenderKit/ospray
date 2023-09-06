@@ -79,11 +79,8 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     accumBuffer =
         make_buffer_device_unique<vec4f>(device.getIspcrtDevice(), numPixels);
 
-    // TODO: Implement fill function in ISPCRT
-    taskAccumID = make_buffer_device_shadowed_unique<int32_t>(
+    taskAccumID = make_buffer_device_unique<int32_t>(
         device.getIspcrtDevice(), getTotalRenderTasks());
-    std::memset(taskAccumID->data(), 0, taskAccumID->size() * sizeof(int32_t));
-    device.getIspcrtQueue().copyToDevice(*taskAccumID);
   }
 
   if (hasVarianceBuffer)
@@ -207,9 +204,11 @@ utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
         [=](uint32_t i) { return taskError(i) > errorThreshold; });
 
     const size_t numActive = last - activeTaskIDs->begin();
-    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
-    tq.copyToDevice(*activeTaskIDs);
-    tq.sync();
+    if (numActive) {
+      ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+      tq.copyToDevice(*activeTaskIDs);
+      tq.sync();
+    }
     return utility::ArrayView<uint32_t>(activeTaskIDs->devicePtr(), numActive);
   } else
     return utility::ArrayView<uint32_t>(
@@ -225,21 +224,13 @@ void LocalFrameBuffer::clear()
 {
   FrameBuffer::clear();
 
-  // it is only necessary to reset the accumID,
-  // LocalFrameBuffer_accumulateTile takes care of clearing the
-  // accumulating buffers
-  if (taskAccumID) {
-    // TODO: Implement fill function in ISPCRT to do this through level-zero
-    // on the device
-    std::fill(taskAccumID->begin(), taskAccumID->end(), 0);
-    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
-    tq.copyToDevice(*taskAccumID);
-    tq.sync();
-  }
-
   // always also clear error buffer (if present)
   if (hasVarianceBuffer) {
     taskErrorRegion.clear();
+    skipVarianceCounter = 1;
+    skipVarianceFrameCounter = skipVarianceCounter;
+    getSh()->varianceAccumCount = 0;
+    getSh()->accumulateVariance = 0;
   }
 }
 void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
@@ -412,6 +403,20 @@ float LocalFrameBuffer::taskError(const uint32_t taskID) const
 void LocalFrameBuffer::beginFrame()
 {
   FrameBuffer::beginFrame();
+
+  if (hasVarianceBuffer) {
+    // Skip variance buffer accumulation or not
+    if (--skipVarianceFrameCounter == 0) {
+      // Skip variance buffer accumulation, reset counters
+      skipVarianceCounter++;
+      skipVarianceFrameCounter = skipVarianceCounter;
+      getSh()->accumulateVariance = 0;
+    } else {
+      // Accumulate variance buffer in this frame
+      getSh()->accumulateVariance = 1;
+      getSh()->varianceAccumCount++;
+    }
+  }
 }
 
 void LocalFrameBuffer::endFrame(const float errorThreshold, const Camera *)
