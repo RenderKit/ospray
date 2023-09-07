@@ -62,7 +62,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -108,7 +108,7 @@ jobs:
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
         export CFLAGS=$CXXFLAGS
         export LDFLAGS="-static-intel"
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -121,7 +121,7 @@ jobs:
       cmd: |
         module load cmake
         module load impi/2021.6
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-mpi-impi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -134,7 +134,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-mpi-mpich
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -147,7 +147,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/openmpi-x86_64
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
   build-centos8:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
