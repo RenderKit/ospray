@@ -332,7 +332,6 @@ jobs:
       cmd: |
         module load cmake/3.15.2
         module load mpi/mpich-x86_64
-        export OIDN_VERBOSE=2
         export OIDN_DEFAULT_DEVICE=cpu
         LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MPI
       artifact-in: build-rocky8-oidn-mpi
@@ -398,12 +397,11 @@ jobs:
     secrets: inherit
     with:
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
+      env-from-files: .github/workflows/dpcpp-release.env .github/workflows/gfx-ubuntu22-release.env
       submodules: true
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
       cmd: |
-        export OIDN_VERBOSE=2
         export OIDN_DEFAULT_DEVICE=sycl
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
       artifact-in: build-ubuntu2204-oidn-mpi

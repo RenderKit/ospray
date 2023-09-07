@@ -50,6 +50,8 @@ let exitCode+=$?
 cmake --build . --target ospray_test_data
 let exitCode+=$?
 
+export OIDN_VERBOSE=2
+
 mkdir failed
 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
 let exitCode+=$?

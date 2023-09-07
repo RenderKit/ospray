@@ -98,6 +98,8 @@ test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/13"
 
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
 
+export OIDN_VERBOSE=2
+
 mkdir failed-gpu
 
 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters" --own-SYCL
@@ -105,6 +107,19 @@ let exitCode+=$?
 
 OSPRAY_ALLOW_DEVICE_MEMORY=1 ospTestSuite --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter=SharedData/TestUSMSharing.structured_regular/2 --own-SYCL
 let exitCode+=$?
+
+if [ $TEST_MULTIDEVICE ]; then
+  mkdir failed-multidevice
+  # post-processing not enabled on multidevice
+  test_filters_md=$test_filters
+  test_filters_md+=":DenoiserOp.DenoiserOp"
+  test_filters_md+=":DebugOp/ImageOp.ImageOp/0"
+  OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --gtest_filter="-$test_filters_md" --osp:load-modules=multidevice_gpu --osp:device=multidevice --own-SYCL
+  let exitCode+=$?
+
+  OSPRAY_ALLOW_DEVICE_MEMORY=1 OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --gtest_filter=SharedData/TestUSMSharing.structured_regular/2 --osp:load-modules=multidevice_gpu --osp:device=multidevice --own-SYCL
+  let exitCode+=$?
+fi
 
 if [ $TEST_MPI ]; then
   mkdir failed-mpi-gpu
