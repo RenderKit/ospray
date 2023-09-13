@@ -49,7 +49,7 @@ set(ISPCRT_URL "https://github.com/ispc/ispc/archive/refs/tags/${ISPCRT_ARCHIVE}
 # need PR #2612, which is in upcoming v1.22, but not yet in v1.21
 if (ISPC_VERSION STREQUAL "1.21.0")
   # `patch` is not available on all systems, so use `git apply` instead
-  set(ISPCRT_PATCH PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/ispcrt-app-device-data.patch)
+  set(ISPCRT_PATCH PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/ispcrt-app-device-data.patch && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/ispcrt-llvm-bin-hint.patch)
 endif()
 
 string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${ISPCRT_URL})

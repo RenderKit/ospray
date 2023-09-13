@@ -1,0 +1,13 @@
+diff --git a/ispcrt/cmake/Finddpcpp_compiler.cmake b/ispcrt/cmake/Finddpcpp_compiler.cmake
+index 060cf7a9d..6f3bf04dd 100644
+--- a/ispcrt/cmake/Finddpcpp_compiler.cmake
++++ b/ispcrt/cmake/Finddpcpp_compiler.cmake
+@@ -24,7 +24,7 @@ if (DPCPP_COMPILER)
+     endif()
+ 
+     # oneAPI distributions ship the llvm utility binaries under bin-llvm
+-    set(DPCPP_LLVM_BIN_HINT "bin-llvm")
++    set(DPCPP_LLVM_BIN_HINT "bin-llvm" "bin/compiler")
+ else()
+     if(DEFINED ENV{SYCL_BUNDLE_ROOT})
+         set(DPCPP_DIR "$ENV{SYCL_BUNDLE_ROOT}")
