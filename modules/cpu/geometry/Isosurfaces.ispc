@@ -81,31 +81,20 @@ SYCL_EXTERNAL void unmasked Isosurfaces_intersect_kernel(
   // wrt. "template arg" isOcclusionTest, alloca also not supported on GPU
   uniform uint8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
 
-#if OPENVKL_VERSION_MAJOR == 1
-  // We know if we have OpenVKL version 1 we're not targetting SYCL
-  iterator = vklInitHitIteratorV(self->vklHitContext,
-      (varying vkl_vec3f *)&ray->org,
-      (varying vkl_vec3f *)&ray->dir,
-      &tRange,
-      &time,
-      hitIteratorBuffer);
-#else
   iterator = vklInitHitIteratorV(&self->vklHitContext,
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,
-#ifdef OSPRAY_TARGET_SYCL
-      time,
-#else
-      &time,
+#ifndef OSPRAY_TARGET_SYCL
+      &
 #endif
+      time,
       hitIteratorBuffer
 #ifdef OSPRAY_TARGET_SYCL
       ,
       ff.volume
 #endif
   );
-#endif
 
   VKLHit hit;
   bool gotHit = vklIterateHitV(iterator,

@@ -8,9 +8,7 @@
 #include "common/FeatureFlagsEnum.h"
 #include "openvkl/openvkl.h"
 // comment break to prevent clang-format from reordering openvkl includes
-#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
-#endif
 #include "transferFunction/TransferFunction.h"
 // ispc shared
 #include "volume/VolumetricModelShared.h"

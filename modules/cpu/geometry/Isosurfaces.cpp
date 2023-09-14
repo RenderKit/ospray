@@ -8,9 +8,7 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // comment break to prevent clang-format from reordering openvkl includes
-#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
-#endif
 #ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Isosurfaces_ispc.h"

@@ -73,33 +73,21 @@ inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
 
     float time = 0.5f;
 
-#if OPENVKL_VERSION_MAJOR == 1
-    // We know if we have OpenVKL version 1 we're not targetting SYCL
-    VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(vm->vklIntervalContext,
-            (varying vkl_vec3f *)&ray.org,
-            (varying vkl_vec3f *)&ray.dir,
-            (varying vkl_range1f *)&interval.interval,
-            &time,
-            (void *uniform)intervalIteratorBuffer);
-#else
     VKLIntervalIterator intervalIterator =
         vklInitIntervalIteratorV(&vm->vklIntervalContext,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,
             (varying vkl_range1f *)&interval.interval,
-#ifdef OSPRAY_TARGET_SYCL
-            time,
-#else
-            &time,
+#ifndef OSPRAY_TARGET_SYCL
+            &
 #endif
+            time,
             (void *uniform)intervalIteratorBuffer
 #ifdef OSPRAY_TARGET_SYCL
             ,
             ff.volume
 #endif
         );
-#endif
 
     VKLInterval interval;
     while (vklIterateIntervalV(intervalIterator,
@@ -125,11 +113,6 @@ inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
 
         // Get volume sample
         vec3f p = transformedRay.org + transformedRay.t0 * transformedRay.dir;
-#if OPENVKL_VERSION_MAJOR == 1
-        // We know if we have OpenVKL version 1 we're not targetting SYCL
-        const float sample = vklComputeSampleV(
-            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
-#else
         const float sample = vklComputeSampleV(&volume->vklSampler,
             (const varying vkl_vec3f *uniform) & p
 #ifdef OSPRAY_TARGET_SYCL
@@ -139,7 +122,6 @@ inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
             ff.volume
 #endif
         );
-#endif
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity =

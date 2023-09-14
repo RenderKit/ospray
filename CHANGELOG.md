@@ -4,8 +4,10 @@ Version History
 ### Changes in v3.0.0:
 
 -   Add implicit indexing for `mesh` geometry
--   The new minimum version for Embree is v4.2.0 and for ISPC it is
-    v1.21.0
+-   The new minimum versions of dependencies:
+       - Embree v4.2.0
+       - Open VKL v2.0.0
+       - ISPC v1.21.0
 -   Remove deprecated parameters and API calls
 
 

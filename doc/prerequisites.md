@@ -42,7 +42,7 @@ before you can build OSPRay you need the following prerequisites:
     can be hinted with the variable `embree_DIR`.
 -   OSPRay support volume rendering (enabled by default via
     `OSPRAY_ENABLE_VOLUMES`), which heavily uses Intel [Open
-    VKL](https://www.openvkl.org/), version 1.3.2 or newer is required.
+    VKL](https://www.openvkl.org/), version 2.0.0 or newer is required.
     If Open VKL is not found by CMake its location can be hinted with
     the variable `openvkl_DIR`, or disable `OSPRAY_ENABLE_VOLUMES`.
 -   OSPRay also provides an optional module implementing the `denoiser`

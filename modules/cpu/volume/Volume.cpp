@@ -16,9 +16,7 @@ void Volume_embreeBounds(const void *_args);
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
 // comment break to prevent clang-format from reordering openvkl includes
-#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
-#endif
 
 #include <unordered_map>
 
@@ -93,9 +91,7 @@ void Volume::commit()
   vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
-#if OPENVKL_VERSION_MAJOR > 1
   vklFeatureFlags = vklGetFeatureFlags(vklSampler);
-#endif
 
   // Setup Embree user-defined geometry
   rtcSetGeometryUserData(embreeGeometry, getSh());

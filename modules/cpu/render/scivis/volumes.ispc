@@ -81,14 +81,8 @@ static void sampleVolume(SciVisRenderContext &rc,
     p = vc.org + newDistance * vc.dir;
 
     // Sample volume value in given point
-#if OPENVKL_VERSION_MAJOR == 1
-    // We know if we have OpenVKL version 1 we're not targetting SYCL
-    sampleVal = vklComputeSampleV(
-        m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
-#else
     sampleVal = vklComputeSampleV(
         &m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
-#endif
     // Go to the next sub-interval
     vc.iuDistance += 1.f;
     dt = newDistance - vc.distance - emptySpace;
@@ -265,22 +259,12 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       VolumetricModel *varying model = vi.volumetricModel;
       foreach_unique (m in model) {
         // Create volume interval iterator
-#if OPENVKL_VERSION_MAJOR == 1
-        // We know if we have OpenVKL version 1 we're not targetting SYCL
-        vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
-            (varying vkl_vec3f *)&vc.org,
-            (varying vkl_vec3f *)&vc.dir,
-            (varying vkl_range1f *)&rInterval,
-            &time,
-            vc.intervalIteratorBuffer);
-#else
         vc.intervalIterator = vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
             &time,
             vc.intervalIteratorBuffer);
-#endif
       }
     }
 
