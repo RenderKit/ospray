@@ -587,17 +587,17 @@ table below.
                                                         in object-space
 
   OSPData data                                          the actual voxel 3D [data]
-  
+
   bool    cellCentered                           false  whether the data is provided
                                                         per cell (as opposed to per
                                                         vertex)
 
-  int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
+  uint    filter            `OSP_VOLUME_FILTER_LINEAR`  filter used for
                                                         reconstructing the field,
                                                         also allowed is
                                                         `OSP_VOLUME_FILTER_NEAREST`
                                                         and
-                                                        `OSP_VOLUME_FILTER_TRICUBIC`
+                                                        `OSP_VOLUME_FILTER_CUBIC`
 
   int     gradientFilter              same as `filter`  filter used during
                                                         gradient computations
@@ -642,7 +642,7 @@ summarized below.
 
   OSPData data                                          the actual voxel 3D [data]
 
-  int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
+  uint    filter            `OSP_VOLUME_FILTER_LINEAR`  filter used for
                                                         reconstructing the field,
                                                         also allowed is
                                                         `OSP_VOLUME_FILTER_NEAREST`
@@ -919,10 +919,10 @@ VDB volumes have the following parameters:
                                `nodesPackedDense`), or `OSP_VOLUME_FORMAT_TILE`
                                (stored in `nodesPackedTile`)
 
-  int        filter            filter used for reconstructing the field, default
-                               is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively
+  uint       filter            filter used for reconstructing the field, default
+                               is `OSP_VOLUME_FILTER_LINEAR`, alternatively
                                `OSP_VOLUME_FILTER_NEAREST`, or
-                               `OSP_VOLUME_FILTER_TRICUBIC`.
+                               `OSP_VOLUME_FILTER_CUBIC`.
 
   int        gradientFilter    filter used for reconstructing the field during
                                gradient computations, default same as `filter`

@@ -356,8 +356,8 @@ typedef enum
 #endif
 {
   OSP_VOLUME_FILTER_NEAREST = 0, // treating voxel cell as constant
-  OSP_VOLUME_FILTER_TRILINEAR = 100, // default trilinear interpolation
-  OSP_VOLUME_FILTER_TRICUBIC = 200 // tricubic interpolation
+  OSP_VOLUME_FILTER_LINEAR = 100, // default trilinear interpolation
+  OSP_VOLUME_FILTER_CUBIC = 200 // tricubic interpolation
 } OSPVolumeFilter;
 
 // VDB node data format

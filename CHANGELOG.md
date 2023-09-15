@@ -8,7 +8,10 @@ Version History
        - Embree v4.2.0
        - Open VKL v2.0.0
        - ISPC v1.21.0
--   Remove deprecated parameters and API calls
+-   Breaking API changes
+    -   Renamed `OSP_VOLUME_FILTER_TRI[LINEAR|CUBIC]` to
+        `OSP_VOLUME_FILTER_[LINEAR|CUBIC]`
+    -   Remove deprecated parameters and API calls
 
 
 ### Changes in v2.12.0:
