@@ -636,9 +636,12 @@ summarized below.
                                                         \phi)$; angles in
                                                         degrees
 
-  vec3f   gridSpacing                      $(1, 1, 1)$  size of the grid cells in
+  vec3f   gridSpacing      $(1, 180/dim.y, 360/dim.z)$  size of the grid cells in
                                                         units of $(r, \theta,
-                                                        \phi)$; angles in degrees
+                                                        \phi)$, per default
+                                                        covering the full sphere;
+                                                        angles in degrees
+
 
   OSPData data                                          the actual voxel 3D [data]
 

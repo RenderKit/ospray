@@ -12,6 +12,8 @@ Version History
     -   Renamed `OSP_VOLUME_FILTER_TRI[LINEAR|CUBIC]` to
         `OSP_VOLUME_FILTER_[LINEAR|CUBIC]`
     -   Most enums have storage type uint32 now
+    -   `gridSpacing` of spherical regular volume defaults to full
+        sphere
     -   Remove deprecated parameters and API calls
 
 
