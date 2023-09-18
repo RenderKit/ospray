@@ -9,7 +9,9 @@ Version History
        - Open VKL v2.0.0
        - ISPC v1.21.0
 -   Breaking API changes
-    -   Renamed `OSP_VOLUME_FILTER_TRI[LINEAR|CUBIC]` to
+    -   Renamed `OSP_TEXTURE_FILTER_BILINEAR` to
+        `OSP_TEXTURE_FILTER_LINEAR ` and
+        `OSP_VOLUME_FILTER_TRI[LINEAR|CUBIC]` to
         `OSP_VOLUME_FILTER_[LINEAR|CUBIC]`
     -   Most enums have storage type uint32 now
     -   `gridSpacing` of spherical regular volume defaults to full

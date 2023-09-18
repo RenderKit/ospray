@@ -30,7 +30,7 @@ struct Texture2D
         halfTexel(0.f),
         data(nullptr),
         format(OSP_TEXTURE_FORMAT_INVALID),
-        filter(OSP_TEXTURE_FILTER_BILINEAR)
+        filter(OSP_TEXTURE_FILTER_LINEAR)
   {
     super.type = TEXTURE_TYPE_2D;
   }

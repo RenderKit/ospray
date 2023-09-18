@@ -466,7 +466,7 @@ TEST_P(Texture2D, filter)
 
 INSTANTIATE_TEST_SUITE_P(Appearance,
     Texture2D,
-    ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_BILINEAR,
+    ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_LINEAR,
                            OSP_TEXTURE_FILTER_NEAREST),
         ::testing::Bool(),
         ::testing::Bool()));

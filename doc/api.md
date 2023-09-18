@@ -2566,7 +2566,7 @@ its parameters are as follows
   Type    Name         Description
   ------- ------------ ----------------------------------
   uint    format       `OSPTextureFormat` for the texture
-  uint    filter       default `OSP_TEXTURE_FILTER_BILINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
+  uint    filter       default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
   OSPData data         the actual texel 2D [data]
   ------- ------------ ----------------------------------
   : Parameters of `texture2d` texture type.

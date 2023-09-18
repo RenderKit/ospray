@@ -194,7 +194,7 @@ typedef enum
     : uint32_t
 #endif
 {
-  OSP_TEXTURE_FILTER_BILINEAR = 0, // default bilinear interpolation
+  OSP_TEXTURE_FILTER_LINEAR = 0, // default bilinear interpolation
   OSP_TEXTURE_FILTER_NEAREST // use nearest-neighbor interpolation
 } OSPTextureFilter;
 
