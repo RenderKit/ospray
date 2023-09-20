@@ -63,7 +63,7 @@ void MotionBlurBoxes::SetUp()
       volData.begin(), volData.end(), [n = 0]() mutable { return n++; });
   volume.setParam("data", cpp::CopiedData(volData.data(), vec3ul(2)));
   volume.setParam("gridOrigin", vec3f(-0.5, 0.5, -0.5));
-  volume.setParam("filter", (int)OSP_VOLUME_FILTER_NEAREST);
+  volume.setParam("filter", OSP_VOLUME_FILTER_NEAREST);
   volume.commit();
 
   cpp::TransferFunction transferFun("piecewiseLinear");
