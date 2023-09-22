@@ -205,7 +205,6 @@ void Volume::handleParams()
         if (name == "data") { // structured volumes
           vec3ul &dim = data->numItems;
           vklSetVec3i(vklVolume, "dimensions", dim.x, dim.y, dim.z);
-          vklSetInt(vklVolume, "voxelType", (VKLDataType)data->type);
         }
         if (name == "nodesPackedDense" || name == "nodesPackedTile") {
           // packed VDB volumes: wrap attribute
