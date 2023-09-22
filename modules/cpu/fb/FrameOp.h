@@ -6,7 +6,7 @@
 #include "common/StructShared.h"
 #include "fb/ImageOp.h"
 // ispc shared
-#include "fb/FrameOpShared.h"
+#include "fb/FrameBufferView.ih"
 
 namespace ospray {
 
@@ -24,7 +24,7 @@ struct OSPRAY_SDK_INTERFACE FrameOp : public FrameOpInterface
 };
 
 struct OSPRAY_SDK_INTERFACE LiveFrameOp
-    : public AddStructShared<LiveFrameOpInterface, ispc::LiveFrameOp>
+    : public AddStructShared<LiveFrameOpInterface, ispc::FrameBufferView>
 {
   LiveFrameOp(api::ISPCDevice &device, FrameBufferView &fbView);
   ~LiveFrameOp() override = default;

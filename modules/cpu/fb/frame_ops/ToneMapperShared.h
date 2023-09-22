@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "fb/FrameOpShared.h"
+#include "fb/FrameBufferView.ih"
 
 #ifdef __cplusplus
 namespace ispc {
@@ -13,7 +13,7 @@ namespace ispc {
 // [Lottes, 2016, "Advanced Techniques and Optimization of HDR Color Pipelines"]
 struct LiveToneMapper
 {
-  LiveFrameOp super;
+  FrameBufferView super;
   // linear exposure adjustment
   float exposure;
   // coefficients

@@ -18,7 +18,7 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
     VaryingTile *uniform final,
     VaryingTile *uniform accum,
     VaryingTile *uniform variance,
-    uniform bool hasAccumBuffer,
+    uniform bool doAccumulation,
     uniform bool hasVarianceBuffer)
 {
   const uniform int accumID = tile->accumID;
@@ -28,7 +28,7 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
   /* variance buffer accumulates every other frame */
   const uniform bool accumulateVariance =
       hasVarianceBuffer && (accumID & 1) == 1;
-  if (!hasAccumBuffer || accumID < 1) {
+  if (!doAccumulation || accumID < 1) {
     for (uniform int i = 0; i < maxi; i++) {
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
       accum->r[i] = col.x;
@@ -257,38 +257,20 @@ export uniform float DFB_computeErrorForTile(
 }
 
 // writes the final normalized colors in a tile into a color buffer
-#define template_writeTile(name, dst_fmt, cvt)                                 \
-  export void DFB_writeTile_##name(                                            \
-      const VaryingTile *uniform tile, void *uniform _color)                   \
-  {                                                                            \
-    const uniform vec2i size = box_size(tile->region);                         \
-    const uniform int maxi = size.y * (TILE_SIZE / programCount);              \
-    dst_fmt *uniform color = (dst_fmt * uniform) _color;                       \
-    for (uniform int i = 0; i < maxi; i++) {                                   \
-      const vec4f c =                                                          \
-          make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);          \
-      color[i] = cvt(c);                                                       \
-    }                                                                          \
-  }
-
-template_writeTile(RGBA8, varying uint32, cvt_uint32);
-template_writeTile(SRGBA, varying uint32, linear_to_srgba8);
+export void DFB_writeTile(const VaryingTile *uniform tile, void *uniform _color)
+{
+  const uniform vec2i size = box_size(tile->region);
+  const uniform int maxi = size.y * (TILE_SIZE / programCount);
+  varying vec4f *uniform color = (varying vec4f * uniform) _color;
+  for (uniform int i = 0; i < maxi; i++) {
+    const vec4f c = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
 #ifndef OSPRAY_TARGET_SYCL
-inline vec4f soa_to_aos4f(varying vec4f s)
-{
-  vec4f a;
-  soa_to_aos4(s.x, s.y, s.z, s.w, (uniform float *uniform) & a);
-  return a;
-}
-template_writeTile(RGBA32F, varying vec4f, soa_to_aos4f);
+    soa_to_aos4(c.x, c.y, c.z, c.w, (uniform float *uniform) & color[i]);
 #else
-inline vec4f cvt_nop(const vec4f &v)
-{
-  return v;
-}
-template_writeTile(RGBA32F, varying vec4f, cvt_nop);
+    color[i] = c;
 #endif
-#undef template_writeTile
+  }
+}
 
 export void DFB_zComposite(
     const VaryingTile *uniform delta, VaryingTile *uniform current)

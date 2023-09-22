@@ -103,11 +103,7 @@ $env:OSPRAY_ALLOW_DEVICE_MEMORY = "0"
 if ( $testMultiDevice ) {
   md failed-multidevice
   $env:OSPRAY_NUM_SUBDEVICES = "2"
-  # post-processing not enabled on multidevice
-  $test_filters_md=$test_filters
-  $test_filters_md+=":DenoiserOp.DenoiserOp"
-  $test_filters_md+=":DebugOp/ImageOp.ImageOp/0"
-  ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice --gtest_filter="-$test_filters_md"
+  ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice --gtest_filter="-$test_filters"
   $exitCode += $LastExitCode
 }
 

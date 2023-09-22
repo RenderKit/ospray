@@ -4,6 +4,7 @@
 #include "FrameBuffer.h"
 #include "FrameOp.h"
 #include "OSPConfig.h"
+#include "fb/FrameBufferView.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
 #endif
@@ -34,8 +35,9 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
     const FeatureFlagsOther ffo)
     : AddStructShared(device.getIspcrtContext(), device),
       size(_size),
+      colorBufferFormat(_colorBufferFormat),
+      hasColorBuffer(channels & OSP_FB_COLOR),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
-      hasAccumBuffer(channels & OSP_FB_ACCUM),
       hasVarianceBuffer(
           (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
       hasNormalBuffer(channels & OSP_FB_NORMAL),
@@ -43,6 +45,7 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
       hasPrimitiveIDBuffer(channels & OSP_FB_ID_PRIMITIVE),
       hasObjectIDBuffer(channels & OSP_FB_ID_OBJECT),
       hasInstanceIDBuffer(channels & OSP_FB_ID_INSTANCE),
+      doAccum(channels & OSP_FB_ACCUM),
       featureFlags(ffo)
 {
   managedObjectType = OSP_FRAMEBUFFER;
@@ -53,7 +56,6 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->size = _size;
   getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
   getSh()->channels = channels;
-  getSh()->colorBufferFormat = _colorBufferFormat;
 
 #ifdef OSPRAY_TARGET_SYCL
   // Note: using 2x2, 4x4, etc doesn't change perf much
@@ -79,9 +81,6 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
 
 void FrameBuffer::commit()
 {
-  // Erase all image operations arrays
-  frameOps.clear();
-
   // Read image operations array set by user
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
 }
@@ -94,16 +93,6 @@ void FrameBuffer::clear()
 vec2i FrameBuffer::getRenderTaskSize() const
 {
   return getSh()->renderTaskSize;
-}
-
-vec2i FrameBuffer::getNumPixels() const
-{
-  return size;
-}
-
-OSPFrameBufferFormat FrameBuffer::getColorBufferFormat() const
-{
-  return getSh()->colorBufferFormat;
 }
 
 float FrameBuffer::getVariance() const
@@ -178,71 +167,9 @@ bool FrameBuffer::frameCancelled() const
   return cancelRender;
 }
 
-void FrameBuffer::prepareLiveOpsForFBV(FrameBufferView &fbv)
-{
-  // Iterate through all image operations set on commit
-  for (auto &&obj : *imageOpData) {
-    // Populate frame operations
-    FrameOpInterface *fopi = dynamic_cast<FrameOpInterface *>(obj);
-    if (fopi)
-      frameOps.push_back(fopi->attach(fbv));
-  }
-}
-
-bool FrameBuffer::hasAccumBuf() const
-{
-  return hasAccumBuffer;
-}
-
-bool FrameBuffer::hasVarianceBuf() const
-{
-  return hasVarianceBuffer;
-}
-
-bool FrameBuffer::hasNormalBuf() const
-{
-  return hasNormalBuffer;
-}
-
-bool FrameBuffer::hasAlbedoBuf() const
-{
-  return hasAlbedoBuffer;
-}
-
 uint32 FrameBuffer::getChannelFlags() const
 {
-  uint32 channels = 0;
-  if (hasDepthBuffer) {
-    channels |= OSP_FB_DEPTH;
-  }
-  if (hasAccumBuffer) {
-    channels |= OSP_FB_ACCUM;
-  }
-  if (hasVarianceBuffer) {
-    channels |= OSP_FB_VARIANCE;
-  }
-  if (hasNormalBuffer) {
-    channels |= OSP_FB_NORMAL;
-  }
-  if (hasAlbedoBuffer) {
-    channels |= OSP_FB_ALBEDO;
-  }
-  return channels;
-}
-
-bool FrameBuffer::hasPrimitiveIDBuf() const
-{
-  return hasPrimitiveIDBuffer;
-}
-
-bool FrameBuffer::hasObjectIDBuf() const
-{
-  return hasObjectIDBuffer;
-}
-
-bool FrameBuffer::hasInstanceIDBuf() const
-{
-  return hasInstanceIDBuffer;
+  return getSh()->channels;
 }
 
 OSPTYPEFOR_DEFINITION(FrameBuffer *);

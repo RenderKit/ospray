@@ -9,10 +9,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline void ToneMapper_kernel(const LiveFrameOp *uniform lfoSelf,
-    const vec2ui id,
-    const vec4f *uniform inputBuffer,
-    vec4f *uniform outputBuffer)
+inline void ToneMapper_kernel(
+    const FrameBufferView *uniform fbvSelf, const vec2ui id)
 {
   // ACES input transform matrix = RRT_SAT_MAT * XYZ_2_AP1_MAT * D65_2_D60_CAT *
   // REC709_2_XYZ_PRI_MAT
@@ -28,10 +26,10 @@ inline void ToneMapper_kernel(const LiveFrameOp *uniform lfoSelf,
       {-0.5310794927f, 1.1081322801f, -0.0727552477f},
       {-0.0736720338f, -0.0060518756f, 1.0760219533f}};
 
-  const LiveToneMapper *uniform self = (const LiveToneMapper *uniform)lfoSelf;
-  uniform const vec2ui &dims = self->super.fbView.viewDims;
+  const LiveToneMapper *uniform self = (const LiveToneMapper *uniform)fbvSelf;
+  uniform const vec2ui &dims = fbvSelf->viewDims;
   const uint32 i = id.y * dims.x + id.x;
-  vec4f col = inputBuffer[i];
+  vec4f col = fbvSelf->colorBufferInput[i];
   vec3f x = make_vec3f(col) * self->exposure;
   if (self->acesColor)
     x = acesInputMat * x;
@@ -39,7 +37,7 @@ inline void ToneMapper_kernel(const LiveFrameOp *uniform lfoSelf,
   if (self->acesColor)
     x = acesOutputMat * x;
   x = clamp(x, make_vec3f(0.f), make_vec3f(1.f));
-  outputBuffer[i] = make_vec4f(x, col.w);
+  fbvSelf->colorBufferOutput[i] = make_vec4f(x, col.w);
 }
 
 DEFINE_KERNEL_LAUNCHER(ToneMapper_kernel);

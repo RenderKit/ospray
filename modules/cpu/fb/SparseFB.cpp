@@ -18,8 +18,6 @@
 
 namespace ospray {
 
-#include "fb/FrameBufferView.h"
-
 // A global function so we can call it from the tile initialization SYCL kernel
 box2i getTileRegion(uint32_t tileID, const vec2i fbSize, const vec2i totalTiles)
 {
@@ -72,15 +70,6 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
     throw std::runtime_error(
         "local framebuffer has invalid size. Dimensions must be greater than "
         "0");
-  }
-}
-
-void SparseFrameBuffer::commit()
-{
-  FrameBuffer::commit();
-
-  if (imageOpData) {
-    FrameBufferView fbv(getNumPixels(), nullptr, nullptr, nullptr, nullptr);
   }
 }
 
@@ -343,14 +332,14 @@ void SparseFrameBuffer::setTiles(
     varianceBuffer = nullptr;
   }
 
-  if (hasAccumBuffer && !tileIDs.empty()) {
+  if (!tileIDs.empty()) {
     accumulationBuffer = make_buffer_device_unique<vec4f>(
         getISPCDevice().getIspcrtDevice(), numPixels);
   } else {
     accumulationBuffer = nullptr;
   }
 
-  if ((hasAccumBuffer || useTaskAccumIDs) && !tileIDs.empty()) {
+  if (useTaskAccumIDs && !tileIDs.empty()) {
     taskAccumID = make_buffer_device_shadowed_unique<int>(
         getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
     std::fill(taskAccumID->begin(), taskAccumID->end(), initialTaskAccumID);

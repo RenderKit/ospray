@@ -19,6 +19,7 @@ struct OSPRAY_SDK_INTERFACE ToneMapperFrameOp : public FrameOp
 
   std::string toString() const override;
 
+ private:
   // Params for the tone mapping curve
   float a, b, c, d;
   bool acesColor;

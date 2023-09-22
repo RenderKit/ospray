@@ -3,21 +3,19 @@
 
 #include "ToneMapper.h"
 #include "ISPCDevice.h"
+#include "fb/FrameBufferView.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 extern "C" {
 #endif
 namespace ispc {
-void ToneMapper_kernelLauncher(
-    const void *, void *, const LiveFrameOp *, void *, void *);
+void ToneMapper_kernelLauncher(const FrameBufferView *, void *, void *);
 }
 #ifndef OSPRAY_TARGET_SYCL
 }
 #endif
 
 namespace ospray {
-
-#include "fb/FrameBufferView.h"
 
 ToneMapperFrameOp::ToneMapperFrameOp(api::Device &device)
     : FrameOp(static_cast<api::ISPCDevice &>(device))
@@ -65,12 +63,6 @@ void ToneMapperFrameOp::commit()
 std::unique_ptr<LiveFrameOpInterface> ToneMapperFrameOp::attach(
     FrameBufferView &fbView)
 {
-  if (!fbView.colorBuffer) {
-    throw std::runtime_error(
-        "tone mapper frame operation must be attached to framebuffer with color "
-        "data");
-  }
-
   return rkcommon::make_unique<LiveToneMapperFrameOp>(
       device, fbView, exposure, a, b, c, d, acesColor);
 }
@@ -90,6 +82,7 @@ LiveToneMapperFrameOp::LiveToneMapperFrameOp(api::ISPCDevice &device,
     bool acesColor)
     : AddStructShared(device.getIspcrtContext(), device, fbView)
 {
+  // Pass tone mapping parameters
   getSh()->exposure = exposure;
   getSh()->a = a;
   getSh()->b = b;
@@ -104,9 +97,7 @@ void LiveToneMapperFrameOp::process(void *waitEvent)
 #ifdef OSPRAY_TARGET_SYCL
   cmdQueue = &device.getSyclQueue();
 #endif
-  vec4f *colorBuffer = getSh()->super.fbView.colorBuffer;
-  ispc::ToneMapper_kernelLauncher(
-      colorBuffer, colorBuffer, &getSh()->super, cmdQueue, waitEvent);
+  ispc::ToneMapper_kernelLauncher(&getSh()->super, cmdQueue, waitEvent);
 }
 
 } // namespace ospray

@@ -45,6 +45,7 @@ set(OSPRAY_CPP_SOURCES
   fb/registration.cpp
 
   fb/frame_ops/Blur.cpp
+  fb/frame_ops/ColorConversion.cpp
   fb/frame_ops/Debug.cpp
   fb/frame_ops/ToneMapper.cpp
 
@@ -129,6 +130,7 @@ set(OSPRAY_ISPC_SOURCES
   fb/SparseFB.ispc
 
   fb/frame_ops/Blur.ispc
+  fb/frame_ops/ColorConversion.ispc
   fb/frame_ops/Debug.ispc
   fb/frame_ops/ToneMapper.ispc
 

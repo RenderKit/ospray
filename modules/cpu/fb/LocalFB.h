@@ -17,6 +17,7 @@
 namespace ospray {
 
 struct SparseFrameBuffer;
+struct LiveColorConversionFrameOp;
 
 struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
     : public AddStructShared<FrameBuffer, ispc::LocalFB>
@@ -26,13 +27,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
       ColorBufferFormat colorBufferFormat,
       const uint32 channels);
 
-  virtual ~LocalFrameBuffer() override
-  {
-#ifdef OSPRAY_TARGET_SYCL
-    device.getSyclQueue().wait_and_throw();
-    device.getIspcrtQueue().sync();
-#endif
-  }
+  virtual ~LocalFrameBuffer() override;
 
   virtual void commit() override;
 
@@ -82,15 +77,15 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   // NOTE: All per-pixel data is only allocated if the corresponding channel
   //       flag was passed on construction
 
-  // format depends on FrameBuffer::colorBufferFormat
-  std::unique_ptr<BufferDeviceShadowed<uint8_t>> colorBuffer;
-  // one float per pixel
-  std::unique_ptr<BufferDeviceShadowed<float>> depthBuffer;
   // one RGBA per pixel
-  std::unique_ptr<BufferDevice<vec4f>> accumBuffer;
+  std::unique_ptr<BufferDeviceShadowed<vec4f>> colorBuffer;
+  // one RGBA per pixel, post-processing output
+  std::unique_ptr<BufferDeviceShadowed<vec4f>> ppColorBuffer;
   // one RGBA per pixel, does not accumulate all samples, for variance
   // estimation
   std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
+  // one float per pixel
+  std::unique_ptr<BufferDeviceShadowed<float>> depthBuffer;
   // accumulated world-space normal per pixel
   std::unique_ptr<BufferDeviceShadowed<vec3f>> normalBuffer;
   // accumulated, one RGB per pixel
@@ -111,13 +106,17 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
   std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
-  // holds accumID per render task, for adaptive accumulation
-  std::unique_ptr<BufferDevice<int32_t>> taskAccumID;
 
   // holds error per tile and adaptive regions
   TaskError taskErrorRegion;
   uint32_t skipVarianceCounter{1};
   uint32_t skipVarianceFrameCounter{1};
+
+  // Array of frame operations
+  std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;
+
+  // Color conversion frame operation
+  std::unique_ptr<LiveColorConversionFrameOp> colorConversionFrameOp;
 };
 
 } // namespace ospray

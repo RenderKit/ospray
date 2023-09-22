@@ -88,13 +88,15 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual void cancelFrame();
   bool frameCancelled() const;
 
-  bool hasAccumBuf() const;
+  bool hasColorBuf() const;
   bool hasVarianceBuf() const;
   bool hasNormalBuf() const;
   bool hasAlbedoBuf() const;
   bool hasPrimitiveIDBuf() const;
   bool hasObjectIDBuf() const;
   bool hasInstanceIDBuf() const;
+
+  bool doAccumulation() const;
 
   uint32 getChannelFlags() const;
 
@@ -103,23 +105,21 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   FeatureFlags getFeatureFlags() const;
 
  protected:
-  // Fill vectors with instantiated live objects
-  void prepareLiveOpsForFBV(FrameBufferView &fbv);
-
   const vec2i size;
+  ColorBufferFormat colorBufferFormat;
 
-  // indicates whether the app requested this frame buffer to have
-  // an (application-mappable) depth buffer
+  // Frame buffer optional buffers
+  bool hasColorBuffer;
   bool hasDepthBuffer;
-  // indicates whether the app requested this frame buffer to have
-  // an accumulation buffer
-  bool hasAccumBuffer;
   bool hasVarianceBuffer;
   bool hasNormalBuffer;
   bool hasAlbedoBuffer;
   bool hasPrimitiveIDBuffer;
   bool hasObjectIDBuffer;
   bool hasInstanceIDBuffer;
+
+  // indicates whether the app requested this frame buffer to do accumulation
+  bool doAccum;
 
   float frameVariance{0.f};
 
@@ -128,12 +128,61 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
   Ref<const DataT<ImageOp *>> imageOpData;
-  std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;
 
   FeatureFlagsOther featureFlags{FFO_NONE};
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
+
+inline vec2i FrameBuffer::getNumPixels() const
+{
+  return size;
+}
+
+inline FrameBuffer::ColorBufferFormat FrameBuffer::getColorBufferFormat() const
+{
+  return colorBufferFormat;
+}
+
+inline bool FrameBuffer::hasColorBuf() const
+{
+  return hasColorBuffer;
+}
+
+inline bool FrameBuffer::hasVarianceBuf() const
+{
+  return hasVarianceBuffer;
+}
+
+inline bool FrameBuffer::hasNormalBuf() const
+{
+  return hasNormalBuffer;
+}
+
+inline bool FrameBuffer::hasAlbedoBuf() const
+{
+  return hasAlbedoBuffer;
+}
+
+inline bool FrameBuffer::hasPrimitiveIDBuf() const
+{
+  return hasPrimitiveIDBuffer;
+}
+
+inline bool FrameBuffer::hasObjectIDBuf() const
+{
+  return hasObjectIDBuffer;
+}
+
+inline bool FrameBuffer::hasInstanceIDBuf() const
+{
+  return hasInstanceIDBuffer;
+}
+
+inline bool FrameBuffer::doAccumulation() const
+{
+  return doAccum;
+}
 
 inline int32_t FrameBuffer::getFrameID() const
 {

@@ -6,38 +6,28 @@
 #ifndef OSPRAY_TARGET_SYCL
 
 #define DEFINE_KERNEL_LAUNCHER(kernel_name)                                    \
-  task static void kernel_name##Task(const vec4f *uniform inputBuffer,         \
-      vec4f *uniform outputBuffer,                                             \
-      const LiveFrameOp *uniform self)                                         \
+  task static void kernel_name##Task(const FrameBufferView *uniform self)      \
   {                                                                            \
     const vec2ui id =                                                          \
         make_vec2ui(taskIndex0 * programCount + programIndex, taskIndex1);     \
-    kernel_name(self, id, inputBuffer, outputBuffer);                          \
+    kernel_name(self, id);                                                     \
   }                                                                            \
                                                                                \
-  export void kernel_name##Launcher(const void *uniform inputBuffer,           \
-      void *uniform outputBuffer,                                              \
-      const LiveFrameOp *uniform self,                                         \
-      void *uniform,                                                           \
-      void *uniform)                                                           \
+  export void kernel_name##Launcher(                                           \
+      const FrameBufferView *uniform self, void *uniform, void *uniform)       \
   {                                                                            \
-    launch[self->fbView.viewDims.x / programCount,                             \
-        self->fbView.viewDims.y] kernel_name##Task((const vec4f *)inputBuffer, \
-        (vec4f *)outputBuffer,                                                 \
-        self);                                                                 \
+    launch[self->viewDims.x / programCount,                                    \
+        self->viewDims.y] kernel_name##Task(self);                             \
     sync;                                                                      \
   }
 
 #else
 
 #define DEFINE_KERNEL_LAUNCHER(kernel_name)                                    \
-  void kernel_name##Launcher(const void *inputBuffer,                          \
-      void *outputBuffer,                                                      \
-      const LiveFrameOp *self,                                                 \
-      void *cmdQueue,                                                          \
-      void *waitEvent)                                                         \
+  void kernel_name##Launcher(                                                  \
+      const FrameBufferView *self, void *cmdQueue, void *waitEvent)            \
   {                                                                            \
-    const vec2ui globalSize = self->fbView.viewDims;                           \
+    const vec2ui globalSize = self->viewDims;                                  \
     const vec2ui workgroupSize = vec2ui(16, 1);                                \
     const vec2ui roundedSize =                                                 \
         ((globalSize - 1) / workgroupSize + 1) * workgroupSize;                \
@@ -47,9 +37,7 @@
     sycl::event event = syclQueue->submit([&](sycl::handler &cgh) {            \
       cgh.parallel_for(dispatchRange, [=](sycl::nd_item<2> taskIndex) {        \
         kernel_name(self,                                                      \
-            vec2ui(taskIndex.get_global_id(0), taskIndex.get_global_id(1)),    \
-            reinterpret_cast<const vec4f *>(inputBuffer),                      \
-            reinterpret_cast<vec4f *>(outputBuffer));                          \
+            vec2ui(taskIndex.get_global_id(0), taskIndex.get_global_id(1)));   \
       });                                                                      \
     });                                                                        \
     sycl::event *syclEvent = static_cast<sycl::event *>(waitEvent);            \

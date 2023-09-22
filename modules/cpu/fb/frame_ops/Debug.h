@@ -18,7 +18,10 @@ struct OSPRAY_SDK_INTERFACE DebugFrameOp : public FrameOp
 
 struct OSPRAY_SDK_INTERFACE LiveDebugFrameOp : public LiveFrameOp
 {
-  LiveDebugFrameOp(api::ISPCDevice &device, FrameBufferView &fbView);
+  LiveDebugFrameOp(api::ISPCDevice &device, FrameBufferView &fbView)
+      : LiveFrameOp(device, fbView)
+  {}
+
   void process(void *waitEvent) override;
 };
 

@@ -58,9 +58,6 @@ let exitCode+=$?
 
 if [ $TEST_MULTIDEVICE ]; then
   mkdir failed-multidevice
-  # post-processing not enabled on multidevice
-  test_filters="DebugOp/ImageOp.ImageOp/0"
-  test_filters+=":DenoiserOp.DenoiserOp"
   OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --gtest_filter="-$test_filters" --osp:load-modules=multidevice_cpu --osp:device=multidevice
   let exitCode+=$?
 fi

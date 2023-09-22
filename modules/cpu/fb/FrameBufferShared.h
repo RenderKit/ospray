@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "ospray/OSPEnums.h"
-
 #ifdef __cplusplus
 namespace ispc {
 #endif // __cplusplus
@@ -80,8 +78,6 @@ struct FrameBuffer
   // The channels stored in the framebuffer
   uint32 channels;
 
-  OSPFrameBufferFormat colorBufferFormat;
-
   // If the frame has been cancelled or not. Note: we don't share bools between
   // ISPC and C++ as the true value representation may differ (as it does with
   // gcc)
@@ -102,7 +98,6 @@ struct FrameBuffer
         renderTaskSize(4),
         frameID(-1),
         channels(0),
-        colorBufferFormat(OSP_FB_NONE),
         cancelRender(0),
         numPixelsRendered(0)
   {}

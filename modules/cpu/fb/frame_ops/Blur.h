@@ -1,6 +1,7 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/ISPCRTBuffers.h"
 #include "fb/FrameOp.h"
 // ispc shared
 #include "BlurShared.h"
@@ -22,7 +23,6 @@ struct OSPRAY_SDK_INTERFACE LiveBlurFrameOp
     : public AddStructShared<LiveFrameOp, ispc::LiveBlur>
 {
   LiveBlurFrameOp(api::ISPCDevice &device, FrameBufferView &fbView);
-
   void process(void *) override;
 
  private:

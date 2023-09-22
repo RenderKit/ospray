@@ -50,8 +50,6 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
       const uint32 channels,
       const bool overrideUseTaskAccumIDs = false);
 
-  virtual void commit() override;
-
   // Return the number of render tasks in the x and y direction
   // This is the kernel launch dims to render the image
   virtual vec2i getNumRenderTasks() const override;

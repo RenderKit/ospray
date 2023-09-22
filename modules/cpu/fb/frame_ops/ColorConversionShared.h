@@ -4,17 +4,21 @@
 #pragma once
 
 #include "fb/FrameBufferView.ih"
+#include "ospray/OSPEnums.h"
 
 #ifdef __cplusplus
 namespace ispc {
 #endif
 
-#define BLUR_RADIUS 4
-struct LiveBlur
+struct LiveColorConversion
 {
   FrameBufferView super;
-  vec4f *scratchBuffer;
-  float weights[BLUR_RADIUS + 1];
+
+  // Target color format
+  OSPFrameBufferFormat targetColorFormat;
+
+  // Converted color buffer
+  void *convBuffer;
 };
 #ifdef __cplusplus
 }

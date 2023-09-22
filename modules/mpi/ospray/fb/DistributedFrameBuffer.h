@@ -121,8 +121,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   void incoming(const std::shared_ptr<mpicommon::Message> &message) override;
 
   //! process a (non-empty) write tile message at the master
-  template <typename ColorT>
-  void processMessage(MasterTileMessage_FB<ColorT> *msg);
+  void processMessage(MasterTileMessage_FB *msg);
 
   //! process a client-to-client write tile message */
   void processMessage(WriteTileMessage *msg);

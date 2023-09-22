@@ -12,9 +12,7 @@ LiveFrameOp::LiveFrameOp(api::ISPCDevice &device, FrameBufferView &fbView)
   // We need `FrameBufferView` to be in `ospray` namespace for external modules
   // to reach it, and we need it to be in `ispc` namespace for ISPC automatic
   // headers generator, copying between those two requires a cast
-  ispc::FrameBufferView *fbv =
-      reinterpret_cast<ispc::FrameBufferView *>(&fbView);
-  getSh()->fbView = *fbv;
+  *getSh() = *reinterpret_cast<ispc::FrameBufferView *>(&fbView);
 }
 
 } // namespace ospray

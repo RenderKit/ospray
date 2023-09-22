@@ -77,6 +77,10 @@ void MultiDeviceLoadBalancer::renderFrame(
     });
   }
 
+  // We need to call post-processing operations on fully compositioned
+  // (rowmajorFb) frame buffer and wait for it to finish
+  framebuffer->rowmajorFb->postProcess(true);
+
   for (size_t i = 0; i < framebuffer->objects.size(); ++i) {
     SparseFrameBuffer *fbi = (SparseFrameBuffer *)framebuffer->objects[i];
     fbi->setCompletedEvent(OSP_FRAME_FINISHED);

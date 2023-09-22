@@ -1,0 +1,14 @@
+// Copyright 2009 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#ifdef __cplusplus
+namespace ispc {
+#endif // __cplusplus
+
+#include "fb/FrameBufferViewDef.h"
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

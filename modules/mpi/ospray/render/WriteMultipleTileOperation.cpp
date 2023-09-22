@@ -122,7 +122,7 @@ void LiveWriteMultipleTile::process(const ispc::Tile &tile)
           (ispc::VaryingTile *)&finished,
           (ispc::VaryingTile *)&accum,
           (ispc::VaryingTile *)&variance,
-          dfb->hasAccumBuf(),
+          dfb->doAccumulation(),
           // disable accumulation of variance
           false);
       if (dfb->hasNormalBuf() || dfb->hasAlbedoBuf()) {
