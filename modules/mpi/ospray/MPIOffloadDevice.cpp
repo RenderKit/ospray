@@ -212,12 +212,6 @@ MPIOffloadDevice::~MPIOffloadDevice()
 
 void MPIOffloadDevice::initializeDevice()
 {
-  Device::commit();
-  // MPI Device defaults to not setting affinity
-  if (threadAffinity == AUTO_DETECT) {
-    threadAffinity = DEAFFINITIZE;
-  }
-
   initialized = true;
 
   int _ac = 1;
@@ -287,6 +281,12 @@ void MPIOffloadDevice::initializeDevice()
 
 void MPIOffloadDevice::commit()
 {
+  Device::commit();
+  // MPI Device defaults to not setting affinity
+  if (threadAffinity == AUTO_DETECT) {
+    threadAffinity = DEAFFINITIZE;
+  }
+
   if (!initialized)
     initializeDevice();
 }

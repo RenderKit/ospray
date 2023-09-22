@@ -4,6 +4,9 @@
 #include <ospray/ospray_util.h>
 #include <random>
 #include "test_fixture.h"
+#ifdef SYCL_LANGUAGE_VERSION
+#include "sycl/sycl.hpp"
+#endif
 
 extern OSPRayEnvironment *ospEnv;
 
@@ -48,6 +51,15 @@ static void customMallocDeleter(const void *dels, const void *buff)
   VALIDATION_MESSAGE;
 }
 
+#ifdef SYCL_LANGUAGE_VERSION
+static void customSYCLDeleter(const void *syclQueue, const void *buff)
+{
+  sycl::free((void *)buff, *(sycl::queue *)syclQueue);
+  TestAssignedCopyDelCounts::delcounts++;
+  VALIDATION_MESSAGE;
+}
+#endif
+
 static void customNewDeleter(const void *dels, const void *buff)
 {
   delete[] (float *)buff;
@@ -71,6 +83,15 @@ void TestAssignedCopy::SetUp()
   float *radiiB = (float *)malloc(numspheres * sizeof(float));
   OSPDeleterCallback radiiDeleter = customMallocDeleter;
   void *radiiUserData = &TestAssignedCopyDelCounts::delcounts;
+#ifdef SYCL_LANGUAGE_VERSION
+  auto *appsSyclQueue = ospEnv->GetAppsSyclQueue();
+  if (appsSyclQueue) { // but on GPU use sycl::malloc
+    free(radiiB);
+    radiiB = sycl::malloc_shared<float>(numspheres, *appsSyclQueue);
+    radiiDeleter = customSYCLDeleter;
+    radiiUserData = appsSyclQueue;
+  }
+#endif
 
   vec2f *tcoordsB = new vec2f[numspheres];
 

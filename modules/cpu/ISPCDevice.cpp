@@ -205,9 +205,7 @@ void ISPCDevice::commit()
 {
   Device::commit();
 
-  // TODO: Should this somehow report an error if app trying to change and
-  // recommit these params?
-  if (!ispcrtContext) {
+  if (!userContext) {
 #ifdef OSPRAY_TARGET_SYCL
     sycl::context *appSyclCtx =
         static_cast<sycl::context *>(getParam<void *>("syclContext", nullptr));
@@ -250,12 +248,16 @@ void ISPCDevice::commit()
       appZeDevice = &syclZeDeviceHandle;
     }
 
+    const bool newContext = appZeCtx || !ispcrtContext;
+
     if (appZeCtx) {
+      userContext = true;
       ispcrtContext = ispcrt::Context(
           ISPCRT_DEVICE_TYPE_GPU, (ISPCRTGenericHandle)*appZeCtx);
       ispcrtDevice =
           ispcrt::Device(ispcrtContext, (ISPCRTGenericHandle)*appZeDevice);
-    } else {
+    } else if (!ispcrtContext) {
+      // internally, from Multidevice GPU
       ispcrt::Context *ispcrtContextPtr = static_cast<ispcrt::Context *>(
           getParam<void *>("ispcrtContext", nullptr));
       ispcrt::Device *ispcrtDevicePtr = static_cast<ispcrt::Device *>(
@@ -269,29 +271,43 @@ void ISPCDevice::commit()
         ispcrtDevice = ispcrt::Device(ispcrtContext);
       }
     }
+
+    if (newContext) {
+      syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
+          reinterpret_cast<pi_native_handle>(
+              ispcrtDevice.nativePlatformHandle()));
+      syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
+          reinterpret_cast<pi_native_handle>(
+              ispcrtDevice.nativeDeviceHandle()));
+
+      syclContext = sycl::ext::oneapi::level_zero::make_context(
+          std::vector<sycl::device>{syclDevice},
+          reinterpret_cast<pi_native_handle>(
+              ispcrtDevice.nativeContextHandle()),
+          true);
+
+      syclQueue = sycl::queue(syclContext,
+          syclDevice,
+          {sycl::property::queue::enable_profiling(),
+              sycl::property::queue::in_order()});
+
+      if (embreeDevice) {
+        rtcReleaseDevice(embreeDevice);
+        embreeDevice = nullptr;
+      }
+#ifdef OSPRAY_ENABLE_VOLUMES
+      if (vklDevice) {
+        vklReleaseDevice(vklDevice);
+        vklDevice = nullptr;
+      }
+#endif
+    }
 #else
+    userContext = true; // on CPU there is no other choice
     ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
     ispcrtDevice = ispcrt::Device(ispcrtContext);
 #endif
     ispcrtQueue = ispcrt::TaskQueue(ispcrtDevice);
-
-#ifdef OSPRAY_TARGET_SYCL
-    syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
-        reinterpret_cast<pi_native_handle>(
-            ispcrtDevice.nativePlatformHandle()));
-    syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
-        reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeDeviceHandle()));
-
-    syclContext = sycl::ext::oneapi::level_zero::make_context(
-        std::vector<sycl::device>{syclDevice},
-        reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
-        true);
-
-    syclQueue = sycl::queue(syclContext,
-        syclDevice,
-        {sycl::property::queue::enable_profiling(),
-            sycl::property::queue::in_order()});
-#endif
   }
 
   setIspcrtTaskingCallbacks();

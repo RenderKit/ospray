@@ -46,9 +46,18 @@ set(ISPCRT_BRANCH "${ISPCRT_ARCHIVE}" CACHE STRING "Which branch of ISPCRT to bu
 set(ISPCRT_URL "https://github.com/ispc/ispc/archive/refs/tags/${ISPCRT_ARCHIVE}.zip"
   CACHE STRING "Location to clone ISPCRT source from")
 
+# need PR #2612, which is in upcoming v1.22, but not yet in v1.21
+if (ISPC_VERSION STREQUAL "1.21.0")
+  # `patch` is not available on all systems, so use `git apply` instead
+  set(ISPCRT_PATCH PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/ispcrt-app-device-data.patch)
+endif()
+
 string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${ISPCRT_URL})
 if (ZIP_FILENAME)
   set(ISPCRT_CLONE_URL URL ${ISPCRT_URL})
+  if (ISPC_SOURCE_HASH)
+    set(ISPCRT_URL_HASH URL_HASH SHA256=${ISPC_SOURCE_HASH})
+  endif()
 else()
   set(ISPCRT_CLONE_URL GIT_REPOSITORY ${ISPCRT_URL} GIT_TAG ${ISPCRT_BRANCH})
 endif()
@@ -61,6 +70,8 @@ ExternalProject_Add(ispcrt
   LIST_SEPARATOR |
   SOURCE_SUBDIR "ispcrt"
   ${ISPCRT_CLONE_URL}
+  ${ISPCRT_URL_HASH}
+  ${ISPCRT_PATCH}
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}

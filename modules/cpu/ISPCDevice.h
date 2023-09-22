@@ -217,6 +217,8 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   sycl::context syclContext;
   sycl::queue syclQueue;
 #endif
+
+  bool userContext{false}; // app can set context only once
 };
 
 } // namespace api

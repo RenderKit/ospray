@@ -5,7 +5,6 @@
 #include "distributed_test_fixture.h"
 #include "rkcommon/utility/getEnvVar.h"
 
-extern OSPRayEnvironment *ospEnv;
 OSPRayEnvironment *ospEnv;
 
 namespace MPIDistribOSPRayTestScenes {

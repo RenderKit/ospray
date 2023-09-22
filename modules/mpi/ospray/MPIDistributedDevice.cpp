@@ -242,17 +242,6 @@ void MPIDistributedDevice::commit()
     messaging::init(mpicommon::worker);
     maml::start();
 
-    // Pass down application's GPU selection made via SYCL or L0 (if any)
-    void *appSyclCtx = getParam<void *>("syclContext", nullptr);
-    internalDevice->setParam<void *>("syclContext", appSyclCtx);
-    void *appSyclDevice = getParam<void *>("syclDevice", nullptr);
-    internalDevice->setParam<void *>("syclDevice", appSyclDevice);
-
-    void *appZeCtx = getParam<void *>("zeContext", nullptr);
-    internalDevice->setParam<void *>("zeContext", appZeCtx);
-    void *appZeDevice = getParam<void *>("zeDevice", nullptr);
-    internalDevice->setParam<void *>("zeDevice", appZeDevice);
-
     RKCOMMON_IF_TRACING_ENABLED({
       mpicommon::barrier(mpicommon::worker.comm).wait();
       rkcommon::tracing::setMarker("clockSync", "mpiDistributed");
@@ -266,6 +255,17 @@ void MPIDistributedDevice::commit()
            << rkcommon::tracing::getProcStatus() << "\n";
     });
   }
+
+  // Pass down application's GPU selection made via SYCL or L0 (if any)
+  void *appSyclCtx = getParam<void *>("syclContext", nullptr);
+  internalDevice->setParam<void *>("syclContext", appSyclCtx);
+  void *appSyclDevice = getParam<void *>("syclDevice", nullptr);
+  internalDevice->setParam<void *>("syclDevice", appSyclDevice);
+
+  void *appZeCtx = getParam<void *>("zeContext", nullptr);
+  internalDevice->setParam<void *>("zeContext", appZeCtx);
+  void *appZeDevice = getParam<void *>("zeDevice", nullptr);
+  internalDevice->setParam<void *>("zeDevice", appZeDevice);
 
   internalDevice->commit();
 }
