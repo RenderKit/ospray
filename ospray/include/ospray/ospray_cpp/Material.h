@@ -11,7 +11,7 @@ namespace cpp {
 class Material : public ManagedObject<OSPMaterial, OSP_MATERIAL>
 {
  public:
-  Material(const std::string &/*ignored*/, const std::string &mat_type);
+  Material(const std::string &mat_type);
   Material(OSPMaterial existing = nullptr);
 };
 
@@ -20,10 +20,9 @@ static_assert(sizeof(Material) == sizeof(OSPMaterial),
 
 // Inlined function definitions ///////////////////////////////////////////
 
-inline Material::Material(
-    const std::string &/*ignored*/, const std::string &mat_type)
+inline Material::Material(const std::string &mat_type)
 {
-  ospObject = ospNewMaterial(nullptr, mat_type.c_str());
+  ospObject = ospNewMaterial(mat_type.c_str());
 }
 
 inline Material::Material(OSPMaterial existing)

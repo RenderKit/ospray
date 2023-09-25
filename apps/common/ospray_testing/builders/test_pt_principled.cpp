@@ -30,16 +30,14 @@ struct PtPrincipledGlass : public PtMaterial
   std::vector<cpp::Material> buildMaterials() const override;
 };
 
-static cpp::Material makePrincipledMetalMaterial(
-    const std::string &rendererType,
-    vec3f baseColor,
+static cpp::Material makePrincipledMetalMaterial(vec3f baseColor,
     float metallic,
     float roughness,
     float anisotropy,
     float coat,
     float coatRoughness)
 {
-  cpp::Material mat(rendererType, "principled");
+  cpp::Material mat("principled");
   mat.setParam("baseColor", baseColor);
   mat.setParam("metallic", metallic);
   mat.setParam("roughness", roughness);
@@ -51,9 +49,7 @@ static cpp::Material makePrincipledMetalMaterial(
   return mat;
 }
 
-static cpp::Material makePrincipledPlasticMaterial(
-    const std::string &rendererType,
-    vec3f baseColor,
+static cpp::Material makePrincipledPlasticMaterial(vec3f baseColor,
     float ior,
     float specular,
     float sheen,
@@ -61,7 +57,7 @@ static cpp::Material makePrincipledPlasticMaterial(
     float sheenRoughness,
     float opacity)
 {
-  cpp::Material mat(rendererType, "principled");
+  cpp::Material mat("principled");
   mat.setParam("baseColor", baseColor);
   mat.setParam("ior", ior);
   mat.setParam("specular", specular);
@@ -74,9 +70,7 @@ static cpp::Material makePrincipledPlasticMaterial(
   return mat;
 }
 
-static cpp::Material makePrincipledGlassMaterial(
-    const std::string &rendererType,
-    vec3f baseColor,
+static cpp::Material makePrincipledGlassMaterial(vec3f baseColor,
     float transmission,
     float roughness,
     float ior,
@@ -85,7 +79,7 @@ static cpp::Material makePrincipledGlassMaterial(
     float thickness,
     float backlight)
 {
-  cpp::Material mat(rendererType, "principled");
+  cpp::Material mat("principled");
   mat.setParam("baseColor", baseColor);
   mat.setParam("transmissionColor", baseColor);
   mat.setParam("transmission", transmission);
@@ -110,57 +104,57 @@ std::vector<cpp::Material> PtPrincipledMetal::buildMaterials() const
 
   // metallic
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledMetalMaterial(rendererType,
-        vec3f(0.0261f, 0.195f, 0.870f),
-        float(i) / (dimSize - 1),
-        0.f,
-        0.f,
-        0.f,
-        0.f));
+    materials.push_back(
+        makePrincipledMetalMaterial(vec3f(0.0261f, 0.195f, 0.870f),
+            float(i) / (dimSize - 1),
+            0.f,
+            0.f,
+            0.f,
+            0.f));
   }
 
   // roughness
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledMetalMaterial(rendererType,
-        vec3f(0.0261f, 0.195f, 0.870f),
-        1.f,
-        float(i) / (dimSize - 1),
-        0.f,
-        0.f,
-        0.f));
+    materials.push_back(
+        makePrincipledMetalMaterial(vec3f(0.0261f, 0.195f, 0.870f),
+            1.f,
+            float(i) / (dimSize - 1),
+            0.f,
+            0.f,
+            0.f));
   }
 
   // anisotropy
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledMetalMaterial(rendererType,
-        vec3f(0.0261f, 0.195f, 0.870f),
-        1.f,
-        .5f,
-        float(i) / (dimSize - 1),
-        0.f,
-        0.f));
+    materials.push_back(
+        makePrincipledMetalMaterial(vec3f(0.0261f, 0.195f, 0.870f),
+            1.f,
+            .5f,
+            float(i) / (dimSize - 1),
+            0.f,
+            0.f));
   }
 
   // coat
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledMetalMaterial(rendererType,
-        vec3f(0.860f, 0.0258f, 0.0536f),
-        1.f,
-        .5f,
-        0.f,
-        float(i) / (dimSize - 1),
-        0.f));
+    materials.push_back(
+        makePrincipledMetalMaterial(vec3f(0.860f, 0.0258f, 0.0536f),
+            1.f,
+            .5f,
+            0.f,
+            float(i) / (dimSize - 1),
+            0.f));
   }
 
   // coatRoughness
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledMetalMaterial(rendererType,
-        vec3f(0.860f, 0.0258f, 0.0536f),
-        1.f,
-        .5f,
-        0.f,
-        1.f,
-        float(i) / (dimSize - 1)));
+    materials.push_back(
+        makePrincipledMetalMaterial(vec3f(0.860f, 0.0258f, 0.0536f),
+            1.f,
+            .5f,
+            0.f,
+            1.f,
+            float(i) / (dimSize - 1)));
   }
 
   return materials;
@@ -174,8 +168,7 @@ std::vector<cpp::Material> PtPrincipledPlastic::buildMaterials() const
 
   // specular
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledPlasticMaterial(rendererType,
-        vec3f(0.770, 0.00, 0.00),
+    materials.push_back(makePrincipledPlasticMaterial(vec3f(0.770, 0.00, 0.00),
         1.45f,
         float(i) / (dimSize - 1),
         0.f,
@@ -186,50 +179,50 @@ std::vector<cpp::Material> PtPrincipledPlastic::buildMaterials() const
 
   // sheen
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledPlasticMaterial(rendererType,
-        vec3f(0.950f, 0.494f, 0.0380f),
-        1.f,
-        0.f,
-        float(i) / (dimSize - 1),
-        0.f,
-        .5f,
-        1.f));
+    materials.push_back(
+        makePrincipledPlasticMaterial(vec3f(0.950f, 0.494f, 0.0380f),
+            1.f,
+            0.f,
+            float(i) / (dimSize - 1),
+            0.f,
+            .5f,
+            1.f));
   }
 
   // sheenTint
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledPlasticMaterial(rendererType,
-        vec3f(0.950f, 0.494f, 0.0380f),
-        1.f,
-        0.f,
-        1.f,
-        float(i) / (dimSize - 1),
-        .5f,
-        1.f));
+    materials.push_back(
+        makePrincipledPlasticMaterial(vec3f(0.950f, 0.494f, 0.0380f),
+            1.f,
+            0.f,
+            1.f,
+            float(i) / (dimSize - 1),
+            .5f,
+            1.f));
   }
 
   // sheenRoughness
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledPlasticMaterial(rendererType,
-        vec3f(0.950f, 0.494f, 0.0380f),
-        1.f,
-        0.f,
-        1.f,
-        0.f,
-        float(i) / (dimSize - 1),
-        1.f));
+    materials.push_back(
+        makePrincipledPlasticMaterial(vec3f(0.950f, 0.494f, 0.0380f),
+            1.f,
+            0.f,
+            1.f,
+            0.f,
+            float(i) / (dimSize - 1),
+            1.f));
   }
 
   // opacity
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledPlasticMaterial(rendererType,
-        vec3f(0.930f, 0.884f, 0.0186f),
-        1.45f,
-        1.f,
-        0.f,
-        0.f,
-        0.f,
-        1.f - float(i) / (dimSize - 1)));
+    materials.push_back(
+        makePrincipledPlasticMaterial(vec3f(0.930f, 0.884f, 0.0186f),
+            1.45f,
+            1.f,
+            0.f,
+            0.f,
+            0.f,
+            1.f - float(i) / (dimSize - 1)));
   }
 
   return materials;
@@ -243,67 +236,67 @@ std::vector<cpp::Material> PtPrincipledGlass::buildMaterials() const
 
   // transmission
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledGlassMaterial(rendererType,
-        vec3f(0.0400f, 0.680f, 1.00f),
-        float(i) / (dimSize - 1),
-        0.f,
-        1.1f,
-        1.f,
-        false,
-        1.f,
-        0.f));
+    materials.push_back(
+        makePrincipledGlassMaterial(vec3f(0.0400f, 0.680f, 1.00f),
+            float(i) / (dimSize - 1),
+            0.f,
+            1.1f,
+            1.f,
+            false,
+            1.f,
+            0.f));
   }
 
   // roughness
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledGlassMaterial(rendererType,
-        vec3f(0.0400f, 0.680f, 1.00f),
-        1.f,
-        float(i) / (dimSize - 1),
-        1.5f,
-        1.f,
-        false,
-        1.f,
-        0.f));
+    materials.push_back(
+        makePrincipledGlassMaterial(vec3f(0.0400f, 0.680f, 1.00f),
+            1.f,
+            float(i) / (dimSize - 1),
+            1.5f,
+            1.f,
+            false,
+            1.f,
+            0.f));
   }
 
   // ior
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledGlassMaterial(rendererType,
-        vec3f(0.0400f, 0.680f, 1.00f),
-        1.f,
-        0.f,
-        lerp(float(i) / (dimSize - 1), 1.f, 2.f),
-        1.f,
-        false,
-        1.f,
-        0.f));
+    materials.push_back(
+        makePrincipledGlassMaterial(vec3f(0.0400f, 0.680f, 1.00f),
+            1.f,
+            0.f,
+            lerp(float(i) / (dimSize - 1), 1.f, 2.f),
+            1.f,
+            false,
+            1.f,
+            0.f));
   }
 
   // transmissionDepth
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledGlassMaterial(rendererType,
-        vec3f(0.0400f, 0.680f, 1.00f),
-        1.f,
-        0.f,
-        1.5f,
-        lerp(float(i) / (dimSize - 1), 2.f, 0.f),
-        false,
-        1.f,
-        0.f));
+    materials.push_back(
+        makePrincipledGlassMaterial(vec3f(0.0400f, 0.680f, 1.00f),
+            1.f,
+            0.f,
+            1.5f,
+            lerp(float(i) / (dimSize - 1), 2.f, 0.f),
+            false,
+            1.f,
+            0.f));
   }
 
   // backlight
   for (int i = 0; i < dimSize; i++) {
-    materials.push_back(makePrincipledGlassMaterial(rendererType,
-        vec3f(0.0400f, 0.200f, 1.00f),
-        .3f,
-        0.f,
-        1.5f,
-        1.f,
-        true,
-        1.f,
-        lerp(float(i) / (dimSize - 1), 0.f, 2.f)));
+    materials.push_back(
+        makePrincipledGlassMaterial(vec3f(0.0400f, 0.200f, 1.00f),
+            .3f,
+            0.f,
+            1.5f,
+            1.f,
+            true,
+            1.f,
+            lerp(float(i) / (dimSize - 1), 0.f, 2.f)));
   }
 
   return materials;

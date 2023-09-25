@@ -14,12 +14,10 @@ struct PtGlass : public PtMaterial
   std::vector<cpp::Material> buildMaterials() const override;
 };
 
-static cpp::Material makeGlassMaterial(const std::string &rendererType,
-    float eta,
-    vec3f color,
-    float attenuationDistance)
+static cpp::Material makeGlassMaterial(
+    float eta, vec3f color, float attenuationDistance)
 {
-  cpp::Material mat(rendererType, "glass");
+  cpp::Material mat("glass");
   mat.setParam("eta", eta);
   mat.setParam("attenuationColor", color);
   mat.setParam("attenuationDistance", attenuationDistance);
@@ -38,8 +36,7 @@ std::vector<cpp::Material> PtGlass::buildMaterials() const
   index_sequence_2D numSpheres(dimSize);
   for (auto i : numSpheres) {
     auto i_f = static_cast<vec2f>(i);
-    materials.push_back(makeGlassMaterial(rendererType,
-        lerp(i_f.x / (dimSize - 1), 1.f, 2.f),
+    materials.push_back(makeGlassMaterial(lerp(i_f.x / (dimSize - 1), 1.f, 2.f),
         vec3f(.1f, .5f, 1.f),
         lerp(1.f - i_f.y / (dimSize - 1), 0.5f, 5.f)));
   }

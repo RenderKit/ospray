@@ -24,11 +24,11 @@ std::vector<cpp::Material> PtTexMix::buildMaterials(
 
   // obj & thinGlass
   {
-    cpp::Material obj(rendererType, "obj");
+    cpp::Material obj("obj");
     obj.commit();
-    cpp::Material thinGlass(rendererType, "thinGlass");
+    cpp::Material thinGlass("thinGlass");
     thinGlass.commit();
-    cpp::Material mix(rendererType, "mix");
+    cpp::Material mix("mix");
     mix.setParam("material1", obj);
     mix.setParam("material2", thinGlass);
     materials.push_back(mix);
@@ -37,12 +37,12 @@ std::vector<cpp::Material> PtTexMix::buildMaterials(
 
   // plastic & metal
   {
-    cpp::Material plastic(rendererType, "plastic");
+    cpp::Material plastic("plastic");
     plastic.setParam("pigmentColor", vec3f(.8f, 0.f, 0.f));
     plastic.commit();
-    cpp::Material metal(rendererType, "metal");
+    cpp::Material metal("metal");
     metal.commit();
-    cpp::Material mix(rendererType, "mix");
+    cpp::Material mix("mix");
     mix.setParam("material1", plastic);
     mix.setParam("material2", metal);
     materials.push_back(mix);
@@ -51,9 +51,9 @@ std::vector<cpp::Material> PtTexMix::buildMaterials(
 
   // velvet & metallicPaint
   {
-    cpp::Material velvet(rendererType, "velvet");
-    cpp::Material metallicPaint(rendererType, "metallicPaint");
-    cpp::Material mix(rendererType, "mix");
+    cpp::Material velvet("velvet");
+    cpp::Material metallicPaint("metallicPaint");
+    cpp::Material mix("mix");
     velvet.commit();
     metallicPaint.commit();
     mix.setParam("material1", velvet);
@@ -64,16 +64,16 @@ std::vector<cpp::Material> PtTexMix::buildMaterials(
 
   // carPaint & principled
   {
-    cpp::Material carPaint(rendererType, "carPaint");
+    cpp::Material carPaint("carPaint");
     carPaint.setParam("baseColor", vec3f(.5f));
     carPaint.setParam("flakeColor", vec3f(.8f));
     carPaint.setParam("flakeDensity", 1.f);
     carPaint.setParam("flakeScale", 1000.f);
     carPaint.commit();
-    cpp::Material principled(rendererType, "principled");
+    cpp::Material principled("principled");
     principled.setParam("baseColor", vec3f(0.0177f, 0.189f, 0.590f));
     principled.commit();
-    cpp::Material mix(rendererType, "mix");
+    cpp::Material mix("mix");
     mix.setParam("material1", carPaint);
     mix.setParam("material2", principled);
     materials.push_back(mix);

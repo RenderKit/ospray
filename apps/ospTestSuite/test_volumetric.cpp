@@ -96,7 +96,7 @@ void TextureVolumeTransform::SetUp()
   {
     // Create materials
     for (uint32_t i = 0; i < cols * rows; i++) {
-      cpp::Material mat(rendererType, "obj");
+      cpp::Material mat("obj");
       mat.setParam("map_kd", tex);
       mat.commit();
       materials[i] = mat;

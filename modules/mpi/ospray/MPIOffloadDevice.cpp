@@ -397,8 +397,7 @@ OSPVolumetricModel MPIOffloadDevice::newVolumetricModel(OSPVolume volume)
 // Model Meta-Data ////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-OSPMaterial MPIOffloadDevice::newMaterial(
-    const char *, const char *material_type)
+OSPMaterial MPIOffloadDevice::newMaterial(const char *material_type)
 {
   ObjectHandle handle = allocateHandle();
 

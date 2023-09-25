@@ -14,10 +14,10 @@ struct PtCarPaint : public PtMaterial
   std::vector<cpp::Material> buildMaterials() const override;
 };
 
-static cpp::Material makeCarPaintMaterial(const std::string &rendererType,
+static cpp::Material makeCarPaintMaterial(
     std::initializer_list<std::pair<std::string, float>> params)
 {
-  cpp::Material mat(rendererType, "carPaint");
+  cpp::Material mat("carPaint");
 
   mat.setParam("baseColor", vec3f(0.0177f, 0.189f, 0.590f));
   mat.setParam("flakeColor", vec3f(0.277f, 0.717f, 0.990f));
@@ -40,33 +40,30 @@ std::vector<cpp::Material> PtCarPaint::buildMaterials() const
 
   // flakeDensity
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeCarPaintMaterial(rendererType,
+    materials.push_back(makeCarPaintMaterial(
         {{"flakeDensity", float(i) / (dimSize - 1)}, {"flakeScale", 1000.f}}));
 
   // flipflopFalloff
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeCarPaintMaterial(rendererType,
-        {{"flakeDensity", 1.f},
-            {"flakeScale", 1000.f},
-            {"flipflopFalloff", 1.f - float(i) / (dimSize - 1)}}));
+    materials.push_back(makeCarPaintMaterial({{"flakeDensity", 1.f},
+        {"flakeScale", 1000.f},
+        {"flipflopFalloff", 1.f - float(i) / (dimSize - 1)}}));
 
   // flakeScale
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeCarPaintMaterial(rendererType,
-        {{"flakeDensity", 1.f},
-            {"flakeScale", lerp(float(i) / (dimSize - 1), 1000.f, 100.f)}}));
+    materials.push_back(makeCarPaintMaterial({{"flakeDensity", 1.f},
+        {"flakeScale", lerp(float(i) / (dimSize - 1), 1000.f, 100.f)}}));
 
   // flakeRoughness
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeCarPaintMaterial(rendererType,
-        {{"flakeDensity", 1.f},
-            {"flakeScale", 1000.f},
-            {"flakeRoughness", float(i) / (dimSize - 1)}}));
+    materials.push_back(makeCarPaintMaterial({{"flakeDensity", 1.f},
+        {"flakeScale", 1000.f},
+        {"flakeRoughness", float(i) / (dimSize - 1)}}));
 
   // coat
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeCarPaintMaterial(
-        rendererType, {{"coat", float(i) / (dimSize - 1)}}));
+    materials.push_back(
+        makeCarPaintMaterial({{"coat", float(i) / (dimSize - 1)}}));
 
   return materials;
 }

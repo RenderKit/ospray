@@ -83,8 +83,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 
   // Model Meta-Data //////////////////////////////////////////////////////
 
-  OSPMaterial newMaterial(const char * /*renderer_type - unused*/,
-      const char *material_type) override;
+  OSPMaterial newMaterial(const char *material_type) override;
 
   OSPTransferFunction newTransferFunction(const char *type) override;
 

@@ -63,7 +63,7 @@ void SpherePrecision::SetUp()
   cpp::GeometricModel model1(sphere);
   cpp::GeometricModel model2(inst_sphere);
 
-  cpp::Material sphereMaterial(rendererType, "obj");
+  cpp::Material sphereMaterial("obj");
   sphereMaterial.setParam("d", 1.0f);
   sphereMaterial.commit();
 

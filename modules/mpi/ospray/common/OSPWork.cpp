@@ -147,7 +147,7 @@ void newMaterial(
   int64_t handle = 0;
   std::string type;
   cmdBuf >> handle >> type;
-  state.objects[handle] = ospNewMaterial(nullptr, type.c_str());
+  state.objects[handle] = ospNewMaterial(type.c_str());
 }
 
 void newLight(

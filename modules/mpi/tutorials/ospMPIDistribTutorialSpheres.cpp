@@ -219,7 +219,7 @@ cpp::Instance makeLocalSpheres(
   sphereGeom.commit();
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
-  cpp::Material material("", "obj");
+  cpp::Material material("obj");
   material.setParam("kd", color);
   material.commit();
 

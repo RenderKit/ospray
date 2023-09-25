@@ -26,7 +26,7 @@ std::vector<cpp::Material> PtLuminous::buildMaterials() const
 
   for (auto i : numSpheres) {
     auto i_f = static_cast<vec2f>(i);
-    materials.push_back(cpp::Material(rendererType, "luminous"));
+    materials.push_back(cpp::Material("luminous"));
     materials.back().setParam("color", vec3f(0.7f, 0.7f, 1.f));
     materials.back().setParam("intensity", i_f.x / (dimSize - 1));
     materials.back().setParam("transparency", 1.f - i_f.y / (dimSize - 1));

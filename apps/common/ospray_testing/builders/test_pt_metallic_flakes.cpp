@@ -15,9 +15,9 @@ struct PtMetallicFlakes : public PtMaterial
 };
 
 static cpp::Material makeMetallicFlakesMaterial(
-    const std::string &rendererType, float flakeAmount, float flakeSpread)
+    float flakeAmount, float flakeSpread)
 {
-  cpp::Material mat(rendererType, "metallicPaint");
+  cpp::Material mat("metallicPaint");
   mat.setParam("baseColor", vec3f(1.f, 0.f, 0.f));
   mat.setParam("flakeAmount", flakeAmount);
   mat.setParam("flakeSpread", flakeSpread);
@@ -36,9 +36,9 @@ std::vector<cpp::Material> PtMetallicFlakes::buildMaterials() const
   index_sequence_2D numSpheres(dimSize);
   for (auto i : numSpheres) {
     auto i_f = static_cast<vec2f>(i);
-    materials.push_back(makeMetallicFlakesMaterial(rendererType,
-        lerp(i_f.x / (dimSize - 1), 1.f, 0.f),
-        lerp(i_f.y / (dimSize - 1), 0.f, 1.f)));
+    materials.push_back(
+        makeMetallicFlakesMaterial(lerp(i_f.x / (dimSize - 1), 1.f, 0.f),
+            lerp(i_f.y / (dimSize - 1), 0.f, 1.f)));
   }
 
   return materials;

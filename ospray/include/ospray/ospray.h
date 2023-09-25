@@ -242,8 +242,7 @@ OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(
 
 // Model Meta-Data //////////////////////////////////////////////////////////
 
-OSPRAY_INTERFACE OSPMaterial ospNewMaterial(
-    const char * /*ignored*/, const char *materialType);
+OSPRAY_INTERFACE OSPMaterial ospNewMaterial(const char *materialType);
 
 OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
 

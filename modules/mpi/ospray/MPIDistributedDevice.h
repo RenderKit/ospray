@@ -84,20 +84,14 @@ struct MPIDistributedDevice : public api::Device
       OSPData destination,
       const vec3ul &destinationIndex) override;
 
-  /*! create a new renderer object (out of list of registered renderers) */
   OSPRenderer newRenderer(const char *type) override;
 
-  /*! create a new geometry object (out of list of registered geometries) */
   OSPGeometry newGeometry(const char *type) override;
 
-  /*! have given renderer create a new material */
-  OSPMaterial newMaterial(
-      const char * /*ignored*/, const char *material_type) override;
+  OSPMaterial newMaterial(const char *material_type) override;
 
-  /*! create a new camera object (out of list of registered cameras) */
   OSPCamera newCamera(const char *type) override;
 
-  /*! create a new volume object (out of list of registered volumes) */
   OSPVolume newVolume(const char *type) override;
 
   OSPGeometricModel newGeometricModel(OSPGeometry geom) override;

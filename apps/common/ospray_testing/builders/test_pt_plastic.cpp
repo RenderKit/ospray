@@ -15,9 +15,9 @@ struct PtPlastic : public PtMaterial
 };
 
 static cpp::Material makePlasticMaterial(
-    const std::string &rendererType, vec3f color, float eta, float roughness)
+    vec3f color, float eta, float roughness)
 {
-  cpp::Material mat(rendererType, "plastic");
+  cpp::Material mat("plastic");
   mat.setParam("pigmentColor", color);
   mat.setParam("eta", eta);
   mat.setParam("roughness", roughness);
@@ -36,8 +36,7 @@ std::vector<cpp::Material> PtPlastic::buildMaterials() const
   index_sequence_2D numSpheres(dimSize);
   for (auto i : numSpheres) {
     auto i_f = static_cast<vec2f>(i);
-    materials.push_back(makePlasticMaterial(rendererType,
-        vec3f(.8f, 0.f, 0.f),
+    materials.push_back(makePlasticMaterial(vec3f(.8f, 0.f, 0.f),
         lerp(i_f.y / (dimSize - 1), 1.f, 2.f),
         i_f.x / (dimSize - 1)));
   }

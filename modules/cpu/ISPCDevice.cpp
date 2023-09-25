@@ -451,8 +451,7 @@ OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
 // Model Meta-Data ////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-OSPMaterial ISPCDevice::newMaterial(
-    const char * /*renderer_type - unused*/, const char *material_type)
+OSPMaterial ISPCDevice::newMaterial(const char *material_type)
 {
   return (OSPMaterial)Material::createInstance(material_type, *this);
 }

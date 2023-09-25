@@ -47,20 +47,15 @@ cpp::Geometry makeBoxGeometry(const box3f &box)
   return ospGeometry;
 }
 
-cpp::GeometricModel makeGeometricModel(cpp::Geometry geo,
-    const std::string &rendererType,
-    const vec3f &kd,
-    bool useIDs)
+cpp::GeometricModel makeGeometricModel(
+    cpp::Geometry geo, const vec3f &kd, bool useIDs)
 {
   cpp::GeometricModel geometricModel(geo);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis"
-      || rendererType == "ao") {
-    cpp::Material objMaterial(rendererType, "obj");
-    objMaterial.setParam("kd", kd);
-    objMaterial.commit();
-    geometricModel.setParam("material", objMaterial);
-  }
+  cpp::Material objMaterial("obj");
+  objMaterial.setParam("kd", kd);
+  objMaterial.commit();
+  geometricModel.setParam("material", objMaterial);
   if (useIDs)
     geometricModel.setParam("id", 44u);
   geometricModel.commit();
@@ -129,7 +124,7 @@ cpp::Group Instancing::buildGroupA() const
 
   cpp::Geometry box = makeBoxGeometry(box3f(vec3f(-1.f), vec3f(1.f)));
   cpp::GeometricModel geometricModel =
-      makeGeometricModel(box, rendererType, vec3f(.1f, .4f, .8f), useIDs);
+      makeGeometricModel(box, vec3f(.1f, .4f, .8f), useIDs);
   group.setParam("geometry", cpp::CopiedData(geometricModel));
 
   cpp::Light light("quad");
@@ -151,11 +146,9 @@ cpp::Group Instancing::buildGroupB() const
   std::vector<cpp::GeometricModel> models;
 
   cpp::Geometry box = makeBoxGeometry(box3f(vec3f(-1.f), vec3f(0.f, 1.f, 1.f)));
-  models.emplace_back(
-      makeGeometricModel(box, rendererType, vec3f(.1f, .4f, .8f), useIDs));
+  models.emplace_back(makeGeometricModel(box, vec3f(.1f, .4f, .8f), useIDs));
   box = makeBoxGeometry(box3f(vec3f(0.f, -1.f, -1.f), vec3f(1.f)));
-  models.emplace_back(
-      makeGeometricModel(box, rendererType, vec3f(.1f, .4f, .8f), useIDs));
+  models.emplace_back(makeGeometricModel(box, vec3f(.1f, .4f, .8f), useIDs));
   group.setParam("geometry", cpp::CopiedData(models));
 
   cpp::Light light("spot");

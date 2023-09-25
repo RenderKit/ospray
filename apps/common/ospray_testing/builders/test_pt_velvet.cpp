@@ -14,11 +14,10 @@ struct PtVelvet : public PtMaterial
   std::vector<cpp::Material> buildMaterials() const override;
 };
 
-static cpp::Material makeVelvetMaterial(const std::string &rendererType,
-    float backScattering,
-    float horizonScatteringFallOff)
+static cpp::Material makeVelvetMaterial(
+    float backScattering, float horizonScatteringFallOff)
 {
-  cpp::Material mat(rendererType, "velvet");
+  cpp::Material mat("velvet");
   mat.setParam("backScattering", backScattering);
   mat.setParam("horizonScatteringFallOff", horizonScatteringFallOff);
   mat.commit();
@@ -36,9 +35,8 @@ std::vector<cpp::Material> PtVelvet::buildMaterials() const
   index_sequence_2D numSpheres(dimSize);
   for (auto i : numSpheres) {
     auto i_f = static_cast<vec2f>(i);
-    materials.push_back(makeVelvetMaterial(rendererType,
-        i_f.x / (dimSize - 1),
-        lerp(i_f.y / (dimSize - 1), 0.f, 20.f)));
+    materials.push_back(makeVelvetMaterial(
+        i_f.x / (dimSize - 1), lerp(i_f.y / (dimSize - 1), 0.f, 20.f)));
   }
 
   return materials;

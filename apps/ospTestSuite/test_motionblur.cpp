@@ -49,7 +49,7 @@ void MotionBlurBoxes::SetUp()
   boxGeometry.commit();
   cpp::GeometricModel model(boxGeometry);
 
-  cpp::Material material(rendererType, "obj");
+  cpp::Material material("obj");
   material.setParam("kd", vec3f(0.8f, 0.1, 0.4));
   material.setParam("ks", vec3f(0.2f));
   material.setParam("ns", 99.f);

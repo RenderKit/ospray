@@ -66,16 +66,11 @@ cpp::Group Boxes::buildGroup() const
 
   model.setParam("color", cpp::CopiedData(color));
 
-  if (rendererType == "pathtracer" || rendererType == "scivis"
-      || rendererType == "ao") {
-    cpp::Material material(rendererType, "obj");
-    if (rendererType == "pathtracer" || rendererType == "scivis") {
-      material.setParam("ks", vec3f(0.3f));
-      material.setParam("ns", 10.f);
-    }
-    material.commit();
-    model.setParam("material", material);
-  }
+  cpp::Material material("obj");
+  material.setParam("ks", vec3f(0.3f));
+  material.setParam("ns", 10.f);
+  material.commit();
+  model.setParam("material", material);
 
   model.commit();
 

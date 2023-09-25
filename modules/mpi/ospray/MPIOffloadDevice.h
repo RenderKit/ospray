@@ -40,8 +40,7 @@ struct MPIOffloadDevice : public api::Device
 
   // Model Meta-Data //////////////////////////////////////////////////////
 
-  OSPMaterial newMaterial(
-      const char * /*ignored*/, const char *material_type) override;
+  OSPMaterial newMaterial(const char *material_type) override;
 
   OSPTransferFunction newTransferFunction(const char *type) override;
 

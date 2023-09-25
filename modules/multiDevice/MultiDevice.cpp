@@ -216,11 +216,11 @@ OSPVolumetricModel MultiDevice::newVolumetricModel(OSPVolume volume)
 
 // Model Meta-Data //////////////////////////////////////////////////////
 
-OSPMaterial MultiDevice::newMaterial(const char *, const char *material_type)
+OSPMaterial MultiDevice::newMaterial(const char *material_type)
 {
   MultiDeviceObject *o = new MultiDeviceObject;
   for (auto &d : subdevices) {
-    o->objects.push_back(d->newMaterial(nullptr, material_type));
+    o->objects.push_back(d->newMaterial(material_type));
   }
   return (OSPMaterial)o;
 }

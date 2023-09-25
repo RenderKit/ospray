@@ -136,7 +136,7 @@ void GeometricLight::SetUp()
   lightMesh.commit();
   cpp::GeometricModel lightModel(lightMesh);
 
-  cpp::Material lightMaterial(rendererType, "luminous");
+  cpp::Material lightMaterial("luminous");
   lightMaterial.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
   lightMaterial.setParam("intensity", 10.f / area);
   lightMaterial.commit();
@@ -377,7 +377,7 @@ void HDRILight::SetUp()
     sphere.commit();
 
     cpp::GeometricModel model(sphere);
-    cpp::Material material(rendererType, "obj");
+    cpp::Material material("obj");
     material.commit();
     model.setParam("material", material);
     model.commit();

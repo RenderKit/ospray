@@ -70,8 +70,7 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
 
   // Model Meta-Data //////////////////////////////////////////////////////
 
-  virtual OSPMaterial newMaterial(
-      const char *renderer_type, const char *material_type) = 0;
+  virtual OSPMaterial newMaterial(const char *material_type) = 0;
 
   virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 

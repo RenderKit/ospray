@@ -404,10 +404,9 @@ OSPVolumetricModel MPIDistributedDevice::newVolumetricModel(OSPVolume _vol)
 #endif
 }
 
-OSPMaterial MPIDistributedDevice::newMaterial(
-    const char *unused, const char *material_type)
+OSPMaterial MPIDistributedDevice::newMaterial(const char *material_type)
 {
-  return internalDevice->newMaterial(unused, material_type);
+  return internalDevice->newMaterial(material_type);
 }
 
 OSPTransferFunction MPIDistributedDevice::newTransferFunction(const char *type)

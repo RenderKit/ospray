@@ -434,12 +434,12 @@ OSPRAY_CATCH_END(nullptr)
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C" OSPMaterial ospNewMaterial(
-    const char *renderer_type, const char *material_type) OSPRAY_CATCH_BEGIN
+    const char *material_type) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_STRING(material_type);
 
   ASSERT_DEVICE();
-  auto material = currentDevice().newMaterial(renderer_type, material_type);
+  auto material = currentDevice().newMaterial(material_type);
   return material;
 }
 OSPRAY_CATCH_END(nullptr)

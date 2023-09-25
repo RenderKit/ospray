@@ -14,14 +14,10 @@ struct PtObj : public PtMaterial
   std::vector<cpp::Material> buildMaterials() const override;
 };
 
-static cpp::Material makeObjMaterial(const std::string &rendererType,
-    float d,
-    vec3f Kd,
-    vec3f Ks,
-    float Ns,
-    vec3f Tf)
+static cpp::Material makeObjMaterial(
+    float d, vec3f Kd, vec3f Ks, float Ns, vec3f Tf)
 {
-  cpp::Material mat(rendererType, "obj");
+  cpp::Material mat("obj");
   mat.setParam("d", d);
   mat.setParam("kd", Kd);
   mat.setParam("ks", Ks);
@@ -42,8 +38,7 @@ std::vector<cpp::Material> PtObj::buildMaterials() const
 
   // d
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeObjMaterial(rendererType,
-        1.f - float(i) / (dimSize - 1),
+    materials.push_back(makeObjMaterial(1.f - float(i) / (dimSize - 1),
         vec3f(.8f, 0.f, 0.f),
         vec3f(0.f),
         10.f,
@@ -51,8 +46,7 @@ std::vector<cpp::Material> PtObj::buildMaterials() const
 
   // Kd
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeObjMaterial(rendererType,
-        1.f,
+    materials.push_back(makeObjMaterial(1.f,
         vec3f(1.f - float(i) / (dimSize - 1), 0.f, 0.f),
         vec3f(0.f),
         10.f,
@@ -60,8 +54,7 @@ std::vector<cpp::Material> PtObj::buildMaterials() const
 
   // Ks
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeObjMaterial(rendererType,
-        1.f,
+    materials.push_back(makeObjMaterial(1.f,
         vec3f(.8f, 0.f, 0.f),
         vec3f(float(i) / (dimSize - 1)),
         1000.f,
@@ -69,8 +62,7 @@ std::vector<cpp::Material> PtObj::buildMaterials() const
 
   // Ns
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeObjMaterial(rendererType,
-        1.f,
+    materials.push_back(makeObjMaterial(1.f,
         vec3f(.8f, 0.f, 0.f),
         vec3f(1.f),
         lerp(float(i) / (dimSize - 1), 10.f, 1000.f),
@@ -78,8 +70,7 @@ std::vector<cpp::Material> PtObj::buildMaterials() const
 
   // Tf
   for (int i = 0; i < dimSize; i++)
-    materials.push_back(makeObjMaterial(rendererType,
-        1.f,
+    materials.push_back(makeObjMaterial(1.f,
         vec3f(.2f, 0.f, 0.f),
         vec3f(.2f, 0.f, 0.f),
         1000.f,
