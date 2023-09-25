@@ -73,10 +73,6 @@ void MultiDevice::commit()
     loadBalancer =
         rkcommon::make_unique<MultiDeviceLoadBalancer>(subdeviceLoadBalancers);
   }
-
-  // ISPCDevice::commit will init the tasking system but here we can reset
-  // it to the global desired number of threads
-  tasking::initTaskingSystem(numThreads, true);
 }
 
 /////////////////////////////////////////////////////////////////////////

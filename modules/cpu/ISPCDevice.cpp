@@ -294,7 +294,6 @@ void ISPCDevice::commit()
 #endif
   }
 
-  tasking::initTaskingSystem(numThreads, true);
   setIspcrtTaskingCallbacks();
 
   if (!embreeDevice) {
