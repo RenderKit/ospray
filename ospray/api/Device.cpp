@@ -40,8 +40,9 @@ Device *Device::createDevice(const char *type)
   auto &repo = *LibraryRepository::getInstance();
 
   if (!repo.libraryExists("ospray_module_cpu") && type == std::string("cpu"))
-    repo.add(
-        "ospray_module_cpu", reinterpret_cast<const void *>(&createDevice));
+    repo.add(reinterpret_cast<const void *>(&createDevice),
+        "ospray_module_cpu",
+        {OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH});
 
   return createInstance(type);
 }
