@@ -28,7 +28,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=gpu-devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -45,7 +45,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=gpu-devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-devel
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -62,7 +62,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=gpu-devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DOPENVKL_VERSION=devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-mpi
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -79,7 +79,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -DBUILD_GLFW=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_VERSION=gpu-devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -DBUILD_GLFW=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DOPENVKL_VERSION=devel -DRKCOMMON_VERSION=devel -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-suse
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
