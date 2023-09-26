@@ -318,7 +318,7 @@ void ISPCDevice::commit()
     vklInit();
 
 #ifdef OSPRAY_TARGET_SYCL
-    vklDevice = vklNewDevice("gpu_4");
+    vklDevice = vklNewDevice("gpu");
     vklDeviceSetVoidPtr(
         vklDevice, "syclContext", static_cast<void *>(&syclContext));
 #else
