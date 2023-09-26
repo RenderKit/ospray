@@ -16,7 +16,7 @@ inline float IntensityDistribution_eval(
     float cosAngle,
     const vec3f &dir /*normalized*/)
 {
-  const float u = acos(cosAngle) * self->scale.x;
+  const float u = acos(clamp(cosAngle, -1.f, 1.f)) * self->scale.x;
   const float u_frac = frac(u);
   const int u0 = u;
   const int u1 = (u0 + 2 >= self->size.x) ? self->size.x - 1 : u0 + 1;
