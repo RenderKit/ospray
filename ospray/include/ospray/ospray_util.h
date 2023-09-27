@@ -63,6 +63,8 @@ OSPRAY_INTERFACE void ospSetUInt(OSPObject, const char *n, unsigned int x);
 OSPRAY_INTERFACE void ospSetBox1f(OSPObject, const char *n, float x, float y);
 
 // clang-format off
+OSPRAY_INTERFACE void ospSetLinear2f(OSPObject, const char *n, float x, float y, float z, float w);
+
 OSPRAY_INTERFACE void ospSetVec2f(OSPObject, const char *n, float x, float y);
 OSPRAY_INTERFACE void ospSetVec3f(OSPObject, const char *n, float x, float y, float z);
 OSPRAY_INTERFACE void ospSetVec4f(OSPObject, const char *n, float x, float y, float z, float w);

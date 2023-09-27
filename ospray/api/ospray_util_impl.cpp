@@ -113,6 +113,13 @@ void ospSetBox1f(OSPObject o, const char *id, float x, float y)
   ospSetParam(o, id, OSP_BOX1F, v);
 }
 
+void ospSetLinear2f(
+    OSPObject o, const char *id, float x, float y, float z, float w)
+{
+  float v[] = {x, y, z, w};
+  ospSetParam(o, id, OSP_LINEAR2F, v);
+}
+
 void ospSetVec2f(OSPObject o, const char *id, float x, float y)
 {
   float v[] = {x, y};
