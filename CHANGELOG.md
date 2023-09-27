@@ -8,6 +8,7 @@ Version History
        - Embree v4.2.0
        - Open VKL v2.0.0
        - ISPC v1.21.0
+       - rkcommon 1.12.0
 -   Breaking API changes
     -   Renamed `OSP_TEXTURE_FILTER_BILINEAR` to
         `OSP_TEXTURE_FILTER_LINEAR ` and
