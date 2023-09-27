@@ -53,7 +53,7 @@ inline float Halton_sample3(
              + mathConstants->haltonPerm3[(index / 243u) % 243u] * 59049u
              + mathConstants->haltonPerm3[(index / 59049u) % 243u] * 243u
              + mathConstants->haltonPerm3[(index / 14348907u) % 243u])
-      * (float)(1.f / 3486784401u);
+      * (float)(1.0 / 3486784401u);
 }
 
 // Permuted Halton sequence base-5
@@ -64,7 +64,7 @@ inline float PermHalton_sample5(
              + mathConstants->haltonPerm5[(index / 125u) % 125u] * 15625u
              + mathConstants->haltonPerm5[(index / 15625u) % 125u] * 125u
              + mathConstants->haltonPerm5[(index / 1953125u) % 125u])
-      * (float)(1.f / 244140625u);
+      * (float)(1.0 / 244140625u);
 }
 
 // Permuted Halton sequence base-7
@@ -74,6 +74,6 @@ inline float PermHalton_sample7(
   return (mathConstants->haltonPerm7[index % 343u] * 117649u
              + mathConstants->haltonPerm7[(index / 343u) % 343u] * 343u
              + mathConstants->haltonPerm7[(index / 117649u) % 343u])
-      * (float)(1.f / 40353607u);
+      * (float)(1.0 / 40353607u);
 }
 OSPRAY_END_ISPC_NAMESPACE
