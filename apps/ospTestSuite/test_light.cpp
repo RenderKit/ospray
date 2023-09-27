@@ -393,15 +393,23 @@ void HDRILight::SetUp()
   // prepare environment texture
   cpp::Texture envTex("texture2d");
   {
-    std::array<vec3f, 8> data = {vec3f(0.f, 1.f, 1.f),
+    std::array<vec3f, 16> data = {vec3f(0.f, 1.f, 1.f),
+        vec3f(1.f, 0.f, 1.f),
+        vec3f(1.f, 1.f, 0.f),
+        vec3f(1.f, 1.f, 1.f),
+        vec3f(0.f, 1.f, 1.f),
         vec3f(1.f, 0.f, 1.f),
         vec3f(1.f, 1.f, 0.f),
         vec3f(1.f, 1.f, 1.f),
         vec3f(1.f, 0.f, 0.f),
         vec3f(0.f, 1.f, 0.f),
         vec3f(0.f, 0.f, 1.f),
+        vec3f(0.f, 0.f, 0.f),
+        vec3f(1.f, 0.f, 0.f),
+        vec3f(0.f, 1.f, 0.f),
+        vec3f(0.f, 0.f, 1.f),
         vec3f(0.f, 0.f, 0.f)};
-    cpp::CopiedData texData(data.data(), vec2ul(4, 2));
+    cpp::CopiedData texData(data.data(), vec2ul(4, 4));
     envTex.setParam("format", OSP_TEXTURE_RGB32F);
     envTex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
     envTex.setParam("data", texData);
