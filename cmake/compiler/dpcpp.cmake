@@ -28,13 +28,6 @@ list(APPEND OSPRAY_CXX_FLAGS_SYCL
   -Xclang=-fsycl-allow-func-ptr
 )
 
-# FIXME: debug information generation takes forever in SYCL
-# TODO: Still true?
-list(APPEND OSPRAY_CXX_FLAGS_SYCL -g0)
-# FIXME: assertion still not working in SYCL
-# TODO: Still true?
-#list(APPEND OSPRAY_CXX_FLAGS_SYCL -UDEBUG -DNDEBUG)
-
 # IGC options from Embree
 # This works around some IGC bug in spill compression
 # TODO: Still true?

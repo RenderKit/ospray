@@ -466,6 +466,7 @@ if (OSPRAY_MODULE_GPU)
     -fsycl
     ${OSPRAY_CXX_FLAGS_SYCL}
     -fsycl-targets=${OSPRAY_SYCL_TARGET}
+    PRIVATE -g0 # XXX debug on device broken
   )
 
   if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
