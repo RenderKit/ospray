@@ -37,7 +37,7 @@ before you can build OSPRay you need the following prerequisites:
     be built from source as part of the [superbuild](#cmake-superbuild).
     Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
     to `OpenMP` or `Internal`.
--   OSPRay also heavily uses Intel [Embree], installing version 4.2.0
+-   OSPRay also heavily uses Intel [Embree], installing version 4.3.0
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
 -   OSPRay support volume rendering (enabled by default via

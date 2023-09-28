@@ -15,14 +15,14 @@ jobs:
 
 ### BUILD JOBS ###
 
-  build-osx-clang:
+  build-osx-clang: # FIXME: EMBREE_FROM_SOURCE only for 4.3
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["x86_64", "build"]'
       cmd: |
-        scripts/build/macosx.sh -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+        scripts/build/macosx.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-osx-clang
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 

@@ -5,7 +5,7 @@ Version History
 
 -   Add implicit indexing for `mesh` geometry
 -   The new minimum versions of dependencies:
-       - Embree v4.2.0
+       - Embree v4.3.0
        - Open VKL v2.0.0
        - ISPC v1.21.0
        - rkcommon 1.12.0
