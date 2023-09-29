@@ -61,7 +61,7 @@ jobs:
         # disable warnings which lead to excessively large log files
         $env:CXXFLAGS = '-w'
         $env:CFLAGS = '-w'
-        scripts\build\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=icx -DCMAKE_C_COMPILER=icx -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON
+        scripts\build\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=icx -DCMAKE_C_COMPILER=icx -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DBUILD_EMBREE_FROM_SOURCE=ON
       artifact-out: build-windows-icx-release
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
