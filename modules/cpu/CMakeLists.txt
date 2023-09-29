@@ -420,7 +420,8 @@ if (OSPRAY_MODULE_GPU)
 
   set_target_properties(ospray_module_gpu_kernels PROPERTIES
     CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON)
+    CXX_STANDARD_REQUIRED ON
+  )
 
   target_link_libraries(ospray_module_gpu_kernels
   PUBLIC
@@ -538,7 +539,8 @@ if (OSPRAY_MODULE_GPU)
 
   set_target_properties(ospray_module_gpu PROPERTIES
     CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON)
+    CXX_STANDARD_REQUIRED ON
+  )
 
   target_link_libraries(ospray_module_gpu
   PUBLIC
