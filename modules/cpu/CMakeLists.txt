@@ -403,7 +403,15 @@ if (OSPRAY_MODULE_CPU)
   endif()
 endif()
 
+
 if (OSPRAY_MODULE_GPU)
+  if (WIN32)
+    cmake_minimum_required(VERSION 3.25)
+  else()
+    cmake_minimum_required(VERSION 3.20.5)
+  endif()
+
+
   include(${ISPCRT_DIR}/interop.cmake)
 
   ospray_configure_dpcpp_target()
