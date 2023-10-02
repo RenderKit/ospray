@@ -414,8 +414,6 @@ if (OSPRAY_MODULE_GPU)
 
   include(${ISPCRT_DIR}/interop.cmake)
 
-  ospray_configure_dpcpp_target()
-
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
   set_source_files_properties(${OSPRAY_ISPC_SOURCES} ${OSPRAY_VOLUMES_ISPC_SOURCES}
     PROPERTIES
@@ -426,10 +424,7 @@ if (OSPRAY_MODULE_GPU)
     ${OSPRAY_VOLUMES_ISPC_SOURCES}
   )
 
-  set_target_properties(ospray_module_gpu_kernels PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-  )
+  ospray_add_sycl_target(ospray_module_gpu_kernels)
 
   target_link_libraries(ospray_module_gpu_kernels
   PUBLIC
@@ -469,32 +464,11 @@ if (OSPRAY_MODULE_GPU)
   )
   endif()
 
-  # catch implicit float to double promotions in kernels only
-  target_compile_options(ospray_module_gpu_kernels PRIVATE
+  target_compile_options(ospray_module_gpu_kernels
+  PRIVATE
+    -g0 # XXX debug on device broken
     -Wdouble-promotion
   )
-
-  target_compile_options(ospray_module_gpu_kernels PUBLIC
-    -fsycl
-    ${OSPRAY_CXX_FLAGS_SYCL}
-    -fsycl-targets=${OSPRAY_SYCL_TARGET}
-    PRIVATE -g0 # XXX debug on device broken
-  )
-
-  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
-    target_link_options(ospray_module_gpu_kernels PUBLIC
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-      -fsycl-device-code-split=per_kernel
-    )
-  else()
-    target_link_options(ospray_module_gpu_kernels PUBLIC
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-    )
-  endif()
 
   target_compile_definitions(ospray_module_gpu_kernels
   PUBLIC
@@ -543,11 +517,6 @@ if (OSPRAY_MODULE_GPU)
   add_library(ospray_module_gpu SHARED
     ${OSPRAY_CPP_SOURCES}
     ${OSPRAY_VOLUMES_CPP_SOURCES}
-  )
-
-  set_target_properties(ospray_module_gpu PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
   )
 
   target_link_libraries(ospray_module_gpu

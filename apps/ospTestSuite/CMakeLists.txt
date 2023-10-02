@@ -67,18 +67,7 @@ PRIVATE
 )
 
 if (OSPRAY_MODULE_GPU)
-  ospray_configure_dpcpp_target()
-  set_target_properties(ospTestSuite PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON)
-  target_compile_options(ospTestSuite PUBLIC
-    -fsycl
-    ${OSPRAY_CXX_FLAGS_SYCL}
-    -fsycl-targets=${OSPRAY_SYCL_TARGET}
-  )
-  target_link_options(ospTestSuite PUBLIC
-    -fsycl
-  )
+  ospray_add_sycl_target(ospTestSuite)
 endif()
 
 if (OSPRAY_MODULE_DENOISER)

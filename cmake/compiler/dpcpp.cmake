@@ -1,10 +1,15 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-# DPCPP compiler is based on Clang, so bring in clang options
-include(clang)
 
-set(CMAKE_CXX_FLAGS "-fhonor-nans -fhonor-infinities ${CMAKE_CXX_FLAGS}")
+get_filename_component(SYCL_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME_WE)
+if (WIN32 AND (SYCL_COMPILER_NAME STREQUAL "icx" OR SYCL_COMPILER_NAME STREQUAL "icpx"))
+  include(msvc) # icx on Windows behaves like msvc
+  set(CMAKE_CXX_FLAGS "/fp:precise ${CMAKE_CXX_FLAGS}")
+else()
+  include(clang) # DPCPP compiler is based on Clang, so bring in clang options
+  set(CMAKE_CXX_FLAGS "-ffp-model=precise ${CMAKE_CXX_FLAGS}")
+endif()
 
 # enable -static-intel
 # Note: this doesn't seem to be used/relevant to the DPC++ compiler? Maybe just the
@@ -15,6 +20,10 @@ set(CMAKE_CXX_FLAGS "-fhonor-nans -fhonor-infinities ${CMAKE_CXX_FLAGS}")
 
 # SYCL flags to match Embree
 list(APPEND OSPRAY_CXX_FLAGS_SYCL
+  -fsycl
+  -fsycl-unnamed-lambda
+  -Xclang -fsycl-allow-func-ptr
+
   -Wno-mismatched-tags
   -Wno-pessimizing-move
   -Wno-reorder
@@ -23,9 +32,6 @@ list(APPEND OSPRAY_CXX_FLAGS_SYCL
   -Wno-dangling-field
   -Wno-unknown-pragmas
   -Wno-logical-op-parentheses
-  -fsycl
-  -fsycl-unnamed-lambda
-  -Xclang=-fsycl-allow-func-ptr
 )
 
 # IGC options from Embree
@@ -92,3 +98,5 @@ string(REPLACE ";" " " OSPRAY_OCL_OPTIONS_STR "${OSPRAY_OCL_OPTIONS}")
 
 set(OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
 string(REPLACE ";" " " OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
+
+set(OSPRAY_LINKER_FLAGS_SYCL -fsycl -Xsycl-target-backend=spir64 "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\"")

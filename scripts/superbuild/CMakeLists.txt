@@ -248,10 +248,6 @@ endif()
 include(dep_rkcommon)
 include(dep_embree)
 
-if (BUILD_OPENVKL)
-  include(dep_openvkl)
-endif()
-
 if (BUILD_GLFW)
   include(dep_glfw)
 endif()
@@ -267,16 +263,27 @@ if (BUILD_OSPRAY_APPS)
   include(dep_benchmark)
 endif()
 
+if (BUILD_OSPRAY_MODULE_MPI)
+  set(OSPRAY_MODULE_MPI ON)
+  include(dep_snappy)
+endif()
+
+##### FIXME WA for VKL and OSPRay to build with GNU-style options
+if (WIN32 AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"))
+  set(CMAKE_C_COMPILER clang)
+  set(CMAKE_CXX_COMPILER clang++)
+endif()
+
+if (BUILD_OPENVKL)
+  include(dep_openvkl)
+endif()
+
+
 ## Build main projects ##
 set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
 
 if (BUILD_OIDN OR BUILD_OSPRAY_MODULE_CPU OR BUILD_OSPRAY_MODULE_MPI)
   set(OSPRAY_ENABLE_MODULES ON)
-endif()
-
-if (BUILD_OSPRAY_MODULE_MPI)
-  set(OSPRAY_MODULE_MPI ON)
-  include(dep_snappy)
 endif()
 
 if (BUILD_OSPRAY_MODULE_MULTIDEVICE)

@@ -223,25 +223,10 @@ macro(ospray_configure_ispc_isa)
   ospray_fix_ispc_target_list()
 endmacro()
 
-macro(ospray_configure_dpcpp_target)
-  set(OSPRAY_SYCL_AOT_DEVICES ${EMBREE_SYCL_AOT_DEVICES})
-
-  # TODO: Is this revision info going to be visible to end users?
-  # In the end the public release
-  # of the code should probably just have one revision it targets right?
-  # The final consumer release rev.
-  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "dg2")
-    set(OSPRAY_SYCL_AOT_DEVICE_REVISION 8)
-  elseif (OSPRAY_SYCL_AOT_DEVICES STREQUAL "pvc")
-    # What final rev to pick here?
-    set(OSPRAY_SYCL_AOT_DEVICE_REVISION 5)
-  endif()
-
-  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
-    set(OSPRAY_SYCL_TARGET spir64)
-  else()
-    set(OSPRAY_SYCL_TARGET spir64_gen)
-  endif()
+macro(ospray_add_sycl_target target)
+  target_compile_features(${target} PUBLIC cxx_std_17)
+  target_compile_options(${target} PUBLIC ${OSPRAY_CXX_FLAGS_SYCL})
+  target_link_options(${target} PUBLIC ${OSPRAY_LINKER_FLAGS_SYCL})
 endmacro()
 
 ## Target creation macros ##
@@ -316,14 +301,6 @@ endmacro()
 ## Compiler configuration macros ##
 
 macro(ospray_configure_compiler)
-  if (WIN32)
-    set(OSPRAY_PLATFORM_WIN  1)
-    set(OSPRAY_PLATFORM_UNIX 0)
-  else()
-    set(OSPRAY_PLATFORM_WIN  0)
-    set(OSPRAY_PLATFORM_UNIX 1)
-  endif()
-
   # unhide compiler to make it easier for users to see what they are using
   mark_as_advanced(CLEAR CMAKE_CXX_COMPILER)
 
@@ -341,17 +318,15 @@ macro(ospray_configure_compiler)
 
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM" OR OSPRAY_MODULE_GPU)
     set(OSPRAY_COMPILER_DPCPP TRUE)
-    if(WIN32) # icx on Windows behaves like msvc
-      # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
-      set(CMAKE_NINJA_CMCLDEPS_RC OFF)
-      include(msvc)
-    else()
-      include(dpcpp)
+    include(dpcpp)
+    if(WIN32)
+      set(CMAKE_NINJA_CMCLDEPS_RC OFF) # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
     endif()
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     set(OSPRAY_COMPILER_ICC TRUE)
-    if(WIN32) # icc on Windows behaves like msvc
-      include(msvc)
+    if(WIN32)
+      set(CMAKE_NINJA_CMCLDEPS_RC OFF) # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
+      include(msvc) # icc on Windows behaves like msvc
     else()
       include(icc)
     endif()
