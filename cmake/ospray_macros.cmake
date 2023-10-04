@@ -371,12 +371,6 @@ macro(ospray_configure_compiler)
   endif()
 
   set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
-
-  if (WIN32)
-    # increase stack to 8MB (the default size of 1MB is too small for our apps)
-    # note: linker options are independent of compiler (icc or MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
-  endif()
 endmacro()
 
 macro(ospray_disable_compiler_warnings)
