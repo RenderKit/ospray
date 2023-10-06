@@ -40,6 +40,18 @@ CMake is easy:
 -   You should now have `libospray.[so,dylib]` as well as a set of
     [example applications].
 
+#### Entitlements on Mac OS\ X
+
+Mac OS\ X requires notarization of applications as a security mechanism,
+and [entitlements must be
+declared](https://developer.apple.com/documentation/bundleresources/entitlements)
+during the notarization process. OSPRay's `denoiser` uses OIDN, which
+uses just-in-time compilation through
+[oneDNN](https://github.com/oneapi-src/oneDNN) and thus requires the
+following entitlement:
+
+-    [`com.apple.security.cs.allow-jit`](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_cs_allow-jit)
+
 
 ### Compiling OSPRay on Windows
 

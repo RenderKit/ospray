@@ -35,7 +35,9 @@ $exitCode += $LastExitCode
 if ( $testMultiDevice ) {
   md failed-multidevice
   $Env:OSPRAY_NUM_SUBDEVICES = 2
-  $test_filters = "DebugOp/ImageOp.ImageOp/0" # post-processing not enabled on multidevice
+  # post-processing not enabled on multidevice
+  $test_filters = "DebugOp/ImageOp.ImageOp/0"
+  $test_filters+=":DenoiserOp.DenoiserOp"
   ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice --gtest_filter="-$test_filters"
   $exitCode += $LastExitCode
 }

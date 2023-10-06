@@ -35,7 +35,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
 
   build-arch-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -53,7 +53,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ospray/docker-images:arch
       cmd: |
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
 
   build-centos7-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -62,7 +62,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -108,7 +108,7 @@ jobs:
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
         export CFLAGS=$CXXFLAGS
         export LDFLAGS="-static-intel"
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DTBB_VERSION=2021.9.0
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -121,7 +121,7 @@ jobs:
       cmd: |
         module load cmake
         module load impi/2021.6
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-mpi-impi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -134,7 +134,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-mpi-mpich
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -147,7 +147,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/openmpi-x86_64
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
   build-centos8:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -189,7 +189,7 @@ jobs:
       cmd: |
         module load cmake/3.15.2
         module load mpi/mpich-x86_64
-        scripts/build/linux.sh -DBUILD_OIDN=ON -DBUILD_OSPRAY_MODULE_MPI=ON
+        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
       artifact-out: build-rocky8-oidn-mpi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -203,7 +203,7 @@ jobs:
         export CFLAGS=-fsanitize=address
         export CXXFLAGS=-fsanitize=address
         export LDFLAGS=-fsanitize=address
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_OIDN=OFF
       artifact-out: build-linux-debug
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -236,7 +236,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
       cmd: |
-        scripts/build/linux.sh -DBUILD_OIDN=ON -DBUILD_OSPRAY_MODULE_MPI=ON
+        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
       artifact-out: build-ubuntu2204-oidn-mpi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 

@@ -27,7 +27,7 @@ jobs:
         module load cmake/3.25.3
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON
       artifact-out: build-ubuntu2204-dpcpp-release
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -43,7 +43,7 @@ jobs:
         module load cmake/3.25.3
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-ubuntu2204-mpi-dpcpp-release
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -59,7 +59,7 @@ jobs:
         module load cmake/3.25.3
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON
       artifact-out: build-ubuntu2204-dpcpp-nightly
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -70,11 +70,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/icx-release.env
+      env-from-files: .github/workflows/icx-release.env .github/workflows/gfx-ubuntu22-release.env # OIDN AOT needs ocloc
       level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-mpi-icx-release
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -84,12 +84,12 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/icx-nightly.env
+      env-from-files: .github/workflows/icx-nightly.env .github/workflows/gfx-ubuntu22-release.env # OIDN AOT needs ocloc
       level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT # FIXME
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-icx-nightly
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -104,9 +104,7 @@ jobs:
       level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
-        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DBUILD_EMBREE_FROM_SOURCE=ON
-      artifact-out: build-suse-icx-release
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON
 
   rocky8-mpich-dpcpp-release-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
@@ -121,7 +119,7 @@ jobs:
         module load mpi/mpich-x86_64
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_OIDN=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-rocky8-mpich-dpcpp-release
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
