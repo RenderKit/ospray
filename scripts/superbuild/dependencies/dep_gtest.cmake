@@ -11,8 +11,8 @@ endif()
 # Google Test follows the "Live Head" philosophy and therefore recommends
 # using the latest commit to 'master' 
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/googletest/archive/refs/tags/v1.13.0.zip"
-  URL_HASH "SHA256=ffa17fbc5953900994e2deec164bb8949879ea09b411e07f215bfbb1f87f4632"
+  URL "https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip"
+  URL_HASH "SHA256=1f357c27ca988c3f7c6b4bf68a9395005ac6761f034046e9dde0896e3aba00e4"
 
 #   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""

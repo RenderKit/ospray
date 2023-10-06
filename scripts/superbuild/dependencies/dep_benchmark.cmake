@@ -9,13 +9,9 @@ else()
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
 endif()
 
-if (WIN32 AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"))
-  set(BENCHMARK_EXTRA_OPTIONS -DCMAKE_CXX_STANDARD=14) # FIXME WA for compile issue
-endif()
-
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/benchmark/archive/refs/tags/v1.6.1.zip"
-  URL_HASH "SHA256=367e963b8620080aff8c831e24751852cffd1f74ea40f25d9cc1b667a9dd5e45"
+  URL "https://github.com/google/benchmark/archive/refs/tags/v1.8.3.zip"
+  URL_HASH "SHA256=abfc22e33e3594d0edf8eaddaf4d84a2ffc491ad74b6a7edc6e7a608f690e691"
 
   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""
@@ -29,7 +25,6 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DBENCHMARK_ENABLE_GTEST_TESTS=OFF
     -DBENCHMARK_ENABLE_WERROR=OFF
     -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
-    ${BENCHMARK_EXTRA_OPTIONS}
 )
 list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
 string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
