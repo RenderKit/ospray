@@ -29,7 +29,6 @@ ospray_configure_compiler()
 ###########################################################
 
 option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
-option(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
 option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
        "Enable 'format' target, requires clang-format too")
 mark_as_advanced(OSPRAY_ENABLE_TARGET_CLANGFORMAT)

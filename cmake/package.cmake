@@ -65,7 +65,10 @@ install(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDI
 ##############################################################
 
 set(CPACK_PACKAGE_NAME "OSPRay")
-set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}.x86_64")
+if (OSPRAY_MODULE_GPU)
+  set(OSPRAY_PACKAGE_SYCL ".sycl")
+endif()
+set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}${OSPRAY_PACKAGE_SYCL}.x86_64")
 
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)

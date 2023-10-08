@@ -94,6 +94,7 @@ export CMAKE_PREFIX_PATH=$DEP_DIR
 
 # set release settings
 cmake -L \
+  "$@" \
   -D OSPRAY_BUILD_ISA=ALL \
   -D TBB_ROOT=$DEP_DIR \
   -D OSPRAY_ZIP_MODE=ON \
@@ -106,6 +107,9 @@ cmake -L \
   -D CMAKE_INSTALL_BINDIR=bin \
   -D CMAKE_BUILD_WITH_INSTALL_RPATH=ON \
   ..
+
+
+if [[ $* != *"BUILD_GPU_SUPPORT"* ]]; then # symbol checks only for non-SYCL builds
 
 # create tar.gz
 make -j $THREADS preinstall
@@ -143,4 +147,6 @@ for lib in libospray_module_mpi_offload.so libospray_module_mpi_distributed_cpu.
   fi
 done
 
-make -j $THREADS package || exit 2
+fi
+
+cmake --build . --target package || exit 2

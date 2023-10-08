@@ -176,16 +176,10 @@ option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
 option(BUILD_OSPRAY_APPS "Enable building OSPRay apps" ON)
-option(BUILD_OSPRAY_MODULE_CPU "Enable building module_cpu" ON)
 option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
 option(BUILD_OSPRAY_MODULE_MULTIDEVICE "Enable building module_multidevice" OFF)
 if (NOT APPLE)
-  option(BUILD_GPU_SUPPORT "Enable GPU support EXPERIMENTAL" OFF)
-  mark_as_advanced(BUILD_GPU_SUPPORT)
-  if (BUILD_GPU_SUPPORT)
-    set(BUILD_GPU_AOT_DEVICES "none" CACHE STRING "Devices to use for AOT compilation")
-    set_property(CACHE BUILD_GPU_AOT_DEVICES PROPERTY STRINGS none dg2 pvc)
-  endif()
+  option(BUILD_GPU_SUPPORT "Enable beta GPU support and building module_gpu" OFF)
 endif()
 
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
@@ -285,15 +279,6 @@ endif()
 
 ## Build main projects ##
 set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
-
-if (BUILD_OIDN OR BUILD_OSPRAY_MODULE_CPU OR BUILD_OSPRAY_MODULE_MPI)
-  set(OSPRAY_ENABLE_MODULES ON)
-endif()
-
-if (BUILD_OSPRAY_MODULE_MULTIDEVICE)
-  set(OSPRAY_ENABLE_MODULES ON)
-  set(OSPRAY_MODULE_MULTIDEVICE ON)
-endif()
 
 if (NOT BUILD_DEPENDENCIES_ONLY)
   include(build_ospray.cmake)

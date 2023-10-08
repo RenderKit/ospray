@@ -1,23 +1,16 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-cmake_dependent_option(
-  OSPRAY_MODULE_CPU
-  "Build the CPU module"
-  ON
-  OSPRAY_ENABLE_MODULES
-  OFF
-)
+option(OSPRAY_MODULE_CPU "Build the CPU module" ON)
 mark_as_advanced(OSPRAY_MODULE_CPU)
 
 cmake_dependent_option(
   OSPRAY_MODULE_GPU
-  "Build the GPU module EXPERIMENTAL"
+  "Build the GPU module (beta)"
   OFF
-  "OSPRAY_ENABLE_MODULES;EMBREE_SYCL_SUPPORT"
+  EMBREE_SYCL_SUPPORT
   OFF
 )
-mark_as_advanced(OSPRAY_MODULE_GPU)
 
 if ((NOT OSPRAY_MODULE_CPU) AND (NOT OSPRAY_MODULE_GPU))
   return()
