@@ -69,7 +69,7 @@ endforeach()
 
 add_library(ospray SHARED ${OSPRAY_SOURCES})
 target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:rkcommon::rkcommon>)
-ospray_install_library(ospray lib)
+ospray_install_library(ospray lib ON)
 
 target_include_directories(ospray
   PUBLIC

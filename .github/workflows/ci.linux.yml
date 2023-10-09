@@ -402,12 +402,16 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
       cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         export OIDN_DEFAULT_DEVICE=sycl
-        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
+        export OIDN_VERBOSE=2
+        mkdir build_regression_tests
+        cd build_regression_tests
+        cmake -D OSPRAY_TEST_ISA=AVX2 $GITHUB_WORKSPACE/test_image_data
+        cmake --build . --target ospray_test_data
+        ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
+        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 mpiexec -np 1 ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp" --osp:load-modules=mpi_offload --osp:device=mpiOffload : -np 2 ospray_mpi_worker
       artifact-in: build-ubuntu2204-oidn-mpi
-      artifact-out: test-ubuntu2204-oidn-mpi-avx2-dg2
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
 
   test-tutorials:
     needs: build-centos7-gcc

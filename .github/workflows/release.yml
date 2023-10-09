@@ -226,6 +226,28 @@ jobs:
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX TEST_MPI
       artifact-in: release-linux
 
+  test-release-linux-oidnsycl:
+    needs: release-linux
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"dg2"'
+      cmd: |
+        module load cmake/3.15.2
+        tar -xzf build_release/*.gz
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        export OIDN_DEFAULT_DEVICE=sycl
+        export OIDN_VERBOSE=2
+        mkdir build_regression_tests
+        cd build_regression_tests
+        cmake -D OSPRAY_TEST_ISA=AVX2 $GITHUB_WORKSPACE/test_image_data
+        cmake --build . --target ospray_test_data
+        ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
+      artifact-in: release-linux
+
   test-release-sycl-linux-cpu:
     needs: release-sycl-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -322,6 +344,26 @@ jobs:
         & $env:SIGN_FILE_WINDOWS -t (Get-ChildItem "$env:GITHUB_WORKSPACE\ospray-*\bin\*" | Select-Object -Expand FullName)
         $exitCode += $LastExitCode
         exit $exitCode
+      artifact-in: release-windows
+
+  test-release-windows-oidnsycl:
+    needs: release-windows
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    secrets: inherit
+    with:
+      runs-on: '"dg2"'
+      force-delete: true
+      env-from-files: .github/workflows/gfx-windows-release.env
+      cmd: |
+        Expand-Archive build_release/*.zip -DestinationPath .
+        $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
+        $env:OIDN_DEFAULT_DEVICE="sycl"
+        $env:OIDN_VERBOSE="2"
+        md build_regression_tests
+        cd build_regression_tests
+        cmake -D OSPRAY_TEST_ISA=AVX2 $env:GITHUB_WORKSPACE\test_image_data
+        cmake --build . --config Release --target ospray_test_data
+        ospTestSuite.exe --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
       artifact-in: release-windows
 
   test-release-windows-msi:

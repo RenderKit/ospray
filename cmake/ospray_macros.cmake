@@ -261,6 +261,22 @@ macro(ospray_install_library name component)
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
   ospray_install_target(${name} ${component})
   ospray_sign_target(${name})
+
+  if (${ARGN})
+    # Install the namelink in the devel component. This command also includes the
+    # RUNTIME and ARCHIVE components a second time to prevent an "install TARGETS
+    # given no ARCHIVE DESTINATION for static library target" error. Installing
+    # these components twice doesn't hurt anything.
+    install(TARGETS ${name}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT devel
+        NAMELINK_ONLY
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT ${component}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT devel
+    )
+  endif()
 endmacro()
 
 macro(ospray_install_target name component)
@@ -281,20 +297,6 @@ macro(ospray_install_target name component)
     DESTINATION ${OSPRAY_CMAKECONFIG_DIR}
     NAMESPACE ospray::
     COMPONENT devel
-  )
-
-  # Install the namelink in the devel component. This command also includes the
-  # RUNTIME and ARCHIVE components a second time to prevent an "install TARGETS
-  # given no ARCHIVE DESTINATION for static library target" error. Installing
-  # these components twice doesn't hurt anything.
-  install(TARGETS ${name}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      COMPONENT devel
-      NAMELINK_ONLY
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT ${component}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      COMPONENT devel
   )
 endmacro()
 
