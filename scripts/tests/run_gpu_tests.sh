@@ -10,7 +10,7 @@ if [ -z "$MPI_ROOT_CONFIG" ]; then
   MPI_ROOT_CONFIG="-np 1"
 fi
 if [ -z "$MPI_WORKER_CONFIG" ]; then
-  MPI_WORKER_CONFIG="-np 1"
+  MPI_WORKER_CONFIG="-np 2"
 fi
 
 # optional command line arguments
@@ -101,7 +101,7 @@ test_filters+=":Appearance/Texture2DTransform.simple/0"
 
 
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
-
+export SYCL_CACHE_PERSISTENT=1
 export OIDN_VERBOSE=2
 
 mkdir failed-gpu
@@ -133,8 +133,8 @@ if [ $TEST_MPI ]; then
   let exitCode+=$?
 
   mkdir failed-mpi-gpu-data-parallel
-  test_filters="MPIDistribTestScenesVolumes/MPIFromOsprayTesting.test_scenes/1"
-  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="-$test_filters"
+  test_filters="MPIDistribTestScenesVolumes/MPIFromOsprayTesting.test_scenes/1" # FIXME
+  mpiexec -np 3 ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="-$test_filters"
   let exitCode+=$?
 fi
 

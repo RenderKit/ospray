@@ -29,7 +29,7 @@ jobs:
         export CXX=clang++
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON
       artifact-out: build-ubuntu2204-dpcpp-release
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   ubu22-mpi-dpcpp-release-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
@@ -45,7 +45,7 @@ jobs:
         export CXX=clang++
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-ubuntu2204-mpi-dpcpp-release
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   ubu22-dpcpp-nightly-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
@@ -61,7 +61,7 @@ jobs:
         export CXX=clang++
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON
       artifact-out: build-ubuntu2204-dpcpp-nightly
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 
   ubu22-mpi-icx-release-build:
@@ -76,7 +76,7 @@ jobs:
         module load cmake/3.25.3
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-mpi-icx-release
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   ubu22-icx-nightly-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
@@ -91,7 +91,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT # FIXME
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-icx-nightly
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 
   suse-icx-release-build:
@@ -121,7 +121,7 @@ jobs:
         export CXX=clang++
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-rocky8-mpich-dpcpp-release
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 
 
@@ -133,7 +133,7 @@ jobs:
     secrets: inherit
     with:
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-release.env .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22-release.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
       artifact-in: build-ubuntu2204-dpcpp-release
@@ -142,8 +142,6 @@ jobs:
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
@@ -154,7 +152,7 @@ jobs:
     secrets: inherit
     with:
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-release.env .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22-release.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"pvc"'
       artifact-in: build-ubuntu2204-dpcpp-release
@@ -163,8 +161,6 @@ jobs:
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
@@ -176,7 +172,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-release.env .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22-release.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"pvc"'
       artifact-in: build-ubuntu2204-mpi-dpcpp-release
@@ -185,8 +181,6 @@ jobs:
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI TEST_MULTIDEVICE
@@ -197,7 +191,7 @@ jobs:
     secrets: inherit
     with:
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-release.env .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22-release.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
       artifact-in: build-ubuntu2204-dpcpp-nightly
@@ -206,8 +200,6 @@ jobs:
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"

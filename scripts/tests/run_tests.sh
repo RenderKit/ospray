@@ -9,7 +9,7 @@ if [ -z "$MPI_ROOT_CONFIG" ]; then
   MPI_ROOT_CONFIG="-np 1"
 fi
 if [ -z "$MPI_WORKER_CONFIG" ]; then
-  MPI_WORKER_CONFIG="-np 1"
+  MPI_WORKER_CONFIG="-np 2"
 fi
 
 if  [ -z "$1" ]; then
@@ -72,7 +72,7 @@ if [ $TEST_MPI ]; then
   let exitCode+=$?
 
   mkdir failed-mpi-data-parallel
-  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-data-parallel
+  mpiexec -np 3 ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-data-parallel
   let exitCode+=$?
 fi
 

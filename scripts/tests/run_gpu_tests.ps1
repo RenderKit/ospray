@@ -80,9 +80,15 @@ $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/7"
 $test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/2"
 $test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/3"
 
+# Artifacts with icx 2024 (dpcpp and icx 2023 is fine)
+$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/12"
+$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/14"
+$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/15"
+$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/17"
+
 
 $env:ONEAPI_DEVICE_SELECTOR="level_zero:*"
-
+$env:SYCL_CACHE_PERSISTENT="1"
 $env:OIDN_VERBOSE="2"
 
 md failed-gpu
@@ -108,11 +114,12 @@ if ( $testMultiDevice ) {
 if ( $testMPI ) {
   md failed-mpi-gpu
   $env:OSPRAY_MPI_DISTRIBUTED_GPU = "1"
-  mpiexec.exe -n 2 ospTestSuite.exe --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi-gpu --gtest_filter="-$test_filters"
+  mpiexec.exe -np 1 ospTestSuite.exe --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi-gpu --gtest_filter="-$test_filters" : -np 2 ospray_mpi_worker.exe
   $exitCode += $LastExitCode
 
   md failed-mpi-gpu-data-parallel
-  mpiexec.exe -n 2 ospMPIDistribTestSuite.exe --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi-gpu-data-parallel
+  $test_filters="MPIDistribTestScenesVolumes/MPIFromOsprayTesting.test_scenes/1" # FIXME
+  mpiexec.exe -np 3 -prepend-rank ospMPIDistribTestSuite.exe --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="-$test_filters"
   $exitCode += $LastExitCode
 }
 
