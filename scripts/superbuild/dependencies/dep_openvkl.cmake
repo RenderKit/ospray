@@ -46,6 +46,7 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
     $<$<BOOL:${DOWNLOAD_TBB}>:-DRKCOMMON_TBB_ROOT=${TBB_PATH}>
     $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
+    $<$<BOOL:${DOWNLOAD_ISPC}>:-Dispcrt_DIR=${ispcrt_DIR}>
     -DBUILD_BENCHMARKS=OFF
     -DBUILD_EXAMPLES=OFF
     -DBUILD_TESTING=OFF
@@ -70,5 +71,5 @@ ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
     rkcommon
     embree
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
-    $<$<BOOL:${DOWNLOAD_ISPC}>:ispcrt>
+    $<$<BOOL:${BUILD_ISPCRT_FROM_SOURCE}>:ispcrt>
 )

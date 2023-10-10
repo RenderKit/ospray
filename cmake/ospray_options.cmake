@@ -11,7 +11,7 @@ include(CMakeDependentOption)
 set(OSPRAY_CMAKECONFIG_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
-set(ISPC_VERSION_REQUIRED 1.21.0)
+set(ISPC_VERSION_REQUIRED 1.21.1)
 set(RKCOMMON_VERSION_REQUIRED 1.12.0)
 set(EMBREE_VERSION_REQUIRED 4.3.0)
 set(OPENVKL_VERSION_REQUIRED 2.0.0)
@@ -82,6 +82,11 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
 ospray_find_embree(${EMBREE_VERSION_REQUIRED} FALSE)
 ospray_verify_embree_features()
 
+# ISPC
+set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ON)
+find_package(ispcrt ${ISPC_VERSION_REQUIRED} REQUIRED)
+set(ISPC_FAST_MATH ON)
+
 # Open VKL
 if (OSPRAY_ENABLE_VOLUMES)
   ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} FALSE)
@@ -98,10 +103,6 @@ endif()
 if (OSPRAY_MODULE_DENOISER)
   find_package(OpenImageDenoise ${OIDN_VERSION_REQUIRED} REQUIRED)
 endif()
-
-# ISPC
-find_package(ispcrt ${ISPC_VERSION_REQUIRED} REQUIRED)
-set(ISPC_FAST_MATH ON)
 
 # Configure OSPRay ISA last after we've detected what we got w/ Embree
 ospray_configure_ispc_isa()

@@ -8,7 +8,7 @@ Version History
        - Embree v4.3.0
        - Open VKL v2.0.0
        - Open Image Denoise v2.1.0
-       - ISPC v1.21.0
+       - ISPC v1.21.1
        - rkcommon v1.12.0
 -   Breaking API changes
     -   Renamed `OSP_TEXTURE_FILTER_BILINEAR` to

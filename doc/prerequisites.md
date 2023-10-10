@@ -21,7 +21,7 @@ before you can build OSPRay you need the following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools.
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.21.0 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.21.1 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
     If ISPC is not found by CMake its location can be hinted with the
