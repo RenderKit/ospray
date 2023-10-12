@@ -28,6 +28,22 @@ static inline void installErrorMsgFunc(Device &device, OSTREAM_T &stream)
 
 // Device definitions /////////////////////////////////////////////////////////
 
+Device::FactoryMap Device::dfcns;
+
+Device *Device::createInstance(const char *type)
+{
+  FactoryFcn fcn = dfcns[type];
+  if (fcn) {
+    auto *obj = fcn();
+    if (obj != nullptr)
+      return obj;
+  }
+
+  throw std::runtime_error("Could not find Device of type: '"
+      + std::string(type)
+      + "'. Make sure you have the correct OSPRay libraries linked and initialized.");
+}
+
 memory::IntrusivePtr<Device> Device::current;
 uint32_t Device::logLevel = OSP_LOG_NONE;
 

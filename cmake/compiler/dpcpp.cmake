@@ -1,11 +1,15 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
+# FIXME CMake does not always set "-x c++" to compile .ispc files as C++ (SYCL)
+# code, despite LANGUAGE is set for them
+set(OSPRAY_COMPILER_NEEDS_X_CPP TRUE)
 
 get_filename_component(SYCL_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME_WE)
 if (WIN32 AND (SYCL_COMPILER_NAME STREQUAL "icx" OR SYCL_COMPILER_NAME STREQUAL "icpx"))
   include(msvc) # icx on Windows behaves like msvc
   set(CMAKE_CXX_FLAGS "/fp:precise ${CMAKE_CXX_FLAGS}")
+  set(OSPRAY_COMPILER_NEEDS_X_CPP FALSE) # icx on Win does not support "-x"
 else()
   include(clang) # DPCPP compiler is based on Clang, so bring in clang options
   set(CMAKE_CXX_FLAGS "-ffp-model=precise ${CMAKE_CXX_FLAGS}")

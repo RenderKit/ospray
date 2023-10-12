@@ -92,13 +92,6 @@ if (OSPRAY_MODULE_GPU)
     ${PROJECT_BINARY_DIR}/ospray/
   )
 
-  if (NOT WIN32)
-  target_compile_options(ospray_module_multidevice_gpu
-  PRIVATE
-    -x c++
-  )
-  endif()
-
   target_compile_definitions(ospray_module_multidevice_gpu PRIVATE
     OBJECTFACTORY_IMPORT
   )

@@ -450,11 +450,8 @@ if (OSPRAY_MODULE_GPU)
     RKCOMMON_NO_SIMD
   )
 
-  if (NOT WIN32)
-  target_compile_options(ospray_module_gpu_kernels
-  PRIVATE
-    -x c++
-  )
+  if (OSPRAY_COMPILER_NEEDS_X_CPP)
+    target_compile_options(ospray_module_gpu_kernels PRIVATE -x c++)
   endif()
 
   target_compile_options(ospray_module_gpu_kernels
@@ -516,13 +513,6 @@ if (OSPRAY_MODULE_GPU)
   PUBLIC
     ospray_module_gpu_kernels
   )
-
-  if (NOT WIN32)
-  target_compile_options(ospray_module_gpu
-  PRIVATE
-    -x c++
-  )
-  endif()
 
   ospray_install_library(ospray_module_gpu lib)
 endif()

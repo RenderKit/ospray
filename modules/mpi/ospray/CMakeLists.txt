@@ -178,11 +178,8 @@ if (OSPRAY_MODULE_GPU)
       ${PROJECT_BINARY_DIR}/ospray/
   )
 
-  if (NOT WIN32)
-  target_compile_options(ospray_module_mpi_distributed_gpu_kernels
-  PRIVATE
-    -x c++
-  )
+  if (OSPRAY_COMPILER_NEEDS_X_CPP)
+    target_compile_options(ospray_module_mpi_distributed_gpu_kernels PRIVATE -x c++)
   endif()
 
   target_compile_options(ospray_module_mpi_distributed_gpu_kernels
