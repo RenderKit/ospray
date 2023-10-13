@@ -432,44 +432,34 @@ const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
   const void *buf = nullptr;
   ispcrt::TaskQueue &tq = device.getIspcrtQueue();
 
-  switch (channel) {
-  case OSP_FB_COLOR: {
+  if ((channel == OSP_FB_COLOR) && (colorBuffer)) {
     tq.copyToHost(*colorBuffer);
     tq.sync();
-    buf = colorBuffer ? colorBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_DEPTH: {
+    buf = colorBuffer->data();
+  } else if ((channel == OSP_FB_DEPTH) && (depthBuffer)) {
     tq.copyToHost(*depthBuffer);
     tq.sync();
-    buf = depthBuffer ? depthBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_NORMAL: {
+    buf = depthBuffer->data();
+  } else if ((channel == OSP_FB_NORMAL) && (normalBuffer)) {
     tq.copyToHost(*normalBuffer);
     tq.sync();
-    buf = normalBuffer ? normalBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_ALBEDO: {
+    buf = normalBuffer->data();
+  } else if ((channel == OSP_FB_ALBEDO) && (albedoBuffer)) {
     tq.copyToHost(*albedoBuffer);
     tq.sync();
-    buf = albedoBuffer ? albedoBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_ID_PRIMITIVE: {
+    buf = albedoBuffer->data();
+  } else if ((channel == OSP_FB_ID_PRIMITIVE) && (primitiveIDBuffer)) {
     tq.copyToHost(*primitiveIDBuffer);
     tq.sync();
-    buf = primitiveIDBuffer ? primitiveIDBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_ID_OBJECT: {
+    buf = primitiveIDBuffer->data();
+  } else if ((channel == OSP_FB_ID_OBJECT) && (objectIDBuffer)) {
     tq.copyToHost(*objectIDBuffer);
     tq.sync();
-    buf = objectIDBuffer ? objectIDBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_ID_INSTANCE: {
+    buf = objectIDBuffer->data();
+  } else if ((channel == OSP_FB_ID_INSTANCE) && (instanceIDBuffer)) {
     tq.copyToHost(*instanceIDBuffer);
     tq.sync();
-    buf = instanceIDBuffer ? instanceIDBuffer->data() : nullptr;
-  } break;
-  default:
-    break;
+    buf = instanceIDBuffer->data();
   }
 
   if (buf)
