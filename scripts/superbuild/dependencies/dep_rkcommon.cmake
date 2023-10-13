@@ -21,6 +21,11 @@ else()
   set(RKCOMMON_CLONE_URL GIT_REPOSITORY ${RKCOMMON_URL} GIT_TAG ${RKCOMMON_VERSION})
 endif()
 
+if (RKCOMMON_VERSION STREQUAL "1.12.0")
+  # `patch` is not available on all systems, so use `git apply` instead
+  set(RKCOMMON_PATCH PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/rkcommon_rpath.patch)
+endif()
+
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
   DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -30,6 +35,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   LIST_SEPARATOR |
   ${RKCOMMON_CLONE_URL}
   ${RKCOMMON_URL_HASH}
+  ${RKCOMMON_PATCH}
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}

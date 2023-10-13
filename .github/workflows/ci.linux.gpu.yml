@@ -142,7 +142,6 @@ jobs:
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
@@ -161,7 +160,6 @@ jobs:
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
@@ -181,7 +179,6 @@ jobs:
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI TEST_MULTIDEVICE
 
@@ -200,7 +197,6 @@ jobs:
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
@@ -219,7 +215,6 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI
 
@@ -238,7 +233,6 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI TEST_MULTIDEVICE
 
@@ -256,7 +250,6 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 

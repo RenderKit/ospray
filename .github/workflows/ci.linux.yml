@@ -248,7 +248,7 @@ jobs:
     with:
       image: centos:7
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-centos7-gcc
       artifact-out: test-centos7-gcc-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -264,7 +264,7 @@ jobs:
         module load cmake
         I_MPI_OFI_LIBRARY_INTERNAL=no module load impi/2021.6
         export FI_PROVIDER=sockets
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
       artifact-in: build-centos7-mpi-impi
       artifact-out: test-centos7-gcc-mpi-impi-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -278,7 +278,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
       artifact-in: build-centos7-mpi-mpich
       artifact-out: test-centos7-gcc-mpi-mpich-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -291,7 +291,7 @@ jobs:
       image: centos:7
       runs-on: '"avx2"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-centos7-icx
       artifact-out: test-centos7-icx-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -304,7 +304,7 @@ jobs:
       image: centos:7
       runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-centos7-icx
       artifact-out: test-centos7-icx-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -317,7 +317,7 @@ jobs:
       image: centos:8
       runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-centos8
       artifact-out: test-centos8-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -333,7 +333,7 @@ jobs:
         module load cmake/3.15.2
         module load mpi/mpich-x86_64
         export OIDN_DEFAULT_DEVICE=cpu
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MPI
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MPI
       artifact-in: build-rocky8-oidn-mpi
       artifact-out: test-rocky8-oidn-mpi-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -359,7 +359,7 @@ jobs:
       image: ubuntu:18.04
       runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-ubuntu1804-gcc
       artifact-out: test-ubuntu1804-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -372,7 +372,7 @@ jobs:
       image: ubuntu:20.04
       runs-on: '"avx2"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-ubuntu2004-gcc
       artifact-out: test-ubuntu2004-gcc-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -385,7 +385,7 @@ jobs:
       image: ubuntu:20.04
       runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MULTIDEVICE
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MULTIDEVICE
       artifact-in: build-ubuntu2004-gcc
       artifact-out: test-ubuntu2004-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -428,7 +428,6 @@ jobs:
       image: ospray/docker-images:arch
       cmd: |
         export LSAN_OPTIONS="suppressions=$GITHUB_WORKSPACE/scripts/tests/sanitize_ignore.txt"
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
         export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
         export TBB_ENABLE_SANITIZERS=1
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
