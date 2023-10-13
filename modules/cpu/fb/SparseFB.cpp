@@ -41,7 +41,8 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
         FFO_FB_SPARSE),
       device(device),
       useTaskAccumIDs((channels & OSP_FB_ACCUM) || overrideUseTaskAccumIDs),
-      totalTiles(divRoundUp(size, vec2i(TILE_SIZE)))
+      totalTiles(divRoundUp(size, vec2i(TILE_SIZE))),
+      numRenderTasks(0)
 {
   if (size.x <= 0 || size.y <= 0) {
     throw std::runtime_error(

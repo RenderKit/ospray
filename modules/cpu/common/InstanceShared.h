@@ -22,7 +22,12 @@ struct Instance
 
 #ifdef __cplusplus
   Instance()
-      : group(nullptr), geom(nullptr), xfm(one), rcp_xfm(one), motionBlur(false)
+      : group(nullptr),
+        geom(nullptr),
+        xfm(one),
+        rcp_xfm(one),
+        motionBlur(false),
+        userID(-1u)
   {}
 };
 } // namespace ispc

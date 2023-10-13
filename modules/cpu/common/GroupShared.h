@@ -25,8 +25,6 @@ struct Group
   GeometricModel **clipModels;
   int32 numClipModels;
 
-  RTCScene testScene;
-
 #ifdef __cplusplus
   Group()
       : geometricModels(nullptr),

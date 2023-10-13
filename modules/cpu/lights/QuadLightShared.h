@@ -28,7 +28,9 @@ struct QuadLightDynamic
         edge1(1.f, 0.f, 0.f),
         edge2(0.f, 1.f, 0.f),
         nnormal(0.f, 0.f, 1.f),
-        ppdf(inf)
+        ppdf(1.f),
+        c0(0.f, 1.f, 0.f),
+        c90(1.f, 0.f, 0.f)
   {}
 #endif
 };
