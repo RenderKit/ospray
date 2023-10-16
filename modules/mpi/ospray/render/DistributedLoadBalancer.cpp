@@ -41,6 +41,10 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
     bool /*wait*/)
 {
   auto *dfb = dynamic_cast<DistributedFrameBuffer *>(_fb);
+  if (!dfb) {
+    throw std::runtime_error(
+        "Distributed Load Balancer only supports DistributedFrameBuffer!");
+  }
 
   auto *world = dynamic_cast<DistributedWorld *>(_world);
   if (!world) {

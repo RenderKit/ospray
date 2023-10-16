@@ -23,7 +23,7 @@ static cpp::Material makeCarPaintMaterial(
   mat.setParam("flakeColor", vec3f(0.277f, 0.717f, 0.990f));
   mat.setParam("flipflopColor", vec3f(0.252f, 0.0385f, 0.550f));
 
-  for (auto param : params)
+  for (auto &param : params)
     mat.setParam(param.first, param.second);
 
   mat.commit();

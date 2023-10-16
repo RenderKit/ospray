@@ -195,7 +195,7 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
         gradientShadingScale));
   }
 
-  for (auto volumetricModel : volumetricModels)
+  for (auto &volumetricModel : volumetricModels)
     volumetricModel.commit();
 
   std::vector<cpp::GeometricModel> geometricModels;
@@ -212,7 +212,7 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
         createGeometricModel(box2, vec3f(0.2f, 0.2f, 0.2f)));
   }
 
-  for (auto geometricModel : geometricModels)
+  for (auto &geometricModel : geometricModels)
     geometricModel.commit();
 
   if (!volumetricModels.empty())

@@ -29,7 +29,8 @@ ObjectHandle::ObjectHandle(const ObjectHandle &other) : i64(other.i64) {}
 
 ObjectHandle &ObjectHandle::operator=(const ObjectHandle &other)
 {
-  i64 = other.i64;
+  if (this != &other)
+    i64 = other.i64;
   return *this;
 }
 
