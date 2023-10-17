@@ -40,7 +40,7 @@ CMake is easy:
 -   You should now have `libospray.[so,dylib]` as well as a set of
     [example applications].
 
-#### Entitlements on Mac OS\ X
+### Entitlements on Mac OS\ X
 
 Mac OS\ X requires notarization of applications as a security mechanism,
 and [entitlements must be
@@ -62,9 +62,8 @@ way to configure OSPRay and to create the Visual Studio solution files:
     does not exist yet CMake will create it).
 
 -   Click "Configure" and select as generator the Visual Studio version
-    you have (OSPRay needs Visual Studio 15 2017 or newer), for Win64
-    (32\ bit builds are not supported by OSPRay), e.g., "Visual Studio 15
-    2017 Win64".
+    you have; OSPRay needs "Visual Studio 15 2017 Win64" or newer, 32\
+    bit builds are not supported, e.g., "Visual Studio 17 2022".
 
 -   If the configuration fails because some dependencies could not be
     found then follow the instructions given in the error message,
@@ -85,7 +84,7 @@ console. In the Visual Studio command prompt type:
     cd path\to\ospray
     mkdir build
     cd build
-    cmake -G "Visual Studio 15 2017 Win64" [-D VARIABLE=value] ..
+    cmake -G "Visual Studio 17 2022" [-D VARIABLE=value] ..
     cmake --build . --config Release
 
 Use `-D` to set variables for CMake, e.g., the path to Embree with "`-D
@@ -105,7 +104,7 @@ Finding an OSPRay Install with CMake
 Client applications using OSPRay can find it with CMake's
 `find_package()` command. For example,
 
-    find_package(ospray 2.0.0 REQUIRED)
+    find_package(ospray 3.0.0 REQUIRED)
 
 finds OSPRay via OSPRay's configuration file `osprayConfig.cmake`^[This
 file is usually in

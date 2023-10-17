@@ -40,9 +40,9 @@ before you can build OSPRay you need the following prerequisites:
 -   OSPRay also heavily uses Intel [Embree], installing version 4.3.0
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
--   OSPRay support volume rendering (enabled by default via
-    `OSPRAY_ENABLE_VOLUMES`), which heavily uses Intel [Open
-    VKL](https://www.openvkl.org/), version 2.0.0 or newer is required.
+-   OSPRay supports volume rendering (enabled by default via
+    `OSPRAY_ENABLE_VOLUMES`), which heavily uses Intel [Open VKL],
+    version 2.0.0 or newer is required.
     If Open VKL is not found by CMake its location can be hinted with
     the variable `openvkl_DIR`, or disable `OSPRAY_ENABLE_VOLUMES`.
 -   OSPRay also provides an optional module implementing the `denoiser`
@@ -83,3 +83,22 @@ Under Windows please directly use the appropriate installers for
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
 version) and [Embree](https://github.com/embree/embree/releases/).
 
+### Additional Prerequisites for GPU Build {-}
+
+To build OSPRay's GPU module you need
+
+-   a SYCL compiler, either the open source [oneAPI DPC++ Compiler
+    2023-09-22](https://github.com/intel/llvm/releases/tag/nightly-2023-09-22)
+    or the latest [Intel oneAPI DPC++/C++
+    Compiler](https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#dpcpp-cpp)
+-   a recent [CMake](http://www.cmake.org), version 3.25.3 or higher
+-   the [oneAPI Level Zero Loader
+    v1.12.0](https://github.com/oneapi-src/level-zero/releases/tag/v1.12.0)
+    development packages
+    -   On Linux Ubuntu 22.04 there are prebuilt packages available for
+        this: `level-zero-devel` and `level-zero`
+    -   Other Linux distributions require building these packages from source
+    -   On Windows, you can use the single package
+        `level-zero_<version>_win-sdk`; note you will need to set the
+        environment variable `LEVEL_ZERO_ROOT` to the location of the
+        SDK
