@@ -189,24 +189,29 @@ void createMPI_ListenForClient(
 
 MPIOffloadDevice::~MPIOffloadDevice()
 {
-  if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
-    postStatusMsg(OSP_LOG_INFO) << "shutting down mpi device";
+  try {
+    if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
+      postStatusMsg(OSP_LOG_INFO) << "shutting down mpi device";
 
-    sendWork([](networking::WriteStream &writer) { writer << work::FINALIZE; },
-        true);
-    fabric = nullptr;
-    maml::shutdown();
+      sendWork(
+          [](networking::WriteStream &writer) { writer << work::FINALIZE; },
+          true);
+      fabric = nullptr;
+      maml::shutdown();
 
-    MPI_Finalize();
+      MPI_Finalize();
 
-    RKCOMMON_IF_TRACING_ENABLED({
-      char hostname[512] = {0};
-      gethostname(hostname, 511);
-      const std::string masterTraceFile =
-          std::string(hostname) + "_master.json";
-      rkcommon::tracing::saveLog(
-          masterTraceFile.c_str(), masterTraceFile.c_str());
-    });
+      RKCOMMON_IF_TRACING_ENABLED({
+        char hostname[512] = {0};
+        gethostname(hostname, 511);
+        const std::string masterTraceFile =
+            std::string(hostname) + "_master.json";
+        rkcommon::tracing::saveLog(
+            masterTraceFile.c_str(), masterTraceFile.c_str());
+      });
+    }
+  } catch (const std::exception &e) {
+    handleError(OSP_UNKNOWN_ERROR, e.what());
   }
 }
 

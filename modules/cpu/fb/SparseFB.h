@@ -153,7 +153,7 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   // Total number of render tasks that the framebuffer is divided into,
   // including those not owned by this sparsefb
-  vec2i numRenderTasks;
+  vec2i numRenderTasks{0};
 
   // holds error per task for each tile, stored in tiled order.
   // The SparseFB doesn't do its own error refinement since it doesn't have

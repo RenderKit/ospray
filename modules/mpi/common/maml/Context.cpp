@@ -7,6 +7,7 @@
 #include <chrono>
 #include <iostream>
 
+#include "common/OSPCommon.h"
 #include "rkcommon/memory/malloc.h"
 #include "rkcommon/tasking/async.h"
 #include "rkcommon/tasking/tasking_system_init.h"
@@ -30,7 +31,11 @@ Context::Context(bool enableCompression) : compressMessages(enableCompression)
 
 Context::~Context()
 {
-  stop();
+  try {
+    stop();
+  } catch (const std::exception &e) {
+    ospray::handleError(OSP_UNKNOWN_ERROR, e.what());
+  }
 }
 
 /*! register a new incoing-message handler. if any message comes in
