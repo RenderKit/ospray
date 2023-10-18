@@ -52,10 +52,11 @@ class Data : public ManagedObject<OSPData, OSP_DATA>
 
   Data(OSPData existing = nullptr);
 
- private:
+ protected:
   template <typename T>
   void validate_element_type();
 
+ private:
   template <typename DIM_T>
   void validate_dimension_type();
 
@@ -71,6 +72,17 @@ class Data : public ManagedObject<OSPData, OSP_DATA>
 
 using SharedData = Data<true>;
 using CopiedData = Data<false>;
+
+class MovedData : public SharedData
+{
+ public:
+  template <typename T, typename ALLOC_T>
+  MovedData(std::vector<T, ALLOC_T> &arr);
+
+ private:
+  template <typename T, typename ALLOC_T>
+  static void vectorDeleter(const void *vec, const void *addr);
+};
 
 static_assert(
     sizeof(Data<>) == sizeof(OSPData), "cpp::Data can't have data members!");
@@ -231,9 +243,38 @@ inline void Data<SHARED>::constructArray(const void *data,
   }
 }
 
+template <typename T, typename ALLOC_T>
+void MovedData::vectorDeleter(const void *vec, const void *addr)
+{
+  auto *v = (std::vector<T, ALLOC_T> *)vec;
+  assert(v->data() == addr);
+  (void)addr;
+  delete v;
+}
+
+template <typename T, typename ALLOC_T>
+inline MovedData::MovedData(std::vector<T, ALLOC_T> &arr)
+{
+  validate_element_type<T>();
+
+  auto *donee = new std::vector<T, ALLOC_T>(std::move(arr));
+
+  ospObject = ospNewSharedData(donee->data(),
+      OSPTypeFor<T>::value,
+      donee->size(),
+      0,
+      1,
+      0,
+      1,
+      0,
+      vectorDeleter<T, ALLOC_T>,
+      donee);
+}
+
 } // namespace cpp
 
 OSPTYPEFOR_SPECIALIZATION(cpp::SharedData, OSP_DATA);
 OSPTYPEFOR_SPECIALIZATION(cpp::CopiedData, OSP_DATA);
+OSPTYPEFOR_SPECIALIZATION(cpp::MovedData, OSP_DATA);
 
 } // namespace ospray

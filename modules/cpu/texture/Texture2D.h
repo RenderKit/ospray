@@ -24,7 +24,7 @@ struct OSPRAY_SDK_INTERFACE Texture2D
   virtual void commit() override;
 
   OSPTextureFormat format{OSP_TEXTURE_FORMAT_INVALID};
-  OSPTextureFilter filter{OSP_TEXTURE_FILTER_BILINEAR};
+  OSPTextureFilter filter{OSP_TEXTURE_FILTER_LINEAR};
 
  protected:
   Ref<const Data> texData;

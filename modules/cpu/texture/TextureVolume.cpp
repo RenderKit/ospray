@@ -16,23 +16,17 @@ std::string TextureVolume::toString() const
 
 void TextureVolume::commit()
 {
-  volume = dynamic_cast<Volume *>(getParamObject("volume"));
-  if (volume) {
-    auto *transferFunction =
-        (TransferFunction *)getParamObject("transferFunction", nullptr);
-    if (!transferFunction) {
-      throw std::runtime_error(toString() + " must have 'transferFunction'");
-    }
-    getSh()->volume = volume->getSh();
-    getSh()->transferFunction = transferFunction->getSh();
-  } else {
-    volumetricModel = dynamic_cast<VolumetricModel *>(getParamObject("volume"));
-    if (!volumetricModel) {
-      throw std::runtime_error(toString() + " must have 'volume' object");
-    }
-    getSh()->volume = volumetricModel->getSh()->volume;
-    getSh()->transferFunction = volumetricModel->getSh()->transferFunction;
-  }
+  volume = getParamObject<Volume>("volume");
+  if (!volume)
+    throw std::runtime_error(toString() + " must have 'volume' object");
+
+  transferFunction = getParamObject<TransferFunction>("transferFunction");
+  if (!transferFunction)
+    throw std::runtime_error(toString() + " must have 'transferFunction'");
+
+  getSh()->volume = volume->getSh();
+  getSh()->transferFunction = transferFunction->getSh();
+
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.get =
       reinterpret_cast<ispc::Texture_get>(ispc::TextureVolume_get_addr());

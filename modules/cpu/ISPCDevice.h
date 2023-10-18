@@ -13,9 +13,7 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // comment break to prevent clang-format from reordering openvkl includes
-#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
-#endif
 #endif
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
@@ -63,7 +61,9 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   OSPData newSharedData(const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
-      const vec3l &byteStride) override;
+      const vec3l &byteStride,
+      OSPDeleterCallback,
+      const void *userPtr) override;
 
   OSPData newData(OSPDataType, const vec3ul &numItems) override;
 
@@ -85,8 +85,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 
   // Model Meta-Data //////////////////////////////////////////////////////
 
-  OSPMaterial newMaterial(const char * /*renderer_type - unused*/,
-      const char *material_type) override;
+  OSPMaterial newMaterial(const char *material_type) override;
 
   OSPTransferFunction newTransferFunction(const char *type) override;
 
@@ -218,6 +217,8 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   sycl::context syclContext;
   sycl::queue syclQueue;
 #endif
+
+  bool userContext{false}; // app can set context only once
 };
 
 } // namespace api

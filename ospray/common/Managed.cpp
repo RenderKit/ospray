@@ -7,14 +7,18 @@ namespace ospray {
 
 ManagedObject::~ManagedObject()
 {
-  std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
-    auto &param = *p;
-    if (param.data.is<OSP_PTR>()) {
-      auto *obj = param.data.get<OSP_PTR>();
-      if (obj != nullptr)
-        obj->refDec();
-    }
-  });
+  try {
+    std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
+      auto &param = *p;
+      if (param.data.valid() && param.data.is<OSP_PTR>()) {
+        auto *obj = param.data.get<OSP_PTR>();
+        if (obj != nullptr)
+          obj->refDec();
+      }
+    });
+  } catch (const std::exception &e) {
+    ospray::handleError(OSP_UNKNOWN_ERROR, e.what());
+  }
 }
 
 void ManagedObject::commit() {}
@@ -38,12 +42,6 @@ void ManagedObject::checkUnused()
 box3f ManagedObject::getBounds() const
 {
   return box3f(empty);
-}
-
-ManagedObject *ManagedObject::getParamObject(
-    const char *name, ManagedObject *valIfNotFound)
-{
-  return getParam<ManagedObject *>(name, valIfNotFound);
 }
 
 OSPTYPEFOR_DEFINITION(ManagedObject *);

@@ -7,10 +7,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline BSDF_EvalRes LambertTransmission_eval(const varying BSDF *uniform self,
-    const vec3f &,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &)
+inline BSDF_EvalRes LambertTransmission_eval(
+    const varying BSDF *uniform self, const vec3f &, const vec3f &wi)
 {
   BSDF_EvalRes res;
   float cosThetaI = max(-dot(wi, getN(self)), 0.f);
@@ -20,11 +18,7 @@ inline BSDF_EvalRes LambertTransmission_eval(const varying BSDF *uniform self,
 }
 
 inline BSDF_SampleRes LambertTransmission_sample(
-    const varying BSDF *uniform self,
-    const vec3f &,
-    const vec2f &s,
-    float,
-    const uniform FeatureFlagsHandler &)
+    const varying BSDF *uniform self, const vec3f &, const vec2f &s, float)
 {
   const vec3f localDir = cosineSampleHemisphere(s);
   BSDF_SampleRes res;
@@ -35,6 +29,17 @@ inline BSDF_SampleRes LambertTransmission_sample(
   return res;
 }
 
+inline void LambertTransmission_Constructor(varying BSDF *uniform self,
+    const varying linear3f *uniform frame,
+    const varying vec3f &R)
+{
+  BSDF_Constructor(self,
+      R,
+      BSDF_DIFFUSE_TRANSMISSION,
+      BSDF_TYPE_LAMBERT_TRANSMISSION,
+      frame);
+}
+
 inline varying BSDF *uniform LambertTransmission_create(
     uniform ShadingContext *uniform ctx,
     const varying linear3f *uniform frame,
@@ -42,18 +47,7 @@ inline varying BSDF *uniform LambertTransmission_create(
 {
   varying BSDF *uniform self =
       (varying BSDF * uniform) ShadingContext_alloc(ctx, sizeof(BSDF));
-  BSDF_Constructor(self,
-      R,
-      BSDF_DIFFUSE_TRANSMISSION,
-      BSDF_TYPE_LAMBERT_TRANSMISSION,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      LambertTransmission_eval,
-      LambertTransmission_sample,
-#endif
-      frame);
+  LambertTransmission_Constructor(self, frame, R);
   return self;
 }
 

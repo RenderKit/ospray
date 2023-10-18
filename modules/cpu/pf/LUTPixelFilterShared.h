@@ -29,7 +29,8 @@ struct LUTPixelFilter
   LUTPixelFilterType lutFilterType;
 
 #ifdef __cplusplus
-  LUTPixelFilter() : distribution(nullptr)
+  LUTPixelFilter()
+      : distribution(nullptr), lutFilterType{LUT_PIXEL_FILTER_TYPE_GAUSSIAN}
   {
     super.type = PIXEL_FILTER_TYPE_LUT;
   }

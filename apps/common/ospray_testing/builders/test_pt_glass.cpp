@@ -1,31 +1,23 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Builder.h"
-#include "ospray_testing.h"
-#include "rkcommon/utility/multidim_index_sequence.h"
-
-using namespace rkcommon::math;
+#include "test_pt_material.h"
 
 namespace ospray {
 namespace testing {
 
-struct PtGlass : public detail::Builder
+struct PtGlass : public PtMaterial
 {
   PtGlass() = default;
   ~PtGlass() override = default;
 
-  void commit() override;
-
-  cpp::Group buildGroup() const override;
+  std::vector<cpp::Material> buildMaterials() const override;
 };
 
-static cpp::Material makeGlassMaterial(const std::string &rendererType,
-    float eta,
-    vec3f color,
-    float attenuationDistance)
+static cpp::Material makeGlassMaterial(
+    float eta, vec3f color, float attenuationDistance)
 {
-  cpp::Material mat(rendererType, "glass");
+  cpp::Material mat("glass");
   mat.setParam("eta", eta);
   mat.setParam("attenuationColor", color);
   mat.setParam("attenuationDistance", attenuationDistance);
@@ -36,50 +28,20 @@ static cpp::Material makeGlassMaterial(const std::string &rendererType,
 
 // Inlined definitions ////////////////////////////////////////////////////
 
-void PtGlass::commit()
+std::vector<cpp::Material> PtGlass::buildMaterials() const
 {
-  Builder::commit();
-  addPlane = false;
-}
-
-cpp::Group PtGlass::buildGroup() const
-{
-  cpp::Geometry sphereGeometry("sphere");
-
-  constexpr int dimSize = 5;
-
-  index_sequence_2D numSpheres(dimSize);
-
-  std::vector<vec3f> spheres;
-  std::vector<uint8_t> index;
   std::vector<cpp::Material> materials;
 
+  constexpr int dimSize = 5;
+  index_sequence_2D numSpheres(dimSize);
   for (auto i : numSpheres) {
     auto i_f = static_cast<vec2f>(i);
-    spheres.emplace_back(i_f.x, i_f.y, 0.f);
-    materials.push_back(makeGlassMaterial(rendererType,
-        lerp(i_f.x / (dimSize - 1), 1.f, 5.f),
-        vec3f(1.f, 0.25f, 0.f),
-        lerp(i_f.y / (dimSize - 1), 0.5f, 5.f)));
-    index.push_back(numSpheres.flatten(i));
+    materials.push_back(makeGlassMaterial(lerp(i_f.x / (dimSize - 1), 1.f, 2.f),
+        vec3f(.1f, .5f, 1.f),
+        lerp(1.f - i_f.y / (dimSize - 1), 0.5f, 5.f)));
   }
 
-  sphereGeometry.setParam("sphere.position", cpp::CopiedData(spheres));
-  sphereGeometry.setParam("radius", 0.4f);
-  sphereGeometry.commit();
-
-  cpp::GeometricModel model(sphereGeometry);
-
-  model.setParam("material", cpp::CopiedData(materials));
-  model.setParam("index", cpp::CopiedData(index));
-  model.commit();
-
-  cpp::Group group;
-
-  group.setParam("geometry", cpp::CopiedData(model));
-  group.commit();
-
-  return group;
+  return materials;
 }
 
 OSP_REGISTER_TESTING_BUILDER(PtGlass, test_pt_glass);

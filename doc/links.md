@@ -1,6 +1,6 @@
 
 [Embree]: https://www.embree.org/
-[Intel Embree]: https://www.embree.org/
+[Open VKL]: https://www.openvkl.org/
 [Open Image Denoise]: https://openimagedenoise.github.io/
 [OSPRayReadme]: https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation"
 [doc/ospray2_porting_guide.md]: https://www.ospray.org/ospray2_porting_guide.html

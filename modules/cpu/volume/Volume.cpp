@@ -16,9 +16,7 @@ void Volume_embreeBounds(const void *_args);
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
 // comment break to prevent clang-format from reordering openvkl includes
-#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
-#endif
 
 #include <unordered_map>
 
@@ -93,9 +91,7 @@ void Volume::commit()
   vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
-#if OPENVKL_VERSION_MAJOR > 1
   vklFeatureFlags = vklGetFeatureFlags(vklSampler);
-#endif
 
   // Setup Embree user-defined geometry
   rtcSetGeometryUserData(embreeGeometry, getSh());
@@ -133,6 +129,8 @@ void Volume::handleParams()
       vklSetFloat(vklVolume, param.name.c_str(), param.data.get<float>());
     } else if (param.data.is<int>()) {
       vklSetInt(vklVolume, param.name.c_str(), param.data.get<int>());
+    } else if (param.data.is<uint32_t>()) {
+      vklSetInt(vklVolume, param.name.c_str(), param.data.get<uint32_t>());
     } else if (param.data.is<vec3f>()) {
       vklSetVec3f(vklVolume,
           param.name.c_str(),
@@ -207,7 +205,6 @@ void Volume::handleParams()
         if (name == "data") { // structured volumes
           vec3ul &dim = data->numItems;
           vklSetVec3i(vklVolume, "dimensions", dim.x, dim.y, dim.z);
-          vklSetInt(vklVolume, "voxelType", (VKLDataType)data->type);
         }
         if (name == "nodesPackedDense" || name == "nodesPackedTile") {
           // packed VDB volumes: wrap attribute

@@ -24,6 +24,11 @@ else()
   set(OPENVKL_CLONE_URL GIT_REPOSITORY ${OPENVKL_URL} GIT_TAG ${OPENVKL_BRANCH})
 endif()
 
+if (OPENVKL_VERSION STREQUAL "2.0.0")
+  # `patch` is not available on all systems, so use `git apply` instead
+  set(OPENVKL_PATCH PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/openvkl_rpath.patch)
+endif()
+
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
   DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -33,6 +38,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   LIST_SEPARATOR | # Use the alternate list separator
   ${OPENVKL_CLONE_URL}
   ${OPENVKL_URL_HASH}
+  ${OPENVKL_PATCH}
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -46,6 +52,7 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
     $<$<BOOL:${DOWNLOAD_TBB}>:-DRKCOMMON_TBB_ROOT=${TBB_PATH}>
     $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
+    $<$<BOOL:${DOWNLOAD_ISPC}>:-Dispcrt_DIR=${ispcrt_DIR}>
     -DBUILD_BENCHMARKS=OFF
     -DBUILD_EXAMPLES=OFF
     -DBUILD_TESTING=OFF
@@ -70,5 +77,5 @@ ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
     rkcommon
     embree
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
-    $<$<BOOL:${DOWNLOAD_ISPC}>:ispcrt>
+    $<$<BOOL:${BUILD_ISPCRT_FROM_SOURCE}>:ispcrt>
 )

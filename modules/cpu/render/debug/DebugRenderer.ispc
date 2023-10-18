@@ -283,33 +283,21 @@ static void DebugRenderer_volume(Renderer *uniform self,
     Volume *uniform volume = m->volume;
 
     float time = 0.5f;
-#if OPENVKL_VERSION_MAJOR == 1
-    // We know if we have OpenVKL version 1 we're not targetting SYCL
-    VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(m->vklIntervalContext,
-            (varying vkl_vec3f *)&ray.org,
-            (varying vkl_vec3f *)&ray.dir,
-            (varying vkl_range1f *)&vInterval.interval,
-            &time,
-            (void *uniform)intervalIteratorBuffer);
-#else
     VKLIntervalIterator intervalIterator =
         vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,
             (varying vkl_range1f *)&vInterval.interval,
-#ifdef OSPRAY_TARGET_SYCL
-            time,
-#else
-            &time,
+#ifndef OSPRAY_TARGET_SYCL
+            &
 #endif
+            time,
             (void *uniform)intervalIteratorBuffer
 #ifdef OSPRAY_TARGET_SYCL
             ,
             ff.volume
 #endif
         );
-#endif
     VKLInterval interval;
 
     static const uniform float samplingRate = 0.5f;
@@ -337,11 +325,6 @@ static void DebugRenderer_volume(Renderer *uniform self,
 
         // Get volume sample
         vec3f p = ray.org + ray.t0 * ray.dir;
-#if OPENVKL_VERSION_MAJOR == 1
-        // We know if we have OpenVKL version 1 we're not targetting SYCL
-        const float sample = vklComputeSampleV(
-            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
-#else
         const float sample = vklComputeSampleV(&volume->vklSampler,
             (const varying vkl_vec3f *uniform) & p
 #ifdef OSPRAY_TARGET_SYCL
@@ -351,7 +334,6 @@ static void DebugRenderer_volume(Renderer *uniform self,
             ff.volume
 #endif
         );
-#endif
         if (!isnan(sample)) {
           vec4f sampleColorOpacity =
               TransferFunction_dispatch_get(m->transferFunction, sample);

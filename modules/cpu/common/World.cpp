@@ -139,7 +139,6 @@ void World::commit()
       }
 #ifdef OSPRAY_ENABLE_VOLUMES
       if (inst->group->sceneVolumes) {
-        featureFlags.other |= FFO_VOLUME_IN_SCENE;
         addGeometryInstance(
             esVol, inst->group->sceneVolumes, inst, embreeDevice, id);
       }

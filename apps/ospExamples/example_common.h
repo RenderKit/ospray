@@ -48,7 +48,7 @@ inline void initializeOSPRay(
   auto logLevel = OSP_LOG_WARNING;
 
   ospDeviceSetParam(device, "warnAsError", OSP_BOOL, &warnAsErrors);
-  ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);
+  ospDeviceSetParam(device, "logLevel", OSP_UINT, &logLevel);
 
   ospDeviceCommit(device);
   ospDeviceRelease(device);

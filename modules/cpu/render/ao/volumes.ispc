@@ -12,6 +12,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
+#ifndef OSPRAY_TARGET_SYCL
+
 struct VolumeContext
 {
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
@@ -29,11 +31,8 @@ struct VolumeContext
 
 static void sampleVolume(VolumeContext &vc,
     const VolumetricModel *uniform m,
-    const uniform float samplingRate,
-    const uniform FeatureFlagsHandler &ffh)
+    const uniform float samplingRate)
 {
-  const uniform FeatureFlags ff = getFeatureFlags(ffh);
-
   // We have to iterate till we get a valid sample value
   float dt = 0.f;
   float sampleVal = nan;
@@ -43,13 +42,7 @@ static void sampleVolume(VolumeContext &vc,
     while (vc.iuDistance > vc.iuLength) {
       // Get next VKL interval
       const float prevUpper = vc.interval.tRange.upper;
-      if (vklIterateIntervalV(vc.intervalIterator,
-              &vc.interval
-#ifdef OSPRAY_TARGET_SYCL
-              ,
-              ff.volume
-#endif
-              )) {
+      if (vklIterateIntervalV(vc.intervalIterator, &vc.interval)) {
         // Intervals may not be contiguous, accumulate empty space
         emptySpace += max(vc.interval.tRange.lower - prevUpper, 0.f);
 
@@ -81,21 +74,8 @@ static void sampleVolume(VolumeContext &vc,
     const vec3f p = vc.org + newDistance * vc.dir;
 
     // Sample volume value in given point
-#if OPENVKL_VERSION_MAJOR == 1
-    // We know if we have OpenVKL version 1 we're not targetting SYCL
     sampleVal = vklComputeSampleV(
-        m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
-#else
-    sampleVal = vklComputeSampleV(&m->volume->vklSampler,
-        (const varying vkl_vec3f *uniform) & p
-#ifdef OSPRAY_TARGET_SYCL
-        ,
-        0,
-        0.5f,
-        ff.volume
-#endif
-    );
-#endif
+        &m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
     // Go to the next sub-interval
     vc.iuDistance += 1.f;
     dt = newDistance - vc.distance - emptySpace;
@@ -112,8 +92,7 @@ static void sampleVolume(VolumeContext &vc,
 static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
     varying VolumeContext *uniform volumeContexts,
     const uniform float samplingRate,
-    vec4f &sampledColor,
-    const uniform FeatureFlagsHandler &ffh)
+    vec4f &sampledColor)
 {
   // Look for the closest sample across all volumes
   float minDist = inf;
@@ -127,13 +106,8 @@ static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
     VolumeContext &vc = volumeContexts[i];
     if (vc.ready == 0) {
       const VolumeInterval &vi = volumeIntervals.intervals[i];
-#ifdef OSPRAY_TARGET_SYCL
-      {
-        const VolumetricModel *m = vi.volumetricModel;
-#else
       foreach_unique (m in vi.volumetricModel) {
-#endif
-        sampleVolume(vc, m, samplingRate, ffh);
+        sampleVolume(vc, m, samplingRate);
       }
       vc.ready = 1;
     }
@@ -161,21 +135,13 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
     Ray &ray,
     varying LDSampler *uniform ldSampler,
     const uniform float samplingRate,
-    const uniform FeatureFlagsHandler &ffh)
+    const uniform FeatureFlagsHandler &)
 {
-  const uniform FeatureFlags ff = getFeatureFlags(ffh);
-
-#ifdef OSPRAY_TARGET_SYCL
-  // Only a single volume context is supported on the GPU, no dynamic allocation
-  VolumeContext volumeContext;
-  varying VolumeContext *uniform volumeContexts = &volumeContext;
-#else
   // Array of volume contexts
   varying VolumeContext *uniform volumeContexts =
       (varying VolumeContext * uniform)
           pushTLS(reduce_max(volumeIntervals.numVolumeIntervals)
               * sizeof(varying VolumeContext));
-#endif
 
   // Sampling position jitter
   const float jitter = LDSampler_getFloat(ldSampler, 0);
@@ -245,39 +211,14 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
       // so we must iterate over them
       float time = 0.5f;
       VolumetricModel *varying model = vi.volumetricModel;
-#ifdef OSPRAY_TARGET_SYCL
-      {
-        const VolumetricModel *m = model;
-#else
       foreach_unique (m in model) {
-#endif
-
         // Create volume interval iterator
-#if OPENVKL_VERSION_MAJOR == 1
-        // We know if we have OpenVKL version 1 we're not targetting SYCL
-        vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
+        vc.intervalIterator = vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
             &time,
             vc.intervalIteratorBuffer);
-#else
-        vc.intervalIterator = vklInitIntervalIteratorV(&m->vklIntervalContext,
-            (varying vkl_vec3f *)&vc.org,
-            (varying vkl_vec3f *)&vc.dir,
-            (varying vkl_range1f *)&rInterval,
-#ifdef OSPRAY_TARGET_SYCL
-            time,
-#else
-            &time,
-#endif
-            vc.intervalIteratorBuffer
-#ifdef OSPRAY_TARGET_SYCL
-            ,
-            ff.volume
-#endif
-        );
-#endif
       }
     }
 
@@ -285,11 +226,8 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
     while (alpha < .99f) {
       // Sample across all volumes
       vec4f sampledColorOpacity;
-      float dist = sampleAllVolumes(volumeIntervals,
-          volumeContexts,
-          samplingRate,
-          sampledColorOpacity,
-          ffh);
+      float dist = sampleAllVolumes(
+          volumeIntervals, volumeContexts, samplingRate, sampledColorOpacity);
 
       // Exit loop if nothing sampled
       if (dist == inf)
@@ -303,13 +241,120 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
     }
   }
 
-#ifndef OSPRAY_TARGET_SYCL
   popTLS(volumeContexts);
-#endif
 
   // Return final color
   return make_vec4f(color, alpha);
 }
+
+#else
+
+// GPU version
+SYCL_EXTERNAL vec4f integrateVolumeIntervals(
+    const VolumeIntervals &volumeIntervals,
+    const RayIntervals &,
+    Ray &ray,
+    varying LDSampler *uniform ldSampler,
+    const uniform float samplingRate,
+    const uniform FeatureFlagsHandler &ffh)
+{
+  const VolumeInterval &vi = volumeIntervals.intervals[0];
+  Ray tRay = ray;
+  AffineSpace3f instanceRcpXfm = vi.instance->rcp_xfm;
+  transformRay(tRay, instanceRcpXfm);
+
+  // Define initial color with alpha
+  vec3f color = make_vec3f(0.f);
+  float alpha = 0.f;
+
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+
+  uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  VolumetricModel *varying m = vi.volumetricModel;
+  VKLIntervalIterator intervalIterator =
+      vklInitIntervalIteratorV(&m->vklIntervalContext,
+          (varying vkl_vec3f *)&tRay.org,
+          (varying vkl_vec3f *)&tRay.dir,
+          (varying vkl_range1f *)&vi.interval,
+          .5f,
+          intervalIteratorBuffer,
+          ff.volume);
+
+  // Sampling position jitter
+  const float jitter = LDSampler_getFloat(ldSampler, 0);
+
+  // Propagate ray across all volumes till opaque
+  float distance = inf;
+  float iuDistance = jitter;
+  float iuLength = 0.f;
+  VKLInterval interval;
+  interval.tRange.upper = inf;
+  float samplingStep = 0.f;
+  while (alpha < .99f) {
+    // Iterate till sampling position is within interval
+    float emptySpace = 0.f;
+    while (iuDistance > iuLength) {
+      // Get next VKL interval
+      const float prevUpper = interval.tRange.upper;
+      if (vklIterateIntervalV(intervalIterator, &interval, ff.volume)) {
+        // Intervals may not be contiguous, accumulate empty space
+        emptySpace += max(interval.tRange.lower - prevUpper, 0.f);
+
+        // Make it local for the next interval
+        iuDistance -= iuLength;
+
+        // Calculate how many steps can be made within this interval
+        samplingStep = interval.nominalDeltaT / samplingRate;
+        iuLength =
+            (interval.tRange.upper - interval.tRange.lower) / samplingStep;
+
+        // Initialize distance if necessary
+        distance = (distance == inf) ? interval.tRange.lower : distance;
+
+      } else {
+        // The end of the volume has been reached
+        return make_vec4f(color, alpha);
+      }
+    }
+
+    // Calculate sampling distance
+    const float newDistance = interval.tRange.lower + iuDistance * samplingStep;
+
+    // Prepare sampling position
+    const vec3f p = tRay.org + newDistance * tRay.dir;
+
+    // Sample volume value in given point
+    float sampleVal = vklComputeSampleV(&m->volume->vklSampler,
+        (const varying vkl_vec3f *uniform) & p,
+        0,
+        .5f,
+        ff.volume);
+
+    if (!isnan(sampleVal)) {
+      // Apply transfer function to get color with alpha
+      vec4f sampledColor =
+          TransferFunction_dispatch_get(m->transferFunction, sampleVal);
+
+      // Weight the opacity with deltaT using Beer law
+      float dt = newDistance - distance - emptySpace;
+      sampledColor.w = 1.f - exp(-sampledColor.w * dt * m->densityScale);
+
+      // Alpha blend sampled color
+      color =
+          color + ((1.f - alpha) * sampledColor.w * make_vec3f(sampledColor));
+      alpha = alpha + ((1.f - alpha) * sampledColor.w);
+    }
+
+    // Go to the next sub-interval
+    iuDistance += 1.f;
+    distance = newDistance;
+  }
+
+  // Return final color
+  return make_vec4f(color, alpha);
+}
+
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE
 #endif

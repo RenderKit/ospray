@@ -17,7 +17,14 @@ GLFWDistribOSPRayWindow *GLFWDistribOSPRayWindow::activeWindow = nullptr;
 static bool g_quitNextFrame = false;
 
 WindowState::WindowState()
-    : quit(false), cameraChanged(false), fbSizeChanged(false), spp(1)
+    : quit(false),
+      cameraChanged(false),
+      fbSizeChanged(false),
+      spp(1),
+      windowSize(0),
+      eyePos(0.f),
+      lookDir(0.f),
+      upDir(0.f)
 {}
 
 GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,

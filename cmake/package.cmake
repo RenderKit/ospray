@@ -45,7 +45,6 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/ospray/include/ospray
 ##############################################################
 
 install(FILES
- ${PROJECT_SOURCE_DIR}/LICENSE.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs-oneTBB.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs-Embree.txt
@@ -58,14 +57,26 @@ install(FILES
  ${PROJECT_SOURCE_DIR}/CHANGELOG.md
  ${PROJECT_SOURCE_DIR}/README.md
  DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
-install(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib OPTIONAL)
+install(FILES ${PROJECT_SOURCE_DIR}/readme.pdf
+ DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib OPTIONAL)
+
+if (OSPRAY_INSTALL_DEPENDENCIES AND OSPRAY_MODULE_DENOISER AND OIDN_DEVICE_CUDA)
+  install(FILES ${PROJECT_SOURCE_DIR}/doc/BINARY-LICENSE.txt RENAME LICENSE.txt
+    DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
+else()
+  install(FILES ${PROJECT_SOURCE_DIR}/LICENSE.txt
+    DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
+endif()
 
 ##############################################################
 # CPack specific stuff
 ##############################################################
 
 set(CPACK_PACKAGE_NAME "OSPRay")
-set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}.x86_64")
+if (OSPRAY_MODULE_GPU)
+  set(OSPRAY_PACKAGE_SYCL ".sycl")
+endif()
+set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}${OSPRAY_PACKAGE_SYCL}.x86_64")
 
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)

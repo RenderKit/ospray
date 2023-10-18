@@ -20,8 +20,7 @@ std::string GeometricModel::toString() const
 
 void GeometricModel::commit()
 {
-  geom =
-      hasParam("geometry") ? (Geometry *)getParamObject("geometry") : geomAPI;
+  geom = getParamObject<Geometry>("geometry", geomAPI.ptr);
   if (!geom)
     throw std::runtime_error(toString() + " received NULL 'geometry'");
 

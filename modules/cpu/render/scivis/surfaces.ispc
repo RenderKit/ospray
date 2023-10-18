@@ -74,7 +74,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
   return color;
 }
 
-SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
+SYCL_EXTERNAL __noinline SSI SciVis_computeShading(const SciVis *uniform self,
     const World *uniform world,
     const DifferentialGeometry &dg,
     ScreenSample &sample,

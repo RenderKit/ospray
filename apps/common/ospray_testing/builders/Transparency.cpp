@@ -57,33 +57,29 @@ cpp::Group Transparency::buildGroup() const
   // Create geometric model
   cpp::GeometricModel gModel(planeGeometry);
   {
-    if (rendererType == "pathtracer" || rendererType == "scivis"
-        || rendererType == "ao") {
-      std::vector<vec3f> colors = {{.8f, 0.f, 0.f},
-          {0.f, .8f, 0.f},
-          {0.f, 0.f, .8f},
-          {.8f, .8f, .8f},
-          {.5f, 0.f, 0.f},
-          {0.f, .5f, 0.f},
-          {0.f, 0.f, .5f}};
-      std::vector<vec3f> transmissions = {{0.f, 0.f, 0.f},
-          {0.f, 0.f, 0.f},
-          {0.f, 0.f, 0.f},
-          {0.f, 0.f, 0.f},
-          {.8f, 0.f, 0.f},
-          {0.f, .8f, 0.f},
-          {0.f, 0.f, .8f}};
-      std::vector<cpp::Material> materials;
-      for (uint32_t i = 0; i < std::min(colors.size(), transmissions.size());
-           i++) {
-        materials.emplace_back(cpp::Material(rendererType, "obj"));
-        materials[i].setParam("kd", colors[i]);
-        if (rendererType == "pathtracer" || rendererType == "scivis")
-          materials[i].setParam("tf", transmissions[i]);
-        materials[i].commit();
-      }
-      gModel.setParam("material", cpp::CopiedData(materials));
+    std::vector<vec3f> colors = {{.8f, 0.f, 0.f},
+        {0.f, .8f, 0.f},
+        {0.f, 0.f, .8f},
+        {.8f, .8f, .8f},
+        {.5f, 0.f, 0.f},
+        {0.f, .5f, 0.f},
+        {0.f, 0.f, .5f}};
+    std::vector<vec3f> transmissions = {{0.f, 0.f, 0.f},
+        {0.f, 0.f, 0.f},
+        {0.f, 0.f, 0.f},
+        {0.f, 0.f, 0.f},
+        {.8f, 0.f, 0.f},
+        {0.f, .8f, 0.f},
+        {0.f, 0.f, .8f}};
+    std::vector<cpp::Material> materials;
+    for (uint32_t i = 0; i < std::min(colors.size(), transmissions.size());
+         i++) {
+      materials.emplace_back(cpp::Material("obj"));
+      materials[i].setParam("kd", colors[i]);
+      materials[i].setParam("tf", transmissions[i]);
+      materials[i].commit();
     }
+    gModel.setParam("material", cpp::CopiedData(materials));
     gModel.commit();
   }
 

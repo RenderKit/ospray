@@ -13,12 +13,17 @@ namespace api {
 struct MultiDeviceObject : public memory::RefCount
 {
   std::vector<OSPObject> objects;
+  OSPDeleterCallback freeFunction{nullptr};
+  const void *userData{nullptr};
+  const void *sharedData{nullptr};
 
   // sharedDataDirtyReference is held temporarily to ensure consistency
   Data *sharedDataDirtyReference = nullptr;
   virtual ~MultiDeviceObject() override
   {
     delete sharedDataDirtyReference;
+    if (freeFunction)
+      freeFunction(userData, sharedData);
   }
 };
 

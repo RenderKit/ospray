@@ -1,20 +1,23 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
+Param(
+  [string] $G = 'Ninja',
+  [ValidateSet('Release', 'RelWithDebInfo', 'Debug')][string] $buildType = 'Release'
+)
+
 md build
 cd build
 
 cmake --version
 
 cmake -L `
-  -G $($args[0]) `
-  -T $($args[1]) `
-  -D CMAKE_BUILD_TYPE=$($args[2]) `
-  -D DEPENDENCIES_BUILD_TYPE=$($args[2]) `
-  -D BUILD_OSPRAY_MODULE_MPI=$($args[3]) `
-  -D BUILD_OSPRAY_MODULE_MULTIDEVICE=$($args[4]) `
+  -G $G `
+  $args `
+  -D CMAKE_BUILD_TYPE=$buildType `
+  -D DEPENDENCIES_BUILD_TYPE=$buildType `
   ../scripts/superbuild
 
-cmake --build . --config $args[2] --target ALL_BUILD
+cmake --build . --config $buildType
 
 exit $LASTEXITCODE

@@ -41,103 +41,6 @@ static cpp::Volume CreateTorus(const int size)
 
 /////////////////////////////////////////////////////////////////////////////
 
-TextureVolumeTransform_deprecated::TextureVolumeTransform_deprecated()
-{
-  rendererType = GetParam();
-}
-
-void TextureVolumeTransform_deprecated::SetUp()
-{
-  Base::SetUp();
-
-  camera.setParam("position", vec3f(.66f, .66f, -2.5f));
-  camera.setParam("direction", vec3f(0.f, 0.f, 1.f));
-  camera.setParam("up", vec3f(0.f, 1.f, 0.f));
-
-  // Create transfer function
-  cpp::TransferFunction transferFun("piecewiseLinear");
-  {
-    std::vector<vec3f> colors = {vec3f(1.f, 0.f, 0.f),
-        vec3f(0.f, 1.f, 0.f),
-        vec3f(0.f, 1.f, 1.f),
-        vec3f(1.f, 1.f, 0.f),
-        vec3f(1.f, 1.f, 1.f),
-        vec3f(1.f, 0.f, 1.f)};
-    std::vector<float> opacities = {1.f, 1.f};
-
-    transferFun.setParam("value", range1f(-10000.f, 100.f));
-    transferFun.setParam("color", cpp::CopiedData(colors));
-    transferFun.setParam("opacity", cpp::CopiedData(opacities));
-    transferFun.commit();
-  }
-
-  // Create volumetric model
-  cpp::VolumetricModel volumetricModel(CreateTorus(256));
-  volumetricModel.setParam("transferFunction", transferFun);
-  volumetricModel.commit();
-
-  // Create volume texture
-  cpp::Texture tex("volume");
-  tex.setParam("volume", volumetricModel);
-  tex.commit();
-
-  // Create a single sphere geometry
-  cpp::Geometry sphere("sphere");
-  {
-    sphere.setParam("sphere.position", cpp::CopiedData(vec3f(0.f)));
-    sphere.setParam("radius", 0.51f);
-    sphere.commit();
-  }
-
-  // Prepare material array
-  constexpr uint32_t cols = 2;
-  constexpr uint32_t rows = 2;
-  std::array<cpp::Material, cols * rows> materials;
-  {
-    // Create materials
-    for (uint32_t i = 0; i < cols * rows; i++) {
-      cpp::Material mat(rendererType, "obj");
-      mat.setParam("map_kd", tex);
-      mat.commit();
-      materials[i] = mat;
-    }
-
-    // Set scale
-    materials[1].setParam("map_kd.transform", affine3f::scale(vec3f(1.2f)));
-    materials[1].commit();
-
-    // Set rotation
-    materials[2].setParam(
-        "map_kd.transform", affine3f::rotate(vec3f(0.5, 0.2, 1), 1.f));
-    materials[2].commit();
-  }
-
-  // Prepare instances
-  rkcommon::index_sequence_2D idx(vec2i(cols, rows));
-  for (auto i : idx) {
-    // Create geometric model
-    cpp::GeometricModel model(sphere);
-    model.setParam("material", materials[idx.flatten(i)]);
-    model.commit();
-
-    // Create group
-    cpp::Group group;
-    group.setParam("geometry", cpp::CopiedData(model));
-    group.commit();
-
-    // Create instance
-    cpp::Instance instance(group);
-    instance.setParam(
-        "transform", affine3f::translate(1.25f * vec3f(i.x, i.y, 0.f)));
-    instance.commit();
-    AddInstance(instance);
-  }
-
-  cpp::Light ambient("ambient");
-  ambient.setParam("intensity", 0.5f);
-  AddLight(ambient);
-}
-
 TextureVolumeTransform::TextureVolumeTransform()
 {
   rendererType = GetParam();
@@ -193,7 +96,7 @@ void TextureVolumeTransform::SetUp()
   {
     // Create materials
     for (uint32_t i = 0; i < cols * rows; i++) {
-      cpp::Material mat(rendererType, "obj");
+      cpp::Material mat("obj");
       mat.setParam("map_kd", tex);
       mat.commit();
       materials[i] = mat;
@@ -362,14 +265,6 @@ INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
     UnstructuredVolume,
     ::testing::Combine(::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(false, true)));
-
-TEST_P(TextureVolumeTransform_deprecated, simple)
-{
-  PerformRenderTest();
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    Renderers, TextureVolumeTransform_deprecated, ::testing::Values("scivis"));
 
 TEST_P(TextureVolumeTransform, simple)
 {

@@ -28,6 +28,22 @@ static inline void installErrorMsgFunc(Device &device, OSTREAM_T &stream)
 
 // Device definitions /////////////////////////////////////////////////////////
 
+Device::FactoryMap Device::dfcns;
+
+Device *Device::createInstance(const char *type)
+{
+  FactoryFcn fcn = dfcns[type];
+  if (fcn) {
+    auto *obj = fcn();
+    if (obj != nullptr)
+      return obj;
+  }
+
+  throw std::runtime_error("Could not find Device of type: '"
+      + std::string(type)
+      + "'. Make sure you have the correct OSPRay libraries linked and initialized.");
+}
+
 memory::IntrusivePtr<Device> Device::current;
 uint32_t Device::logLevel = OSP_LOG_NONE;
 
@@ -40,8 +56,9 @@ Device *Device::createDevice(const char *type)
   auto &repo = *LibraryRepository::getInstance();
 
   if (!repo.libraryExists("ospray_module_cpu") && type == std::string("cpu"))
-    repo.add(
-        "ospray_module_cpu", reinterpret_cast<const void *>(&createDevice));
+    repo.add(reinterpret_cast<const void *>(&createDevice),
+        "ospray_module_cpu",
+        {OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH});
 
   return createInstance(type);
 }
@@ -71,7 +88,7 @@ void Device::commit()
 
   apiTraceEnabled = traceAPI;
 
-  logLevel = getParam<int>("logLevel", OSP_LOG_NONE);
+  logLevel = (OSPLogLevel)getParam<uint32_t>("logLevel", OSP_LOG_NONE);
 
   auto logLevelStr =
       utility::getEnvVar<std::string>("OSPRAY_LOG_LEVEL").value_or("");

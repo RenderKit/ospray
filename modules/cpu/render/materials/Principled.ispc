@@ -1,6 +1,8 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "Principled.ih"
+
 #include "Medium.ih"
 #include "common/Ray.ih"
 #include "render/Material.ih"
@@ -15,28 +17,84 @@
 #include "render/bsdfs/MicrofacetSheenLayer.ih"
 #include "render/bsdfs/MultiBSDF.ih"
 #include "render/bsdfs/OrenNayar.ih"
+#include "render/bsdfs/PassthroughLayer.ih"
 #include "render/bsdfs/ThinDielectric.ih"
 #include "render/bsdfs/ThinMicrofacetDielectric.ih"
 #include "render/bsdfs/Transmission.ih"
 #include "texture/TextureParam.ih"
-
-#include "Principled.ih"
+// c++ shared
+#include "PrincipledShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
+struct Principled_Diffuse_BSDF
+{
+  DEFINE_MULTIBSDF(2);
+  OrenNayar lambert;
+  BSDF lambertTransmission;
+};
+
+struct Principled_Plastic_BSDF
+{
+  MicrofacetDielectricLayer dielectricLayer;
+  Principled_Diffuse_BSDF diffuse;
+};
+
+struct Principled_Glass_BSDF
+{
+  int bsdfId;
+  MicrofacetDielectric dielectric;
+  ThinMicrofacetDielectric thinDielectric;
+  BSDF transmission;
+};
+
+struct Principled_Base_MultiBSDF
+{
+  DEFINE_MULTIBSDF(3);
+  MicrofacetConductor metal;
+  Principled_Glass_BSDF glass;
+  Principled_Plastic_BSDF plastic;
+};
+
+struct Principled_ClearCoat_BSDF
+{
+  MicrofacetDielectricLayer dielectricLayer;
+  Principled_Base_MultiBSDF base;
+};
+
+struct Principled_SheenLayer_BSDF
+{
+  MicrofacetSheenLayer sheenLayer;
+  Principled_ClearCoat_BSDF clearCoat;
+};
+
+struct Principled_BSDF
+{
+  DEFINE_MULTIBSDF(2);
+  BSDF transmission;
+  Principled_SheenLayer_BSDF sheen;
+};
+
+SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &,
-    const Medium &currentMedium)
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &)
 {
   const uniform Principled *uniform self =
       (const uniform Principled *uniform)super;
-  varying BSDF *varying bsdf = NULL;
+
+  // Allocate memory and initialize material BSDF
+  varying Principled_BSDF *uniform bsdf = (varying Principled_BSDF * uniform)
+      ShadingContext_alloc(ctx, sizeof(Principled_BSDF));
+  varying MultiBSDF *uniform multiRoot = (varying MultiBSDF * uniform) bsdf;
+  MultiBSDF_Constructor(multiRoot, 2);
+  bsdf->super.bsdfType = BSDF_TYPE_PRINCIPLED;
 
   // create the default shading frame
   varying linear3f *uniform frame = LinearSpace3f_create(ctx,
@@ -55,7 +113,7 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
     opacity *= baseColorSample.w;
   }
 
-  if (opacity > EPS) {
+  if (self->opacity > EPS) {
     varying linear3f *uniform baseFrame = frame;
     if (valid(self->baseNormalMap)) {
       baseFrame = LinearSpace3f_create(ctx,
@@ -67,7 +125,9 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
       }
     }
 
-    varying BSDF *uniform baseBsdf = MultiBSDF_create(ctx);
+    varying MultiBSDF *uniform multiBase =
+        (varying MultiBSDF * uniform) & bsdf->sheen.clearCoat.base;
+    MultiBSDF_Constructor(multiBase, 3);
 
     const vec3f baseColor =
         clamp(self->baseColor * get3f(self->baseColorMap, dg, make_vec3f(1.f))
@@ -99,7 +159,12 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
       // plastic base
       const float plastic = dielectric * (1.f - transmission);
       if (plastic > EPS) {
-        varying BSDF *varying plasticBsdf = NULL;
+        varying MultiBSDF *uniform multiDiffuse = (varying MultiBSDF * uniform)
+            & bsdf->sheen.clearCoat.base.plastic.diffuse;
+        MultiBSDF_Constructor(multiDiffuse, 2);
+
+        varying Principled_Plastic_BSDF *uniform plasticBsdf =
+            &bsdf->sheen.clearCoat.base.plastic;
 
         // diffuse
         const float diffuse =
@@ -113,46 +178,50 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
         const float diffuseReflection = 1.f - diffuseTransmission;
 
         if (diffuseReflection > EPS) {
-          if (roughness < EPS)
-            plasticBsdf = Lambert_create(ctx, baseFrame, diffuseColor);
+          if (self->roughness < EPS)
+            Lambert_Constructor(
+                &plasticBsdf->diffuse.lambert.super, baseFrame, diffuseColor);
           else
-            plasticBsdf =
-                OrenNayar_create(ctx, baseFrame, diffuseColor, roughness);
+            OrenNayar_Constructor(&plasticBsdf->diffuse.lambert,
+                baseFrame,
+                diffuseColor,
+                roughness);
+
+          MultiBSDF_add(multiDiffuse,
+              0,
+              &plasticBsdf->diffuse.lambert.super,
+              diffuseReflection,
+              diffuseReflection);
         }
 
         if (diffuseTransmission > EPS) {
-          varying BSDF *uniform diffuseTransmissionBsdf =
-              LambertTransmission_create(ctx, baseFrame, diffuseColor);
-
-          if (plasticBsdf) {
-            varying BSDF *uniform mixBsdf = MultiBSDF_create(ctx);
-            MultiBSDF_add(
-                mixBsdf, plasticBsdf, diffuseReflection, diffuseReflection);
-            MultiBSDF_add(mixBsdf,
-                diffuseTransmissionBsdf,
-                diffuseTransmission,
-                diffuseTransmission);
-            plasticBsdf = mixBsdf;
-          } else {
-            plasticBsdf = diffuseTransmissionBsdf;
-          }
+          LambertTransmission_Constructor(
+              &plasticBsdf->diffuse.lambertTransmission,
+              baseFrame,
+              diffuseColor);
+          MultiBSDF_add(multiDiffuse,
+              1,
+              &plasticBsdf->diffuse.lambertTransmission,
+              diffuseTransmission,
+              diffuseTransmission);
         }
 
         // specular
         if (specular > EPS && abs(eta - 1.f) > EPS) {
-          if (roughness < EPS) {
-            plasticBsdf = DielectricLayer_create(ctx,
+          if (self->roughness < EPS) {
+            DielectricLayer_Constructor((varying DielectricLayer * uniform)
+                    & plasticBsdf->dielectricLayer,
                 baseFrame,
-                plasticBsdf,
+                &plasticBsdf->diffuse.super,
                 eta,
                 make_vec3f(1.f),
                 1.f,
                 specular);
           } else {
-            plasticBsdf = MicrofacetDielectricLayer_create(ctx,
+            MicrofacetDielectricLayer_Constructor(&plasticBsdf->dielectricLayer,
                 super->microfacetAlbedoTables,
                 baseFrame,
-                plasticBsdf,
+                &plasticBsdf->diffuse.super,
                 eta,
                 make_vec3f(1.f),
                 1.f,
@@ -160,31 +229,42 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
                 anisotropy,
                 specular);
           }
-        }
+        } else
+          PassthroughLayer_Constructor((varying PassthroughLayer * uniform)
+                  & plasticBsdf->dielectricLayer,
+              &plasticBsdf->diffuse.super);
 
-        MultiBSDF_add(
-            baseBsdf, plasticBsdf, plastic, plastic * max(diffuse, specular));
+        MultiBSDF_add(multiBase,
+            2,
+            &plasticBsdf->dielectricLayer.super,
+            plastic,
+            plastic * max(diffuse, specular));
       }
 
       // glass base
       const float glass = dielectric * transmission * specular;
       if (glass > EPS) {
-        varying BSDF *varying glassBsdf = NULL;
+        varying Principled_Glass_BSDF *uniform glassBsdf =
+            &bsdf->sheen.clearCoat.base.glass;
 
         if (abs(eta - 1.f) > EPS) {
           if (!self->thin) {
-            // solid
-            // use microfacet if textured due to different
-            // transparent shadow behavior
-            if (roughness < EPS && !valid(self->roughnessMap))
-              glassBsdf = Dielectric_create(ctx, baseFrame, eta);
+            if (self->roughness < EPS)
+              Dielectric_Constructor(
+                  (varying Dielectric * uniform) & glassBsdf->dielectric,
+                  baseFrame,
+                  eta);
             else
-              glassBsdf = MicrofacetDielectric_create(ctx,
+              MicrofacetDielectric_Constructor(&glassBsdf->dielectric,
                   super->microfacetAlbedoTables,
                   baseFrame,
                   eta,
                   roughness,
                   anisotropy);
+
+            glassBsdf->bsdfId = 1;
+            MultiBSDF_add(
+                multiBase, 1, &glassBsdf->dielectric.super, glass, glass);
           } else {
             // thin
             const vec3f transmissionColor = clamp(self->transmissionColor
@@ -197,23 +277,31 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
             const vec3f attenuation =
                 logf(transmissionColor) / transmissionDepth * thickness;
 
-            if (roughness < EPS)
-              glassBsdf =
-                  ThinDielectric_create(ctx, baseFrame, eta, attenuation);
+            if (self->roughness < EPS)
+              ThinDielectric_Constructor((varying ThinDielectric * uniform)
+                      & glassBsdf->thinDielectric,
+                  baseFrame,
+                  eta,
+                  attenuation);
             else
-              glassBsdf = ThinMicrofacetDielectric_create(ctx,
+              ThinMicrofacetDielectric_Constructor(&glassBsdf->thinDielectric,
                   super->microfacetAlbedoTables,
                   baseFrame,
                   eta,
                   roughness,
                   anisotropy,
                   attenuation);
+
+            glassBsdf->bsdfId = 2;
+            MultiBSDF_add(
+                multiBase, 1, &glassBsdf->thinDielectric.super, glass, glass);
           }
         } else {
-          glassBsdf = Transmission_create(ctx, baseFrame, make_vec3f(1.f));
+          Transmission_Constructor(
+              &glassBsdf->transmission, baseFrame, make_vec3f(1.f));
+          glassBsdf->bsdfId = 0;
+          MultiBSDF_add(multiBase, 1, &glassBsdf->transmission, glass, glass);
         }
-
-        MultiBSDF_add(baseBsdf, glassBsdf, glass, glass);
       }
     }
 
@@ -225,28 +313,31 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
 
       Fresnel *uniform fresnel =
           FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
-      varying BSDF *varying conductorBsdf;
-      if (roughness < EPS)
-        conductorBsdf = Conductor_create(ctx, baseFrame, fresnel);
+      varying MicrofacetConductor *uniform metalBsdf =
+          &bsdf->sheen.clearCoat.base.metal;
+      if (self->roughness < EPS)
+        Conductor_Constructor(
+            (varying Conductor * uniform) metalBsdf, baseFrame, fresnel);
       else
-        conductorBsdf = MicrofacetConductor_create(ctx,
+        MicrofacetConductor_Constructor(metalBsdf,
             super->microfacetAlbedoTables,
             baseFrame,
             fresnel,
             roughness,
             anisotropy);
 
-      MultiBSDF_add(baseBsdf, conductorBsdf, conductor, conductor);
+      MultiBSDF_add(multiBase, 0, &metalBsdf->super, conductor, conductor);
     }
-
-    bsdf = baseBsdf;
 
     // coatings
     varying linear3f *uniform coatFrame = frame;
 
     // clear coat
-    const float coat = clamp(self->coat * get1f(self->coatMap, dg, 1.f));
-    if (coat > EPS) {
+    PassthroughLayer_Constructor((varying PassthroughLayer * uniform)
+            & bsdf->sheen.clearCoat.dielectricLayer,
+        &bsdf->sheen.clearCoat.base.super);
+    if (self->coat > EPS) {
+      const float coat = clamp(self->coat * get1f(self->coatMap, dg, 1.f));
       float coatIor = self->coatIor * get1f(self->coatIorMap, dg, 1.f);
       if (coatIor < 1.f)
         coatIor = rcp(coatIor);
@@ -260,8 +351,6 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
             self->coatColor * get3f(self->coatColorMap, dg, make_vec3f(1.f)));
         const float coatThickness = max(
             self->coatThickness * get1f(self->coatThicknessMap, dg, 1.f), 0.f);
-        const float coatRoughness =
-            clamp(self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f));
 
         if (valid(self->coatNormalMap)) {
           coatFrame = LinearSpace3f_create(ctx,
@@ -271,14 +360,23 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
                   self->coatNormal));
         }
 
-        if (coatRoughness < EPS) {
-          bsdf = DielectricLayer_create(
-              ctx, coatFrame, bsdf, coatEta, coatColor, coatThickness, coat);
+        if (self->coatRoughness < EPS) {
+          DielectricLayer_Constructor((varying DielectricLayer * uniform)
+                  & bsdf->sheen.clearCoat.dielectricLayer,
+              coatFrame,
+              &bsdf->sheen.clearCoat.base.super,
+              coatEta,
+              coatColor,
+              coatThickness,
+              coat);
         } else {
-          bsdf = MicrofacetDielectricLayer_create(ctx,
+          const float coatRoughness = clamp(
+              self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f));
+          MicrofacetDielectricLayer_Constructor(
+              &bsdf->sheen.clearCoat.dielectricLayer,
               super->microfacetAlbedoTables,
               coatFrame,
-              bsdf,
+              &bsdf->sheen.clearCoat.base.super,
               coatEta,
               coatColor,
               coatThickness,
@@ -290,8 +388,8 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
     }
 
     // sheen
-    const float sheen = clamp(self->sheen * get1f(self->sheenMap, dg, 1.f));
-    if (sheen > EPS) {
+    if (self->sheen > EPS) {
+      const float sheen = clamp(self->sheen * get1f(self->sheenMap, dg, 1.f));
       vec3f sheenColor = clamp(
           self->sheenColor * get3f(self->sheenColorMap, dg, make_vec3f(1.f)));
       const float sheenTint =
@@ -300,40 +398,39 @@ SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
       const float sheenRoughness =
           clamp(self->sheenRoughness * get1f(self->sheenRoughnessMap, dg, 1.f));
 
-      bsdf = MicrofacetSheenLayer_create(ctx,
+      MicrofacetSheenLayer_Constructor(&bsdf->sheen.sheenLayer,
           super->microfacetAlbedoTables,
           coatFrame,
-          bsdf,
+          &bsdf->sheen.clearCoat.dielectricLayer.super,
           sheenColor,
           sheenRoughness,
           sheen);
-    }
+    } else
+      PassthroughLayer_Constructor(
+          (varying PassthroughLayer * uniform) & bsdf->sheen.sheenLayer,
+          &bsdf->sheen.clearCoat.dielectricLayer.super);
+
+    MultiBSDF_add(
+        multiRoot, 1, &bsdf->sheen.sheenLayer.super, opacity, opacity);
   }
 
   // cut-out transparency
   const float transparency = 1.f - opacity;
   if (transparency > EPS) {
-    varying BSDF *uniform transparencyBsdf =
-        Transmission_create(ctx, frame, make_vec3f(transparency));
-
-    if (bsdf) {
-      varying BSDF *uniform mixBsdf = MultiBSDF_create(ctx);
-      MultiBSDF_add(mixBsdf, bsdf, opacity, opacity);
-      MultiBSDF_add(mixBsdf, transparencyBsdf, 1.f, transparency);
-      bsdf = mixBsdf;
-    } else {
-      bsdf = transparencyBsdf;
-    }
+    Transmission_Constructor(
+        &bsdf->transmission, frame, make_vec3f(transparency));
+    MultiBSDF_add(multiRoot, 0, &bsdf->transmission, 1.f, transparency);
   }
 
-  return bsdf;
+  return &bsdf->super;
 }
 
-SYCL_EXTERNAL vec3f Principled_getTransparency(
+SYCL_EXTERNAL __noinline vec3f Principled_getTransparency(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium)
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &)
 {
   const uniform Principled *uniform self =
       (const uniform Principled *uniform)super;
@@ -354,7 +451,7 @@ SYCL_EXTERNAL vec3f Principled_getTransparency(
     return T;
 
   // cut-out opacity
-  if (opacity > EPS) {
+  if (self->opacity > EPS) {
     // glass base
     const float specular =
         clamp(self->specular * get1f(self->specularMap, dg, 1.f));
@@ -375,14 +472,11 @@ SYCL_EXTERNAL vec3f Principled_getTransparency(
       const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
 
       if (abs(eta - 1.f) > EPS) {
-        const float roughness =
-            clamp(self->roughness * get1f(self->roughnessMap, dg, 1.f));
-
         if (!self->thin) {
           // solid
           // use microfacet if textured due to different
           // transparent shadow behavior
-          if (roughness < EPS && !valid(self->roughnessMap))
+          if (self->roughness < EPS)
             T = Dielectric_getTransparency(cosThetaO, eta);
         } else {
           // thin
@@ -396,15 +490,18 @@ SYCL_EXTERNAL vec3f Principled_getTransparency(
           const vec3f attenuation =
               logf(transmissionColor) / transmissionDepth * thickness;
 
-          if (roughness < EPS)
+          if (self->roughness < EPS) {
             T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation);
-          else
+          } else {
+            const float roughness =
+                clamp(self->roughness * get1f(self->roughnessMap, dg, 1.f));
             T = ThinMicrofacetDielectric_getTransparency(
                 super->microfacetAlbedoTables,
                 cosThetaO,
                 eta,
                 roughness,
                 attenuation);
+          }
         }
       } else {
         T = make_vec3f(1.f);
@@ -412,8 +509,8 @@ SYCL_EXTERNAL vec3f Principled_getTransparency(
 
       if (reduce_max(T) > 0.f) {
         // clear coat
-        const float coat = clamp(self->coat * get1f(self->coatMap, dg, 1.f));
-        if (coat > EPS) {
+        if (self->coat > EPS) {
+          const float coat = clamp(self->coat * get1f(self->coatMap, dg, 1.f));
           float coatIor = self->coatIor * get1f(self->coatIorMap, dg, 1.f);
           if (coatIor < 1.f)
             coatIor = rcp(coatIor);
@@ -431,14 +528,14 @@ SYCL_EXTERNAL vec3f Principled_getTransparency(
             const float coatThickness = max(
                 self->coatThickness * get1f(self->coatThicknessMap, dg, 1.f),
                 0.f);
-            const float coatRoughness = clamp(
-                self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f));
 
-            if (coatRoughness < EPS) {
+            if (self->coatRoughness < EPS) {
               T = T
                   * DielectricLayer_getTransparency(
                       cosThetaO, coatEta, coatColor, coatThickness, coat);
             } else {
+              const float coatRoughness = clamp(
+                  self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f));
               T = T
                   * MicrofacetDielectricLayer_getTransparency(
                       super->microfacetAlbedoTables,
@@ -454,8 +551,9 @@ SYCL_EXTERNAL vec3f Principled_getTransparency(
         }
 
         // sheen
-        const float sheen = clamp(self->sheen * get1f(self->sheenMap, dg, 1.f));
-        if (sheen > EPS) {
+        if (self->sheen > EPS) {
+          const float sheen =
+              clamp(self->sheen * get1f(self->sheenMap, dg, 1.f));
           const float sheenRoughness = clamp(
               self->sheenRoughness * get1f(self->sheenRoughnessMap, dg, 1.f));
 
@@ -478,7 +576,7 @@ SYCL_EXTERNAL vec3f Principled_getTransparency(
   return T;
 }
 
-SYCL_EXTERNAL void Principled_selectNextMedium(
+SYCL_EXTERNAL __noinline void Principled_selectNextMedium(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium)
@@ -504,6 +602,444 @@ SYCL_EXTERNAL void Principled_selectNextMedium(
   } else {
     currentMedium = self->outsideMedium;
   }
+}
+
+// Lambert BSDF
+
+__noinline BSDF_EvalRes LambertBSDF_eval(
+    const varying OrenNayar *uniform self, const vec3f &wo, const vec3f &wi)
+{
+  if (self->super.bsdfType == BSDF_TYPE_OREN_NAYAR)
+    return OrenNayar_eval(&self->super, wo, wi);
+  else
+    return Lambert_eval(&self->super, wo, wi);
+}
+
+__noinline BSDF_SampleRes LambertBSDF_sample(
+    const varying OrenNayar *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  if (self->super.bsdfType == BSDF_TYPE_OREN_NAYAR)
+    return OrenNayar_sample(&self->super, wo, s, ss);
+  else
+    return Lambert_sample(&self->super, wo, s, ss);
+}
+
+// Diffuse BSDF
+
+__noinline BSDF_EvalRes DiffuseBSDF_eval(
+    const varying Principled_Diffuse_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  MULTIBSDF_EVAL_BEGIN();
+  MULTIBSDF_EVAL_CHILD(0, &self->lambert, LambertBSDF_eval);
+  MULTIBSDF_EVAL_CHILD(1, &self->lambertTransmission, LambertTransmission_eval);
+  MULTIBSDF_EVAL_END();
+  return MULTIBSDF_EVAL_GET();
+}
+
+__noinline BSDF_SampleRes DiffuseBSDF_sample(
+    const varying Principled_Diffuse_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  MULTIBSDF_SAMPLE_BEGIN();
+  MULTIBSDF_SAMPLE_CHILD(0, &self->lambert, LambertBSDF_sample);
+  MULTIBSDF_SAMPLE_CHILD(
+      1, &self->lambertTransmission, LambertTransmission_sample);
+  MULTIBSDF_SAMPLE_EVAL();
+  MULTIBSDF_EVAL_CHILD(0, &self->lambert, LambertBSDF_eval);
+  MULTIBSDF_EVAL_CHILD(1, &self->lambertTransmission, LambertTransmission_eval);
+  MULTIBSDF_SAMPLE_END();
+  return MULTIBSDF_SAMPLE_GET();
+}
+
+// Plastic DielectricLayer BSDF
+
+inline BSDF_EvalRes Plastic_DielectricLayerBSDF_eval(
+    const varying Principled_Plastic_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  DIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->diffuse.super.scatteringType,
+      &self->diffuse,
+      DiffuseBSDF_eval);
+  return DIELECTRICLAYER_EVAL_GET();
+}
+
+inline BSDF_SampleRes Plastic_DielectricLayerBSDF_sample(
+    const varying Principled_Plastic_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  DIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->diffuse.super.scatteringType,
+      &self->diffuse,
+      DiffuseBSDF_sample);
+  return DIELECTRICLAYER_SAMPLE_GET();
+}
+
+// Plastic MicrofacetDielectricLayer BSDF
+
+inline BSDF_EvalRes Plastic_MicrofacetDielectricLayerBSDF_eval(
+    const varying Principled_Plastic_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  MICROFACETDIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->diffuse.super.scatteringType,
+      &self->diffuse,
+      DiffuseBSDF_eval);
+  return MICROFACETDIELECTRICLAYER_EVAL_GET();
+}
+
+inline BSDF_SampleRes Plastic_MicrofacetDielectricLayerBSDF_sample(
+    const varying Principled_Plastic_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  MICROFACETDIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->diffuse.super.scatteringType,
+      &self->diffuse,
+      DiffuseBSDF_eval,
+      DiffuseBSDF_sample);
+  return MICROFACETDIELECTRICLAYER_SAMPLE_GET();
+}
+
+// Plastic BSDF
+
+__noinline BSDF_EvalRes PlasticBSDF_eval(
+    const varying Principled_Plastic_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  // Skip dielectric layer if no specular
+  if (self->dielectricLayer.weight < EPS)
+    return DiffuseBSDF_eval(&self->diffuse, wo, wi);
+
+  if (self->dielectricLayer.super.bsdfType
+      == BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER)
+    return Plastic_MicrofacetDielectricLayerBSDF_eval(self, wo, wi);
+  else
+    return Plastic_DielectricLayerBSDF_eval(self, wo, wi);
+}
+
+__noinline BSDF_SampleRes PlasticBSDF_sample(
+    const varying Principled_Plastic_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  // Skip dielectric layer if no specular
+  if (self->dielectricLayer.weight < EPS)
+    return DiffuseBSDF_sample(&self->diffuse, wo, s, ss);
+
+  if (self->dielectricLayer.super.bsdfType
+      == BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER)
+    return Plastic_MicrofacetDielectricLayerBSDF_sample(self, wo, s, ss);
+  else
+    return Plastic_DielectricLayerBSDF_sample(self, wo, s, ss);
+}
+
+// Glass Dielectric BSDF
+
+inline BSDF_EvalRes Glass_DielectricBSDF_eval(
+    const varying MicrofacetDielectric *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  if (self->super.bsdfType == BSDF_TYPE_MICROFACET_DIELECTRIC)
+    return MicrofacetDielectric_eval(&self->super, wo, wi);
+  else
+    return Dielectric_eval(&self->super, wo, wi);
+}
+
+inline BSDF_SampleRes Glass_DielectricBSDF_sample(
+    const varying MicrofacetDielectric *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  if (self->super.bsdfType == BSDF_TYPE_MICROFACET_DIELECTRIC)
+    return MicrofacetDielectric_sample(&self->super, wo, s, ss);
+  else
+    return Dielectric_sample(&self->super, wo, s, ss);
+}
+
+// Glass ThinDielectric BSDF
+
+inline BSDF_EvalRes Glass_ThinDielectricBSDF_eval(
+    const varying ThinMicrofacetDielectric *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  if (self->super.bsdfType == BSDF_TYPE_THIN_MICROFACET_DIELECTRIC)
+    return ThinMicrofacetDielectric_eval(&self->super, wo, wi);
+  else
+    return ThinDielectric_eval(&self->super, wo, wi);
+}
+
+inline BSDF_SampleRes Glass_ThinDielectricBSDF_sample(
+    const varying ThinMicrofacetDielectric *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  if (self->super.bsdfType == BSDF_TYPE_THIN_MICROFACET_DIELECTRIC)
+    return ThinMicrofacetDielectric_sample(&self->super, wo, s, ss);
+  else
+    return ThinDielectric_sample(&self->super, wo, s, ss);
+}
+
+// Glass BSDF
+
+__noinline BSDF_EvalRes GlassBSDF_eval(
+    const varying Principled_Glass_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  if (self->bsdfId == 1)
+    return Glass_DielectricBSDF_eval(&self->dielectric, wo, wi);
+  else if (self->bsdfId == 2)
+    return Glass_ThinDielectricBSDF_eval(&self->thinDielectric, wo, wi);
+  else
+    return make_BSDF_EvalRes_zero();
+}
+
+__noinline BSDF_SampleRes GlassBSDF_sample(
+    const varying Principled_Glass_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  if (self->bsdfId == 1)
+    return Glass_DielectricBSDF_sample(&self->dielectric, wo, s, ss);
+  else if (self->bsdfId == 2)
+    return Glass_ThinDielectricBSDF_sample(&self->thinDielectric, wo, s, ss);
+  else
+    return Transmission_sample(&self->transmission, wo, s, ss);
+}
+
+// Metal BSDF
+
+__noinline BSDF_EvalRes MetalBSDF_eval(
+    const varying MicrofacetConductor *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  if (self->super.bsdfType == BSDF_TYPE_MICROFACET_CONDUCTOR)
+    return MicrofacetConductor_eval(self, wo, wi);
+  else
+    return make_BSDF_EvalRes_zero();
+}
+
+__noinline BSDF_SampleRes MetalBSDF_sample(
+    const varying MicrofacetConductor *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  if (self->super.bsdfType == BSDF_TYPE_MICROFACET_CONDUCTOR)
+    return MicrofacetConductor_sample(self, wo, s, ss);
+  else
+    return Conductor_sample(&self->super, wo, s, ss);
+}
+
+// Base BSDF
+
+__noinline BSDF_EvalRes BaseBSDF_eval(
+    const varying Principled_Base_MultiBSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  MULTIBSDF_EVAL_BEGIN();
+  MULTIBSDF_EVAL_CHILD(0, &self->metal, MetalBSDF_eval);
+  MULTIBSDF_EVAL_CHILD(1, &self->glass, GlassBSDF_eval);
+  MULTIBSDF_EVAL_CHILD(2, &self->plastic, PlasticBSDF_eval);
+  MULTIBSDF_EVAL_END();
+  return MULTIBSDF_EVAL_GET();
+}
+
+__noinline BSDF_SampleRes BaseBSDF_sample(
+    const varying Principled_Base_MultiBSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  MULTIBSDF_SAMPLE_BEGIN();
+  MULTIBSDF_SAMPLE_CHILD(0, &self->metal, MetalBSDF_sample);
+  MULTIBSDF_SAMPLE_CHILD(1, &self->glass, GlassBSDF_sample);
+  MULTIBSDF_SAMPLE_CHILD(2, &self->plastic, PlasticBSDF_sample);
+  MULTIBSDF_SAMPLE_EVAL();
+  MULTIBSDF_EVAL_CHILD(0, &self->metal, MetalBSDF_eval);
+  MULTIBSDF_EVAL_CHILD(1, &self->glass, GlassBSDF_eval);
+  MULTIBSDF_EVAL_CHILD(2, &self->plastic, PlasticBSDF_eval);
+  MULTIBSDF_SAMPLE_END();
+  return MULTIBSDF_SAMPLE_GET();
+}
+
+// ClearCoat DielectricLayer BSDF
+
+inline BSDF_EvalRes ClearCoat_DielectricLayerBSDF_eval(
+    const varying Principled_ClearCoat_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  DIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->base.super.scatteringType,
+      &self->base,
+      BaseBSDF_eval);
+  return DIELECTRICLAYER_EVAL_GET();
+}
+
+inline BSDF_SampleRes ClearCoat_DielectricLayerBSDF_sample(
+    const varying Principled_ClearCoat_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  DIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->base.super.scatteringType,
+      &self->base,
+      BaseBSDF_sample);
+  return DIELECTRICLAYER_SAMPLE_GET();
+}
+
+// ClearCoat MicrofacetDielectricLayer BSDF
+
+inline BSDF_EvalRes ClearCoat_MicrofacetDielectricLayerBSDF_eval(
+    const varying Principled_ClearCoat_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  MICROFACETDIELECTRICLAYER_EVAL(self->dielectricLayer,
+      self->base.super.scatteringType,
+      &self->base,
+      BaseBSDF_eval);
+  return MICROFACETDIELECTRICLAYER_EVAL_GET();
+}
+
+inline BSDF_SampleRes ClearCoat_MicrofacetDielectricLayerBSDF_sample(
+    const varying Principled_ClearCoat_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  MICROFACETDIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      self->base.super.scatteringType,
+      &self->base,
+      BaseBSDF_eval,
+      BaseBSDF_sample);
+  return MICROFACETDIELECTRICLAYER_SAMPLE_GET();
+}
+
+// ClearCoat BSDF
+
+__noinline BSDF_EvalRes ClearCoatBSDF_eval(
+    const varying Principled_ClearCoat_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  // Skip dielectric layer if no clear coat
+  if (self->dielectricLayer.weight < EPS)
+    return BaseBSDF_eval(&self->base, wo, wi);
+
+  if (self->dielectricLayer.super.bsdfType
+      == BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER)
+    return ClearCoat_MicrofacetDielectricLayerBSDF_eval(self, wo, wi);
+  else
+    return ClearCoat_DielectricLayerBSDF_eval(self, wo, wi);
+}
+
+__noinline BSDF_SampleRes ClearCoatBSDF_sample(
+    const varying Principled_ClearCoat_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  // Skip dielectric layer if no clear coat
+  if (self->dielectricLayer.weight < EPS)
+    return BaseBSDF_sample(&self->base, wo, s, ss);
+
+  if (self->dielectricLayer.super.bsdfType
+      == BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER)
+    return ClearCoat_MicrofacetDielectricLayerBSDF_sample(self, wo, s, ss);
+  else
+    return ClearCoat_DielectricLayerBSDF_sample(self, wo, s, ss);
+}
+
+// SheenLayer BSDF
+
+__noinline BSDF_EvalRes SheenLayerBSDF_eval(
+    const varying Principled_SheenLayer_BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  // Skip sheen layer if does not exists
+  if (self->sheenLayer.weight < EPS)
+    return ClearCoatBSDF_eval(&self->clearCoat, wo, wi);
+
+  MICROFACETSHEENLAYER_EVAL(
+      self->sheenLayer, &self->clearCoat, ClearCoatBSDF_eval);
+  return MICROFACETSHEENLAYER_EVAL_GET();
+}
+
+__noinline BSDF_SampleRes SheenLayerBSDF_sample(
+    const varying Principled_SheenLayer_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  // Skip sheen layer if does not exists
+  if (self->sheenLayer.weight < EPS)
+    return ClearCoatBSDF_sample(&self->clearCoat, wo, s, ss);
+
+  MICROFACETSHEENLAYER_SAMPLE(self->sheenLayer,
+      &self->clearCoat,
+      ClearCoatBSDF_eval,
+      ClearCoatBSDF_sample);
+  return MICROFACETSHEENLAYER_SAMPLE_GET();
+}
+
+// Principled BSDF
+
+SYCL_EXTERNAL __noinline BSDF_EvalRes Principled_BSDF_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+{
+  const varying Principled_BSDF *uniform self =
+      (const varying Principled_BSDF *uniform)super;
+
+  MULTIBSDF_EVAL_BEGIN();
+  // 0 - omitted, no evaluation needed for transmission BSDF
+  MULTIBSDF_EVAL_CHILD(1, &self->sheen, SheenLayerBSDF_eval);
+  MULTIBSDF_EVAL_END();
+  return MULTIBSDF_EVAL_GET();
+}
+
+SYCL_EXTERNAL __noinline BSDF_SampleRes Principled_BSDF_sample(
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  const varying Principled_BSDF *uniform self =
+      (const varying Principled_BSDF *uniform)super;
+
+  MULTIBSDF_SAMPLE_BEGIN();
+  MULTIBSDF_SAMPLE_CHILD(0, &self->transmission, Transmission_sample);
+  MULTIBSDF_SAMPLE_CHILD(1, &self->sheen, SheenLayerBSDF_sample);
+  MULTIBSDF_SAMPLE_EVAL();
+  // 0 - omitted, no evaluation needed for transmission BSDF
+  MULTIBSDF_EVAL_CHILD(1, &self->sheen, SheenLayerBSDF_eval);
+  MULTIBSDF_SAMPLE_END();
+  return MULTIBSDF_SAMPLE_GET();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

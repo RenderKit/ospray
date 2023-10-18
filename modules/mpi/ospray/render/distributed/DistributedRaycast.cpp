@@ -15,7 +15,6 @@
 #include "AlphaCompositeTileOperation.h"
 #include "DistributedRaycast.h"
 #include "common/DistributedWorld.h"
-#include "common/Profiling.h"
 #include "fb/DistributedFrameBuffer.h"
 
 // ispc exports
@@ -74,10 +73,8 @@ void DistributedRaycastRenderer::commit()
   Renderer::commit();
 
   getSh()->aoSamples = getParam<int>("aoSamples", 0);
-  getSh()->aoRadius =
-      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f));
-  getSh()->shadowsEnabled =
-      getParam<bool>("shadows", getParam<int>("shadowsEnabled", 0));
+  getSh()->aoRadius = getParam<float>("aoDistance", 1e20f);
+  getSh()->shadowsEnabled = getParam<bool>("shadows", false);
   getSh()->volumeSamplingRate = getParam<float>("volumeSamplingRate", 1.f);
 }
 

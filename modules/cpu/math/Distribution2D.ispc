@@ -27,11 +27,11 @@ SYCL_EXTERNAL Sample2D Distribution2D_sample(
 SYCL_EXTERNAL float Distribution2D_pdf(
     const uniform Distribution2D *uniform self, const vec2f &uv)
 {
-  const int idy = uv.y * self->size.y;
+  const int idy = clamp((int)(uv.y * self->size.y), 0, self->size.y - 1);
   const float befy = idy == 0 ? 0.0f : self->cdf_y[idy - 1];
   const float pdf_y = (self->cdf_y[idy] - befy) * self->size.y;
 
-  const int idx = uv.x * self->size.x;
+  const int idx = clamp((int)(uv.x * self->size.x), 0, self->size.x - 1);
   const int x0 = idy * self->size.x;
   const float befx = idx == 0 ? 0.0f : self->cdf_x[x0 + idx - 1];
   const float pdf_x = (self->cdf_x[x0 + idx] - befx) * self->size.x;

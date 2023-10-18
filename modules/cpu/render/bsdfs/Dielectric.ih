@@ -16,19 +16,14 @@ struct Dielectric
   float eta; // etaO / etaI
 };
 
-inline BSDF_EvalRes Dielectric_eval(const varying BSDF *uniform,
-    const vec3f &,
-    const vec3f &,
-    const uniform FeatureFlagsHandler &)
+inline BSDF_EvalRes Dielectric_eval(
+    const varying BSDF *uniform, const vec3f &, const vec3f &)
 {
   return make_BSDF_EvalRes_zero();
 }
 
-inline BSDF_SampleRes Dielectric_sample(const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec2f &,
-    float ss,
-    const uniform FeatureFlagsHandler &)
+inline BSDF_SampleRes Dielectric_sample(
+    const varying BSDF *uniform super, const vec3f &wo, const vec2f &, float ss)
 {
   const varying Dielectric *uniform self =
       (const varying Dielectric *uniform)super;
@@ -67,13 +62,6 @@ inline void Dielectric_Constructor(varying Dielectric *uniform self,
       make_vec3f(1.0f),
       BSDF_SPECULAR,
       BSDF_TYPE_DIELECTRIC,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      Dielectric_eval,
-      Dielectric_sample,
-#endif
       frame);
   self->eta = eta;
 }

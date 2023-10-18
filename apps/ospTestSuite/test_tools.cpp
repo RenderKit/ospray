@@ -5,6 +5,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "test_tools.h"
+#include <fstream>
 #include "rkcommon/utility/SaveImage.h"
 
 extern OSPRayEnvironment *ospEnv;
@@ -21,7 +22,7 @@ OSPImageTools::OSPImageTools(
     fileFormat = ".png";
     break;
   case OSP_FB_RGBA32F:
-    fileFormat = ".hdr";
+    fileFormat = ".pfm";
     break;
   default:
     fileFormat = ".err";
@@ -67,8 +68,15 @@ OsprayStatus OSPImageTools::writeImg(std::string fileName, const void *pixel)
     writeErr = writePNG(fileName, (const uint32_t *)pixel);
   } else if (GetFileFormat() == ".hdr") {
     writeErr = writeHDR(fileName, (const float *)pixel);
+  } else if (GetFileFormat() == ".pfm") {
+    try {
+      rkcommon::utility::writePFM(fileName, size.x, size.y, (const vec4f *)pixel);
+      writeErr = OsprayStatus::Ok;
+    } catch (...) {
+      writeErr = OsprayStatus::Fail;
+    }
   } else {
-    std::cerr << "Unsuporrted file format" << std::endl;
+    std::cerr << "Unsupported file format" << std::endl;
     writeErr = OsprayStatus::Error;
   }
 
@@ -111,11 +119,14 @@ vec4f OSPImageTools::getAveragedPixel(const vec4f *image,
 
 // compare the baseline image with the values form the framebuffer
 template <typename T>
-OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(
-    const T *testImage, const T *baselineImage, const std::string &baselineName)
+OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(const T *testImage,
+    const T *baselineImage,
+    const std::string &baselineName,
+    const float pixelConversionFactor)
 {
   bool notPerfect = false;
   double totalError = 0.;
+
   rkcommon::index_sequence_2D imageIndices(size);
   std::vector<T> diffAbsImage(imageIndices.total_indices());
   {
@@ -136,7 +147,7 @@ OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(
 
       // Only count errors if above specified threshold, this removes blurred
       // noise
-      const float pixelError = reduce_add(diffAvgValue);
+      const float pixelError = reduce_add(diffAvgValue) * pixelConversionFactor;
       if (pixelError > pixelThreshold)
         totalError += pixelError;
 
@@ -179,6 +190,39 @@ OsprayStatus OSPImageTools::saveTestImage(const void *pixel)
   return writeImg(ospEnv->GetBaselineDir() + "/" + imgName, pixel);
 }
 
+vec4f *loadPF4(std::string fileName, int &sizeX, int &sizeY)
+{
+  std::ifstream ifs;
+
+  ifs.open(fileName, std::ifstream::in | std::ifstream::binary);
+  if (!ifs.good())
+    return nullptr;
+
+  std::string header;
+  std::getline(ifs, header);
+  if (!ifs.good() || header != "PF4")
+    return nullptr;
+
+  ifs >> sizeX >> sizeY;
+  std::getline(ifs, header); // eat newline after size information
+  if (!ifs.good())
+    return nullptr;
+
+  std::getline(ifs, header);
+  if (!ifs.good() || header != "-1.0")
+    return nullptr;
+
+  size_t sz = sizeX * sizeY;
+  vec4f *img = new vec4f[sz];
+
+  ifs.read((char*)img, sz * sizeof(float) * 4);
+  if (!ifs.good())
+    return nullptr;
+
+  ifs.close();
+  return img;
+}
+
 // compare the baseline image with the values form the framebuffer
 OsprayStatus OSPImageTools::compareImgWithBaseline(const void *testImage)
 {
@@ -203,11 +247,19 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const void *testImage)
     compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
     if (compErr == OsprayStatus::Ok)
       compErr = compareImgWithBaselineTmpl<vec4f>(
-          (vec4f *)testImage, baselineImage, baselineName);
+          (vec4f *)testImage, baselineImage, baselineName, 255.0f);
     if (baselineImage)
       stbi_image_free(baselineImage);
+  } else if (GetFileFormat() == ".pfm") {
+    vec4f *baselineImage = loadPF4(baselineName, dataX, dataY);
+    compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
+    if (compErr == OsprayStatus::Ok)
+      compErr = compareImgWithBaselineTmpl<vec4f>(
+          (vec4f *)testImage, baselineImage, baselineName, 255.0f);
+    if (baselineImage)
+      delete[] baselineImage;
   } else {
-    std::cerr << "Unsuporrted file format" << std::endl;
+    std::cerr << "Unsupported file format" << std::endl;
     compErr = OsprayStatus::Error;
   }
   return compErr;

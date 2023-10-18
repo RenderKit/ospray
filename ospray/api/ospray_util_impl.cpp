@@ -14,6 +14,16 @@ OSPData ospNewSharedData1D(
   return ospNewSharedData(sharedData, type, numItems, 0, 1, 0, 1, 0);
 }
 
+OSPData ospNewAssignedData1D(const void *sharedData,
+    OSPDataType type,
+    uint64_t numItems,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr)
+{
+  return ospNewSharedData(
+      sharedData, type, numItems, 0, 1, 0, 1, 0, freeFunction, userPtr);
+}
+
 OSPData ospNewSharedData1DStride(const void *sharedData,
     OSPDataType type,
     uint64_t numItems,
@@ -100,6 +110,24 @@ void ospSetFloat(OSPObject o, const char *id, float x)
 void ospSetInt(OSPObject o, const char *id, int x)
 {
   ospSetParam(o, id, OSP_INT, &x);
+}
+
+void ospSetUInt(OSPObject o, const char *id, unsigned int x)
+{
+  ospSetParam(o, id, OSP_UINT, &x);
+}
+
+void ospSetBox1f(OSPObject o, const char *id, float x, float y)
+{
+  float v[] = {x, y};
+  ospSetParam(o, id, OSP_BOX1F, v);
+}
+
+void ospSetLinear2f(
+    OSPObject o, const char *id, float x, float y, float z, float w)
+{
+  float v[] = {x, y, z, w};
+  ospSetParam(o, id, OSP_LINEAR2F, v);
 }
 
 void ospSetVec2f(OSPObject o, const char *id, float x, float y)

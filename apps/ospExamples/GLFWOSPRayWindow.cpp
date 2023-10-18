@@ -54,7 +54,22 @@ static const std::vector<std::string> g_scenes = {"boxes_lit",
     "particle_volume_isosurface",
     "vdb_volume",
     "vdb_volume_packed",
-    "instancing"};
+    "instancing",
+    "test_pt_alloy_roughness",
+    "test_pt_carpaint",
+    "test_pt_glass",
+    "test_pt_thinglass",
+    "test_pt_luminous",
+    "test_pt_metal_roughness",
+    "test_pt_metallic_flakes",
+    "test_pt_obj",
+    "test_pt_plastic",
+    "test_pt_principled_metal",
+    "test_pt_principled_plastic",
+    "test_pt_principled_glass",
+    "test_pt_tex_material",
+    "test_pt_tex_mix",
+    "test_pt_velvet"};
 
 static const std::vector<std::string> g_curveVariant = {
     "bspline", "hermite", "catmull-rom", "linear", "cones"};
@@ -222,10 +237,9 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
   backplate.push_back(vec4f(0.2f, 0.2f, 0.8f, 1.0f));
   backplate.push_back(vec4f(0.4f, 0.2f, 0.4f, 1.0f));
 
-  OSPTextureFormat texFmt = OSP_TEXTURE_RGBA32F;
   backplateTex.setParam(
       "data", cpp::CopiedData(backplate.data(), vec2ul(2, 2)));
-  backplateTex.setParam("format", OSP_INT, &texFmt);
+  backplateTex.setParam("format", OSP_TEXTURE_RGBA32F);
   addObjectToCommit(backplateTex.handle());
 
   refreshScene(true);
@@ -655,18 +669,18 @@ void GLFWOSPRayWindow::buildUI()
           g_pixelFilterTypes.size())) {
     pixelFilterTypeStr = g_pixelFilterTypes[whichPixelFilter];
 
-    OSPPixelFilterTypes pixelFilterType =
-        OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS;
+    OSPPixelFilterType pixelFilterType =
+        OSPPixelFilterType::OSP_PIXELFILTER_GAUSS;
     if (pixelFilterTypeStr == "point")
-      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_POINT;
+      pixelFilterType = OSPPixelFilterType::OSP_PIXELFILTER_POINT;
     else if (pixelFilterTypeStr == "box")
-      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_BOX;
+      pixelFilterType = OSPPixelFilterType::OSP_PIXELFILTER_BOX;
     else if (pixelFilterTypeStr == "gaussian")
-      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS;
+      pixelFilterType = OSPPixelFilterType::OSP_PIXELFILTER_GAUSS;
     else if (pixelFilterTypeStr == "mitchell")
-      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL;
+      pixelFilterType = OSPPixelFilterType::OSP_PIXELFILTER_MITCHELL;
     else if (pixelFilterTypeStr == "blackmanHarris")
-      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS;
+      pixelFilterType = OSPPixelFilterType::OSP_PIXELFILTER_BLACKMAN_HARRIS;
 
     rendererPT.setParam("pixelFilter", pixelFilterType);
     rendererSV.setParam("pixelFilter", pixelFilterType);
@@ -790,7 +804,7 @@ void GLFWOSPRayWindow::buildUI()
           "rolling up"};
       if (ImGui::BeginCombo("shutterType##cameraShutterType",
               cameraShutterTypes[cameraShutterType])) {
-        for (int n = 0; n < 5; n++) {
+        for (uint32_t n = 0; n < 5; n++) {
           bool is_selected = (cameraShutterType == n);
           if (ImGui::Selectable(cameraShutterTypes[n], is_selected))
             cameraShutterType = (OSPShutterType)n;
@@ -858,7 +872,7 @@ void GLFWOSPRayWindow::buildUI()
       "none", "left", "right", "side-by-side", "top/bottom"};
   if (ImGui::BeginCombo("camera stereoMode##cameraStereoMode",
           cameraStereoModes[cameraStereoMode])) {
-    for (int n = 0; n < 5; n++) {
+    for (uint32_t n = 0; n < 5; n++) {
       bool is_selected = (cameraStereoMode == n);
       if (ImGui::Selectable(cameraStereoModes[n], is_selected))
         cameraStereoMode = (OSPStereoMode)n;

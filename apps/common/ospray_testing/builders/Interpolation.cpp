@@ -112,7 +112,7 @@ cpp::Group Interpolation::buildGroup() const
   tex.setParam(
       "data", cpp::CopiedData(colors_mod.data(), vec2ul(colors_mod.size(), 1)));
   tex.commit();
-  cpp::Material mat(rendererType, "obj");
+  cpp::Material mat("obj");
   if (attribute == 1) // texture
     mat.setParam("map_kd", tex);
   mat.commit();
@@ -146,19 +146,13 @@ cpp::Group Interpolation::buildGroup() const
   mesh.commit();
 
   cpp::GeometricModel model(mesh);
-
-  // create and setup a material
-  if (rendererType == "pathtracer" || rendererType == "scivis"
-      || rendererType == "ao") {
-    model.setParam("material", mat);
-  }
+  model.setParam("material", mat);
 
   if ((attribute == 0) && interpolation == 2)
     model.setParam("color", cpp::CopiedData(colors_mod));
   else if ((attribute == 0) && interpolation == 3)
     model.setParam("color", colors_mod[0]);
 
-  // Put the mesh and material into a model
   model.commit();
 
   cpp::Group group;

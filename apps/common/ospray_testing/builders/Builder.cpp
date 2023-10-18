@@ -92,7 +92,9 @@ cpp::TransferFunction Builder::makeTransferFunction(
   return transferFunction;
 }
 
-cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
+cpp::Instance Builder::makeGroundPlane(const box3f &bounds,
+    const vec4f &planeColor,
+    const vec4f &stripeColor) const
 {
   auto planeExtent = 0.8f * length(bounds.center() - bounds.lower);
 
@@ -106,7 +108,6 @@ cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
   unsigned int startingIndex = 0;
 
   const vec3f up = vec3f{0.f, 1.f, 0.f};
-  const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
 
   v_position.emplace_back(-planeExtent, -1.f, -planeExtent);
   v_position.emplace_back(planeExtent, -1.f, -planeExtent);
@@ -118,10 +119,10 @@ cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
   v_normal.push_back(up);
   v_normal.push_back(up);
 
-  v_color.push_back(gray);
-  v_color.push_back(gray);
-  v_color.push_back(gray);
-  v_color.push_back(gray);
+  v_color.push_back(planeColor);
+  v_color.push_back(planeColor);
+  v_color.push_back(planeColor);
+  v_color.push_back(planeColor);
 
   indices.emplace_back(
       startingIndex, startingIndex + 1, startingIndex + 2, startingIndex + 3);
@@ -130,8 +131,6 @@ cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
   const float stripeWidth = 0.025f;
   const float paddedExtent = planeExtent + stripeWidth;
   const size_t numStripes = 10;
-
-  const vec4f stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f};
 
   for (size_t i = 0; i < numStripes; i++) {
     // the center coordinate of the stripe, either in the x or z
@@ -197,12 +196,9 @@ cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
 
   cpp::GeometricModel plane(planeGeometry);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis"
-      || rendererType == "ao") {
-    cpp::Material material(rendererType, "obj");
-    material.commit();
-    plane.setParam("material", material);
-  }
+  cpp::Material material("obj");
+  material.commit();
+  plane.setParam("material", material);
 
   plane.commit();
 

@@ -36,7 +36,9 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
       const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
-      const vec3l &byteStride);
+      const vec3l &byteStride,
+      OSPDeleterCallback freeFunction = nullptr,
+      const void *userData = nullptr);
   Data(api::ISPCDevice &device, OSPDataType, const vec3ul &numItems);
 
   virtual ~Data() override;
@@ -93,6 +95,10 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
 
  private:
   void init(); // init dimensions and byteStride
+
+ protected:
+  OSPDeleterCallback freeFunction{nullptr};
+  const void *userData{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Data *, OSP_DATA);
@@ -336,7 +342,7 @@ template <typename T, int DIM>
 inline const Ref<const DataT<T, DIM>> ISPCDeviceObject::getParamDataT(
     const char *name, bool required, bool promoteScalar)
 {
-  Data *data = getParam<Data *>(name);
+  Data *data = getParamObject<Data>(name);
 
   if (data && data->is<T, DIM>())
     return &(data->as<T, DIM>());
@@ -396,22 +402,6 @@ std::vector<T *> createArrayOfSh(const DataT<U *, DIM> &data)
     retval.push_back(obj->getSh());
 
   return retval;
-}
-
-template <>
-inline Data *ManagedObject::getParam<Data *>(
-    const char *name, Data *valIfNotFound)
-{
-  auto *obj = ParameterizedObject::getParam<ManagedObject *>(
-      name, (ManagedObject *)valIfNotFound);
-  if (obj && obj->managedObjectType == OSP_DATA)
-    return (Data *)obj;
-  else {
-    // reset query status if object is not a Data*
-    if (obj)
-      findParam(name)->query = false;
-    return valIfNotFound;
-  }
 }
 
 } // namespace ospray

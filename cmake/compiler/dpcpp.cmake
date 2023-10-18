@@ -1,10 +1,19 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-# DPCPP compiler is based on Clang, so bring in clang options
-include(clang)
+# FIXME CMake does not always set "-x c++" to compile .ispc files as C++ (SYCL)
+# code, despite LANGUAGE is set for them
+set(OSPRAY_COMPILER_NEEDS_X_CPP TRUE)
 
-set(CMAKE_CXX_FLAGS "-fhonor-nans -fhonor-infinities ${CMAKE_CXX_FLAGS}")
+get_filename_component(SYCL_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME_WE)
+if (WIN32 AND (SYCL_COMPILER_NAME STREQUAL "icx" OR SYCL_COMPILER_NAME STREQUAL "icpx"))
+  include(msvc) # icx on Windows behaves like msvc
+  set(CMAKE_CXX_FLAGS "/fp:precise ${CMAKE_CXX_FLAGS}")
+  set(OSPRAY_COMPILER_NEEDS_X_CPP FALSE) # icx on Win does not support "-x"
+else()
+  include(clang) # DPCPP compiler is based on Clang, so bring in clang options
+  set(CMAKE_CXX_FLAGS "-ffp-model=precise ${CMAKE_CXX_FLAGS}")
+endif()
 
 # enable -static-intel
 # Note: this doesn't seem to be used/relevant to the DPC++ compiler? Maybe just the
@@ -15,6 +24,10 @@ set(CMAKE_CXX_FLAGS "-fhonor-nans -fhonor-infinities ${CMAKE_CXX_FLAGS}")
 
 # SYCL flags to match Embree
 list(APPEND OSPRAY_CXX_FLAGS_SYCL
+  -fsycl
+  -fsycl-unnamed-lambda
+  -Xclang -fsycl-allow-func-ptr
+
   -Wno-mismatched-tags
   -Wno-pessimizing-move
   -Wno-reorder
@@ -23,17 +36,7 @@ list(APPEND OSPRAY_CXX_FLAGS_SYCL
   -Wno-dangling-field
   -Wno-unknown-pragmas
   -Wno-logical-op-parentheses
-  -fsycl
-  -fsycl-unnamed-lambda
-  -Xclang=-fsycl-allow-func-ptr
 )
-
-# FIXME: debug information generation takes forever in SYCL
-# TODO: Still true?
-list(APPEND OSPRAY_CXX_FLAGS_SYCL -g0)
-# FIXME: assertion still not working in SYCL
-# TODO: Still true?
-#list(APPEND OSPRAY_CXX_FLAGS_SYCL -UDEBUG -DNDEBUG)
 
 # IGC options from Embree
 # This works around some IGC bug in spill compression
@@ -46,6 +49,7 @@ list(APPEND OSPRAY_IGC_OPTIONS "VISAOptions=-scratchAllocForStackInKB 128")
 #list(APPEND OSPRAY_IGC_OPTIONS "ForceInlineStackCallWithImplArg=0" "EnableGlobalStateBuffer=1")
 
 option(OSPRAY_IGC_ENABLE_ZE_BINARY "Enable ZEBinary (for GTPin)" OFF)
+mark_as_advanced(OSPRAY_IGC_ENABLE_ZE_BINARY)
 if (OSPRAY_IGC_ENABLE_ZE_BINARY)
   list(APPEND OSPRAY_IGC_OPTIONS "EnableZEBinary=1")
 endif()
@@ -53,6 +57,7 @@ endif()
 # This significantly improves compile times on 17028 and up, though also impacts performance some
 option(OSPRAY_IGC_FAST_COMPILE
   "Pass flags to improve compilation speed at the cost of some optimization" OFF)
+mark_as_advanced(OSPRAY_IGC_FAST_COMPILE)
 if (OSPRAY_IGC_FAST_COMPILE)
   set(OSPRAY_IGC_FAST_COMPILE_UNIT_SIZE_THRESHOLD "18000" CACHE STRING
     "Set the partition unit unit size threshold (default 18000)")
@@ -64,6 +69,7 @@ endif()
 
 # Development option to dump shaders, when we compile AOT this has to be done at build time
 option(OSPRAY_IGC_DUMP_SHADERS "Dump IGC shaders during build" OFF)
+mark_as_advanced(OSPRAY_IGC_DUMP_SHADERS)
 if (OSPRAY_IGC_DUMP_SHADERS)
   list(APPEND OSPRAY_IGC_OPTIONS
     "ShaderDumpEnable=1"
@@ -88,6 +94,7 @@ endif()
 
 # Large GRF mode
 option(OSPRAY_SYCL_LARGEGRF "Enable SYCL Large GRF Support" ON)
+mark_as_advanced(OSPRAY_SYCL_LARGEGRF)
 if (OSPRAY_SYCL_LARGEGRF)
   list(APPEND OSPRAY_OCL_OPTIONS "-internal_options -cl-intel-256-GRF-per-thread")
 endif()
@@ -99,3 +106,5 @@ string(REPLACE ";" " " OSPRAY_OCL_OPTIONS_STR "${OSPRAY_OCL_OPTIONS}")
 
 set(OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
 string(REPLACE ";" " " OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
+
+set(OSPRAY_LINKER_FLAGS_SYCL -fsycl -Xsycl-target-backend=spir64 "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\"")

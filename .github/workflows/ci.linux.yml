@@ -35,7 +35,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
 
   build-arch-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -53,7 +53,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ospray/docker-images:arch
       cmd: |
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
 
   build-centos7-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -62,7 +62,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -108,7 +108,7 @@ jobs:
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
         export CFLAGS=$CXXFLAGS
         export LDFLAGS="-static-intel"
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -121,7 +121,7 @@ jobs:
       cmd: |
         module load cmake
         module load impi/2021.6
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-mpi-impi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -134,7 +134,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-centos7-mpi-mpich
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -147,7 +147,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/openmpi-x86_64
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
   build-centos8:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -180,6 +180,19 @@ jobs:
         module load mpi/openmpi-x86_64
         scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
+  build-rocky8-oidn-mpi:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: rockylinux:8.7
+      cmd: |
+        module load cmake/3.15.2
+        module load mpi/mpich-x86_64
+        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+      artifact-out: build-rocky8-oidn-mpi
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
   build-linux-debug:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -190,7 +203,7 @@ jobs:
         export CFLAGS=-fsanitize=address
         export CXXFLAGS=-fsanitize=address
         export LDFLAGS=-fsanitize=address
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_OIDN=OFF
       artifact-out: build-linux-debug
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -216,6 +229,17 @@ jobs:
       artifact-out: build-ubuntu2004-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
+  build-ubuntu2204-oidn-mpi:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: ubuntu:22.04
+      cmd: |
+        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+      artifact-out: build-ubuntu2204-oidn-mpi
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
 ### TEST JOBS ###
 
   test-centos7-gcc-avx2:
@@ -224,7 +248,7 @@ jobs:
     with:
       image: centos:7
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-centos7-gcc
       artifact-out: test-centos7-gcc-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -235,12 +259,12 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
         module load cmake
         I_MPI_OFI_LIBRARY_INTERNAL=no module load impi/2021.6
         export FI_PROVIDER=sockets
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
       artifact-in: build-centos7-mpi-impi
       artifact-out: test-centos7-gcc-mpi-impi-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -254,7 +278,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
       artifact-in: build-centos7-mpi-mpich
       artifact-out: test-centos7-gcc-mpi-mpich-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -265,9 +289,9 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-centos7-icx
       artifact-out: test-centos7-icx-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -278,9 +302,9 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-centos7-icx
       artifact-out: test-centos7-icx-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -291,11 +315,27 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:8
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-centos8
       artifact-out: test-centos8-avx512skx
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  test-rocky8-oidn-mpi-avx512skx:
+    needs: build-rocky8-oidn-mpi
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: rockylinux:8.7
+      runs-on: '"avx512"'
+      cmd: |
+        module load cmake/3.15.2
+        module load mpi/mpich-x86_64
+        export OIDN_DEFAULT_DEVICE=cpu
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MPI
+      artifact-in: build-rocky8-oidn-mpi
+      artifact-out: test-rocky8-oidn-mpi-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
@@ -317,9 +357,9 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:18.04
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-ubuntu1804-gcc
       artifact-out: test-ubuntu1804-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -330,9 +370,9 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:20.04
-      runs-on: '["Linux", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-ubuntu2004-gcc
       artifact-out: test-ubuntu2004-gcc-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -343,13 +383,35 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:20.04
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MULTIDEVICE
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MULTIDEVICE
       artifact-in: build-ubuntu2004-gcc
       artifact-out: test-ubuntu2004-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
+
+  test-ubuntu2204-oidn-mpi-avx2-dg2:
+    needs: build-ubuntu2204-oidn-mpi
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/dpcpp-release.env .github/workflows/gfx-ubuntu22-release.env
+      submodules: true
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"dg2"'
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        export OIDN_DEFAULT_DEVICE=sycl
+        export OIDN_VERBOSE=2
+        mkdir build_regression_tests
+        cd build_regression_tests
+        cmake -D OSPRAY_TEST_ISA=AVX2 $GITHUB_WORKSPACE/test_image_data
+        cmake --build . --target ospray_test_data
+        ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
+        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 mpiexec -np 1 ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp" --osp:load-modules=mpi_offload --osp:device=mpiOffload : -np 2 ospray_mpi_worker
+      artifact-in: build-ubuntu2204-oidn-mpi
 
   test-tutorials:
     needs: build-centos7-gcc
@@ -364,12 +426,10 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ospray/docker-images:arch
-      # Uses WA for LeakSanitizer fatal error, https://github.com/google/sanitizers/issues/1322
       cmd: |
         export LSAN_OPTIONS="suppressions=$GITHUB_WORKSPACE/scripts/tests/sanitize_ignore.txt"
-        export ASAN_OPTIONS="intercept_tls_get_addr=0"
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
         export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
+        export TBB_ENABLE_SANITIZERS=1
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
         build/install/ospray/bin/ospBenchmark --benchmark_min_time=0
       artifact-in: build-linux-debug

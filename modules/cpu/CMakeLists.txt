@@ -1,23 +1,16 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-cmake_dependent_option(
-  OSPRAY_MODULE_CPU
-  "Build the CPU module"
-  ON
-  OSPRAY_ENABLE_MODULES
-  OFF
-)
+option(OSPRAY_MODULE_CPU "Build the CPU module" ON)
 mark_as_advanced(OSPRAY_MODULE_CPU)
 
 cmake_dependent_option(
   OSPRAY_MODULE_GPU
-  "Build the GPU module EXPERIMENTAL"
+  "Build the GPU module (beta)"
   OFF
-  "OSPRAY_ENABLE_MODULES;EMBREE_SYCL_SUPPORT"
+  EMBREE_SYCL_SUPPORT
   OFF
 )
-mark_as_advanced(OSPRAY_MODULE_GPU)
 
 if ((NOT OSPRAY_MODULE_CPU) AND (NOT OSPRAY_MODULE_GPU))
   return()
@@ -32,6 +25,7 @@ set(OSPRAY_CPP_SOURCES
 
   ModuleInit.cpp
   ispc_tasksys.cpp
+  ispc_tasksys.h
 
   ISPCDevice.h
   ISPCDevice.cpp
@@ -270,7 +264,7 @@ if (WIN32)
   # changes .def only if content changed, avoids unnecessary re-linking
   configure_file(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_cpu.def.in ospray_module_cpu.def COPYONLY)
 
-  list(APPEND OSPRAY_ISPC_SOURCES ospray_module_cpu.def)
+  set(OSPRAY_ISPC_DEF ospray_module_cpu.def)
 endif()
 
 ## ISPC Device-specific options ##
@@ -319,7 +313,6 @@ if (OSPRAY_MODULE_CPU)
     -DOSPRAY_BEGIN_ISPC_NAMESPACE=
     -DOSPRAY_END_ISPC_NAMESPACE=
     -DSYCL_EXTERNAL=
-    -D__noinline=
   )
 
   if (OSPRAY_ENABLE_VOLUMES)
@@ -347,6 +340,7 @@ if (OSPRAY_MODULE_CPU)
       ${OSPRAY_VOLUMES_CPP_SOURCES}
       ${OSPRAY_ISPC_SOURCES}
       ${OSPRAY_VOLUMES_ISPC_SOURCES}
+      ${OSPRAY_ISPC_DEF}
       geometry/Subdivision.cpp
       geometry/Subdivision.ispc)
 
@@ -381,7 +375,6 @@ if (OSPRAY_MODULE_CPU)
     TILE_SIZE=${OSPRAY_TILE_SIZE}
     MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
     SYCL_EXTERNAL=
-    __noinline=
   )
 
   if (OSPRAY_ENABLE_VOLUMES)
@@ -403,10 +396,16 @@ if (OSPRAY_MODULE_CPU)
   endif()
 endif()
 
-if (OSPRAY_MODULE_GPU)
-  include(${ISPCRT_DIR}/interop.cmake)
 
-  ospray_configure_dpcpp_target()
+if (OSPRAY_MODULE_GPU)
+  if (WIN32)
+    cmake_minimum_required(VERSION 3.25)
+  else()
+    cmake_minimum_required(VERSION 3.20.5)
+  endif()
+
+
+  include(${ISPCRT_DIR}/interop.cmake)
 
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
   set_source_files_properties(${OSPRAY_ISPC_SOURCES} ${OSPRAY_VOLUMES_ISPC_SOURCES}
@@ -418,9 +417,7 @@ if (OSPRAY_MODULE_GPU)
     ${OSPRAY_VOLUMES_ISPC_SOURCES}
   )
 
-  set_target_properties(ospray_module_gpu_kernels PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON)
+  ospray_add_sycl_target(ospray_module_gpu_kernels)
 
   target_link_libraries(ospray_module_gpu_kernels
   PUBLIC
@@ -453,42 +450,22 @@ if (OSPRAY_MODULE_GPU)
     RKCOMMON_NO_SIMD
   )
 
+  if (OSPRAY_COMPILER_NEEDS_X_CPP)
+    target_compile_options(ospray_module_gpu_kernels PRIVATE -x c++)
+  endif()
+
   target_compile_options(ospray_module_gpu_kernels
   PRIVATE
-    -x c++
-  )
-
-  # catch implicit float to double promotions in kernels only
-  target_compile_options(ospray_module_gpu_kernels PRIVATE
+    -g0 # XXX debug on device broken
     -Wdouble-promotion
   )
-
-  target_compile_options(ospray_module_gpu_kernels PUBLIC
-    -fsycl
-    ${OSPRAY_CXX_FLAGS_SYCL}
-    -fsycl-targets=${OSPRAY_SYCL_TARGET}
-  )
-
-  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
-    target_link_options(ospray_module_gpu_kernels PUBLIC
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-      -fsycl-device-code-split=per_kernel
-    )
-  else()
-    target_link_options(ospray_module_gpu_kernels PUBLIC
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-    )
-  endif()
 
   target_compile_definitions(ospray_module_gpu_kernels
   PUBLIC
     OSPRAY_TARGET_SYCL
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}
+    _ALLOW_KEYWORD_MACROS # avoid error when redefining reserved keywords like "export"
     uniform=
     varying=
     unmasked=
@@ -532,18 +509,9 @@ if (OSPRAY_MODULE_GPU)
     ${OSPRAY_VOLUMES_CPP_SOURCES}
   )
 
-  set_target_properties(ospray_module_gpu PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON)
-
   target_link_libraries(ospray_module_gpu
   PUBLIC
     ospray_module_gpu_kernels
-  )
-
-  target_compile_options(ospray_module_gpu
-  PRIVATE
-    -x c++
   )
 
   ospray_install_library(ospray_module_gpu lib)

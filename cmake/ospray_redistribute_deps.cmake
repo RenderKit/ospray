@@ -1,43 +1,15 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-macro(ospray_install_namelink NAME)
-  get_filename_component(TARGET_NAME ${NAME} NAME) # strip path
-  set(LIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
-  # strip version and lib suffix
-  if(APPLE)
-    set(LIBREGEX "(.+)[.]([0-9]+)([.][0-9]+[.][0-9]+)${LIB_SUFFIX}")
-  else()
-    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)([.][0-9]+[.][0-9]+)")
-  endif()
-  string(REGEX REPLACE ${LIBREGEX} "\\1" BASE_LIB_NAME ${TARGET_NAME})
-  if (CMAKE_MATCH_COUNT GREATER 2)
-    if(APPLE)
-      set(SYMLINK ${BASE_LIB_NAME}.${CMAKE_MATCH_2}${LIB_SUFFIX})
-    else()
-      set(SYMLINK ${BASE_LIB_NAME}${LIB_SUFFIX}.${CMAKE_MATCH_2})
+macro(ospray_add_dependent_lib_configuration TARGET_NAME VAR CONFIGURATION)
+    get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
+    get_target_property(LIBRARY_SO ${TARGET_NAME} IMPORTED_SONAME_${CONFIGURATION})
+    if (LIBRARY_SO)
+      get_filename_component(LIBRARY_DIR ${LIBRARY} DIRECTORY)
+      get_filename_component(LIBRARY_NAME ${LIBRARY_SO} NAME)
+      set(LIBRARY "${LIBRARY_DIR}/${LIBRARY_NAME}")
     endif()
-    execute_process(COMMAND "${CMAKE_COMMAND}" -E
-        create_symlink ${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR}/${SYMLINK})
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SYMLINK} ${ARGN}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-    set(TARGET_NAME ${SYMLINK})
-  endif()
-   
-  # also create a major version suffixed symlink
-  if(APPLE)
-    set(LIBREGEX "(.+)[.]([0-9]+)${LIB_SUFFIX}")
-  else()
-    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)")
-  endif()
-  string(REGEX REPLACE ${LIBREGEX} "\\1" BASE_LIB_NAME ${TARGET_NAME})
-  if (CMAKE_MATCH_COUNT)
-    set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX})
-    execute_process(COMMAND "${CMAKE_COMMAND}" -E
-        create_symlink ${TARGET_NAME} ${SYMLINK})
-    install(PROGRAMS ${SYMLINK} ${ARGN} DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        COMPONENT redist)
-  endif()
+    list(APPEND ${VAR} ${LIBRARY})
 endmacro()
 
 macro(ospray_add_dependent_lib TARGET_NAME)
@@ -45,22 +17,20 @@ macro(ospray_add_dependent_lib TARGET_NAME)
     get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
     # first/default configuration
     list(GET CONFIGURATIONS 0 CONFIGURATION)
-    get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
-    list(APPEND DEPENDENT_LIBS ${LIBRARY})
-    ospray_install_namelink(${LIBRARY})
+    ospray_add_dependent_lib_configuration(${TARGET_NAME} DEPENDENT_LIBS ${CONFIGURATION})
     # potentially Debug configuration
     list(FIND CONFIGURATIONS "DEBUG" FOUND)
     if(FOUND GREATER 0)
-      get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_DEBUG)
-      list(APPEND DEPENDENT_LIBS_DEBUG ${LIBRARY})
-      ospray_install_namelink(${LIBRARY} CONFIGURATIONS Debug)
+      ospray_add_dependent_lib_configuration(${TARGET_NAME} DEPENDENT_LIBS_DEBUG "DEBUG")
+    else()
+      ospray_add_dependent_lib_configuration(${TARGET_NAME} DEPENDENT_LIBS_DEBUG ${CONFIGURATION})
     endif()
   else()
     message(STATUS "Skipping target '${TARGET_NAME}'")
   endif()
 endmacro()
 
-macro(ospray_add_dependent_lib_plugins TARGET_NAME PLUGINS_PATTERN)
+macro(ospray_add_dependent_lib_plugins TARGET_NAME PLUGINS_PATTERN VER_PATTERN)
   if (TARGET ${TARGET_NAME})
     # retrieve library directory
     get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
@@ -75,18 +45,22 @@ macro(ospray_add_dependent_lib_plugins TARGET_NAME PLUGINS_PATTERN)
       )
     elseif (APPLE)
       file(GLOB LIBRARY_PLUGINS LIST_DIRECTORIES FALSE
-        "${LIBRARY_DIR}/lib${PLUGINS_PATTERN}*.dylib"
+        "${LIBRARY_DIR}/lib${PLUGINS_PATTERN}${VER_PATTERN}.dylib"
       )
     else()
       file(GLOB LIBRARY_PLUGINS LIST_DIRECTORIES FALSE
-        "${LIBRARY_DIR}/lib${PLUGINS_PATTERN}.so*"
+        "${LIBRARY_DIR}/lib${PLUGINS_PATTERN}.so${VER_PATTERN}"
       )
     endif()
 
     # iterate over all found plugins and add them to DEPENDENT_LIBS list
     foreach(LIBRARY_PLUGIN ${LIBRARY_PLUGINS})
-      list(APPEND DEPENDENT_LIBS ${LIBRARY_PLUGIN})
-      ospray_install_namelink(${LIBRARY_PLUGIN})
+      get_filename_component(LIBRARY_NAME ${LIBRARY_PLUGIN} NAME_WE)
+      if (LIBRARY_NAME MATCHES "_debug")
+        list(APPEND DEPENDENT_LIBS_DEBUG ${LIBRARY_PLUGIN})
+      else()
+        list(APPEND DEPENDENT_LIBS ${LIBRARY_PLUGIN})
+      endif()
     endforeach()
   else()
     message(STATUS "Skipping target '${TARGET_NAME}' plugins")
@@ -94,16 +68,15 @@ macro(ospray_add_dependent_lib_plugins TARGET_NAME PLUGINS_PATTERN)
 endmacro()
 
 ospray_add_dependent_lib(ispcrt::ispcrt)
-ospray_add_dependent_lib_plugins(ispcrt::ispcrt "ispcrt_device_*")
+ospray_add_dependent_lib_plugins(ispcrt::ispcrt "ispcrt_device_*" "")
 ospray_add_dependent_lib(rkcommon::rkcommon)
 if (RKCOMMON_TASKING_TBB)
   ospray_add_dependent_lib(TBB::tbb)
   ospray_add_dependent_lib(TBB::tbbmalloc)
+  ospray_add_dependent_lib_plugins(TBB::tbb "tbbbind" ".[0-9]")
+  ospray_add_dependent_lib_plugins(TBB::tbb "tbbbind_?_?" ".[0-9]")
 endif()
 ospray_add_dependent_lib(embree)
-if (EMBREE_SYCL_SUPPORT)
-  ospray_add_dependent_lib(embree_rthwif)
-endif()
 ospray_add_dependent_lib(openvkl::openvkl)
 ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device)
 ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device_4)
@@ -112,7 +85,35 @@ ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device_16)
 if (OSPRAY_MODULE_DENOISER)
   ospray_add_dependent_lib(OpenImageDenoise)
   ospray_add_dependent_lib(OpenImageDenoise_core)
-  ospray_add_dependent_lib_plugins(OpenImageDenoise "OpenImageDenoise_device_*")
+  ospray_add_dependent_lib_plugins(OpenImageDenoise "OpenImageDenoise_device_*" ".[0-9].[0-9].[0-9]")
+endif()
+if (OSPRAY_MODULE_GPU OR OSPRAY_MODULE_DENOISER)
+  if (OSPRAY_MODULE_GPU)
+    get_filename_component(SYCL_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
+    if (NOT WIN32)
+      set(SYCL_DIR "${SYCL_DIR}/../lib")
+    endif()
+  else()
+    get_target_property(CONFIGURATIONS OpenImageDenoise IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION) # use first/default configuration
+    get_target_property(OIDN_LIB OpenImageDenoise IMPORTED_LOCATION_${CONFIGURATION})
+    get_filename_component(SYCL_DIR ${OIDN_LIB} DIRECTORY)
+  endif()
+
+  if (WIN32)
+    file(GLOB SYCL_LIB LIST_DIRECTORIES FALSE
+      "${SYCL_DIR}/sycl?.dll"
+      "${SYCL_DIR}/pi_level_zero.dll"
+      "${SYCL_DIR}/pi_win_proxy_loader.dll"
+      "${SYCL_DIR}/win_proxy_loader.dll"
+    )
+  else()
+    file(GLOB SYCL_LIB LIST_DIRECTORIES FALSE
+      "${SYCL_DIR}/libsycl.so.?"
+      "${SYCL_DIR}/libpi_level_zero.so"
+    )
+  endif()
+  list(APPEND DEPENDENT_LIBS ${SYCL_LIB})
 endif()
 
 if (WIN32)
@@ -131,11 +132,15 @@ else()
   add_custom_target(sign_files COMMENT "Not signing files")
 endif()
 
-install(PROGRAMS ${DEPENDENT_LIBS} DESTINATION ${INSTALL_DIR} COMPONENT redist)
-if (DEPENDENT_LIBS_DEBUG)
-  install(PROGRAMS ${DEPENDENT_LIBS_DEBUG} CONFIGURATIONS Debug
-          DESTINATION ${INSTALL_DIR} COMPONENT redist)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  set(DEPENDENT_LIBS ${DEPENDENT_LIBS_DEBUG})
 endif()
+foreach(LIB ${DEPENDENT_LIBS})
+  install(CODE
+    "file(INSTALL \"${LIB}\" DESTINATION \${CMAKE_INSTALL_PREFIX}/${INSTALL_DIR} FOLLOW_SYMLINK_CHAIN)"
+    COMPONENT redist
+  )
+endforeach()
 
 # Install MSVC runtime
 if (WIN32)

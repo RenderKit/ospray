@@ -3,7 +3,10 @@
 
 #include "test_fixture.h"
 
-extern OSPRayEnvironment *ospEnv;
+#ifdef SYCL_LANGUAGE_VERSION
+#include "sycl/sycl.hpp"
+#endif
+
 OSPRayEnvironment *ospEnv;
 
 int main(int argc, char **argv)
@@ -19,8 +22,22 @@ int main(int argc, char **argv)
 
   ospInit(&argc, (const char **)argv);
 
+  ::testing::InitGoogleTest(&argc, argv);
+  ospEnv = new OSPRayEnvironment(argc, argv);
+  AddGlobalTestEnvironment(ospEnv);
+
   {
     cpp::Device device = cpp::Device::current();
+
+#ifdef SYCL_LANGUAGE_VERSION
+    sycl::queue *appsSyclQueue = ospEnv->GetAppsSyclQueue();
+    if (appsSyclQueue) {
+      static auto appsSyclContext = appsSyclQueue->get_context();
+      static auto appsSyclDevice = appsSyclQueue->get_device();
+      device.setParam("syclContext", OSP_VOID_PTR, (void *)&appsSyclContext);
+      device.setParam("syclDevice", OSP_VOID_PTR, (void *)&appsSyclDevice);
+    }
+#endif
 
     device.setErrorCallback(
         [](void *, OSPError error, const char *errorDetails) {
@@ -40,9 +57,6 @@ int main(int argc, char **argv)
     device.commit();
   }
 
-  ::testing::InitGoogleTest(&argc, argv);
-  ospEnv = new OSPRayEnvironment(argc, argv);
-  AddGlobalTestEnvironment(ospEnv);
   auto result = RUN_ALL_TESTS();
 
   ospShutdown();

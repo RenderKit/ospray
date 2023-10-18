@@ -3,11 +3,11 @@
 
 #include "environment.h"
 
+#ifdef SYCL_LANGUAGE_VERSION
+#include "sycl/sycl.hpp"
+#endif
+
 OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
-    : dumpImg(false),
-      rendererType("scivis"),
-      baselineDir("regression_test_baseline"),
-      failedDir("failed")
 {
   ParseArgs(argc, argv);
 }
@@ -26,7 +26,9 @@ void OSPRayEnvironment::ParseArgs(int argc, char **argv)
                 << "--imgsize-y=XX : change the height of an image\n"
                 << "--renderer-type=XX : change the renderer used for tests\n"
                 << "--baseline-dir=XX : Change the directory used for baseline "
-                   "images during tests\n";
+                   "images during tests\n"
+                << "--own-SYCL : turn on SYCL data sharing.\n";
+
       std::exit(EXIT_SUCCESS);
     } else if (testArgs.at(idx) == "--dump-img") {
       dumpImg = true;
@@ -40,6 +42,14 @@ void OSPRayEnvironment::ParseArgs(int argc, char **argv)
       baselineDir = GetStrArgValue(&testArgs.at(idx));
     } else if (testArgs.at(idx).find("--failed-dir=") == 0) {
       failedDir = GetStrArgValue(&testArgs.at(idx));
+    } else if (testArgs.at(idx).find("--own-SYCL") == 0) {
+#ifdef SYCL_LANGUAGE_VERSION
+      ownSYCL = true;
+#else
+      std::cerr << "WARNING: Compiled without SYCL support, "
+                   "SYCL data sharing not supported."
+                << std::endl;
+#endif
     }
   }
 }
@@ -68,3 +78,17 @@ std::string OSPRayEnvironment::GetStrArgValue(std::string *arg) const
   }
   return ret;
 }
+
+#ifdef SYCL_LANGUAGE_VERSION
+OSPRayEnvironment::~OSPRayEnvironment()
+{
+  delete appsSyclQueue;
+}
+
+sycl::queue *OSPRayEnvironment::GetAppsSyclQueue()
+{
+  if (ownSYCL && !appsSyclQueue)
+    appsSyclQueue = new sycl::queue;
+  return appsSyclQueue;
+}
+#endif

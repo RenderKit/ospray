@@ -15,6 +15,10 @@ struct MixMaterial : public AddStructShared<Material, ispc::Mix>
   virtual std::string toString() const override;
 
   virtual void commit() override;
+
+ protected:
+  Ref<Material> mat1;
+  Ref<Material> mat2;
 };
 
 } // namespace pathtracer

@@ -23,10 +23,12 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with: 
+      force-delete: true
       image: ospray/docker-images:docu
       submodules: true
       cmd: |
         cd doc
+        git clone --depth 1 -b release-2.12.x https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/documentation.graphics.renderkit.ospray-website.git ospray-doc
         make pdf
         make checklinks
       artifact-out: pdf
@@ -54,17 +56,38 @@ jobs:
       artifact-out: release-linux
       artifact-path: build_release/*.gz
 
+  release-sycl-linux:
+    needs: pdf
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/dpcpp-release.env
+      level-zero-version: public/1.12.0 # for ispcrt
+      cmd: |
+        module load cmake/3.25.3
+        update-alternatives --set mpi /usr/bin/mpicc.mpich
+        update-alternatives --set mpirun /usr/bin/mpirun.mpich
+        update-alternatives --set mpi-x86_64-linux-gnu /usr/include/x86_64-linux-gnu/mpich
+        export CC=clang
+        export CXX=clang++
+        scripts/release/linux.sh -G Ninja -DBUILD_GPU_SUPPORT=ON -DOSPRAY_MODULE_GPU=ON
+      artifact-in: pdf
+      artifact-out: release-sycl-linux
+      artifact-path: build_release/*.gz
+
   release-osx-clang:
     needs: pdf
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "macOS", "sign", "x86_64" ]'
+      runs-on: '["sign", "x86_64"]'
       cmd: |
         export CC=clang
         export CXX=clang++
-        scripts/release/macosx.sh
+        scripts/release/macosx.sh -DBUILD_EMBREE_FROM_SOURCE=ON # FIXME invalid symlinks in Embree v4.3 package
         $SIGN_FILE_MAC -o runtime -e scripts/release/ospray.entitlements build_release/ospray-*pkg
         scripts/release/macosx_notarization.sh build_release/ospray-*.pkg
       artifact-in: pdf
@@ -76,32 +99,62 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '["Windows", "build", "mpi"]'
+      runs-on: '["build", "mpi"]'
       cmd: |
-        scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
+        $exitCode = 0 # keep job status to properly fail
+        scripts\release\win.ps1 -G "Visual Studio 15 2017 Win64"
+        $exitCode += $LastExitCode
         & $env:SIGN_FILE_WINDOWS ospray*.msi
+        $exitCode += $LastExitCode
+        exit $exitCode
       artifact-in: pdf
       artifact-out: release-windows
       artifact-path: "build_release/ospray*.zip build_release/ospray*.msi"
+
+
+  release-sycl-windows:
+    needs: pdf
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      runs-on: '["build", "mpi"]'
+      env-from-files: .github/workflows/dpcpp-release.env
+      level-zero-version: public/1.12.0 # for ispcrt
+      cmd: |
+        $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
+        # disable warnings which lead to excessively large log files
+        $env:CXXFLAGS = '-w'
+        $env:CFLAGS = '-w'
+        $exitCode = 0 # keep job status to properly fail
+        scripts\release\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_C_COMPILER=clang-cl -DBUILD_GPU_SUPPORT=ON -DOSPRAY_MODULE_GPU=ON
+        $exitCode += $LastExitCode
+        & $env:SIGN_FILE_WINDOWS ospray*.msi
+        $exitCode += $LastExitCode
+        exit $exitCode
+      artifact-in: pdf
+      artifact-out: release-sycl-windows
+      artifact-path: "build_release/ospray*.zip build_release/ospray*.msi"
+
 
 ### SCAN JOBS ###
 
   static-analysis:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@devel
     with:
-      project: ospray
-      prebuild: |
-        module load cmake
-        module load intel/2021.2
-        echo "Configure dependencies"
-        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF
-        echo "Build dependencies"
-        cmake --build build_deps
-        INSTALL_DIR=$(pwd)/build_deps/install
-        export CMAKE_PREFIX_PATH=${INSTALL_DIR}
-        echo "Configure OSPRay"
-        cmake -L -S . -B build -DISPC_EXECUTABLE=$INSTALL_DIR/bin/ispc -DTBB_ROOT=$INSTALL_DIR -DOSPRAY_MODULE_DENOISER=ON -DOSPRAY_MODULE_BILINEAR_PATCH=ON -DOSPRAY_MODULE_MPI=ON
+      coverity: true
+      project: OSPRay
+      prebuild: >
+        module load impi/latest &&
+        echo "Configure dependencies" &&
+        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF &&
+        echo "Build dependencies" &&
+        cmake --build build_deps &&
+        INSTALL_DIR=$(pwd)/build_deps/install &&
+        export CMAKE_PREFIX_PATH=${INSTALL_DIR} &&
+        echo "Configure OSPRay" &&
+        cmake -L -S . -B build -DTBB_ROOT=$INSTALL_DIR -DOSPRAY_MODULE_DENOISER=ON -DOSPRAY_MODULE_BILINEAR_PATCH=ON -DOSPRAY_MODULE_MPI=ON &&
         echo "Done: Configure OSPRay"
       build: cmake --build build
 
@@ -119,6 +172,18 @@ jobs:
       artifact-in-windows: release-windows
       path: build_release/ospray-*
 
+  binary-analysis-sycl:
+    needs:
+      - release-sycl-linux
+      - release-sycl-windows
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/binary_analysis.yml@main
+    with:
+      project: ospray
+      artifact-in-linux: release-sycl-linux
+      artifact-in-windows: release-sycl-windows
+      path: build_release/ospray-*
+
   antivirus-scan:
     needs:
       - release-linux
@@ -131,6 +196,18 @@ jobs:
       artifact-in-linux: release-linux
       artifact-in-macos: release-osx-clang
       artifact-in-windows: release-windows
+      path: build_release/ospray-*
+
+  antivirus-scan-sycl:
+    needs:
+      - release-sycl-linux
+      - release-sycl-windows
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/antivirus_scan.yml@main
+    with:
+      project: ospray
+      artifact-in-linux: release-sycl-linux
+      artifact-in-windows: release-sycl-windows
       path: build_release/ospray-*
 
 ### TEST JOBS ###
@@ -148,11 +225,79 @@ jobs:
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX TEST_MPI
       artifact-in: release-linux
 
+  test-release-linux-oidnsycl:
+    needs: release-linux
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"dg2"'
+      cmd: |
+        module load cmake/3.15.2
+        tar -xzf build_release/*.gz
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        export OIDN_DEFAULT_DEVICE=sycl
+        export OIDN_VERBOSE=2
+        mkdir build_regression_tests
+        cd build_regression_tests
+        cmake -D OSPRAY_TEST_ISA=AVX2 $GITHUB_WORKSPACE/test_image_data
+        cmake --build . --target ospray_test_data
+        ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
+      artifact-in: release-linux
+
+  test-release-sycl-linux-cpu:
+    needs: release-sycl-linux
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ubuntu:22.04
+      cmd: |
+        update-alternatives --set mpi /usr/bin/mpicc.mpich
+        update-alternatives --set mpirun /usr/bin/mpirun.mpich
+        tar -xzf build_release/*.gz
+        export OIDN_VERBOSE=2
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX TEST_MPI
+      artifact-in: release-sycl-linux
+
+  test-release-sycl-linux-dg2:
+    needs: release-sycl-linux
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      image: ubuntu:22.04
+      runs-on: '"dg2"'
+      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      options: --device=/dev/dri:/dev/dri
+      cmd: |
+        update-alternatives --set mpi /usr/bin/mpicc.mpich
+        update-alternatives --set mpirun /usr/bin/mpirun.mpich
+        tar -xzf build_release/*.gz
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_gpu_tests.sh $GITHUB_WORKSPACE TEST_MPI
+      artifact-in: release-sycl-linux
+
+  test-release-sycl-linux-pvc:
+    needs: release-sycl-linux
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      image: ubuntu:22.04
+      runs-on: '"pvc"'
+      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      options: --device=/dev/dri:/dev/dri
+      cmd: |
+        update-alternatives --set mpi /usr/bin/mpicc.mpich
+        update-alternatives --set mpirun /usr/bin/mpirun.mpich
+        tar -xzf build_release/*.gz
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_gpu_tests.sh $GITHUB_WORKSPACE TEST_MPI
+      artifact-in: release-sycl-linux
+
   test-release-osx:
     needs: release-osx-clang
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "x86_64", "build", "avx2" ]'
+      runs-on: '["x86_64", "build", "avx2"]'
       cmd: |
         unzip build_release/*.zip
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
@@ -175,7 +320,7 @@ jobs:
     needs: release-osx-clang
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "sign", "x86_64" ]'
+      runs-on: '["sign", "x86_64" ]'
       cmd: |
         unzip build_release/*.zip
         $SIGN_FILE_MAC -t ./ospray-*/bin/* ./ospray-*/lib/*.dylib ./build_release/*.pkg
@@ -185,22 +330,110 @@ jobs:
     needs: release-windows
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["Windows", "avx512", "mpi"]'
+      runs-on: '["avx512", "mpi"]'
       cmd: |
         Expand-Archive build_release/*.zip -DestinationPath .
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
+        $exitCode = 0 # keep job status to properly fail
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
-        & $env:SIGN_FILE_WINDOWS -t (Get-ChildItem ospray-*\bin\* | Select-Object -Expand FullName)
+        $exitCode += $LastExitCode
+        & $env:SIGN_FILE_WINDOWS -t (Get-ChildItem "$env:GITHUB_WORKSPACE\ospray-*\bin\*" | Select-Object -Expand FullName)
+        $exitCode += $LastExitCode
+        exit $exitCode
+      artifact-in: release-windows
+
+  test-release-windows-oidnsycl:
+    needs: release-windows
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    secrets: inherit
+    with:
+      runs-on: '"dg2"'
+      force-delete: true
+      env-from-files: .github/workflows/gfx-windows-release.env
+      cmd: |
+        Expand-Archive build_release/*.zip -DestinationPath .
+        $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
+        $env:OIDN_DEFAULT_DEVICE="sycl"
+        $env:OIDN_VERBOSE="2"
+        md build_regression_tests
+        cd build_regression_tests
+        cmake -D OSPRAY_TEST_ISA=AVX2 $env:GITHUB_WORKSPACE\test_image_data
+        cmake --build . --config Release --target ospray_test_data
+        ospTestSuite.exe --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
       artifact-in: release-windows
 
   test-release-windows-msi:
     needs: release-windows
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["Windows", "avx512", "mpi"]'
+      runs-on: '["avx512", "mpi"]'
       cmd: |
         msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$env:GITHUB_WORKSPACE
-        $env:Path += ";$env:GITHUB_WORKSPACE\Intel\OSPRay v2\bin"
+        $env:Path += ";$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin"
+        $exitCode = 0 # keep job status to properly fail
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
-        & $env:SIGN_FILE_WINDOWS -t $env:GITHUB_WORKSPACE\build_release\*.msi (Get-ChildItem "$env:GITHUB_WORKSPACE\Intel\OSPRay v2\bin\*" | Select-Object -Expand FullName)
+        $exitCode += $LastExitCode
+        & $env:SIGN_FILE_WINDOWS -t $env:GITHUB_WORKSPACE\build_release\*.msi (Get-ChildItem "$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin\*" | Select-Object -Expand FullName)
+        $exitCode += $LastExitCode
+        exit $exitCode
       artifact-in: release-windows
+
+  test-release-sycl-windows-zip-cpu:
+    needs: release-sycl-windows
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '["avx512", "mpi"]'
+      cmd: |
+        Expand-Archive build_release/*.zip -DestinationPath .
+        $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
+        $env:OIDN_VERBOSE="2"
+        $exitCode = 0 # keep job status to properly fail
+        scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
+        $exitCode += $LastExitCode
+        & $env:SIGN_FILE_WINDOWS -t (Get-ChildItem "$env:GITHUB_WORKSPACE\ospray-*\bin\*" | Select-Object -Expand FullName)
+        $exitCode += $LastExitCode
+        exit $exitCode
+      artifact-in: release-sycl-windows
+
+  test-release-sycl-windows-msi-cpu:
+    needs: release-sycl-windows
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '["avx512", "mpi"]'
+      cmd: |
+        msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$env:GITHUB_WORKSPACE
+        $env:Path += ";$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin"
+        $env:OIDN_VERBOSE="2"
+        $exitCode = 0 # keep job status to properly fail
+        scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
+        $exitCode += $LastExitCode
+        & $env:SIGN_FILE_WINDOWS -t $env:GITHUB_WORKSPACE\build_release\*.msi (Get-ChildItem "$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin\*" | Select-Object -Expand FullName)
+        $exitCode += $LastExitCode
+        exit $exitCode
+      artifact-in: release-sycl-windows
+
+  test-release-sycl-windows-zip:
+    needs: release-sycl-windows
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
+    with:
+      runs-on: '"dg2"' # FIXME: mpi
+      env-from-files: .github/workflows/gfx-windows-release.env
+      cmd: |
+        $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
+        Expand-Archive build_release/*.zip -DestinationPath .
+        $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
+        scripts\tests\run_gpu_tests.ps1 $env:GITHUB_WORKSPACE TEST_MPI
+      artifact-in: release-sycl-windows
+
+  test-release-sycl-windows-msi:
+    needs: release-sycl-windows
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
+    with:
+      runs-on: '"dg2"' # FIXME: mpi
+      env-from-files: .github/workflows/gfx-windows-release.env
+      cmd: |
+        $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
+        msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$env:GITHUB_WORKSPACE
+        $env:Path += ";$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin"
+        scripts\tests\run_gpu_tests.ps1 $env:GITHUB_WORKSPACE TEST_MPI
+      artifact-in: release-sycl-windows

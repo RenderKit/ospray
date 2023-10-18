@@ -6,7 +6,7 @@
 #pragma once
 
 #include "Geometry.h"
-#include "volume/VolumetricModel.h"
+#include "volume/Volume.h"
 // ispc shared
 #include "IsosurfacesShared.h"
 
@@ -27,12 +27,7 @@ struct OSPRAY_SDK_INTERFACE Isosurfaces
   FeatureFlags getFeatureFlags() const override;
 
  protected:
-  // Data members //
-
   Ref<const DataT<float>> isovaluesData;
-  // For backwards compatibility, a volumetric model was used to set
-  // the volume and color
-  Ref<VolumetricModel> model;
   Ref<Volume> volume;
   VKLHitIteratorContext vklHitContext = VKLHitIteratorContext();
 };
@@ -40,11 +35,7 @@ struct OSPRAY_SDK_INTERFACE Isosurfaces
 inline FeatureFlags Isosurfaces::getFeatureFlags() const
 {
   FeatureFlags ff = Geometry::getFeatureFlags();
-  if (model) {
-    ff |= model->getFeatureFlags();
-  } else {
-    ff |= volume->getFeatureFlags();
-  }
+  ff |= volume->getFeatureFlags();
   return ff;
 }
 

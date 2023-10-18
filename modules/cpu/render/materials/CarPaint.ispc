@@ -1,6 +1,8 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "CarPaint.ih"
+
 #include "common/Ray.ih"
 #include "render/Material.ih"
 #include "render/bsdfs/Conductor.ih"
@@ -8,35 +10,50 @@
 #include "render/bsdfs/Lambert.ih"
 #include "render/bsdfs/MicrofacetConductor.ih"
 #include "render/bsdfs/MicrofacetDielectricLayer.ih"
-#include "render/bsdfs/MultiBSDF.ih"
 #include "render/bsdfs/OrenNayar.ih"
+#include "render/bsdfs/PassthroughLayer.ih"
 #include "render/shaders/Flakes.ih"
 #include "texture/TextureParam.ih"
-
-#include "CarPaint.ih"
+// c++ shared
+#include "CarPaintShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL const varying BSDF *varying CarPaint_getBSDF(
+struct CarPaint_BSDF
+{
+  BSDF root;
+  MicrofacetDielectricLayer dielectricLayer;
+  int flakeMask;
+  MicrofacetConductor conductor;
+  OrenNayar baseDiffuse;
+};
+
+SYCL_EXTERNAL __noinline const varying BSDF *uniform CarPaint_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &)
+    const Medium &,
+    const uniform FeatureFlagsHandler &)
 {
   const uniform CarPaint *uniform self = (const uniform CarPaint *uniform)super;
-  varying BSDF *varying bsdf = NULL;
 
   varying linear3f *uniform frame = LinearSpace3f_create(ctx,
       makeShadingFrame(dg, self->normalMap, self->normalRot, self->normal));
+
+  // Allocate memory and initialize material BSDF
+  varying CarPaint_BSDF *uniform bsdf = (varying CarPaint_BSDF * uniform)
+      ShadingContext_alloc(ctx, sizeof(CarPaint_BSDF));
 
   const float flakeDensity =
       clamp(self->flakeDensity * get1f(self->flakeDensityMap, dg, 1.f));
   int flakeMask = 0;
   varying linear3f *uniform flakeFrame = NULL;
+
+  varying BSDF *varying substrate = NULL;
 
   // metallic flakes in the clear coat layer
   if (flakeDensity > EPS) {
@@ -72,17 +89,20 @@ SYCL_EXTERNAL const varying BSDF *varying CarPaint_getBSDF(
         flakeFresnel = FresnelConductorRGBUniform_create(ctx, flakeEta, flakeK);
       }
 
-      const float flakeRoughness = max(
-          self->flakeRoughness * get1f(self->flakeRoughnessMap, dg, 1.f), 0.f);
-      if (flakeRoughness < EPS)
-        bsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
+      if (self->flakeRoughness < EPS)
+        Conductor_Constructor((varying Conductor * uniform) & bsdf->conductor,
+            flakeFrame,
+            flakeFresnel);
       else
-        bsdf = MicrofacetConductor_create(ctx,
+        MicrofacetConductor_Constructor(&bsdf->conductor,
             super->microfacetAlbedoTables,
             flakeFrame,
             flakeFresnel,
-            flakeRoughness,
+            max(self->flakeRoughness * get1f(self->flakeRoughnessMap, dg, 1.f),
+                0.f),
             0.f);
+
+      substrate = &bsdf->conductor.super;
     }
   }
 
@@ -91,14 +111,20 @@ SYCL_EXTERNAL const varying BSDF *varying CarPaint_getBSDF(
     const vec3f baseColor =
         clamp(self->baseColor * get3f(self->baseColorMap, dg, make_vec3f(1.f))
             * make_vec3f(dg.color));
-    const float roughness =
-        max(self->roughness * get1f(self->roughnessMap, dg, 1.f), 0.f);
 
-    if (roughness < EPS)
-      bsdf = Lambert_create(ctx, frame, baseColor);
+    if (self->roughness < EPS)
+      Lambert_Constructor(
+          (varying BSDF * uniform) & bsdf->baseDiffuse, frame, baseColor);
     else
-      bsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+      OrenNayar_Constructor(&bsdf->baseDiffuse,
+          frame,
+          baseColor,
+          max(self->roughness * get1f(self->roughnessMap, dg, 1.f), 0.f));
+
+    substrate = &bsdf->baseDiffuse.super;
   }
+
+  bsdf->flakeMask = flakeMask;
 
   // clear coat layer
   const float coat = max(self->coat * get1f(self->coatMap, dg, 1.f), 0.f);
@@ -129,36 +155,214 @@ SYCL_EXTERNAL const varying BSDF *varying CarPaint_getBSDF(
 
       const float coatThickness = max(
           self->coatThickness * get1f(self->coatThicknessMap, dg, 1.f), 0.f);
-      const float coatRoughness = max(
-          self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f), 0.f);
       varying linear3f *uniform coatFrame = LinearSpace3f_create(ctx,
           makeShadingFrame(
               dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
 
-      if (coatRoughness < EPS) {
-        bsdf = DielectricLayer_create(ctx,
+      if (self->coatRoughness < EPS) {
+        DielectricLayer_Constructor(
+            (varying DielectricLayer * uniform) & bsdf->dielectricLayer,
             coatFrame,
-            bsdf,
+            substrate,
             rcp(coatIor),
             coatFinalColor,
             coatThickness,
             coat);
       } else {
-        bsdf = MicrofacetDielectricLayer_create(ctx,
+        MicrofacetDielectricLayer_Constructor(&bsdf->dielectricLayer,
             super->microfacetAlbedoTables,
             coatFrame,
-            bsdf,
+            substrate,
             rcp(coatIor),
             coatFinalColor,
             coatThickness,
-            coatRoughness,
+            max(self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f),
+                0.f),
             0.f,
             coat);
       }
     }
+  } else {
+    PassthroughLayer_Constructor(
+        (varying PassthroughLayer * uniform) & bsdf->dielectricLayer,
+        substrate);
   }
 
-  return bsdf;
+  bsdf->root = bsdf->dielectricLayer.super;
+  bsdf->root.bsdfType = BSDF_TYPE_CARPAINT;
+  return &bsdf->root;
+}
+
+// Conductor BSDF
+
+inline BSDF_EvalRes ConductorBSDF_eval(
+    const varying MicrofacetConductor *uniform self,
+    const vec3f &wo,
+    const vec3f &wi)
+{
+  if (self->super.bsdfType == BSDF_TYPE_MICROFACET_CONDUCTOR)
+    return MicrofacetConductor_eval(self, wo, wi);
+  else
+    return make_BSDF_EvalRes_zero();
+}
+
+inline BSDF_SampleRes ConductorBSDF_sample(
+    const varying MicrofacetConductor *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  if (self->super.bsdfType == BSDF_TYPE_MICROFACET_CONDUCTOR)
+    return MicrofacetConductor_sample(self, wo, s, ss);
+  else
+    return Conductor_sample(&self->super, wo, s, ss);
+}
+
+// Diffuse BSDF
+
+inline BSDF_EvalRes DiffuseBSDF_eval(
+    const varying OrenNayar *uniform self, const vec3f &wo, const vec3f &wi)
+{
+  if (self->super.bsdfType == BSDF_TYPE_OREN_NAYAR)
+    return OrenNayar_eval(&self->super, wo, wi);
+  else
+    return Lambert_eval(&self->super, wo, wi);
+}
+
+inline BSDF_SampleRes DiffuseBSDF_sample(const varying OrenNayar *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  if (self->super.bsdfType == BSDF_TYPE_OREN_NAYAR)
+    return OrenNayar_sample(&self->super, wo, s, ss);
+  else
+    return Lambert_sample(&self->super, wo, s, ss);
+}
+
+// Base layer BSDF
+
+__noinline BSDF_EvalRes BaseBSDF_eval(
+    const varying CarPaint_BSDF *uniform self, const vec3f &wo, const vec3f &wi)
+{
+  if (self->flakeMask) {
+    return ConductorBSDF_eval(&self->conductor, wo, wi);
+  } else {
+    return DiffuseBSDF_eval(&self->baseDiffuse, wo, wi);
+  }
+}
+
+__noinline BSDF_SampleRes BaseBSDF_sample(
+    const varying CarPaint_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  if (self->flakeMask) {
+    return ConductorBSDF_sample(&self->conductor, wo, s, ss);
+  } else {
+    return DiffuseBSDF_sample(&self->baseDiffuse, wo, s, ss);
+  }
+}
+
+// DielectricLayer BSDF
+
+inline BSDF_EvalRes DielectricLayerBSDF_eval(
+    const varying CarPaint_BSDF *uniform self, const vec3f &wo, const vec3f &wi)
+{
+  BSDFScatteringType scatteringType = (self->flakeMask)
+      ? self->conductor.super.scatteringType
+      : self->baseDiffuse.super.scatteringType;
+
+  DIELECTRICLAYER_EVAL(
+      self->dielectricLayer, scatteringType, self, BaseBSDF_eval);
+  return DIELECTRICLAYER_EVAL_GET();
+}
+
+inline BSDF_SampleRes DielectricLayerBSDF_sample(
+    const varying CarPaint_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  BSDFScatteringType scatteringType = (self->flakeMask)
+      ? self->conductor.super.scatteringType
+      : self->baseDiffuse.super.scatteringType;
+
+  DIELECTRICLAYER_SAMPLE(
+      self->dielectricLayer, scatteringType, self, BaseBSDF_sample);
+  return DIELECTRICLAYER_SAMPLE_GET();
+}
+
+// MicrofacetDielectricLayer BSDF
+
+inline BSDF_EvalRes MicrofacetDielectricLayerBSDF_eval(
+    const varying CarPaint_BSDF *uniform self, const vec3f &wo, const vec3f &wi)
+{
+  BSDFScatteringType scatteringType = (self->flakeMask)
+      ? self->conductor.super.scatteringType
+      : self->baseDiffuse.super.scatteringType;
+
+  MICROFACETDIELECTRICLAYER_EVAL(
+      self->dielectricLayer, scatteringType, self, BaseBSDF_eval);
+  return MICROFACETDIELECTRICLAYER_EVAL_GET();
+}
+
+inline BSDF_SampleRes MicrofacetDielectricLayerBSDF_sample(
+    const varying CarPaint_BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  BSDFScatteringType scatteringType = (self->flakeMask)
+      ? self->conductor.super.scatteringType
+      : self->baseDiffuse.super.scatteringType;
+
+  MICROFACETDIELECTRICLAYER_SAMPLE(self->dielectricLayer,
+      scatteringType,
+      self,
+      BaseBSDF_eval,
+      BaseBSDF_sample);
+  return MICROFACETDIELECTRICLAYER_SAMPLE_GET();
+}
+
+// CarPaint BSDF
+
+SYCL_EXTERNAL __noinline BSDF_EvalRes CarPaint_BSDF_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+{
+  const varying CarPaint_BSDF *uniform self =
+      (const varying CarPaint_BSDF *uniform)super;
+
+  // Skip dielectric layer if no clear coat
+  if (self->dielectricLayer.weight < EPS)
+    return BaseBSDF_eval(self, wo, wi);
+
+  if (self->dielectricLayer.super.bsdfType
+      == BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER)
+    return MicrofacetDielectricLayerBSDF_eval(self, wo, wi);
+  else
+    return DielectricLayerBSDF_eval(self, wo, wi);
+}
+
+SYCL_EXTERNAL __noinline BSDF_SampleRes CarPaint_BSDF_sample(
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
+{
+  const varying CarPaint_BSDF *uniform self =
+      (const varying CarPaint_BSDF *uniform)super;
+
+  // Skip dielectric layer if no clear coat
+  if (self->dielectricLayer.weight < EPS)
+    return BaseBSDF_sample(self, wo, s, ss);
+
+  if (self->dielectricLayer.super.bsdfType
+      == BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER)
+    return MicrofacetDielectricLayerBSDF_sample(self, wo, s, ss);
+  else
+    return DielectricLayerBSDF_sample(self, wo, s, ss);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

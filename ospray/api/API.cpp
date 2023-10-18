@@ -209,6 +209,9 @@ extern "C" void ospDeviceSetParam(OSPDevice _object,
   case OSP_INT:
     object->setParam<int>(id, *(int *)mem);
     break;
+  case OSP_UINT:
+    object->setParam<uint32_t>(id, *(uint32_t *)mem);
+    break;
   case OSP_BOOL:
     object->setParam<bool>(id, *(bool *)mem);
     break;
@@ -262,28 +265,6 @@ extern "C" void ospDeviceSetErrorCallback(OSPDevice _object,
     device->error_fcn = callback;
     device->errorUserData = userData;
   }
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospDeviceSetStatusFunc(
-    OSPDevice _object, OSPStatusFunc legacyCallback) OSPRAY_CATCH_BEGIN
-{
-  ospDeviceSetStatusCallback(
-      _object,
-      [](void *fcn, const char *msg) { ((OSPStatusFunc)fcn)(msg); },
-      &legacyCallback);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospDeviceSetErrorFunc(
-    OSPDevice _object, OSPErrorFunc legacyCallback) OSPRAY_CATCH_BEGIN
-{
-  ospDeviceSetErrorCallback(
-      _object,
-      [](void *fcn, OSPError e, const char *msg) {
-        ((OSPErrorFunc)fcn)(e, msg);
-      },
-      &legacyCallback);
 }
 OSPRAY_CATCH_END()
 
@@ -355,13 +336,17 @@ extern "C" OSPData ospNewSharedData(const void *sharedData,
     uint64_t numItems2,
     int64_t byteStride2,
     uint64_t numItems3,
-    int64_t byteStride3) OSPRAY_CATCH_BEGIN
+    int64_t byteStride3,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPData data = currentDevice().newSharedData(sharedData,
       type,
       ospray::vec3ul(numItems1, numItems2, numItems3),
-      ospray::vec3l(byteStride1, byteStride2, byteStride3));
+      ospray::vec3l(byteStride1, byteStride2, byteStride3),
+      freeFunction,
+      userPtr);
   return data;
 }
 OSPRAY_CATCH_END(nullptr)
@@ -453,12 +438,12 @@ OSPRAY_CATCH_END(nullptr)
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C" OSPMaterial ospNewMaterial(
-    const char *renderer_type, const char *material_type) OSPRAY_CATCH_BEGIN
+    const char *material_type) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_STRING(material_type);
 
   ASSERT_DEVICE();
-  auto material = currentDevice().newMaterial(renderer_type, material_type);
+  auto material = currentDevice().newMaterial(material_type);
   return material;
 }
 OSPRAY_CATCH_END(nullptr)

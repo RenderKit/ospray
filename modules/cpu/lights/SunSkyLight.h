@@ -48,8 +48,8 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
   void processIntensityQuantityType();
 
   std::unique_ptr<BufferShared<vec3f>> skyImage;
-  Ref<Texture2D> map = nullptr;
-  Ref<Distribution2D> distribution = nullptr;
+  Ref<Texture2D> map;
+  Ref<Distribution2D> distribution;
   vec2i skySize;
   linear3f frame{one}; // sky orientation
   vec3f direction{0.f, 0.f, 1.f};

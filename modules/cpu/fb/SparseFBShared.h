@@ -34,7 +34,10 @@ struct SparseFB
 
 #ifdef __cplusplus
   SparseFB()
-      : tiles(nullptr),
+      : numRenderTasks(0),
+        totalTiles(0),
+        numTiles(0),
+        tiles(nullptr),
         taskAccumID(nullptr),
         accumulationBuffer(nullptr),
         varianceBuffer(nullptr),

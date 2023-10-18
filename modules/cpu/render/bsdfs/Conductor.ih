@@ -11,23 +11,11 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 struct Conductor
 {
   BSDF super;
-
   Fresnel *uniform fresnel;
 };
 
-inline BSDF_EvalRes Conductor_eval(const varying BSDF *uniform,
-    const vec3f &,
-    const vec3f &,
-    const uniform FeatureFlagsHandler &)
-{
-  return make_BSDF_EvalRes_zero();
-}
-
-inline BSDF_SampleRes Conductor_sample(const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec2f &,
-    float,
-    const uniform FeatureFlagsHandler &)
+inline BSDF_SampleRes Conductor_sample(
+    const varying BSDF *uniform super, const vec3f &wo, const vec2f &, float)
 {
   const varying Conductor *uniform self =
       (const varying Conductor *uniform)super;
@@ -47,13 +35,6 @@ inline void Conductor_Constructor(varying Conductor *uniform self,
       Fresnel_dispatch_evalAvg(fresnel),
       BSDF_SPECULAR_REFLECTION,
       BSDF_TYPE_CONDUCTOR,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      Conductor_eval,
-      Conductor_sample,
-#endif
       frame);
   self->fresnel = fresnel;
 }

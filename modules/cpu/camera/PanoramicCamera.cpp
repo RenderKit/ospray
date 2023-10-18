@@ -42,8 +42,8 @@ void PanoramicCamera::commit()
     getSh()->frame.vy = cross(getSh()->frame.vz, getSh()->frame.vx);
   }
 
-  getSh()->stereoMode = (OSPStereoMode)getParam<uint8_t>(
-      "stereoMode", getParam<int32_t>("stereoMode", OSP_STEREO_NONE));
+  getSh()->stereoMode =
+      (OSPStereoMode)getParam<uint32_t>("stereoMode", OSP_STEREO_NONE);
   getSh()->ipd_offset =
       0.5f * getParam<float>("interpupillaryDistance", 0.0635f);
 

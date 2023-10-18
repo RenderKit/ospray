@@ -53,6 +53,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   virtual uint32_t getTotalRenderTasks() const = 0;
 
+  // Get the device-side render task IDs
   virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
       float errorThreshold) = 0;
 

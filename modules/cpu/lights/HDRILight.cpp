@@ -34,35 +34,26 @@ void HDRILight::set(bool isVisible,
 #endif
 
   this->radianceScale = radianceScale;
-  if (map) {
-    this->map = map;
-    this->distribution = distribution;
+  this->map = map;
+  this->distribution = distribution;
 
-    this->rcpSize = 1.f / this->map->sizef;
-    this->light2world = light2world;
+  this->rcpSize = 1.f / this->map->sizef;
+  this->light2world = light2world;
 
-    // Enable dynamic runtime instancing or apply static transformation
-    if (instance) {
-      if (instance->motionBlur) {
+  // Enable dynamic runtime instancing or apply static transformation
+  if (instance) {
+    if (instance->motionBlur) {
 #ifndef OSPRAY_TARGET_SYCL
-        super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
-            ispc::HDRILight_sample_instanced_addr());
-        super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
-            ispc::HDRILight_eval_instanced_addr());
+      super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::HDRILight_sample_instanced_addr());
+      super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::HDRILight_eval_instanced_addr());
 #endif
-      } else {
-        this->light2world = instance->xfm.l * this->light2world;
-      }
+    } else {
+      this->light2world = instance->xfm.l * this->light2world;
     }
-    world2light = rcp(this->light2world);
-  } else {
-#ifndef OSPRAY_TARGET_SYCL
-    super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
-        ispc::HDRILight_sample_dummy_addr());
-    super.eval =
-        reinterpret_cast<ispc::Light_EvalFunc>(ispc::Light_eval_addr());
-#endif
   }
+  world2light = rcp(this->light2world);
 }
 } // namespace ispc
 
@@ -93,17 +84,15 @@ void HDRILight::commit()
   Light::commit();
   const vec3f up = getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f));
   const vec3f dir = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
-  map = (Texture2D *)getParamObject("map", nullptr);
+  map = getParamObject<Texture2D>("map");
+
+  if (!map)
+    throw std::runtime_error(toString() + " must have 'map'");
 
   // recreate distribution
-  distribution = nullptr;
-  if (map) {
-    distribution = new Distribution2D(map->getSh()->size, getISPCDevice());
-    // Release extra local ref
-    distribution->refDec();
-
-    ispc::HDRILight_initDistribution(map->getSh(), distribution->getSh());
-  }
+  distribution = new Distribution2D(map->getSh()->size, getISPCDevice());
+  distribution->refDec(); // Release extra local ref
+  ispc::HDRILight_initDistribution(map->getSh(), distribution->getSh());
 
   frame.vx = normalize(-dir);
   frame.vy = normalize(cross(frame.vx, up));
@@ -116,8 +105,7 @@ void HDRILight::commit()
 void HDRILight::processIntensityQuantityType()
 {
   // validate the correctness of the light quantity type
-  if (intensityQuantity != OSP_INTENSITY_QUANTITY_SCALE
-      && intensityQuantity != OSP_INTENSITY_QUANTITY_RADIANCE) {
+  if (intensityQuantity != OSP_INTENSITY_QUANTITY_SCALE) {
     postStatusMsg(OSP_LOG_WARNING)
         << toString() << " unsupported 'intensityQuantity' value";
     coloredIntensity = vec3f(0.0f);

@@ -36,6 +36,9 @@ struct Ray
   uint32 primID; //!< primitive ID
   uint32 geomID; //!< geometry ID
   uint32 instID; //!< instance ID
+#ifdef RTC_GEOMETRY_INSTANCE_ARRAY
+  uint32 instPrimID; // not used, but need to pad
+#endif
 };
 
 // Hit query functions ////////////////////////////////////////////////////////

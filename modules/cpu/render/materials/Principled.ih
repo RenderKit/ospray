@@ -2,27 +2,44 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
-#include "PrincipledShared.h"
+#include "render/bsdfs/BSDF.ih"
+#include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
+struct Material;
+struct ShadingContext;
+struct DifferentialGeometry;
+struct Ray;
+struct Medium;
+
+SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh);
 
-SYCL_EXTERNAL vec3f Principled_getTransparency(
+SYCL_EXTERNAL __noinline vec3f Principled_getTransparency(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsHandler &ffh);
 
-SYCL_EXTERNAL void Principled_selectNextMedium(
+SYCL_EXTERNAL __noinline void Principled_selectNextMedium(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium);
 
-OSPRAY_END_ISPC_NAMESPACE
+SYCL_EXTERNAL __noinline BSDF_EvalRes Principled_BSDF_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi);
 
+SYCL_EXTERNAL __noinline BSDF_SampleRes Principled_BSDF_sample(
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss);
+
+OSPRAY_END_ISPC_NAMESPACE

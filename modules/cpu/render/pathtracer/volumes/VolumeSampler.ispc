@@ -4,6 +4,7 @@
 
 #include "common/FeatureFlagsEnum.h"
 #include "common/World.ih"
+#include "math/random.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #include "volume/transferFunction/TransferFunctionDispatch.ih"
 
@@ -26,42 +27,25 @@ float delta_tracking(const VolumetricModel *uniform vModel,
   // VKL_MAX_INTERVAL_ITERATOR_SIZE
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 #else
-  void *uniform intervalIteratorBuffer = alloca(vklGetIntervalIteratorSizeV(
-#if OPENVKL_VERSION_MAJOR == 1
-      vModel->vklIntervalContext
-#else
-      &vModel->vklIntervalContext
-#endif
-      ));
+  void *uniform intervalIteratorBuffer =
+      alloca(vklGetIntervalIteratorSizeV(&vModel->vklIntervalContext));
 #endif
 
-#if OPENVKL_VERSION_MAJOR == 1
-  // We know if we have OpenVKL version 1 we're not targetting SYCL
-  VKLIntervalIterator intervalIterator =
-      vklInitIntervalIteratorV(vModel->vklIntervalContext,
-          (varying vkl_vec3f *)&o,
-          (varying vkl_vec3f *)&w,
-          (varying vkl_range1f *)&rInterval,
-          &time,
-          intervalIteratorBuffer);
-#else
   VKLIntervalIterator intervalIterator =
       vklInitIntervalIteratorV(&vModel->vklIntervalContext,
           (varying vkl_vec3f *)&o,
           (varying vkl_vec3f *)&w,
           (varying vkl_range1f *)&rInterval,
-#ifdef OSPRAY_TARGET_SYCL
-          time,
-#else
-          &time,
+#ifndef OSPRAY_TARGET_SYCL
+          &
 #endif
+          time,
           intervalIteratorBuffer
 #ifdef OSPRAY_TARGET_SYCL
           ,
           ff.volume
 #endif
       );
-#endif
   float t = 0.f;
   VKLInterval interval;
   while (vklIterateIntervalV(intervalIterator,
@@ -91,11 +75,6 @@ float delta_tracking(const VolumetricModel *uniform vModel,
       xi = RandomSampler_getFloat(randomSampler);
       const vec3f p = o + t * w;
 
-#if OPENVKL_VERSION_MAJOR == 1
-      // We know if we have OpenVKL version 1 we're not targetting SYCL
-      const float sample = vklComputeSampleV(
-          vModel->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
-#else
       const float sample = vklComputeSampleV(&vModel->volume->vklSampler,
           (const varying vkl_vec3f *uniform) & p
 #ifdef OSPRAY_TARGET_SYCL
@@ -105,7 +84,6 @@ float delta_tracking(const VolumetricModel *uniform vModel,
           ff.volume
 #endif
       );
-#endif
       if (isnan(sample))
         continue;
 

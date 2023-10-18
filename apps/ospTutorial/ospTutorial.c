@@ -145,8 +145,7 @@ int main(int argc, const char **argv)
 
   ospCommit(mesh);
 
-  OSPMaterial mat =
-    ospNewMaterial("", "obj"); // first argument no longer matters
+  OSPMaterial mat = ospNewMaterial("obj");
   ospCommit(mat);
 
   // put the mesh into a model

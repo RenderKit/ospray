@@ -80,12 +80,12 @@ cpp::Group Spheres::buildGroup() const
 
   if (rendererType == "pathtracer") {
     // create glass material and assign to geometry
-    cpp::Material glassMaterial(rendererType.c_str(), "thinGlass");
+    cpp::Material glassMaterial("thinGlass");
     glassMaterial.setParam("attenuationDistance", 0.2f);
     glassMaterial.commit();
     model.setParam("material", glassMaterial);
-  } else if (rendererType == "scivis" || rendererType == "ao") {
-    cpp::Material glassMaterial(rendererType.c_str(), "obj");
+  } else {
+    cpp::Material glassMaterial("obj");
     glassMaterial.commit();
     model.setParam("material", glassMaterial);
   }

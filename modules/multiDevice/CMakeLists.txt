@@ -36,7 +36,6 @@ add_definitions_ispc(
   OSPRAY_BEGIN_ISPC_NAMESPACE=
   OSPRAY_END_ISPC_NAMESPACE=
   SYCL_EXTERNAL=
-  __noinline=
   OSPRAY_ENABLE_VOLUMES
 )
 
@@ -74,14 +73,8 @@ if (OSPRAY_MODULE_GPU)
     message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
   endif()
 
-  ospray_configure_dpcpp_target()
-
   add_library(ospray_module_multidevice_gpu SHARED
     ${OSPRAY_MULTIDEVICE_CPP_SOURCES})
-
-  set_target_properties(ospray_module_multidevice_gpu PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON)
 
   target_link_libraries(ospray_module_multidevice_gpu
   PRIVATE
@@ -97,11 +90,6 @@ if (OSPRAY_MODULE_GPU)
     ${CMAKE_CURRENT_BINARY_DIR}
     # For ISPC module generated ispc headers
     ${PROJECT_BINARY_DIR}/ospray/
-  )
-
-  target_compile_options(ospray_module_multidevice_gpu
-  PRIVATE
-    -x c++
   )
 
   target_compile_definitions(ospray_module_multidevice_gpu PRIVATE

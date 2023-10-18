@@ -49,7 +49,7 @@ void MotionBlurBoxes::SetUp()
   boxGeometry.commit();
   cpp::GeometricModel model(boxGeometry);
 
-  cpp::Material material(rendererType, "obj");
+  cpp::Material material("obj");
   material.setParam("kd", vec3f(0.8f, 0.1, 0.4));
   material.setParam("ks", vec3f(0.2f));
   material.setParam("ns", 99.f);
@@ -63,7 +63,7 @@ void MotionBlurBoxes::SetUp()
       volData.begin(), volData.end(), [n = 0]() mutable { return n++; });
   volume.setParam("data", cpp::CopiedData(volData.data(), vec3ul(2)));
   volume.setParam("gridOrigin", vec3f(-0.5, 0.5, -0.5));
-  volume.setParam("filter", (int)OSP_VOLUME_FILTER_NEAREST);
+  volume.setParam("filter", OSP_VOLUME_FILTER_NEAREST);
   volume.commit();
 
   cpp::TransferFunction transferFun("piecewiseLinear");

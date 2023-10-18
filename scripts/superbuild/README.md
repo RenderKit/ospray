@@ -14,10 +14,10 @@ cmake [<OSPRAY_SOURCE_DIR>/scripts/superbuild]
 cmake --build .
 ```
 
-On Windows make sure to select the non-default 64bit generator, e.g.
+On Windows make sure to select a 64bit generator, e.g.
 
 ```sh
-cmake -G "Visual Studio 15 2017 Win64" [<OSPRAY_SOURCE_DIR>/scripts/superbuild]
+cmake -G "Visual Studio 17 2022" [<OSPRAY_SOURCE_DIR>/scripts/superbuild]
 ```
 
 The resulting `install` directory (or the one set with
@@ -36,6 +36,9 @@ INSTALL_IN_SEPARATE_DIRECTORIES
 :   toggles installation of all libraries in separate or the same
     directory.
 
+BUILD_OPENVKL
+:   whether to enable volume rendering via Open VKL
+
 BUILD_EMBREE_FROM_SOURCE
 :   set to OFF will download a pre-built version of Embree.
 
@@ -48,6 +51,10 @@ OIDN_VERSION
 BUILD_OSPRAY_MODULE_MPI
 :   set to ON to build OSPRay’s MPI module for data-replicated and
     distributed parallel rendering on multiple nodes.
+
+BUILD_GPU_SUPPORT
+:   enables beta GPU support, fetching the SYCL variants of the
+    dependencies and builds `OSPRAY_MODULE_GPU`
 
 BUILD_TBB_FROM_SOURCE
 :   set to ON to build TBB from source (required for ARM support). The

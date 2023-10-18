@@ -12,9 +12,7 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // comment break to prevent clang-format from reordering openvkl includes
-#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
-#endif
 // ispc shared
 #include "VolumeShared.h"
 

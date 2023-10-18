@@ -14,17 +14,6 @@
 //////////////////////////////////////////////////////////////////////////////
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// sample function used when no environment map is given: black
-Light_SampleRes HDRILight_sample_dummy(const Light *uniform,
-    const DifferentialGeometry &,
-    const vec2f &,
-    const float)
-{
-  Light_SampleRes res;
-  memset(&res, 0, sizeof(Light_SampleRes));
-  return res;
-}
-
 inline Light_SampleRes Sample(const HDRILight *uniform self,
     const uniform linear3f &light2world,
     const vec2f &s)
@@ -107,20 +96,21 @@ inline Light_EvalRes Eval(const HDRILight *uniform self,
   const vec3f localDir = world2light * dir;
 
   const float u = atan2(localDir.y, localDir.x) * (float)one_over_two_pi;
-  const float v = acos(localDir.z) * (float)one_over_pi;
-  const vec2f uv = make_vec2f(u, v);
+  const float v = acos(clamp(localDir.z, -1.f, 1.f)) * (float)one_over_pi;
 
   // clamp2edge for theta for tex lookup, to prevent light leaks at the poles
   const vec2f uvc = make_vec2f(
       u, clamp(v, self->map->halfTexel.y, 1.0f - self->map->halfTexel.y));
+
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, uvc);
   res.radiance = get3f(self->map, lookup) * self->radianceScale;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
+  vec2f uv = uvc + self->map->halfTexel;
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)
-  const vec2f uvd = frac(uv + self->map->halfTexel);
-  res.pdf = Distribution2D_pdf(self->distribution, uvd);
+  uv.x = frac(uv.x);
+  res.pdf = Distribution2D_pdf(self->distribution, uv);
   res.pdf *= (float)one_over_two_pi_sqr * rsqrt(1.f - sqr(localDir.z));
 
   return res;
@@ -202,11 +192,6 @@ task
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
-
-export void *uniform HDRILight_sample_dummy_addr()
-{
-  return (void *uniform)HDRILight_sample_dummy;
-}
 
 export void *uniform HDRILight_sample_addr()
 {

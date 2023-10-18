@@ -5,6 +5,7 @@
 #include "Data.h"
 #include "common/ISPCRTBuffers.h"
 #include "ospray/ospray.h"
+#include "rkcommon/utility/getEnvVar.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
 namespace ospray {
@@ -13,13 +14,17 @@ Data::Data(api::ISPCDevice &device,
     const void *sharedData,
     OSPDataType type,
     const vec3ul &numItems,
-    const vec3l &byteStride)
+    const vec3l &byteStride,
+    OSPDeleterCallback freeFunction,
+    const void *userData)
     : ISPCDeviceObject(device),
       appSharedPtr((char *)sharedData),
       shared(true),
       type(type),
       numItems(numItems),
-      byteStride(byteStride)
+      byteStride(byteStride),
+      freeFunction(freeFunction),
+      userData(userData)
 {
   if (sharedData == nullptr) {
     throw std::runtime_error("OSPData: shared buffer is NULL");
@@ -61,6 +66,9 @@ Data::~Data()
         child->refDec();
     }
   }
+  if (freeFunction) {
+    freeFunction(userData, appSharedPtr);
+  }
 }
 
 ispc::Data1D Data::emptyData1D;
@@ -86,17 +94,53 @@ void Data::init()
   if (shared) {
     ispcrt::Context &ispcrtContext = getISPCDevice().getIspcrtContext();
     ispcrt::Device &ispcrtDevice = getISPCDevice().getIspcrtDevice();
+    const size_t sizeBytes = byteStride.z * numItems.z;
     auto memType = ispcrtDevice.getMemoryAllocType(addr);
-
-    if (memType != ISPCRT_ALLOC_TYPE_SHARED) {
-      const size_t sizeBytes = byteStride.z * numItems.z;
+    switch (memType) {
+    case ISPCRT_ALLOC_TYPE_HOST:
+    default:
+      // std::cerr << "HOST..COPYING" << std::endl;
       shared = false;
-      // TODO: is the padding still needed?
       view = make_buffer_shared_unique<char>(ispcrtContext,
-          sizeBytes + 16,
+          sizeBytes, // TODO: is a padding of +16 still needed?
           ispcrt::SharedMemoryUsageHint::HostWriteDeviceRead);
       addr = view->data();
       std::memcpy(addr, appSharedPtr, sizeBytes);
+      break;
+    case ISPCRT_ALLOC_TYPE_SHARED:
+      // std::cerr << "SHARED..USE IN PLACE" << std::endl;
+      break;
+    case ISPCRT_ALLOC_TYPE_DEVICE:
+      static bool useDeviceMemory =
+          (rkcommon::utility::getEnvVar<int>("OSPRAY_ALLOW_DEVICE_MEMORY")
+                  .value_or(0)
+              != 0);
+      if (useDeviceMemory) {
+        // std::cerr << "DEVICE..USE IN PLACE" << std::endl;
+        addr = appSharedPtr;
+      } else {
+        // std::cerr << "DEVICE..COPYING" << std::endl;
+        shared = false;
+        // make a handle for the app's memory
+        ISPCRTNewMemoryViewFlags memFlags = {
+            ISPCRT_ALLOC_TYPE_DEVICE, ISPCRT_SM_APPLICATION_MANAGED_DEVICE};
+        ISPCRTMemoryView handleOnAppsMemory = ispcrtNewMemoryView(
+            ispcrtDevice.handle(), appSharedPtr, sizeBytes, &memFlags);
+        // make ospray's shared buffer
+        view = make_buffer_shared_unique<char>(ispcrtContext,
+            sizeBytes,
+            ispcrt::SharedMemoryUsageHint::HostWriteDeviceRead);
+        // copy to it
+        ispcrt::TaskQueue &ispcrtTaskQueue = getISPCDevice().getIspcrtQueue();
+        ispcrtCopyMemoryView(ispcrtTaskQueue.handle(),
+            view->handle(),
+            handleOnAppsMemory,
+            sizeBytes);
+        ispcrtTaskQueue.sync();
+        ispcrtRelease(handleOnAppsMemory);
+        addr = view->data();
+      }
+      break;
     }
   }
 #endif
@@ -178,6 +222,7 @@ void Data::commit()
   // If we were passed "shared" data that was not actually in USM we made a USM
   // copy of it, and need to update that copy on commit
   if (appSharedPtr && addr != appSharedPtr) {
+    // FIXME: handle ISPCRT_ALLOC_TYPE_DEVICE memory (needs device copy)
     const size_t sizeBytes = byteStride.z * numItems.z;
     std::memcpy(addr, appSharedPtr, sizeBytes);
   }

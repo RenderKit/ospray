@@ -4,10 +4,11 @@
 #include <assert.h>
 #include <vector>
 #include "common/OSPCommon.h"
+#include "ispcrt.h"
 #include "rkcommon/memory/malloc.h"
 #include "rkcommon/tasking/parallel_for.h"
 
-namespace rkcommon {
+namespace ospray {
 
 /* Signature of ispc-generated 'task' functions */
 using ISPCTaskFunc = void (*)(void *data,
@@ -22,8 +23,7 @@ using ISPCTaskFunc = void (*)(void *data,
     int taskCount1,
     int taskCount2);
 
-extern "C" OSPRAY_SDK_INTERFACE void *ISPCAlloc(
-    void **taskPtr, int64_t size, int32_t alignment)
+void *ospISPCAlloc(void **taskPtr, int64_t size, int32_t alignment)
 {
   if (*taskPtr == nullptr)
     *taskPtr = new std::vector<void *>;
@@ -33,7 +33,7 @@ extern "C" OSPRAY_SDK_INTERFACE void *ISPCAlloc(
   return ptr;
 }
 
-extern "C" OSPRAY_SDK_INTERFACE void ISPCSync(void *task)
+void ospISPCSync(void *task)
 {
   std::vector<void *> *lst = (std::vector<void *> *)task;
   for (size_t i = 0; i < lst->size(); i++)
@@ -41,7 +41,7 @@ extern "C" OSPRAY_SDK_INTERFACE void ISPCSync(void *task)
   delete lst;
 }
 
-extern "C" OSPRAY_SDK_INTERFACE void ISPCLaunch(void ** /*taskPtr*/,
+void ospISPCLaunch(void ** /*taskPtr*/,
     void *func,
     void *data,
     int taskCount0,
@@ -67,4 +67,10 @@ extern "C" OSPRAY_SDK_INTERFACE void ISPCLaunch(void ** /*taskPtr*/,
         taskCount2);
   });
 }
-} // namespace rkcommon
+
+void setIspcrtTaskingCallbacks()
+{
+  ispcrtSetTaskingCallbacks(ospISPCLaunch, ospISPCAlloc, ospISPCSync);
+}
+
+} // namespace ospray

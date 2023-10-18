@@ -6,17 +6,11 @@
 
 // ospray
 #include "VolumetricModel.h"
-#include "transferFunction/TransferFunction.h"
 
 namespace ospray {
 
 VolumetricModel::VolumetricModel(api::ISPCDevice &device, Volume *_volume)
-    : AddStructShared(device.getIspcrtContext(), device),
-      volumeAPI(_volume)
-#if OPENVKL_VERSION_MAJOR == 1
-      ,
-      vklIntervalContext(nullptr)
-#endif
+    : AddStructShared(device.getIspcrtContext(), device), volumeAPI(_volume)
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
 }
@@ -34,14 +28,12 @@ std::string VolumetricModel::toString() const
 
 void VolumetricModel::commit()
 {
-  volume = hasParam("volume") ? (Volume *)getParamObject("volume") : volumeAPI;
+  volume = getParamObject<Volume>("volume", volumeAPI.ptr);
   if (!volume)
     throw std::runtime_error(toString() + " received NULL 'volume'");
 
-  auto *transferFunction =
-      (TransferFunction *)getParamObject("transferFunction", nullptr);
-
-  if (transferFunction == nullptr)
+  transferFunction = getParamObject<TransferFunction>("transferFunction");
+  if (!transferFunction)
     throw std::runtime_error(toString() + " must have 'transferFunction'");
 
   // create value selector using transfer function and pass to volume
@@ -83,6 +75,10 @@ void VolumetricModel::commit()
   getSh()->anisotropy = getParam<float>("anisotropy", 0.f);
   getSh()->gradientShadingScale = getParam<float>("gradientShadingScale", 0.f);
   getSh()->userID = getParam<uint32>("id", RTC_INVALID_GEOMETRY_ID);
+
+  featureFlagsOther = FFO_VOLUME_IN_SCENE;
+  if (getSh()->gradientShadingScale > 0.f)
+    featureFlagsOther |= FFO_VOLUME_SCIVIS_SHADING;
 }
 
 RTCGeometry VolumetricModel::embreeGeometryHandle() const

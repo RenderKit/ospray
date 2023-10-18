@@ -35,7 +35,6 @@ add_definitions_ispc(
   -DOSPRAY_BEGIN_ISPC_NAMESPACE=
   -DOSPRAY_END_ISPC_NAMESPACE=
   -DSYCL_EXTERNAL=
-  -D__noinline=
 )
 
 ispc_target_add_sources(ospray_module_bilinear_patches

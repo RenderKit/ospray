@@ -19,7 +19,7 @@ std::string Instance::toString() const
 
 void Instance::commit()
 {
-  group = hasParam("group") ? (Group *)getParamObject("group") : groupAPI;
+  group = getParamObject<Group>("group", groupAPI.ptr);
   if (!group)
     throw std::runtime_error(toString() + " received NULL 'group'");
 

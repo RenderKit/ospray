@@ -8,7 +8,6 @@
 #include "common/ApplicationData.h"
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
-#include "common/Profiling.h"
 #include "rkcommon/utility/FixedArray.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
@@ -41,8 +40,7 @@ struct MPIOffloadDevice : public api::Device
 
   // Model Meta-Data //////////////////////////////////////////////////////
 
-  OSPMaterial newMaterial(
-      const char * /*ignored*/, const char *material_type) override;
+  OSPMaterial newMaterial(const char *material_type) override;
 
   OSPTransferFunction newTransferFunction(const char *type) override;
 
@@ -63,7 +61,9 @@ struct MPIOffloadDevice : public api::Device
   OSPData newSharedData(const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
-      const vec3l &byteStride) override;
+      const vec3l &byteStride,
+      OSPDeleterCallback,
+      const void *userPtr) override;
 
   OSPData newData(OSPDataType, const vec3ul &numItems) override;
 
@@ -149,7 +149,7 @@ struct MPIOffloadDevice : public api::Device
 
   int rootWorkerRank() const;
 
-  ObjectHandle allocateHandle() const;
+  ObjectHandle allocateHandle();
 
   /*! @{ read and write stream for the work commands */
   std::unique_ptr<rkcommon::networking::Fabric> fabric;
@@ -158,9 +158,17 @@ struct MPIOffloadDevice : public api::Device
 
   std::unordered_map<int64_t, FrameBufferMapping> framebufferMappings;
 
-  std::unordered_map<int64_t, Ref<ApplicationData>> sharedData;
+  // Refcount from the app side is managed by appRefCount
+  std::unordered_map<int64_t, ApplicationData> sharedData;
 
   std::unordered_set<int64_t> futures;
+
+  /* We track app ref counts locally to reduce how many retain/release commands
+   * we need to send to the worker nodes. This reduces communication costs for
+   * apps using the C++ wrappers or some automatic refcounting wrapper that
+   * calls retain/release a lot.
+   */
+  std::unordered_map<int64_t, int64_t> appRefCount;
 
   uint32_t maxCommandBufferEntries;
   uint32_t commandBufferSize;
@@ -171,10 +179,6 @@ struct MPIOffloadDevice : public api::Device
   rkcommon::networking::FixedBufferWriter commandBuffer;
 
   bool initialized{false};
-
-#ifdef ENABLE_PROFILING
-  mpicommon::ProfilingPoint masterStart;
-#endif
 };
 
 template <typename Fcn>

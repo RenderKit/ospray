@@ -8,8 +8,8 @@
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "ISPCDevice.h"
 #include "TileOperation.h"
-#include "common/Profiling.h"
 #include "fb/FrameBufferView.h"
+#include "rkcommon/tracing/Tracing.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
 #endif
@@ -137,6 +137,8 @@ void DFB::startNewFrame(const float errorThreshold)
     tileBufferOffsets.clear();
   }
   if (getSh()->colorBufferFormat != OSP_FB_NONE) {
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
+        "startFrame::reserveTileGatherBuf", "DFB"));
     // Allocate a conservative upper bound of space which we'd need to
     // store the compressed tiles
     const size_t uncompressedSize = masterMsgSize(getSh()->colorBufferFormat,
@@ -146,8 +148,11 @@ void DFB::startNewFrame(const float errorThreshold)
         hasIDBuf());
     const size_t compressedSize = snappy::MaxCompressedLength(uncompressedSize);
     tileGatherBuffer.resize(myTiles.size() * compressedSize, 0);
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
   }
 
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("startFrame::initTilesInfo", "DFB"));
   {
     std::lock_guard<std::mutex> fbLock(mutex);
     std::lock_guard<std::mutex> numTilesLock(numTilesMutex);
@@ -204,6 +209,7 @@ void DFB::startNewFrame(const float errorThreshold)
 
     frameIsActive = true;
   }
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
   mpicommon::barrier(mpiGroup.comm).wait();
 
   if (isFrameComplete(0))
@@ -437,19 +443,14 @@ void DFB::waitUntilFinished()
   using namespace mpicommon;
   using namespace std::chrono;
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint start;
-#endif
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("waitUntilDoneCond", "DFB"));
   std::unique_lock<std::mutex> lock(mutex);
   frameDoneCond.wait(lock, [&] { return frameIsDone; });
 
   frameIsActive = false;
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint end;
-  std::cout << "Waiting for completion and sync of cancellation status: "
-            << elapsedTimeMs(start, end) << "ms\n";
-#endif
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   setCompletedEvent(OSP_WORLD_RENDERED);
 
@@ -457,19 +458,14 @@ void DFB::waitUntilFinished()
     return;
   }
 
-#ifdef ENABLE_PROFILING
-  start = ProfilingPoint();
-#endif
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("finalGather", "DFB"));
   if (getSh()->colorBufferFormat != OSP_FB_NONE) {
     gatherFinalTiles();
   } else if (hasVarianceBuffer) {
     gatherFinalErrors();
   }
-#ifdef ENABLE_PROFILING
-  end = ProfilingPoint();
-  std::cout << "Gather final tiles took: " << elapsedTimeMs(start, end)
-            << "ms\n";
-#endif
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 }
 
 void DFB::processMessage(WriteTileMessage *msg)
@@ -741,9 +737,8 @@ void DFB::gatherFinalTiles()
   using namespace mpicommon;
   using namespace std::chrono;
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint preGatherComputeStart;
-#endif
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("preGatherComputeStart", "DFB"));
 
   const size_t tileSize = masterMsgSize(getSh()->colorBufferFormat,
       hasDepthBuffer,
@@ -765,11 +760,10 @@ void DFB::gatherFinalTiles()
     }
   }
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint startGather;
-  std::cout << "Pre-gather took: "
-            << elapsedTimeMs(preGatherComputeStart, startGather) << "ms\n";
-#endif
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("gatherTileData", "DFB");
+  });
 
   // Each rank sends us the offset lists of the individually compressed tiles
   // in its compressed data buffer
@@ -829,18 +823,13 @@ void DFB::gatherFinalTiles()
 
   tileOffsetsGather.wait();
 
-#ifdef ENABLE_PROFILING
-  ProfilingPoint endGather;
-  std::cout << "Gather time: " << elapsedTimeMs(startGather, endGather)
-            << "ms\n";
-#endif
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   // Now we must decompress each ranks data to process it, though we
   // already know how much data each is sending us and where to write it.
   if (IamTheMaster()) {
-#ifdef ENABLE_PROFILING
-    ProfilingPoint startFbWrite;
-#endif
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::beginEvent("masterTileWrite", "DFB"));
     tasking::parallel_for(workerSize(), [&](int i) {
       tasking::parallel_for(numTilesExpected[i], [&](int tid) {
         int processTileOffset = processOffsets[i] + tid;
@@ -868,11 +857,7 @@ void DFB::gatherFinalTiles()
         }
       });
     });
-#ifdef ENABLE_PROFILING
-    ProfilingPoint endFbWrite;
-    std::cout << "Master tile write time: "
-              << elapsedTimeMs(startFbWrite, endFbWrite) << "ms\n";
-#endif
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
     // not accurate, did we render something at all
     localFBonMaster->getSh()->super.numPixelsRendered = totalTilesExpected;
   }
@@ -1023,10 +1008,6 @@ float DFB::tileError(const uint32_t tileID)
 
 void DFB::endFrame(const float errorThreshold, const Camera *camera)
 {
-  if (localFBonMaster)
-    for (auto &p : frameOps)
-      p->process(nullptr, camera);
-
   // only refine on master
   if (mpicommon::IamTheMaster()) {
     frameVariance = tileErrorRegion.refine(errorThreshold);
@@ -1038,11 +1019,49 @@ void DFB::endFrame(const float errorThreshold, const Camera *camera)
   setCompletedEvent(OSP_FRAME_FINISHED);
 }
 
-AsyncEvent DFB::postProcess(const Camera *, bool)
+AsyncEvent DFB::postProcess(const Camera *camera, bool)
 {
   AsyncEvent event;
-  // TODO: Modify DistributedLoadBalancer and move here post-processing loop
-  // from endFrame()
+  if (localFBonMaster && !frameOps.empty()) {
+    // FrameOps are run on the device, but the DFB receives the final image
+    // data over MPI into host-memory, and returns host-memory pointers
+    // directly. So, we need to copy the host data to the device, run the frame
+    // ops, then copy it back. If we can receive with MPI directly into device
+    // memory we can drop this first copy step. When running on the CPU device,
+    // these copies will become no-ops.
+    ispcrt::TaskQueue &tq = getISPCDevice().getIspcrtQueue();
+    if (localFBonMaster->colorBuffer) {
+      tq.copyToDevice(*localFBonMaster->colorBuffer);
+    }
+    if (localFBonMaster->depthBuffer) {
+      tq.copyToDevice(*localFBonMaster->depthBuffer);
+    }
+    if (localFBonMaster->normalBuffer) {
+      tq.copyToDevice(*localFBonMaster->normalBuffer);
+    }
+    if (localFBonMaster->albedoBuffer) {
+      tq.copyToDevice(*localFBonMaster->albedoBuffer);
+    }
+    tq.sync();
+
+    for (auto &p : frameOps) {
+      p->process(nullptr, camera);
+    }
+
+    if (localFBonMaster->colorBuffer) {
+      tq.copyToHost(*localFBonMaster->colorBuffer);
+    }
+    if (localFBonMaster->depthBuffer) {
+      tq.copyToHost(*localFBonMaster->depthBuffer);
+    }
+    if (localFBonMaster->normalBuffer) {
+      tq.copyToHost(*localFBonMaster->normalBuffer);
+    }
+    if (localFBonMaster->albedoBuffer) {
+      tq.copyToHost(*localFBonMaster->albedoBuffer);
+    }
+    tq.sync();
+  }
   return event;
 }
 

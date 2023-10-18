@@ -1,32 +1,28 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Builder.h"
-#include "ospray_testing.h"
-#include "rkcommon/utility/multidim_index_sequence.h"
-
-using namespace rkcommon::math;
+#include "test_pt_material.h"
 
 namespace ospray {
 namespace testing {
 
-struct PtObj : public detail::Builder
+struct PtObj : public PtMaterial
 {
   PtObj() = default;
   ~PtObj() override = default;
 
-  void commit() override;
-
-  cpp::Group buildGroup() const override;
-  cpp::World buildWorld() const override;
+  std::vector<cpp::Material> buildMaterials() const override;
 };
 
 static cpp::Material makeObjMaterial(
-    const std::string &rendererType, vec3f Kd, vec3f Ks)
+    float d, vec3f Kd, vec3f Ks, float Ns, vec3f Tf)
 {
-  cpp::Material mat(rendererType, "obj");
+  cpp::Material mat("obj");
+  mat.setParam("d", d);
   mat.setParam("kd", Kd);
   mat.setParam("ks", Ks);
+  mat.setParam("ns", Ns);
+  mat.setParam("tf", Tf);
   mat.commit();
 
   return mat;
@@ -34,75 +30,53 @@ static cpp::Material makeObjMaterial(
 
 // Inlined definitions ////////////////////////////////////////////////////
 
-void PtObj::commit()
+std::vector<cpp::Material> PtObj::buildMaterials() const
 {
-  Builder::commit();
-  addPlane = false;
-}
-
-cpp::Group PtObj::buildGroup() const
-{
-  cpp::Geometry sphereGeometry("sphere");
-
+  std::vector<cpp::Material> materials;
   constexpr int dimSize = 5;
-
   index_sequence_2D numSpheres(dimSize);
 
-  std::vector<vec3f> spheres;
-  std::vector<uint8_t> index;
-  std::vector<cpp::Material> materials;
+  // d
+  for (int i = 0; i < dimSize; i++)
+    materials.push_back(makeObjMaterial(1.f - float(i) / (dimSize - 1),
+        vec3f(.8f, 0.f, 0.f),
+        vec3f(0.f),
+        10.f,
+        vec3f(0.f)));
 
-  for (auto i : numSpheres) {
-    auto i_f = static_cast<vec2f>(i);
-    spheres.emplace_back(i_f.x, i_f.y, 0.f);
+  // Kd
+  for (int i = 0; i < dimSize; i++)
+    materials.push_back(makeObjMaterial(1.f,
+        vec3f(1.f - float(i) / (dimSize - 1), 0.f, 0.f),
+        vec3f(0.f),
+        10.f,
+        vec3f(0.f)));
 
-    auto l = i_f / (dimSize - 1);
-    materials.push_back(makeObjMaterial(rendererType,
-        lerp(l.x, vec3f(0.1f), vec3f(1.f, 0.f, 0.f)),
-        lerp(l.y, vec3f(0.f), vec3f(1.f))));
+  // Ks
+  for (int i = 0; i < dimSize; i++)
+    materials.push_back(makeObjMaterial(1.f,
+        vec3f(.8f, 0.f, 0.f),
+        vec3f(float(i) / (dimSize - 1)),
+        1000.f,
+        vec3f(0.f)));
 
-    index.push_back(numSpheres.flatten(i));
-  }
+  // Ns
+  for (int i = 0; i < dimSize; i++)
+    materials.push_back(makeObjMaterial(1.f,
+        vec3f(.8f, 0.f, 0.f),
+        vec3f(1.f),
+        lerp(float(i) / (dimSize - 1), 10.f, 1000.f),
+        vec3f(0.f)));
 
-  sphereGeometry.setParam("sphere.position", cpp::CopiedData(spheres));
-  sphereGeometry.setParam("radius", 0.4f);
-  sphereGeometry.commit();
+  // Tf
+  for (int i = 0; i < dimSize; i++)
+    materials.push_back(makeObjMaterial(1.f,
+        vec3f(.2f, 0.f, 0.f),
+        vec3f(.2f, 0.f, 0.f),
+        1000.f,
+        (float(i) / (dimSize - 1)) * vec3f(1.f, .5f, .5f)));
 
-  cpp::GeometricModel model(sphereGeometry);
-
-  model.setParam("material", cpp::CopiedData(materials));
-  model.setParam("index", cpp::CopiedData(index));
-  model.commit();
-
-  cpp::Group group;
-
-  group.setParam("geometry", cpp::CopiedData(model));
-  group.commit();
-
-  return group;
-}
-
-cpp::World PtObj::buildWorld() const
-{
-  auto world = Builder::buildWorld();
-
-  std::vector<cpp::Light> lightHandles;
-
-  cpp::Light dirLight("distant");
-  dirLight.setParam("direction", vec3f(1.f, -1.f, 1.f));
-  dirLight.commit();
-
-  cpp::Light ambientLight("ambient");
-  ambientLight.setParam("intensity", 0.4f);
-  ambientLight.setParam("color", vec3f(1.f));
-  ambientLight.commit();
-
-  lightHandles.push_back(dirLight);
-  lightHandles.push_back(ambientLight);
-
-  world.setParam("light", cpp::CopiedData(lightHandles));
-
-  return world;
+  return materials;
 }
 
 OSP_REGISTER_TESTING_BUILDER(PtObj, test_pt_obj);

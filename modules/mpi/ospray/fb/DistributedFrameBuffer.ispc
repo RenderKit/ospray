@@ -226,11 +226,13 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
 }
 
 // computes the error for a tile
-export uniform float DFB_computeErrorForTile(const uniform vec2i &size,
+export uniform float DFB_computeErrorForTile(
+    const uniform int *uniform const size_, // vec2i
     const VaryingTile *uniform accum,
     const VaryingTile *uniform variance,
     const uniform float accumID)
 {
+  const uniform vec2i size = make_vec2i(size_[0], size_[1]);
   const uniform int maxi = size.y * (TILE_SIZE / programCount);
   const uniform float rcpAccumID = rcpf(accumID + 1);
   const uniform float accHalfScale = rcpf(accumID / 2 + 1);

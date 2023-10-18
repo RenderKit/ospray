@@ -38,15 +38,15 @@ struct OSPRAY_SDK_INTERFACE Camera
   // Data members //
 
   // if motionBlur in local camera space; otherwise in world-space:
-  vec3f pos; // position of the camera
-  vec3f dir; // main direction of the camera
-  vec3f up; // up direction of the camera
+  vec3f pos{0.f, 0.f, 0.f}; // position of the camera
+  vec3f dir{0.f, 0.f, 1.f}; // main direction of the camera
+  vec3f up{0.f, 1.f, 0.f}; // up direction of the camera
 
   float nearClip{1e-6f}; // near clipping distance
   // definition of the image region, may even be outside of [0..1]^2
   // to simulate sensor shift
-  vec2f imageStart; // lower left corner
-  vec2f imageEnd; // upper right corner
+  vec2f imageStart{0.f, 0.f}; // lower left corner
+  vec2f imageEnd{1.f, 1.f}; // upper right corner
   range1f shutter{0.5f, 0.5f}; // start and end time of camera shutter time
   float rollingShutterDuration{0.0f};
   OSPShutterType shutterType{OSP_SHUTTER_GLOBAL};

@@ -82,44 +82,6 @@ OSPRay `world` and objects common in all scenes (for example lighting
 and ground plane), which can be conveniently overridden in the derived
 builders.
 
-Given below are different scenes listed with their string identifiers:
-
-boxes
-: A simple scene with `box` geometry type.
-
-cornell_box
-: A scene depicting a classic cornell box with `quad` mesh geometry type
-for rendering two cubes and a `quad` light type.
-
-curves
-: A simple scene with `curve` geometry type and options to change
-`curveBasis`. For details on different basis' please check documentation
-of [curves].
-
-gravity_spheres_volume
-: A scene with `structuredRegular` type of [volume].
-
-gravity_spheres_isosurface
-: A scene depicting iso-surface rendering of `gravity_spheres_volume`
-using geometry type `isosurface`.
-
-perlin_noise_volumes
-: An example scene with `structuredRegular` volume type depicting perlin
-noise.
-
-random_spheres
-: A simple scene depicting `sphere` geometry type.
-
-streamlines
-: A scene showcasing streamlines geometry derived from `curve` geometry
-type.
-
-subdivision_cube
-: A scene with a cube of `subdivision` geometry type to showcase
-subdivision surfaces.
-
-unstructured_volume
-: A simple scene with a volume of `unstructured` volume type.
 
 ### Renderer
 
@@ -135,22 +97,6 @@ to change `turbidity` and `sunDirection`.
 
 ![Rendering an evening sky with the `renderSunSky` option.][imgRenderSunSky]
 
-
-MPI Distributed Tutorials
-=========================
-
-The MPI Distributed tutorials demonstrate various ways that distributed
-applications using MPI can leverage OSPRay's distributed rendering
-capabilities to render distributed, replicated, and partially replicated
-data across the processes. The tutorials will be built as part of OSPRay
-when running cmake with
-
-    cmake \
-      -DOSPRAY_ENABLE_APPS=ON \
-      -DOSPRAY_ENABLE_APPS_TUTORIALS=ON \
-      -DOSPRAY_MODULE_MPI=ON \
-      -DOSPRAY_MPI_BUILD_TUTORIALS=ON \
-      <other args>
 
 ospMPIDistribTutorial
 ---------------------

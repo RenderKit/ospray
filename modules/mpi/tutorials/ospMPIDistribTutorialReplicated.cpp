@@ -16,7 +16,6 @@
 #include <memory>
 #include <random>
 #include "GLFWDistribOSPRayWindow.h"
-#include "example_common.h"
 #include "ospray/ospray_cpp.h"
 #include "ospray/ospray_cpp/ext/rkcommon.h"
 #include "ospray/ospray_util.h"

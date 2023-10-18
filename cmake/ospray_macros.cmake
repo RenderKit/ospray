@@ -76,22 +76,22 @@ macro(ospray_fix_ispc_target_list)
   if (NUM_TARGETS EQUAL 1
       AND NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x4"
       AND NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x8")
-    if (EMBREE_ISA_SUPPORTS_SSE4 AND
+    if (EMBREE_ISA_SSE42 AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "sse4")
       list(APPEND OSPRAY_ISPC_TARGET_LIST sse4)
-    elseif (EMBREE_ISA_SUPPORTS_AVX AND
+    elseif (EMBREE_ISA_AVX AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx")
       list(APPEND OSPRAY_ISPC_TARGET_LIST avx)
-    elseif (EMBREE_ISA_SUPPORTS_AVX2 AND
+    elseif (EMBREE_ISA_AVX2 AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx2")
       list(APPEND OSPRAY_ISPC_TARGET_LIST avx2)
-    elseif (EMBREE_ISA_SUPPORTS_AVX512SKX AND
+    elseif (EMBREE_ISA_AVX512 AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512skx-i32x16")
       list(APPEND OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
-    elseif (EMBREE_ISA_SUPPORTS_NEON AND
+    elseif (EMBREE_ISA_NEON AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x4")
       list(APPEND OSPRAY_ISPC_TARGET_LIST neon-i32x4)
-    elseif (EMBREE_ISA_SUPPORTS_NEON2X AND
+    elseif (EMBREE_ISA_NEON2X AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x8")
       list(APPEND OSPRAY_ISPC_TARGET_LIST neon-i32x8)
     endif()
@@ -105,22 +105,22 @@ macro(ospray_configure_ispc_isa)
     "Target ISA (SSE4, AVX, AVX2, AVX512SKX, NEON, NEON2X, or ALL)")
   string(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 
-  if(EMBREE_ISA_SUPPORTS_SSE4 AND OPENVKL_ISA_SSE4)
+  if(EMBREE_ISA_SSE42 AND OPENVKL_ISA_SSE4)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} SSE4)
   endif()
-  if(EMBREE_ISA_SUPPORTS_AVX AND OPENVKL_ISA_AVX)
+  if(EMBREE_ISA_AVX AND OPENVKL_ISA_AVX)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX)
   endif()
-  if(EMBREE_ISA_SUPPORTS_AVX2 AND OPENVKL_ISA_AVX2)
+  if(EMBREE_ISA_AVX2 AND OPENVKL_ISA_AVX2)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX2)
   endif()
-  if(EMBREE_ISA_SUPPORTS_AVX512SKX AND OPENVKL_ISA_AVX512SKX)
+  if(EMBREE_ISA_AVX512 AND OPENVKL_ISA_AVX512SKX)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512SKX)
   endif()
-  if(EMBREE_ISA_SUPPORTS_NEON AND OPENVKL_ISA_NEON)
+  if(EMBREE_ISA_NEON AND OPENVKL_ISA_NEON)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} NEON)
   endif()
-  if(EMBREE_ISA_SUPPORTS_NEON2X AND OPENVKL_ISA_NEON2X)
+  if(EMBREE_ISA_NEON2X AND OPENVKL_ISA_NEON2X)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} NEON2X)
   endif()
 
@@ -130,34 +130,34 @@ macro(ospray_configure_ispc_isa)
   unset(OSPRAY_ISPC_TARGET_LIST)
   if (OSPRAY_BUILD_ISA STREQUAL "ALL")
 
-    if(EMBREE_ISA_SUPPORTS_SSE4 AND OPENVKL_ISA_SSE4)
+    if(EMBREE_ISA_SSE42 AND OPENVKL_ISA_SSE4)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
       message(STATUS "OSPRay SSE4 ISA target enabled.")
     endif()
-    if(EMBREE_ISA_SUPPORTS_AVX AND OPENVKL_ISA_AVX)
+    if(EMBREE_ISA_AVX AND OPENVKL_ISA_AVX)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx)
       message(STATUS "OSPRay AVX ISA target enabled.")
     endif()
-    if(EMBREE_ISA_SUPPORTS_AVX2 AND OPENVKL_ISA_AVX2)
+    if(EMBREE_ISA_AVX2 AND OPENVKL_ISA_AVX2)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
       message(STATUS "OSPRay AVX2 ISA target enabled.")
     endif()
-    if(EMBREE_ISA_SUPPORTS_AVX512SKX AND OPENVKL_ISA_AVX512SKX)
+    if(EMBREE_ISA_AVX512 AND OPENVKL_ISA_AVX512SKX)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512skx-i32x16)
       message(STATUS "OSPRay AVX512SKX ISA target enabled.")
     endif()
-    if(EMBREE_ISA_SUPPORTS_NEON AND OPENVKL_ISA_NEON)
+    if(EMBREE_ISA_NEON AND OPENVKL_ISA_NEON)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} neon-i32x4)
       message(STATUS "OSPRay NEON ISA target enabled.")
     endif()
-    if(EMBREE_ISA_SUPPORTS_NEON2X AND OPENVKL_ISA_NEON2X)
+    if(EMBREE_ISA_NEON2X AND OPENVKL_ISA_NEON2X)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} neon-i32x8)
       message(STATUS "OSPRay NEON2X ISA target enabled.")
     endif()
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "AVX512SKX")
 
-    if(NOT EMBREE_ISA_SUPPORTS_AVX512SKX)
+    if(NOT EMBREE_ISA_AVX512)
       message(FATAL_ERROR "Your Embree build does not support AVX512SKX!")
     endif()
     if(NOT OPENVKL_ISA_AVX512SKX)
@@ -167,7 +167,7 @@ macro(ospray_configure_ispc_isa)
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "AVX2")
 
-    if(NOT EMBREE_ISA_SUPPORTS_AVX2)
+    if(NOT EMBREE_ISA_AVX2)
       message(FATAL_ERROR "Your Embree build does not support AVX2!")
     endif()
     if(NOT OPENVKL_ISA_AVX2)
@@ -177,7 +177,7 @@ macro(ospray_configure_ispc_isa)
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "AVX")
 
-    if(NOT EMBREE_ISA_SUPPORTS_AVX)
+    if(NOT EMBREE_ISA_AVX)
       message(FATAL_ERROR "Your Embree build does not support AVX!")
     endif()
     if(NOT OPENVKL_ISA_AVX)
@@ -187,7 +187,7 @@ macro(ospray_configure_ispc_isa)
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "SSE4")
 
-    if(NOT EMBREE_ISA_SUPPORTS_SSE4)
+    if(NOT EMBREE_ISA_SSE42)
       message(FATAL_ERROR "Your Embree build does not support SSE4!")
     endif()
     if(NOT OPENVKL_ISA_SSE4)
@@ -197,7 +197,7 @@ macro(ospray_configure_ispc_isa)
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "NEON")
 
-    if (NOT EMBREE_ISA_SUPPORTS_NEON)
+    if (NOT EMBREE_ISA_NEON)
       message(FATAL_ERROR "Your Embree build does not support NEON!")
     endif()
     if (NOT OPENVKL_ISA_NEON)
@@ -207,7 +207,7 @@ macro(ospray_configure_ispc_isa)
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "NEON2X")
 
-    if (NOT EMBREE_ISA_SUPPORTS_NEON2X)
+    if (NOT EMBREE_ISA_NEON2X)
       message(FATAL_ERROR "Your Embree build does not support NEON2X!")
     endif()
     if (NOT OPENVKL_ISA_NEON2X)
@@ -223,25 +223,10 @@ macro(ospray_configure_ispc_isa)
   ospray_fix_ispc_target_list()
 endmacro()
 
-macro(ospray_configure_dpcpp_target)
-  set(OSPRAY_SYCL_AOT_DEVICES ${EMBREE_SYCL_AOT_DEVICES})
-
-  # TODO: Is this revision info going to be visible to end users?
-  # In the end the public release
-  # of the code should probably just have one revision it targets right?
-  # The final consumer release rev.
-  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "dg2")
-    set(OSPRAY_SYCL_AOT_DEVICE_REVISION 8)
-  elseif (OSPRAY_SYCL_AOT_DEVICES STREQUAL "pvc")
-    # What final rev to pick here?
-    set(OSPRAY_SYCL_AOT_DEVICE_REVISION 5)
-  endif()
-
-  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
-    set(OSPRAY_SYCL_TARGET spir64)
-  else()
-    set(OSPRAY_SYCL_TARGET spir64_gen)
-  endif()
+macro(ospray_add_sycl_target target)
+  target_compile_features(${target} PUBLIC cxx_std_17)
+  target_compile_options(${target} PUBLIC ${OSPRAY_CXX_FLAGS_SYCL})
+  target_link_options(${target} PUBLIC ${OSPRAY_LINKER_FLAGS_SYCL})
 endmacro()
 
 ## Target creation macros ##
@@ -276,6 +261,22 @@ macro(ospray_install_library name component)
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
   ospray_install_target(${name} ${component})
   ospray_sign_target(${name})
+
+  if (${ARGN})
+    # Install the namelink in the devel component. This command also includes the
+    # RUNTIME and ARCHIVE components a second time to prevent an "install TARGETS
+    # given no ARCHIVE DESTINATION for static library target" error. Installing
+    # these components twice doesn't hurt anything.
+    install(TARGETS ${name}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT devel
+        NAMELINK_ONLY
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT ${component}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT devel
+    )
+  endif()
 endmacro()
 
 macro(ospray_install_target name component)
@@ -297,33 +298,11 @@ macro(ospray_install_target name component)
     NAMESPACE ospray::
     COMPONENT devel
   )
-
-  # Install the namelink in the devel component. This command also includes the
-  # RUNTIME and ARCHIVE components a second time to prevent an "install TARGETS
-  # given no ARCHIVE DESTINATION for static library target" error. Installing
-  # these components twice doesn't hurt anything.
-  install(TARGETS ${name}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      COMPONENT devel
-      NAMELINK_ONLY
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT ${component}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      COMPONENT devel
-  )
 endmacro()
 
 ## Compiler configuration macros ##
 
 macro(ospray_configure_compiler)
-  if (WIN32)
-    set(OSPRAY_PLATFORM_WIN  1)
-    set(OSPRAY_PLATFORM_UNIX 0)
-  else()
-    set(OSPRAY_PLATFORM_WIN  0)
-    set(OSPRAY_PLATFORM_UNIX 1)
-  endif()
-
   # unhide compiler to make it easier for users to see what they are using
   mark_as_advanced(CLEAR CMAKE_CXX_COMPILER)
 
@@ -341,17 +320,15 @@ macro(ospray_configure_compiler)
 
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM" OR OSPRAY_MODULE_GPU)
     set(OSPRAY_COMPILER_DPCPP TRUE)
-    if(WIN32) # icx on Windows behaves like msvc
-      # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
-      set(CMAKE_NINJA_CMCLDEPS_RC OFF)
-      include(msvc)
-    else()
-      include(dpcpp)
+    include(dpcpp)
+    if(WIN32)
+      set(CMAKE_NINJA_CMCLDEPS_RC OFF) # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
     endif()
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     set(OSPRAY_COMPILER_ICC TRUE)
-    if(WIN32) # icc on Windows behaves like msvc
-      include(msvc)
+    if(WIN32)
+      set(CMAKE_NINJA_CMCLDEPS_RC OFF) # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
+      include(msvc) # icc on Windows behaves like msvc
     else()
       include(icc)
     endif()
@@ -374,7 +351,12 @@ macro(ospray_configure_compiler)
 
   if (WIN32)
     # increase stack to 8MB (the default size of 1MB is too small for our apps)
-    # note: linker options are independent of compiler (icc or MSVC)
+    if (OSPRAY_MODULE_GPU)
+      get_filename_component(SYCL_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME_WE)
+      if (SYCL_COMPILER_NAME STREQUAL "clang++")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Xlinker")
+      endif()
+    endif()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
   endif()
 endmacro()
@@ -387,31 +369,33 @@ endmacro()
 
 ## Embree functions/macros ##
 
-function(ospray_check_embree_feature FEATURE DESCRIPTION)
+function(ospray_check_embree_feature FEATURE VALUE DESC)
   set(FEATURE EMBREE_${FEATURE})
-  if(NOT ${ARGN})
-    if (${FEATURE})
-      message(FATAL_ERROR "OSPRay requires Embree to be compiled "
-              "without ${DESCRIPTION} (${FEATURE}=OFF).")
+  if (${ARGN})
+    if (${FEATURE} STREQUAL ${VALUE})
+      return()
     endif()
   else()
-    if (NOT ${FEATURE})
-      message(FATAL_ERROR "OSPRay requires Embree to be compiled "
-              "with support for ${DESCRIPTION} (${FEATURE}=ON).")
+    if ((${VALUE} AND ${FEATURE}) OR (NOT ${VALUE} AND NOT ${FEATURE}))
+      return()
     endif()
   endif()
+  message(FATAL_ERROR "OSPRay requires Embree to ${DESC} (compiled with ${FEATURE}=${VALUE}).")
 endfunction()
 
 function(ospray_verify_embree_features)
-  ospray_check_embree_feature(ISPC_SUPPORT ISPC)
-  ospray_check_embree_feature(FILTER_FUNCTION "intersection filter")
-  ospray_check_embree_feature(GEOMETRY_TRIANGLE "triangle geometries")
-  ospray_check_embree_feature(GEOMETRY_CURVE "spline curve geometries")
-  ospray_check_embree_feature(GEOMETRY_USER "user geometries")
-  ospray_check_embree_feature(RAY_PACKETS "ray packets")
-  ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
+  ospray_check_embree_feature(ISPC_SUPPORT ON "support ISPC")
+  ospray_check_embree_feature(FILTER_FUNCTION ON "support intersection filter")
+  ospray_check_embree_feature(GEOMETRY_TRIANGLE ON "support triangle geometries")
+  ospray_check_embree_feature(GEOMETRY_CURVE ON "support spline curve geometries")
+  ospray_check_embree_feature(GEOMETRY_USER ON "support user geometries")
+  ospray_check_embree_feature(RAY_PACKETS ON "support ray packets")
+  ospray_check_embree_feature(BACKFACE_CULLING OFF "have backface culling disabled")
+# FIXME available in Embree >v4.3
+#  ospray_check_embree_feature(GEOMETRY_INSTANCE ON "support instances")
+  ospray_check_embree_feature(MAX_INSTANCE_LEVEL_COUNT 1 "only support single-level instancing" ON)
   if (OSPRAY_MODULE_GPU)
-    ospray_check_embree_feature(SYCL_SUPPORT "DPC++/SYCL support")
+    ospray_check_embree_feature(SYCL_SUPPORT ON "support DPC++/SYCL")
   endif()
 endfunction()
 
@@ -444,71 +428,6 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED FIND_AS_DEPENDENCY)
       IMPORTED_LOCATION_${CONFIGURATION})
   endif()
   message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
-endmacro()
-
-macro(ospray_determine_embree_isa_support)
-  if (EMBREE_MAX_ISA STREQUAL "DEFAULT" OR
-      EMBREE_MAX_ISA STREQUAL "NONE")
-    set(EMBREE_ISA_SUPPORTS_SSE2      ${EMBREE_ISA_SSE2})
-    set(EMBREE_ISA_SUPPORTS_SSE4      ${EMBREE_ISA_SSE42})
-    set(EMBREE_ISA_SUPPORTS_AVX       ${EMBREE_ISA_AVX})
-    set(EMBREE_ISA_SUPPORTS_AVX2      ${EMBREE_ISA_AVX2})
-    set(EMBREE_ISA_SUPPORTS_AVX512SKX ${EMBREE_ISA_AVX512SKX})
-    set(EMBREE_ISA_SUPPORTS_NEON      ${EMBREE_ISA_NEON})
-    if(EMBREE_ISA_NEON2X)
-      set(EMBREE_ISA_SUPPORTS_NEON2X  ${EMBREE_ISA_NEON2X})
-    else() # workaround missing config in Embree v4.0.0
-      if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64" AND NOT EMBREE_ISA_SUPPORTS_NEON)
-        set(EMBREE_ISA_SUPPORTS_NEON2X TRUE)
-      else()
-        set(EMBREE_ISA_SUPPORTS_NEON2X FALSE)
-      endif()
-    endif()
-  else()
-    set(EMBREE_ISA_SUPPORTS_SSE2      FALSE)
-    set(EMBREE_ISA_SUPPORTS_SSE4      FALSE)
-    set(EMBREE_ISA_SUPPORTS_AVX       FALSE)
-    set(EMBREE_ISA_SUPPORTS_AVX2      FALSE)
-    set(EMBREE_ISA_SUPPORTS_AVX512SKX FALSE)
-    set(EMBREE_ISA_SUPPORTS_NEON      FALSE)
-    set(EMBREE_ISA_SUPPORTS_NEON2X    FALSE)
-
-    if (EMBREE_MAX_ISA STREQUAL "SSE2")
-      set(EMBREE_ISA_SUPPORTS_SSE2 TRUE)
-    elseif (EMBREE_MAX_ISA MATCHES "SSE4\\.[12]$")
-      set(EMBREE_ISA_SUPPORTS_SSE2 TRUE)
-      set(EMBREE_ISA_SUPPORTS_SSE4 TRUE)
-    elseif (EMBREE_MAX_ISA STREQUAL "AVX")
-      set(EMBREE_ISA_SUPPORTS_SSE2 TRUE)
-      set(EMBREE_ISA_SUPPORTS_SSE4 TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX  TRUE)
-    elseif (EMBREE_MAX_ISA STREQUAL "AVX2")
-      set(EMBREE_ISA_SUPPORTS_SSE2 TRUE)
-      set(EMBREE_ISA_SUPPORTS_SSE4 TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX  TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX2 TRUE)
-    elseif (EMBREE_MAX_ISA STREQUAL "AVX512SKX")
-      set(EMBREE_ISA_SUPPORTS_SSE2      TRUE)
-      set(EMBREE_ISA_SUPPORTS_SSE4      TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX       TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX2      TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX512SKX TRUE)
-    elseif (EMBREE_MAX_ISA STREQUAL "NEON")
-      set(EMBREE_ISA_SUPPORTS_NEON      TRUE)
-    elseif (EMBREE_MAX_ISA STREQUAL "NEON2X")
-      set(EMBREE_ISA_SUPPORTS_NEON2X    TRUE)
-    endif()
-  endif()
-
-  if (NOT (EMBREE_ISA_SUPPORTS_SSE4
-           OR EMBREE_ISA_SUPPORTS_AVX
-           OR EMBREE_ISA_SUPPORTS_AVX2
-           OR EMBREE_ISA_SUPPORTS_AVX512SKX
-           OR EMBREE_ISA_SUPPORTS_NEON
-           OR EMBREE_ISA_SUPPORTS_NEON2X))
-      message(FATAL_ERROR
-        "Your Embree build needs to support at least one ISA >= SSE4.1 or NEON!")
-  endif()
 endmacro()
 
 macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED FIND_AS_DEPENDENCY)

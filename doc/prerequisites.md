@@ -21,7 +21,7 @@ before you can build OSPRay you need the following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools.
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.20.0 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.21.1 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
     If ISPC is not found by CMake its location can be hinted with the
@@ -37,17 +37,17 @@ before you can build OSPRay you need the following prerequisites:
     be built from source as part of the [superbuild](#cmake-superbuild).
     Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
     to `OpenMP` or `Internal`.
--   OSPRay also heavily uses Intel [Embree], installing version 4.0.0
+-   OSPRay also heavily uses Intel [Embree], installing version 4.3.0
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
--   OSPRay support volume rendering (enabled by default via
-    `OSPRAY_ENABLE_VOLUMES`), which heavily uses Intel [Open
-    VKL](https://www.openvkl.org/), version 1.3.2 or newer is required.
+-   OSPRay supports volume rendering (enabled by default via
+    `OSPRAY_ENABLE_VOLUMES`), which heavily uses Intel [Open VKL],
+    version 2.0.0 or newer is required.
     If Open VKL is not found by CMake its location can be hinted with
     the variable `openvkl_DIR`, or disable `OSPRAY_ENABLE_VOLUMES`.
 -   OSPRay also provides an optional module implementing the `denoiser`
     image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
-    module requires Intel [Open Image Denoise] in version 2.0.0 or
+    module requires Intel [Open Image Denoise] in version 2.1.0 or
     newer. You may need to hint the location of the library with the
     CMake variable `OpenImageDenoise_DIR`.
 -   For the optional MPI modules (enabled by `OSPRAY_MODULE_MPI`), which
@@ -83,3 +83,22 @@ Under Windows please directly use the appropriate installers for
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
 version) and [Embree](https://github.com/embree/embree/releases/).
 
+### Additional Prerequisites for GPU Build {-}
+
+To build OSPRay's GPU module you need
+
+-   a SYCL compiler, either the open source [oneAPI DPC++ Compiler
+    2023-09-22](https://github.com/intel/llvm/releases/tag/nightly-2023-09-22)
+    or the latest [Intel oneAPI DPC++/C++
+    Compiler](https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#dpcpp-cpp)
+-   a recent [CMake](http://www.cmake.org), version 3.25.3 or higher
+-   the [oneAPI Level Zero Loader
+    v1.12.0](https://github.com/oneapi-src/level-zero/releases/tag/v1.12.0)
+    development packages
+    -   On Linux Ubuntu 22.04 there are prebuilt packages available for
+        this: `level-zero-devel` and `level-zero`
+    -   Other Linux distributions require building these packages from source
+    -   On Windows, you can use the single package
+        `level-zero_<version>_win-sdk`; note you will need to set the
+        environment variable `LEVEL_ZERO_ROOT` to the location of the
+        SDK

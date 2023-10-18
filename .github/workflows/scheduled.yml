@@ -52,11 +52,10 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      runs-on: '["Windows", "build", "NAS", "mpi"]'
+      runs-on: '["build", "NAS", "mpi"]'
       cmd: |
-        scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON" "ON"
+        scripts\build\win.ps1 -G "Visual Studio 17 2022" -buildType Debug -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-windows-debug-all
-      # artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
 ### TEST JOBS ###
@@ -66,9 +65,9 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ospray/docker-images:arch
-      runs-on: '["Linux", "avx512"]'
+      runs-on: '"avx512"'
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       artifact-in: build-linux-debug-all
       artifact-out: test-linux-debug-all
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -89,7 +88,7 @@ jobs:
     needs: build-windows-debug-all
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["Windows", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX2

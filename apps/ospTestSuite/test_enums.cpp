@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <gtest/gtest.h>
+#ifdef SYCL_LANGUAGE_VERSION
+#include "sycl/sycl.hpp"
+#endif
 #include "embree4/rtcore.h"
 #include "ospray/OSPEnums.h"
 
@@ -109,8 +112,8 @@ TEST(Enums, VKLFilter)
 {
   ASSERT_LE(sizeof(OSPVolumeFilter), sizeof(VKLFilter));
   ASSERT_EQ(OSP_VOLUME_FILTER_NEAREST, VKL_FILTER_NEAREST);
-  ASSERT_EQ(OSP_VOLUME_FILTER_TRILINEAR, VKL_FILTER_TRILINEAR);
-  ASSERT_EQ(OSP_VOLUME_FILTER_TRICUBIC, VKL_FILTER_TRICUBIC);
+  ASSERT_EQ(OSP_VOLUME_FILTER_LINEAR, VKL_FILTER_LINEAR);
+  ASSERT_EQ(OSP_VOLUME_FILTER_CUBIC, VKL_FILTER_CUBIC);
 }
 
 TEST(Enums, VKLFormat)

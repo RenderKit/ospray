@@ -104,7 +104,7 @@ void LiveWriteMultipleTile::process(const ispc::Tile &tile)
       // short, which leads to vast over-estimation of variance; thus
       // estimate variance now, when accum buffer is also one (the buffered)
       // tile short
-      const float prevErr = DFB_computeErrorForTile((ispc::vec2i &)sz,
+      const float prevErr = DFB_computeErrorForTile(sz,
           (ispc::VaryingTile *)&accum,
           (ispc::VaryingTile *)&variance,
           maxAccumID - 1);
@@ -131,7 +131,7 @@ void LiveWriteMultipleTile::process(const ispc::Tile &tile)
             (ispc::VaryingTile *)&accum);
       }
       // but still need to update the error
-      error = DFB_computeErrorForTile((ispc::vec2i &)sz,
+      error = DFB_computeErrorForTile(sz,
           (ispc::VaryingTile *)&accum,
           (ispc::VaryingTile *)&variance,
           maxAccumID);

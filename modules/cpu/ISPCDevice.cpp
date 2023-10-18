@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #ifdef OSPRAY_TARGET_SYCL
-#include <level_zero/ze_api.h>
-// ze_api and sycl level zero backend must be in this order
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
 #endif
 
@@ -18,6 +16,7 @@
 #include "fb/ImageOp.h"
 #include "fb/LocalFB.h"
 #include "geometry/GeometricModel.h"
+#include "ispc_tasksys.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
@@ -204,9 +203,7 @@ void ISPCDevice::commit()
 {
   Device::commit();
 
-  // TODO: Should this somehow report an error if app trying to change and
-  // recommit these params?
-  if (!ispcrtContext) {
+  if (!userContext) {
 #ifdef OSPRAY_TARGET_SYCL
     sycl::context *appSyclCtx =
         static_cast<sycl::context *>(getParam<void *>("syclContext", nullptr));
@@ -249,12 +246,16 @@ void ISPCDevice::commit()
       appZeDevice = &syclZeDeviceHandle;
     }
 
+    const bool newContext = appZeCtx || !ispcrtContext;
+
     if (appZeCtx) {
+      userContext = true;
       ispcrtContext = ispcrt::Context(
           ISPCRT_DEVICE_TYPE_GPU, (ISPCRTGenericHandle)*appZeCtx);
       ispcrtDevice =
           ispcrt::Device(ispcrtContext, (ISPCRTGenericHandle)*appZeDevice);
-    } else {
+    } else if (!ispcrtContext) {
+      // internally, from Multidevice GPU
       ispcrt::Context *ispcrtContextPtr = static_cast<ispcrt::Context *>(
           getParam<void *>("ispcrtContext", nullptr));
       ispcrt::Device *ispcrtDevicePtr = static_cast<ispcrt::Device *>(
@@ -268,32 +269,46 @@ void ISPCDevice::commit()
         ispcrtDevice = ispcrt::Device(ispcrtContext);
       }
     }
+
+    if (newContext) {
+      syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
+          reinterpret_cast<pi_native_handle>(
+              ispcrtDevice.nativePlatformHandle()));
+      syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
+          reinterpret_cast<pi_native_handle>(
+              ispcrtDevice.nativeDeviceHandle()));
+
+      syclContext = sycl::ext::oneapi::level_zero::make_context(
+          std::vector<sycl::device>{syclDevice},
+          reinterpret_cast<pi_native_handle>(
+              ispcrtDevice.nativeContextHandle()),
+          true);
+
+      syclQueue = sycl::queue(syclContext,
+          syclDevice,
+          {sycl::property::queue::enable_profiling(),
+              sycl::property::queue::in_order()});
+
+      if (embreeDevice) {
+        rtcReleaseDevice(embreeDevice);
+        embreeDevice = nullptr;
+      }
+#ifdef OSPRAY_ENABLE_VOLUMES
+      if (vklDevice) {
+        vklReleaseDevice(vklDevice);
+        vklDevice = nullptr;
+      }
+#endif
+    }
 #else
+    userContext = true; // on CPU there is no other choice
     ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
     ispcrtDevice = ispcrt::Device(ispcrtContext);
 #endif
     ispcrtQueue = ispcrt::TaskQueue(ispcrtDevice);
-
-#ifdef OSPRAY_TARGET_SYCL
-    syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
-        reinterpret_cast<pi_native_handle>(
-            ispcrtDevice.nativePlatformHandle()));
-    syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
-        reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeDeviceHandle()));
-
-    syclContext = sycl::ext::oneapi::level_zero::make_context(
-        std::vector<sycl::device>{syclDevice},
-        reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
-        true);
-
-    syclQueue = sycl::queue(syclContext,
-        syclDevice,
-        {sycl::property::queue::enable_profiling(),
-            sycl::property::queue::in_order()});
-#endif
   }
 
-  tasking::initTaskingSystem(numThreads, true);
+  setIspcrtTaskingCallbacks();
 
   if (!embreeDevice) {
 #ifdef OSPRAY_TARGET_SYCL
@@ -314,14 +329,10 @@ void ISPCDevice::commit()
 
 #ifdef OSPRAY_ENABLE_VOLUMES
   if (!vklDevice) {
-#if OPENVKL_VERSION_MAJOR == 1
-    vklLoadModule("cpu_device");
-#else
     vklInit();
-#endif
 
 #ifdef OSPRAY_TARGET_SYCL
-    vklDevice = vklNewDevice("gpu_4");
+    vklDevice = vklNewDevice("gpu");
     vklDeviceSetVoidPtr(
         vklDevice, "syclContext", static_cast<void *>(&syclContext));
 #else
@@ -387,9 +398,12 @@ int ISPCDevice::loadModule(const char *name)
 OSPData ISPCDevice::newSharedData(const void *sharedData,
     OSPDataType type,
     const vec3ul &numItems,
-    const vec3l &byteStride)
+    const vec3l &byteStride,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr)
 {
-  return (OSPData) new Data(*this, sharedData, type, numItems, byteStride);
+  return (OSPData) new Data(
+      *this, sharedData, type, numItems, byteStride, freeFunction, userPtr);
 }
 
 OSPData ISPCDevice::newData(OSPDataType type, const vec3ul &numItems)
@@ -454,8 +468,7 @@ OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
 // Model Meta-Data ////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-OSPMaterial ISPCDevice::newMaterial(
-    const char * /*renderer_type - unused*/, const char *material_type)
+OSPMaterial ISPCDevice::newMaterial(const char *material_type)
 {
   return (OSPMaterial)Material::createInstance(material_type, *this);
 }
@@ -526,7 +539,7 @@ void ISPCDevice::setObjectParam(
 void ISPCDevice::removeObjectParam(OSPObject _object, const char *name)
 {
   ManagedObject *object = (ManagedObject *)_object;
-  ManagedObject *existing = object->getParam<ManagedObject *>(name, nullptr);
+  ManagedObject *existing = object->getParamObject<ManagedObject>(name);
   if (existing)
     existing->refDec();
   object->removeParam(name);

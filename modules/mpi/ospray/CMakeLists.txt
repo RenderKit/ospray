@@ -155,30 +155,20 @@ ospray_install_library(ospray_module_mpi_distributed_cpu mpi)
 if (OSPRAY_MODULE_GPU)
   include(${ISPCRT_DIR}/interop.cmake)
 
-  ospray_configure_dpcpp_target()
-
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
   set_source_files_properties(${OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES} PROPERTIES
       LANGUAGE CXX)
 
-  add_library(ospray_module_mpi_distributed_gpu SHARED
-    ${OSPRAY_MPI_DISTRIBUTED_CPP_SOURCES}
-    ${OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES})
-
-  set_target_properties(ospray_module_mpi_distributed_gpu PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON)
-
-  target_link_libraries(ospray_module_mpi_distributed_gpu
-  PRIVATE
-    Snappy::snappy
-    rkcommon::rkcommon
-    ospray_mpi_common
-    ospray_module_gpu_kernels
-    ospray_module_gpu
+  add_library(ospray_module_mpi_distributed_gpu_kernels OBJECT
+    ${OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES}
   )
 
-  target_include_directories(ospray_module_mpi_distributed_gpu
+  target_link_libraries(ospray_module_mpi_distributed_gpu_kernels
+  PRIVATE
+    ospray_module_gpu_kernels
+  )
+
+  target_include_directories(ospray_module_mpi_distributed_gpu_kernels
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -188,11 +178,23 @@ if (OSPRAY_MODULE_GPU)
       ${PROJECT_BINARY_DIR}/ospray/
   )
 
-  target_compile_options(ospray_module_mpi_distributed_gpu
+  if (OSPRAY_COMPILER_NEEDS_X_CPP)
+    target_compile_options(ospray_module_mpi_distributed_gpu_kernels PRIVATE -x c++)
+  endif()
+
+  target_compile_options(ospray_module_mpi_distributed_gpu_kernels
   PRIVATE
-    -x c++
+    -g0 # XXX debug on device broken
+    -Wdouble-promotion
   )
 
+  # Install and export without DESTINATION to turn it into INTERFACE library
+  install(TARGETS ospray_module_mpi_distributed_gpu_kernels EXPORT ospray_Exports)
+
+  add_library(ospray_module_mpi_distributed_gpu SHARED
+    ${OSPRAY_MPI_DISTRIBUTED_CPP_SOURCES}
+  )
+ 
   # Note: GPU hybrid code defines are brought in for us by linking the CPU module
   target_compile_definitions(ospray_module_mpi_distributed_gpu PRIVATE
     OSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
@@ -200,6 +202,17 @@ if (OSPRAY_MODULE_GPU)
     # so we have to include it with import define so the table will be imported
     # from 'ospray' library
     OBJECTFACTORY_IMPORT
+  )
+
+  target_link_libraries(ospray_module_mpi_distributed_gpu
+  PUBLIC
+    ospray_module_gpu_kernels
+    ospray_module_mpi_distributed_gpu_kernels
+  PRIVATE
+    Snappy::snappy
+    rkcommon::rkcommon
+    ospray_mpi_common
+    ospray_module_gpu
   )
 
   ospray_install_library(ospray_module_mpi_distributed_gpu lib)

@@ -9,15 +9,12 @@ else()
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
 endif()
 
-if (NOT WIN32)
-  set(PATCH sed -ie "s/size_t AdvanceToNextTag/inline \\0/" snappy.cc)
-endif()
-
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/snappy/archive/refs/tags/1.1.9.zip"
-  URL_HASH "SHA256=e170ce0def2c71d0403f5cda61d6e2743373f9480124bcfcd0fa9b3299d428d9"
+  URL "https://github.com/google/snappy/archive/refs/tags/1.1.10.zip"
+  URL_HASH "SHA256=3c6f7b07f92120ebbba5f7742f2cc2386fd46c53f5730322b7b90d4afc126fca"
 
-  PATCH_COMMAND ${PATCH}
+  # `patch` is not available on all systems, so use `git apply` instead
+  PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/snappy-sign-compare.patch
 
   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""

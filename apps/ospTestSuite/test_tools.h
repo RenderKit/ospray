@@ -70,7 +70,8 @@ class OSPImageTools
   template <typename T>
   OsprayStatus compareImgWithBaselineTmpl(const T *testImage,
       const T *baselineImage,
-      const std::string &baselineName);
+      const std::string &baselineName,
+      const float pixelConversionFactor = 1.0f);
 
  public:
   OSPImageTools(vec2i imgSize,

@@ -6,7 +6,7 @@
 #include "DynamicLoadBalancer.h"
 #include <math.h>
 #include "Messaging.h"
-#include "common/Profiling.h"
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/ArrayView.h"
 
 namespace ospray {
@@ -175,13 +175,19 @@ void DynamicLoadBalancer::incoming(
   auto *header = (DynamicLBMessage *)message->data;
 
   if (header->type == TERMINATED) {
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::setMarker("TERMINATED", "DynamicLB"));
     int numTerm = ((DynamicLBTerminatedMessage *)message->data)->numTerm;
     updateActiveTasks(numTerm);
   } // TERMINATED
   else if (header->type == NEED_WORK) {
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::setMarker("NEED_WORK", "DynamicLB"));
     sendWork(header->senderRank);
   } // NEED_WORK
   else if (header->type == RECV_WORK) {
+    RKCOMMON_IF_TRACING_ENABLED(
+        rkcommon::tracing::setMarker("RECV_WORK", "DynamicLB"));
     auto *workMsg = (DynamicLBSendWorkMessage *)message->data;
     int numRecvWork = workMsg->numWorkItems;
     auto *workItems =
@@ -208,6 +214,8 @@ void DynamicLoadBalancer::incoming(
 // --------------------------------------------------------------------
 void DynamicLoadBalancer::requestWork()
 {
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::setMarker("requestWork", "DynamicLB"));
   const int msgSize = sizeof(DynamicLBMessage);
 
   int base, power;
@@ -251,6 +259,8 @@ void DynamicLoadBalancer::sendMultiWork()
   if (stolenWork.empty()) {
     return;
   }
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::setMarker("sendMultiWork", "DynamicLB"));
 
   // Each thief will be sent workPerRank work items
   const size_t workPerThief = stolenWork.size() / thiefIds.size();

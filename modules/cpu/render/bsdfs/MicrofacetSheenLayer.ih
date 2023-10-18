@@ -15,208 +15,13 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 struct MicrofacetSheenLayer
 {
   BSDF super;
+  float weight;
 
-  varying BSDF *varying substrate;
   vec3f R;
   SheenDistribution microfacet;
   float roughness;
   const MicrofacetAlbedoTables *uniform microfacetAlbedoTables;
-
-  float weight;
 };
-
-inline BSDF_EvalRes MicrofacetSheenLayer_eval(const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &ffh)
-{
-  const varying MicrofacetSheenLayer *uniform self =
-      (const varying MicrofacetSheenLayer *uniform)super;
-
-  float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.f)
-    return make_BSDF_EvalRes_zero();
-  float cosThetaI = dot(wi, getN(super));
-
-  // Evaluate the substrate
-  BSDF_EvalRes substrate;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    const BSDF *f = self->substrate;
-#else
-  foreach_unique (f in self->substrate) {
-#endif
-    // Because of how the dispatches are unrolled to hide the potential
-    // recursion (that we know will terminate) from the SYCL compiler we have
-    // to call MultiBSDF directly here if we have a layer over a MultiBSDF
-    if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-      substrate = MultiBSDF_eval(f, wo, wi, ffh); // f->eval(f, wo, wi);
-    } else {
-      substrate =
-          BSDF_dispatch_eval_base(f, wo, wi, ffh); // f->eval(f, wo, wi);
-    }
-  }
-
-  // Energy conservation
-  float Ro = MicrofacetSheenAlbedoTable_eval(
-                 self->microfacetAlbedoTables, cosThetaO, self->roughness)
-      * self->weight;
-  float Ri = MicrofacetSheenAlbedoTable_eval(
-                 self->microfacetAlbedoTables, abs(cosThetaI), self->roughness)
-      * self->weight;
-  float T = min(1.f - Ro, 1.f - Ri);
-  substrate.value = substrate.value * T;
-
-  float coatPickProb = Ro;
-  float substratePickProb = 1.f - coatPickProb;
-
-  if (cosThetaI > 0.f) {
-    // Compute the microfacet normal
-    vec3f wh = normalize(wo + wi);
-    float cosThetaH = dot(wh, getN(super));
-    float cosThetaOH = dot(wo, wh);
-    float cosThetaIH = dot(wi, wh);
-
-    // Evaluate the coating reflection
-    float D = eval(self->microfacet, cosThetaH);
-    float G =
-        evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
-
-    BSDF_EvalRes coat;
-    coat.pdf = uniformSampleHemispherePDF();
-    coat.value = self->R * (D * G * rcp(4.f * cosThetaO) * self->weight);
-
-    // Compute the total reflection
-    BSDF_EvalRes res;
-    res.pdf = coatPickProb * coat.pdf + substratePickProb * substrate.pdf;
-    res.value = coat.value + substrate.value;
-    return res;
-  } else {
-    // Return the substrate transmission
-    substrate.pdf *= substratePickProb;
-    return substrate;
-  }
-}
-
-inline BSDF_SampleRes MicrofacetSheenLayer_sample(
-    const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec2f &s,
-    float ss,
-    const uniform FeatureFlagsHandler &ffh)
-{
-  const varying MicrofacetSheenLayer *uniform self =
-      (const varying MicrofacetSheenLayer *uniform)super;
-  BSDF_SampleRes res;
-
-  float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.f)
-    return make_BSDF_SampleRes_zero();
-
-  // Energy conservation
-  float Ro = MicrofacetSheenAlbedoTable_eval(
-                 self->microfacetAlbedoTables, cosThetaO, self->roughness)
-      * self->weight;
-
-  // Sample the coating or the substrate
-  BSDF_EvalRes substrate;
-
-  float coatPickProb = Ro;
-  float substratePickProb = 1.f - coatPickProb;
-
-  if (ss < coatPickProb) {
-    // Sample the coating reflection
-    res.type = BSDF_DIFFUSE_REFLECTION;
-    res.wi = getFrame(super) * uniformSampleHemisphere(s);
-
-    // Evaluate the substrate
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const BSDF *f = self->substrate;
-#else
-    foreach_unique (f in self->substrate) {
-#endif
-      // Because of how the dispatches are unrolled to hide the potential
-      // recursion (that we know will terminate) from the SYCL compiler we have
-      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
-      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        substrate = MultiBSDF_eval(f, wo, res.wi, ffh); // f->eval(f, wo, wi);
-      } else {
-        substrate =
-            BSDF_dispatch_eval_base(f, wo, res.wi, ffh); // f->eval(f, wo, wi);
-      }
-    }
-  } else {
-    // Sample the substrate
-    float ss1 =
-        (ss - coatPickProb) * rcp(substratePickProb); // reallocate sample
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const BSDF *f = self->substrate;
-#else
-    foreach_unique (f in self->substrate) {
-#endif
-      // Because of how the dispatches are unrolled to hide the potential
-      // recursion (that we know will terminate) from the SYCL compiler we have
-      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
-      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
-        res = MultiBSDF_sample(f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
-      } else {
-        res = BSDF_dispatch_sample_base(
-            f, wo, s, ss1, ffh); // f->sample(f, wo, s, ss1);
-      }
-    }
-    if (reduce_max(res.weight) <= 0.f)
-      return res;
-    substrate.pdf = res.pdf;
-    substrate.value = res.weight
-        * ((res.type & BSDF_SPECULAR)
-                ? 1.f
-                : res.pdf); // correctly handle delta distributions
-  }
-
-  float cosThetaI = dot(res.wi, getN(super));
-
-  // Energy conservation
-  float Ri = MicrofacetSheenAlbedoTable_eval(
-                 self->microfacetAlbedoTables, abs(cosThetaI), self->roughness)
-      * self->weight;
-  float T = min(1.f - Ro, 1.f - Ri);
-  substrate.value = substrate.value * T;
-
-  if (res.type & BSDF_SPECULAR) {
-    // If we sampled a delta distribution, we don't have to evaluate the coating
-    // reflection (see MultiBSDF_sample)
-    res.weight = substrate.value * rcp(substratePickProb);
-    return res;
-  } else if (cosThetaI <= 0.f) {
-    // If we sampled transmission, we just have to return the substrate
-    // transmission
-    res.pdf = substratePickProb * substrate.pdf;
-    res.weight = substrate.value * rcp(res.pdf);
-    return res;
-  } else {
-    // Compute the microfacet normal
-    vec3f wh = normalize(wo + res.wi);
-    float cosThetaH = dot(wh, getN(super));
-    float cosThetaOH = dot(wo, wh);
-    float cosThetaIH = dot(res.wi, wh);
-
-    // Evaluate the coating reflection
-    float D = eval(self->microfacet, cosThetaH);
-    float G =
-        evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
-
-    BSDF_EvalRes coat;
-    coat.pdf = uniformSampleHemispherePDF();
-    coat.value = self->R * (D * G * rcp(4.f * cosThetaO) * self->weight);
-
-    // Compute the total reflection
-    res.pdf = coatPickProb * coat.pdf + substratePickProb * substrate.pdf;
-    res.weight = (coat.value + substrate.value) * rcp(res.pdf);
-    return res;
-  }
-}
 
 inline void MicrofacetSheenLayer_Constructor(
     varying MicrofacetSheenLayer *uniform self,
@@ -233,16 +38,8 @@ inline void MicrofacetSheenLayer_Constructor(
           R), // lean towards substrate (sheen is only at edge)
       BSDF_DIFFUSE_REFLECTION | substrate->scatteringType,
       BSDF_TYPE_MICROFACET_SHEEN_LAYER,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      MicrofacetSheenLayer_eval,
-      MicrofacetSheenLayer_sample,
-#endif
       frame);
 
-  self->substrate = substrate;
   self->R = R;
   self->microfacet = make_SheenDistribution(roughnessToAlpha(roughness));
   self->roughness = roughness;
@@ -283,3 +80,143 @@ inline vec3f MicrofacetSheenLayer_getTransparency(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
+
+// Eval macros
+
+#define MICROFACETSHEENLAYER_EVAL(msl_name, substrate_bsdf, substrate_fn)      \
+  const varying MicrofacetSheenLayer *uniform msl =                            \
+      (const varying MicrofacetSheenLayer *uniform) & msl_name;                \
+                                                                               \
+  float cosThetaO = dot(wo, getN(&msl->super));                                \
+  if (cosThetaO <= 0.f)                                                        \
+    return make_BSDF_EvalRes_zero();                                           \
+  float cosThetaI = dot(wi, getN(&msl->super));                                \
+                                                                               \
+  /* Evaluate the substrate */                                                 \
+  BSDF_EvalRes substrate = substrate_fn(substrate_bsdf, wo, wi);               \
+                                                                               \
+  /* Energy conservation */                                                    \
+  float Ro = MicrofacetSheenAlbedoTable_eval(                                  \
+                 msl->microfacetAlbedoTables, cosThetaO, msl->roughness)       \
+      * msl->weight;                                                           \
+  float Ri = MicrofacetSheenAlbedoTable_eval(                                  \
+                 msl->microfacetAlbedoTables, abs(cosThetaI), msl->roughness)  \
+      * msl->weight;                                                           \
+  float T = min(1.f - Ro, 1.f - Ri);                                           \
+  substrate.value = substrate.value * T;                                       \
+                                                                               \
+  float coatPickProb = Ro;                                                     \
+  float substratePickProb = 1.f - coatPickProb;                                \
+                                                                               \
+  if (cosThetaI > 0.f) {                                                       \
+    /* Compute the microfacet normal */                                        \
+    vec3f wh = normalize(wo + wi);                                             \
+    float cosThetaH = dot(wh, getN(&msl->super));                              \
+    float cosThetaOH = dot(wo, wh);                                            \
+    float cosThetaIH = dot(wi, wh);                                            \
+                                                                               \
+    /* Evaluate the coating reflection */                                      \
+    float D = eval(msl->microfacet, cosThetaH);                                \
+    float G =                                                                  \
+        evalG2(msl->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH); \
+                                                                               \
+    BSDF_EvalRes coat;                                                         \
+    coat.pdf = uniformSampleHemispherePDF();                                   \
+    coat.value = msl->R * (D * G * rcp(4.f * cosThetaO) * msl->weight);        \
+                                                                               \
+    /* Compute the total reflection */                                         \
+    substrate.pdf =                                                            \
+        coatPickProb * coat.pdf + substratePickProb * substrate.pdf;           \
+    substrate.value = coat.value + substrate.value;                            \
+  } else {                                                                     \
+    /* Return the substrate transmission */                                    \
+    substrate.pdf *= substratePickProb;                                        \
+  }
+
+#define MICROFACETSHEENLAYER_EVAL_GET() substrate
+
+// Sample macros
+
+#define MICROFACETSHEENLAYER_SAMPLE(                                           \
+    msl_name, substrate_bsdf, substrate_eval, substrate_sample)                \
+  const varying MicrofacetSheenLayer *uniform msl =                            \
+      (const varying MicrofacetSheenLayer *uniform) & msl_name;                \
+  BSDF_SampleRes res;                                                          \
+                                                                               \
+  float cosThetaO = dot(wo, getN(&msl->super));                                \
+  if (cosThetaO <= 0.f)                                                        \
+    return make_BSDF_SampleRes_zero();                                         \
+                                                                               \
+  /* Energy conservation */                                                    \
+  float Ro = MicrofacetSheenAlbedoTable_eval(                                  \
+                 msl->microfacetAlbedoTables, cosThetaO, msl->roughness)       \
+      * msl->weight;                                                           \
+                                                                               \
+  /* Sample the coating or the substrate */                                    \
+  BSDF_EvalRes substrate;                                                      \
+                                                                               \
+  float coatPickProb = Ro;                                                     \
+  float substratePickProb = 1.f - coatPickProb;                                \
+                                                                               \
+  if (ss < coatPickProb) {                                                     \
+    /* Sample the coating reflection */                                        \
+    res.type = BSDF_DIFFUSE_REFLECTION;                                        \
+    res.wi = getFrame(&msl->super) * uniformSampleHemisphere(s);               \
+                                                                               \
+    /* Evaluate the substrate */                                               \
+    substrate = substrate_eval(substrate_bsdf, wo, res.wi);                    \
+  } else {                                                                     \
+    /* Sample the substrate */                                                 \
+    float ss1 =                                                                \
+        (ss - coatPickProb) * rcp(substratePickProb); /* reallocate sample */  \
+    res = substrate_sample(substrate_bsdf, wo, s, ss1);                        \
+    if (reduce_max(res.weight) <= 0.f)                                         \
+      return res;                                                              \
+                                                                               \
+    substrate.pdf = res.pdf;                                                   \
+    substrate.value = res.weight                                               \
+        * ((res.type & BSDF_SPECULAR)                                          \
+                ? 1.f                                                          \
+                : res.pdf); /* correctly handle delta distributions */         \
+  }                                                                            \
+                                                                               \
+  float cosThetaI = dot(res.wi, getN(&msl->super));                            \
+                                                                               \
+  /* Energy conservation */                                                    \
+  float Ri = MicrofacetSheenAlbedoTable_eval(                                  \
+                 msl->microfacetAlbedoTables, abs(cosThetaI), msl->roughness)  \
+      * msl->weight;                                                           \
+  float T = min(1.f - Ro, 1.f - Ri);                                           \
+  substrate.value = substrate.value * T;                                       \
+                                                                               \
+  if (res.type & BSDF_SPECULAR) {                                              \
+    /* If we sampled a delta distribution, we don't have to evaluate the       \
+     * coating reflection (see MultiBSDF_sample) */                            \
+    res.weight = substrate.value * rcp(substratePickProb);                     \
+  } else if (cosThetaI <= 0.f) {                                               \
+    /* If we sampled transmission, we just have to return the substrate        \
+     * transmission */                                                         \
+    res.pdf = substratePickProb * substrate.pdf;                               \
+    res.weight = substrate.value * rcp(res.pdf);                               \
+  } else {                                                                     \
+    /* Compute the microfacet normal */                                        \
+    vec3f wh = normalize(wo + res.wi);                                         \
+    float cosThetaH = dot(wh, getN(&msl->super));                              \
+    float cosThetaOH = dot(wo, wh);                                            \
+    float cosThetaIH = dot(res.wi, wh);                                        \
+                                                                               \
+    /* Evaluate the coating reflection */                                      \
+    float D = eval(msl->microfacet, cosThetaH);                                \
+    float G =                                                                  \
+        evalG2(msl->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH); \
+                                                                               \
+    BSDF_EvalRes coat;                                                         \
+    coat.pdf = uniformSampleHemispherePDF();                                   \
+    coat.value = msl->R * (D * G * rcp(4.f * cosThetaO) * msl->weight);        \
+                                                                               \
+    /* Compute the total reflection */                                         \
+    res.pdf = coatPickProb * coat.pdf + substratePickProb * substrate.pdf;     \
+    res.weight = (coat.value + substrate.value) * rcp(res.pdf);                \
+  }
+
+#define MICROFACETSHEENLAYER_SAMPLE_GET() res

@@ -17,8 +17,8 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 struct MicrofacetConductor
 {
   BSDF super;
-
   Fresnel *uniform fresnel;
+
   GGXDistribution microfacet;
   float roughness;
   const MicrofacetAlbedoTables *uniform microfacetAlbedoTables;
@@ -28,17 +28,15 @@ struct MicrofacetConductor
   vec3f fmsScale;
 };
 
-inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF *uniform super,
+inline BSDF_EvalRes MicrofacetConductor_eval(
+    const varying MicrofacetConductor *uniform self,
     const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &)
+    const vec3f &wi)
 {
-  const varying MicrofacetConductor *uniform self =
-      (const varying MicrofacetConductor *uniform)super;
   BSDF_EvalRes res;
 
-  float cosThetaO = dot(wo, getN(super));
-  float cosThetaI = dot(wi, getN(super));
+  float cosThetaO = dot(wo, getN(&self->super));
+  float cosThetaI = dot(wi, getN(&self->super));
   if (cosThetaO <= 0.f || cosThetaI <= 0.f)
     return make_BSDF_EvalRes_zero();
 
@@ -47,7 +45,7 @@ inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF *uniform super,
   float cosThetaOH = dot(wo, wh);
   float cosThetaIH = dot(wi, wh);
 
-  linear3f toLocal = transposed(getFrame(super));
+  linear3f toLocal = transposed(getFrame(&self->super));
   vec3f wo0 = toLocal * wo;
   vec3f wi0 = toLocal * wi;
   vec3f wh0 = toLocal * wh;
@@ -72,22 +70,19 @@ inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF *uniform super,
 }
 
 inline BSDF_SampleRes MicrofacetConductor_sample(
-    const varying BSDF *uniform super,
+    const varying MicrofacetConductor *uniform self,
     const vec3f &wo,
     const vec2f &s,
-    float,
-    const uniform FeatureFlagsHandler &)
+    float)
 {
-  const varying MicrofacetConductor *uniform self =
-      (const varying MicrofacetConductor *uniform)super;
   BSDF_SampleRes res;
 
-  float cosThetaO = dot(wo, getN(super));
+  float cosThetaO = dot(wo, getN(&self->super));
   if (cosThetaO <= 0.f)
     return make_BSDF_SampleRes_zero();
 
-  linear3f toGlobal = getFrame(super);
-  linear3f toLocal = transposed(getFrame(super));
+  linear3f toGlobal = getFrame(&self->super);
+  linear3f toLocal = transposed(getFrame(&self->super));
   vec3f wo0 = toLocal * wo;
 
   // Sample the microfacet normal
@@ -95,7 +90,7 @@ inline BSDF_SampleRes MicrofacetConductor_sample(
   vec3f wh = toGlobal * sampleVisible(self->microfacet, wo0, whPdf, s);
 
   res.wi = reflect(wo, wh);
-  float cosThetaI = dot(res.wi, getN(super));
+  float cosThetaI = dot(res.wi, getN(&self->super));
   if (cosThetaI <= 0.f)
     return make_BSDF_SampleRes_zero();
   float cosThetaOH = dot(wo, wh);
@@ -140,13 +135,6 @@ inline void MicrofacetConductor_Constructor(
       Favg * self->Eavg, // TODO better estimate
       BSDF_GLOSSY_REFLECTION,
       BSDF_TYPE_MICROFACET_CONDUCTOR,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      MicrofacetConductor_eval,
-      MicrofacetConductor_sample,
-#endif
       frame);
   self->fresnel = fresnel;
   self->microfacet =

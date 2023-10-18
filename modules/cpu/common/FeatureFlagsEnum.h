@@ -9,20 +9,6 @@
 #else
 #include <openvkl/openvkl.h>
 #endif
-
-#if OPENVKL_VERSION_MAJOR == 1
-#ifdef ISPC
-typedef uint64 VKLFeatureFlags;
-#else
-#include <cstdint>
-typedef uint64_t VKLFeatureFlags;
-#endif
-
-#define VKL_FEATURE_FLAGS_NONE 0
-#define VKL_FEATURE_FLAGS_DEFAULT -1
-
-#endif
-
 #endif
 
 #ifdef __cplusplus
@@ -129,6 +115,9 @@ enum FeatureFlagsOther
   // feature flags to distinguish between needing the volume rendering/sampling
   // code paths or just needing the isosurface traversal code path.
   FFO_VOLUME_IN_SCENE = 1 << 27,
+
+  // Volume shading in SciVis renderer
+  FFO_VOLUME_SCIVIS_SHADING = 1 << 28,
 
   FFO_ALL = 0xffffffff
 };

@@ -95,10 +95,8 @@ void Curves::commit()
       getParamDataT<vec3f>("vertex.position");
   if (vertexNoRadiusData) { // round, linear curves with constant radius
     float radius = getParam<float>("radius", 0.01f);
-    curveType = (OSPCurveType)getParam<uint8_t>(
-        "type", getParam<int32_t>("type", OSP_ROUND));
-    curveBasis = (OSPCurveBasis)getParam<uint8_t>(
-        "basis", getParam<int32_t>("basis", OSP_LINEAR));
+    curveType = (OSPCurveType)getParam<uint32_t>("type", OSP_ROUND);
+    curveBasis = (OSPCurveBasis)getParam<uint32_t>("basis", OSP_LINEAR);
     if (curveMap[std::make_pair(curveType, curveBasis)]
         != RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE)
       throw std::runtime_error(
@@ -120,13 +118,13 @@ void Curves::commit()
   } else { // embree curves
     vertexData = getParamDataT<vec4f>("vertex.position_radius", true);
 
-    curveType = (OSPCurveType)getParam<uint8_t>(
-        "type", getParam<int32_t>("type", OSP_UNKNOWN_CURVE_TYPE));
+    curveType =
+        (OSPCurveType)getParam<uint32_t>("type", OSP_UNKNOWN_CURVE_TYPE);
     if (curveType == OSP_UNKNOWN_CURVE_TYPE)
       throw std::runtime_error("curves geometry has invalid 'type'");
 
-    curveBasis = (OSPCurveBasis)getParam<uint8_t>(
-        "basis", getParam<int32_t>("basis", OSP_UNKNOWN_CURVE_BASIS));
+    curveBasis =
+        (OSPCurveBasis)getParam<uint32_t>("basis", OSP_UNKNOWN_CURVE_BASIS);
     if (curveBasis == OSP_UNKNOWN_CURVE_BASIS)
       throw std::runtime_error("curves geometry has invalid 'basis'");
 

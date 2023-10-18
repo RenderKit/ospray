@@ -11,8 +11,6 @@
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 #include "volume/Volume.ih"
-#include "volume/VolumetricModel.ih"
-#include "volume/transferFunction/TransferFunctionDispatch.ih"
 // c++ shared
 #include "IsosurfacesShared.h"
 
@@ -28,23 +26,13 @@ int Isosurfaces_primID(const Isosurfaces *uniform self, const float isovalue)
   return -1;
 }
 
-// A wrapper for backwards compatibility with the old VolumetricModel API
-Volume *uniform Isosurfaces_getVolume(const Isosurfaces *uniform self)
-{
-  if (self->volume) {
-    return self->volume;
-  }
-  return self->volumetricModel->volume;
-}
-
 export void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   uniform Isosurfaces *uniform self =
       (uniform Isosurfaces * uniform) args->geometryUserPtr;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
-  Volume *uniform volume = Isosurfaces_getVolume(self);
-  *out = make_box3fa(volume->boundingBox);
+  *out = make_box3fa(self->volume->boundingBox);
 }
 
 SYCL_EXTERNAL void Isosurfaces_postIntersect(const Geometry *uniform geometry,
@@ -54,21 +42,15 @@ SYCL_EXTERNAL void Isosurfaces_postIntersect(const Geometry *uniform geometry,
     const uniform FeatureFlagsHandler &ffh)
 {
   Isosurfaces *uniform self = (Isosurfaces * uniform) geometry;
-  Volume *uniform volume = Isosurfaces_getVolume(self);
 
   if (flags & (DG_NS | DG_NG))
     dg.Ng = dg.Ns =
-        Volume_getGradient(volume, ray.Ng /* actually local hit */, ffh);
+        Volume_getGradient(self->volume, ray.Ng /* actually local hit */, ffh);
 
   // convert ray-space epsilon (in ray.u) to object-/world-space using max(dir)
   // instead of costly length; the error is at most sqrt(3)~1.7, quite
   // acceptable for eps
   dg.epsilon = reduce_max(abs(ray.dir)) * ray.u;
-
-  if ((flags & DG_COLOR) && self->volumetricModel) {
-    TransferFunction *uniform xf = self->volumetricModel->transferFunction;
-    dg.color = TransferFunction_dispatch_get(xf, self->isovalues[ray.primID]);
-  }
 }
 
 SYCL_EXTERNAL void unmasked Isosurfaces_intersect_kernel(
@@ -99,31 +81,20 @@ SYCL_EXTERNAL void unmasked Isosurfaces_intersect_kernel(
   // wrt. "template arg" isOcclusionTest, alloca also not supported on GPU
   uniform uint8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
 
-#if OPENVKL_VERSION_MAJOR == 1
-  // We know if we have OpenVKL version 1 we're not targetting SYCL
-  iterator = vklInitHitIteratorV(self->vklHitContext,
-      (varying vkl_vec3f *)&ray->org,
-      (varying vkl_vec3f *)&ray->dir,
-      &tRange,
-      &time,
-      hitIteratorBuffer);
-#else
   iterator = vklInitHitIteratorV(&self->vklHitContext,
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,
-#ifdef OSPRAY_TARGET_SYCL
-      time,
-#else
-      &time,
+#ifndef OSPRAY_TARGET_SYCL
+      &
 #endif
+      time,
       hitIteratorBuffer
 #ifdef OSPRAY_TARGET_SYCL
       ,
       ff.volume
 #endif
   );
-#endif
 
   VKLHit hit;
   bool gotHit = vklIterateHitV(iterator,

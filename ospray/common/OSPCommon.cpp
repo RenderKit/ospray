@@ -730,21 +730,13 @@ uint32_t logLevel()
   return ospray::api::Device::current->logLevel;
 }
 
-OSPError loadLocalModule(const std::string &moduleName)
+OSPError loadLocalModule(const std::string &name)
 {
-  std::string name = moduleName;
-  // XXX backwards compatibility
-  if (moduleName == "ispc") {
-    name = "cpu";
-  }
-  // XXX backwards compatibility for mpi offload apps
-  if (moduleName == "mpi") {
-    name = "mpi_offload";
-  }
-
   std::string libName = "ospray_module_" + name;
   try {
-    loadLibrary(libName, reinterpret_cast<const void *>(&loadLocalModule));
+    loadLibrary(reinterpret_cast<const void *>(&loadLocalModule),
+        libName,
+        {OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH});
   } catch (const std::exception &e) {
     handleError(OSP_INVALID_OPERATION, e.what());
     return OSP_INVALID_OPERATION;

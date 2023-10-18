@@ -1,6 +1,76 @@
 Version History
 ---------------
 
+### Changes in v3.0.0:
+
+-   Beta support for Intel Xe GPUs (Intel Arc™ GPUs a Intel Data Center
+    GPU Flex and Max Series), exploiting ray tracing hardware support.
+    Implementation is based on the [SYCL](https://www.khronos.org/sycl/)
+    cross-platform programming language implemented by [Intel oneAPI
+    Data Parallel C++
+    (DPC++)](https://www.intel.com/content/www/us/en/developer/tools/oneapi/data-parallel-c-plus-plus.html).  
+    Note that the following features are not implemented yet or are not
+    working correctly on the new `gpu` device:
+    -   Multiple volumes in the scene
+    -   Clipping
+    -   Motion blur
+    -   Subdivision surfaces
+    -   Progress reporting via `ospGetProgress` or canceling the frame via `ospCancel`
+    -   Picking via `ospPick`
+    -   Adaptive accumulation via `OSP_FB_VARIANCE` and `varianceThreshold`
+    -   Framebuffer channels `OSP_FB_ID_*` (id buffers)
+    -   Experimental support for shared device-only data, works only for
+        `structuredRegular` volume
+    -   Further known issues
+        -   Some delay on start-up or when changing the scene, because
+            kernel code is JIT compiled and specialized. JIT compilation
+            can be cached by setting environment variable
+            `SYCL_CACHE_PERSISTENT=1`, then consecutive starts or
+            rendering the same scene configuration is without delay
+        -   For some combination of compiler, GPU driver and scene the
+            rendered images might show artifacts (e.g., vertical lines
+            or small blocks)
+        -   Multidevice does not support `OSPImageOperation`s for
+            denoising or tone mapping
+-   Add implicit indexing for `mesh` geometry
+-   Add support for transferring ownership of temporary buffers:
+    `ospNewSharedData` accepts an optional deleter callback
+-   Optimizations for MPI module, supported by new integrated
+    performance tracing framework
+-   Optimize `scivis` gradient shading
+-   Main thread does not set FTZ/DAZ anymore for denormals handling
+-   Compute intersection epsilon for Mesh to avoid rendering artifacts
+    due to self-intersection
+-   Fix energy conservation of Pricipled material under certain
+    parameter combinations
+-   Fix `denoiser` to not wipe the alpha channel
+-   Fix crash in HDRI light
+-   Fix link order for Debug build on Windows
+-   The new minimum versions of dependencies:
+    -    Embree v4.3.0
+    -    Open VKL v2.0.0
+    -    Open Image Denoise v2.1.0
+    -    ISPC v1.21.1
+    -    rkcommon v1.12.0
+-   Breaking API changes
+    -   Renamed `OSP_TEXTURE_FILTER_BILINEAR` to
+        `OSP_TEXTURE_FILTER_LINEAR ` and
+        `OSP_VOLUME_FILTER_TRI[LINEAR|CUBIC]` to
+        `OSP_VOLUME_FILTER_[LINEAR|CUBIC]`
+    -   Most enums now use storage type `uint32`
+    -   `gridSpacing` of spherical regular volume defaults to full
+        sphere
+    -   Remove deprecated parameters and API calls
+        -   error callback signatures without user pointer
+        -   first argument of `ospNewMaterial`
+        -   module name `ispc`; use `cpu`
+        -   `volume` texture and `isosurface` geometry: `volumetricModel`; use `OSPVolume volume`
+        -   Transfer function `vec2f valueRange`; use `box1f value`
+        -   `hdri` and `sun-sky` lights: `intensityQuantity` `OSP_INTENSITY_QUANTITY_RADIANCE`
+        -   `spot` light with `intensityDistribution`: `intensityQuantity` other than `OSP_INTENSITY_QUANTITY_SCALE`
+
+
+
 ### Changes in v2.12.0:
 
 -   Support denoising on the GPU with OIDN 2.0, which is the new minimum
@@ -9,8 +79,8 @@ Version History
     limits the number of non-specular (i.e., diffuse and glossy) bounces
 -   Optimized dynamic load balancing for MPI devices
 -   Fix crash when using small image resolution and many MPI ranks
--   Fix crash in `pathtracer` when `lightSamples > 0` but lights in the
-    scene
+-   Fix crash in `pathtracer` when `lightSamples > 0` but there are
+    lights in the scene
 -   Fix transparent shadows with too high `minContribution` setting
 -   The new minimum version for ISPC is v1.20.0
 -   Release binaries on Linux are built on Rocky 8

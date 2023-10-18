@@ -1,8 +1,13 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "LocalFB.h"
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+
 #include "FrameOp.h"
+#include "LocalFB.h"
 #include "SparseFB.h"
 #include "fb/FrameBufferView.h"
 #include "render/util.h"
@@ -40,11 +45,6 @@ void LocalFrameBuffer_writeIDTile(void *uniform _fb,
     const void *uniform src);
 } // namespace ispc
 #endif
-
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-#include <numeric>
 
 namespace ospray {
 
@@ -113,15 +113,18 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
   // TODO: Better way to pass the task IDs that doesn't require just storing
   // them all? Maybe as blocks/tiles similar to when we just had tiles? Will
   // make task ID lookup more expensive for sparse case though
-  renderTaskIDs = make_buffer_shared_unique<uint32_t>(
-      device.getIspcrtContext(), getTotalRenderTasks());
+  renderTaskIDs = make_buffer_device_shadowed_unique<uint32_t>(
+      device.getIspcrtDevice(), getTotalRenderTasks());
   std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
   if (hasVarianceBuffer)
-    activeTaskIDs = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtContext(), getTotalRenderTasks());
+    activeTaskIDs = make_buffer_device_shadowed_unique<uint32_t>(
+        device.getIspcrtDevice(), getTotalRenderTasks());
 
-  // TODO: Could use TBB parallel sort here if it's exposed through the rkcommon
-  // tasking system
+    // TODO: Could use TBB parallel sort here if it's exposed through the
+    // rkcommon tasking system
+#ifndef OSPRAY_TARGET_SYCL
+  // We use a 1x1 task size in SYCL and this sorting may not pay off for the
+  // cost it adds
   std::sort(renderTaskIDs->begin(),
       renderTaskIDs->end(),
       [&](const uint32_t &a, const uint32_t &b) {
@@ -129,6 +132,13 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
         const vec2i p_b = getTaskStartPos(b);
         return interleaveZOrder(p_a.x, p_a.y) < interleaveZOrder(p_b.x, p_b.y);
       });
+#endif
+  {
+    // Upload the task IDs to the device
+    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+    tq.copyToDevice(*renderTaskIDs);
+    tq.sync();
+  }
 
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.accumulateSample =
@@ -195,11 +205,15 @@ utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
         renderTaskIDs->end(),
         activeTaskIDs->begin(),
         [=](uint32_t i) { return taskError(i) > errorThreshold; });
-    return utility::ArrayView<uint32_t>(
-        activeTaskIDs->data(), last - activeTaskIDs->begin());
+
+    const size_t numActive = last - activeTaskIDs->begin();
+    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+    tq.copyToDevice(*activeTaskIDs);
+    tq.sync();
+    return utility::ArrayView<uint32_t>(activeTaskIDs->devicePtr(), numActive);
   } else
     return utility::ArrayView<uint32_t>(
-        renderTaskIDs->data(), renderTaskIDs->size());
+        renderTaskIDs->devicePtr(), renderTaskIDs->size());
 }
 
 std::string LocalFrameBuffer::toString() const
@@ -218,7 +232,9 @@ void LocalFrameBuffer::clear()
     // TODO: Implement fill function in ISPCRT to do this through level-zero
     // on the device
     std::fill(taskAccumID->begin(), taskAccumID->end(), 0);
-    device.getIspcrtQueue().copyToDevice(*taskAccumID);
+    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
+    tq.copyToDevice(*taskAccumID);
+    tq.sync();
   }
 
   // always also clear error buffer (if present)
@@ -295,8 +311,12 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
   const size_t numTasks = tiles.size();
   const Tile *tilesPtr = tiles.data();
   const int colorFormat = getColorBufferFormat();
-  vec3f *albedoBufferPtr = fbSh->super.channels & OSP_FB_ALBEDO ? albedoBuffer->data() : nullptr;
-  vec3f *normalBufferPtr = fbSh->super.channels & OSP_FB_NORMAL ? normalBuffer->data() : nullptr;
+  vec3f *albedoBufferPtr = fbSh->super.channels & OSP_FB_ALBEDO
+      ? albedoBuffer->devicePtr()
+      : nullptr;
+  vec3f *normalBufferPtr = fbSh->super.channels & OSP_FB_NORMAL
+      ? normalBuffer->devicePtr()
+      : nullptr;
 
   device.getSyclQueue()
       .submit([&](sycl::handler &cgh) {
@@ -345,14 +365,13 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
         });
       })
       .wait_and_throw();
-
 #endif
 }
 
-void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
+void LocalFrameBuffer::writeTiles(SparseFrameBuffer *sparseFb)
 {
-  const auto &tiles = sparseFb->getTiles();
-  writeTiles(tiles);
+  // Write tiles operates on device memory
+  writeTiles(sparseFb->getTilesDevice());
 
   assert(getRenderTaskSize() == sparseFb->getRenderTaskSize());
   const vec2i renderTaskSize = getRenderTaskSize();
@@ -361,11 +380,13 @@ void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
     return;
   }
 
+  // Now we do need the tile memory on the host to read the region information
+  const auto tileIDs = sparseFb->getTileIDs();
   uint32_t renderTaskID = 0;
-  for (size_t i = 0; i < tiles.size(); ++i) {
-    const auto &tile = tiles[i];
+  for (size_t i = 0; i < tileIDs.size(); ++i) {
+    const box2i tileRegion = sparseFb->getTileRegion(tileIDs[i]);
     const box2i taskRegion(
-        tile.region.lower / renderTaskSize, tile.region.upper / renderTaskSize);
+        tileRegion.lower / renderTaskSize, tileRegion.upper / renderTaskSize);
     for (int y = taskRegion.lower.y; y < taskRegion.upper.y; ++y) {
       for (int x = taskRegion.lower.x; x < taskRegion.upper.x;
            ++x, ++renderTaskID) {
@@ -393,8 +414,7 @@ void LocalFrameBuffer::beginFrame()
   FrameBuffer::beginFrame();
 }
 
-void LocalFrameBuffer::endFrame(
-    const float errorThreshold, const Camera *)
+void LocalFrameBuffer::endFrame(const float errorThreshold, const Camera *)
 {
   frameVariance = taskErrorRegion.refine(errorThreshold);
 }
@@ -412,44 +432,34 @@ const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
   const void *buf = nullptr;
   ispcrt::TaskQueue &tq = device.getIspcrtQueue();
 
-  switch (channel) {
-  case OSP_FB_COLOR: {
+  if ((channel == OSP_FB_COLOR) && (colorBuffer)) {
     tq.copyToHost(*colorBuffer);
     tq.sync();
-    buf = colorBuffer ? colorBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_DEPTH: {
+    buf = colorBuffer->data();
+  } else if ((channel == OSP_FB_DEPTH) && (depthBuffer)) {
     tq.copyToHost(*depthBuffer);
     tq.sync();
-    buf = depthBuffer ? depthBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_NORMAL: {
+    buf = depthBuffer->data();
+  } else if ((channel == OSP_FB_NORMAL) && (normalBuffer)) {
     tq.copyToHost(*normalBuffer);
     tq.sync();
-    buf = normalBuffer ? normalBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_ALBEDO: {
+    buf = normalBuffer->data();
+  } else if ((channel == OSP_FB_ALBEDO) && (albedoBuffer)) {
     tq.copyToHost(*albedoBuffer);
     tq.sync();
-    buf = albedoBuffer ? albedoBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_ID_PRIMITIVE: {
+    buf = albedoBuffer->data();
+  } else if ((channel == OSP_FB_ID_PRIMITIVE) && (primitiveIDBuffer)) {
     tq.copyToHost(*primitiveIDBuffer);
     tq.sync();
-    buf = primitiveIDBuffer ? primitiveIDBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_ID_OBJECT: {
+    buf = primitiveIDBuffer->data();
+  } else if ((channel == OSP_FB_ID_OBJECT) && (objectIDBuffer)) {
     tq.copyToHost(*objectIDBuffer);
     tq.sync();
-    buf = objectIDBuffer ? objectIDBuffer->data() : nullptr;
-  } break;
-  case OSP_FB_ID_INSTANCE: {
+    buf = objectIDBuffer->data();
+  } else if ((channel == OSP_FB_ID_INSTANCE) && (instanceIDBuffer)) {
     tq.copyToHost(*instanceIDBuffer);
     tq.sync();
-    buf = instanceIDBuffer ? instanceIDBuffer->data() : nullptr;
-  } break;
-  default:
-    break;
+    buf = instanceIDBuffer->data();
   }
 
   if (buf)

@@ -40,9 +40,12 @@ endif()
 
 add_executable(ospTestSuite
   ${OSPRAY_RESOURCE}
+  environment.cpp # potentially compile with SYCL, overriding non-SYCL ospray_gtest_utils
   test_geometry.cpp
   test_volumetric.cpp
   test_appearance.cpp
+  test_assigned_data.cpp
+  test_sharedusm_data.cpp
   test_light.cpp
   test_enums.cpp
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:test_glm_compat.cpp>
@@ -62,6 +65,10 @@ PRIVATE
   $<$<BOOL:${OSPRAY_ENABLE_VOLUMES}>:openvkl::openvkl>
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:${GLM_TARGET}>
 )
+
+if (OSPRAY_MODULE_GPU)
+  ospray_add_sycl_target(ospTestSuite)
+endif()
 
 if (OSPRAY_MODULE_DENOISER)
   # Enable OIDN tests

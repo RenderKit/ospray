@@ -21,7 +21,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
-find_package(ospray 2.0.0 REQUIRED)
+find_package(ospray 3.0.0 REQUIRED)
 
 add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/../ospTutorial.c)
 target_link_libraries(${PROJECT_NAME} ospray::ospray)

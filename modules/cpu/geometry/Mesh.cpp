@@ -16,7 +16,7 @@ void *Mesh_getAreas_addr();
 } // namespace ispc
 #endif
 // std
-#include <cmath>
+#include <numeric>
 
 namespace ospray {
 
@@ -90,10 +90,10 @@ void Mesh::commit()
     }
   }
 
-  colorData = getParam<Data *>("color");
+  colorData = getParamObject<Data>("color");
   bool isColorFaceVarying = true;
   if (!colorData) {
-    colorData = getParam<Data *>("vertex.color");
+    colorData = getParamObject<Data>("vertex.color");
     isColorFaceVarying = false;
   }
   bool isTexcoordFaceVarying = true;
@@ -102,9 +102,26 @@ void Mesh::commit()
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
     isTexcoordFaceVarying = false;
   }
+
+  // get optional vec3i index, if successful, it's a triangle
   indexData = getParamDataT<vec3ui>("index");
+
+  // optionally get vec4i index, if successful, it's a quad
   if (!indexData)
-    indexData = getParamDataT<vec4ui>("index", true);
+    indexData = getParamDataT<vec4ui>("index");
+
+  // If no index data given, make tri or quad soup based on input parameter
+  // Index order is 0,1,2,3,...
+  if (!indexData) {
+    const bool quadSoup = getParam<bool>("quadSoup", false);
+    const int elements = quadSoup ? 4 : 3;
+    indexData = new Data(getISPCDevice(),
+        quadSoup ? OSP_VEC4UI : OSP_VEC3UI,
+        vec3l(vertexData->size() / elements, 1, 1));
+    indexData->refDec();
+    auto begin = (unsigned int *)indexData->data();
+    std::iota(begin, begin + indexData->size() * elements, 0);
+  }
 
   const bool isTri = indexData->type == OSP_VEC3UI;
 

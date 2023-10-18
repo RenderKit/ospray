@@ -21,7 +21,7 @@ void Texture2D::SetUp()
   camera.setParam("imageStart", vec2f(1.f, 1.f));
   camera.setParam("imageEnd", vec2f(0.f, 0.f));
   auto params = GetParam();
-  int filter = std::get<0>(params);
+  OSPTextureFilter filter = std::get<0>(params);
 
   // create (4*2) x 4 grid
   constexpr int cols = 8;
@@ -132,7 +132,7 @@ void Texture2D::SetUp()
     tex.setParam("data", data);
     tex.commit();
     ospRelease(data);
-    cpp::Material mat(rendererType, "obj");
+    cpp::Material mat("obj");
     mat.setParam("kd", vec3f(0.8));
     mat.setParam(i & 1 ? "map_bump" : "map_kd", tex);
     mat.commit();
@@ -242,7 +242,7 @@ void Texture2DTransform::SetUp()
   std::array<cpp::Material, cols * rows> materials;
   cpp::Texture tex = createTexture2D();
   for (int i = 0; i < cols * rows; i++) {
-    cpp::Material mat(rendererType, "obj");
+    cpp::Material mat("obj");
     mat.setParam("map_kd", tex);
     mat.commit();
     materials[i] = mat;
@@ -291,12 +291,10 @@ void RendererMaterialList::SetUp()
   std::vector<uint32_t> index;
   std::vector<cpp::Material> materials;
 
-  auto makeObjMaterial =
-      [](const std::string &rendererType, vec3f Kd, vec3f Ks) -> cpp::Material {
-    cpp::Material mat(rendererType, "obj");
+  auto makeObjMaterial = [](vec3f Kd, vec3f Ks) -> cpp::Material {
+    cpp::Material mat("obj");
     mat.setParam("kd", Kd);
-    if (rendererType == "pathtracer" || rendererType == "scivis")
-      mat.setParam("ks", Ks);
+    mat.setParam("ks", Ks);
     mat.commit();
 
     return mat;
@@ -307,9 +305,9 @@ void RendererMaterialList::SetUp()
     spheres.emplace_back(i_f.x, i_f.y, 0.f);
 
     auto l = i_f / (dimSize - 1);
-    materials.push_back(makeObjMaterial(rendererType,
-        lerp(l.x, vec3f(0.1f), vec3f(0.f, 0.f, 1.f)),
-        lerp(l.y, vec3f(0.f), vec3f(1.f))));
+    materials.push_back(
+        makeObjMaterial(lerp(l.x, vec3f(0.1f), vec3f(0.f, 0.f, 1.f)),
+            lerp(l.y, vec3f(0.f), vec3f(1.f))));
 
     index.push_back(static_cast<uint32_t>(numSpheres.flatten(i)));
   }
@@ -383,11 +381,11 @@ void PTBackgroundRefraction::SetUp()
   cpp::GeometricModel model(boxGeometry);
 
   std::vector<cpp::Material> materials;
-  materials.emplace_back(cpp::Material(rendererType, "thinGlass"));
-  materials.emplace_back(cpp::Material(rendererType, "glass"));
-  materials.emplace_back(cpp::Material(rendererType, "glass"));
+  materials.emplace_back(cpp::Material("thinGlass"));
+  materials.emplace_back(cpp::Material("glass"));
+  materials.emplace_back(cpp::Material("glass"));
   materials.back().setParam("eta", 1.2f);
-  materials.emplace_back(cpp::Material(rendererType, "obj"));
+  materials.emplace_back(cpp::Material("obj"));
   materials.back().setParam("d", 0.2f);
   materials.back().setParam("kd", vec3f(0.7f, 0.5f, 0.1f));
   for (auto &m : materials)
@@ -416,7 +414,7 @@ void PTBackgroundRefraction::SetUp()
 
   cpp::Light light("sunSky");
   light.setParam("turbidity", 8.0f);
-  light.setParam("intensity", 0.2f);
+  light.setParam("intensity", 0.005f);
   AddLight(light);
   cpp::Light mirrorlight("sunSky");
   mirrorlight.setParam("up", vec3f(0.0f, -1.0f, 0.0f));
@@ -441,13 +439,23 @@ INSTANTIATE_TEST_SUITE_P(MaterialLists,
 
 INSTANTIATE_TEST_SUITE_P(TestScenesPtMaterials,
     FromOsprayTesting,
-    ::testing::Combine(::testing::Values("test_pt_glass",
+    ::testing::Combine(::testing::Values("test_pt_alloy_roughness",
+                           "test_pt_carpaint",
+                           "test_pt_glass",
+                           "test_pt_thinglass",
                            "test_pt_luminous",
                            "test_pt_metal_roughness",
                            "test_pt_metallic_flakes",
-                           "test_pt_obj"),
+                           "test_pt_obj",
+                           "test_pt_plastic",
+                           "test_pt_principled_metal",
+                           "test_pt_principled_plastic",
+                           "test_pt_principled_glass",
+                           "test_pt_tex_material",
+                           "test_pt_tex_mix",
+                           "test_pt_velvet"),
         ::testing::Values("pathtracer"),
-        ::testing::Values(16)));
+        ::testing::Values(64)));
 
 TEST_P(Texture2D, filter)
 {
@@ -456,7 +464,7 @@ TEST_P(Texture2D, filter)
 
 INSTANTIATE_TEST_SUITE_P(Appearance,
     Texture2D,
-    ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_BILINEAR,
+    ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_LINEAR,
                            OSP_TEXTURE_FILTER_NEAREST),
         ::testing::Bool(),
         ::testing::Bool()));

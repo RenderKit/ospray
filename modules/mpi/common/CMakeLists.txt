@@ -6,7 +6,6 @@ add_library(ospray_mpi_common SHARED
     MPIBcastFabric.cpp
     MPICommon.cpp
     ObjectHandle.cpp
-    Profiling.cpp
     maml/maml.cpp
     maml/Context.cpp
 )
@@ -29,12 +28,5 @@ target_include_directories(ospray_mpi_common
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
-
-if (OSPRAY_MPI_ENABLE_PROFILING)
-  target_compile_definitions(ospray_mpi_common
-    PUBLIC
-      -DENABLE_PROFILING
-  )
-endif()
 
 ospray_install_library(ospray_mpi_common mpi)

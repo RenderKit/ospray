@@ -119,9 +119,10 @@ void FrameBuffer::beginFrame()
 {
   cancelRender = false;
   frameID++;
-  // TODO: Maybe better as a kernel to avoid USM thrash to host
+  // TODO: Cancellation isn't supported on the GPU
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->cancelRender = 0;
+  // TODO: Maybe better as a kernel to avoid USM thrash to host
   getSh()->numPixelsRendered = 0;
   getSh()->frameID = frameID;
 #endif
@@ -171,7 +172,10 @@ float FrameBuffer::getCurrentProgress() const
 void FrameBuffer::cancelFrame()
 {
   cancelRender = true;
+  // TODO: Cancellation isn't supported on the GPU
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->cancelRender = 1;
+#endif
 }
 
 bool FrameBuffer::frameCancelled() const

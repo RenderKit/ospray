@@ -21,9 +21,8 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       cmd: |
-        scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF" "OFF"
+        scripts\build\win.ps1 -G "Visual Studio 15 2017 Win64"
       artifact-out: build-windows-msvc15
-      # artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
   build-windows-msvc16-mpi_and_md:
@@ -31,33 +30,29 @@ jobs:
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '["Windows", "build", "mpi"]'
+      runs-on: '["build", "mpi"]'
       cmd: |
-        scripts\build\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON" "ON"
+        scripts\build\win.ps1 -G "Visual Studio 16 2019" -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-windows-msvc16-mpi_and_md
-      # artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
-# TODO
-# build-windows-msvc17:
-#   uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-#   secrets: inherit
-#   with:
-#     force-delete: true    # guarantees .gitattributes are respected in working dir
-#     cmd: |
-#       scripts\build\win.ps1 "Visual Studio 17 2022" "v143" "Release" "OFF" "OFF"
-#     artifact-out: build-windows-msvc17
-#     # artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
-#     artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
+  build-windows-msvc17:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      cmd: |
+        scripts\build\win.ps1 -G "Visual Studio 17 2022"
+      artifact-out: build-windows-msvc17
+      artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
 ### TEST JOBS ###
 
-  # continue-on-error: true
   test-windows-msvc15-avx2:
     needs: build-windows-msvc15
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["Windows", "avx2"]'
+      runs-on: '"avx2"'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX2
@@ -70,6 +65,7 @@ jobs:
     needs: build-windows-msvc15
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      runs-on: '"avx512"'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX512SKX
@@ -78,13 +74,11 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
-
-  # continue-on-error: true
   test-windows-msvc16-avx2:
     needs: build-windows-msvc16-mpi_and_md
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["Windows", "avx2", "mpi"]'
+      runs-on: '["avx2", "mpi"]'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX2 TEST_MULTIDEVICE TEST_MPI
@@ -97,12 +91,25 @@ jobs:
     needs: build-windows-msvc16-mpi_and_md
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["Windows", "build", "mpi"]'
+      runs-on: '["avx512", "mpi"]'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         echo $env:Path
         scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX512SKX TEST_MULTIDEVICE TEST_MPI
       artifact-in: build-windows-msvc16-mpi_and_md
       artifact-out: test-windows-msvc16-mpi_and_md-avx512skx
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  test-windows-msvc17:
+    needs: build-windows-msvc17
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '"avx512"'
+      cmd: |
+        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX512SKX
+      artifact-in: build-windows-msvc17
+      artifact-out: test-windows-msvc17-avx512
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true

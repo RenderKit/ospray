@@ -9,6 +9,7 @@
 #include "common/ObjectHandle.h"
 #include "rkcommon/array3D/for_each.h"
 #include "rkcommon/memory/RefCount.h"
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/AbstractArray.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/FixedArray.h"
@@ -146,7 +147,7 @@ void newMaterial(
   int64_t handle = 0;
   std::string type;
   cmdBuf >> handle >> type;
-  state.objects[handle] = ospNewMaterial(nullptr, type.c_str());
+  state.objects[handle] = ospNewMaterial(type.c_str());
 }
 
 void newLight(
@@ -382,6 +383,8 @@ void mapFramebuffer(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
 {
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::beginEvent("mapFramebuffer", "mpiOffloadWorker"));
   // Map the channel and send the image back over the fabric
   int64_t handle = 0;
   uint32_t channel = 0;
@@ -409,6 +412,7 @@ void mapFramebuffer(OSPState &state,
       ospUnmapFrameBuffer(map, fb);
     }
   }
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 }
 
 void getVariance(OSPState &state,
@@ -938,6 +942,8 @@ const char *tagName(work::TAG t)
     return "FUTURE_CANCEL";
   case FUTURE_GET_PROGRESS:
     return "FUTURE_GET_PROGRESS";
+  case FUTURE_GET_TASK_DURATION:
+    return "FUTURE_GET_TASK_DURATION";
   case FINALIZE:
     return "FINALIZE";
   case NONE:

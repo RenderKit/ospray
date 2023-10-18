@@ -42,7 +42,9 @@ struct Builder : public memory::RefCountedObject,
  protected:
   cpp::TransferFunction makeTransferFunction(const range1f &valueRange) const;
 
-  cpp::Instance makeGroundPlane(const box3f &bounds) const;
+  cpp::Instance makeGroundPlane(const box3f &bounds,
+      const vec4f &planeColor = vec4f{0.9f, 0.9f, 0.9f, 0.75f},
+      const vec4f &stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f}) const;
 
   // Data //
 

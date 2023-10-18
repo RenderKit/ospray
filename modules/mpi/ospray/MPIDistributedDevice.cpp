@@ -4,6 +4,13 @@
 #include <map>
 #include <memory>
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <WinSock2.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "ISPCDevice.h"
 #include "MPIDistributedDevice.h"
 #include "camera/Camera.h"
@@ -12,7 +19,6 @@
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/MPICommon.h"
-#include "common/Profiling.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
@@ -21,6 +27,7 @@
 #include "render/ThreadedRenderTask.h"
 #include "render/distributed/DistributedRaycast.h"
 #include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/tracing/Tracing.h"
 #include "rkcommon/utility/CodeTimer.h"
 #include "rkcommon/utility/getEnvVar.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -179,6 +186,14 @@ MPIDistributedDevice::~MPIDistributedDevice()
       // Silently move on if finalize fails
     }
   }
+  RKCOMMON_IF_TRACING_ENABLED({
+    char hostname[512] = {0};
+    gethostname(hostname, 511);
+    const std::string workerTraceFile = std::string(hostname) + "_"
+        + std::to_string(mpicommon::workerRank()) + ".json";
+    rkcommon::tracing::saveLog(
+        workerTraceFile.c_str(), workerTraceFile.c_str());
+  });
 }
 
 static void internalDeviceErrorFunc(
@@ -227,17 +242,30 @@ void MPIDistributedDevice::commit()
     messaging::init(mpicommon::worker);
     maml::start();
 
-    // Pass down application's GPU selection made via SYCL or L0 (if any)
-    void *appSyclCtx = getParam<void *>("syclContext", nullptr);
-    internalDevice->setParam<void *>("syclContext", appSyclCtx);
-    void *appSyclDevice = getParam<void *>("syclDevice", nullptr);
-    internalDevice->setParam<void *>("syclDevice", appSyclDevice);
+    RKCOMMON_IF_TRACING_ENABLED({
+      mpicommon::barrier(mpicommon::worker.comm).wait();
+      rkcommon::tracing::setMarker("clockSync", "mpiDistributed");
 
-    void *appZeCtx = getParam<void *>("zeContext", nullptr);
-    internalDevice->setParam<void *>("zeContext", appZeCtx);
-    void *appZeDevice = getParam<void *>("zeDevice", nullptr);
-    internalDevice->setParam<void *>("zeDevice", appZeDevice);
+      char hostname[512] = {0};
+      gethostname(hostname, 511);
+      const std::string worker_log_file = std::string(hostname) + "_"
+          + std::to_string(mpicommon::workerRank()) + "_worker_proc_status.txt";
+      std::ofstream fout(worker_log_file.c_str());
+      fout << "Worker on '" << hostname << "' /proc/self/status:\n"
+           << rkcommon::tracing::getProcStatus() << "\n";
+    });
   }
+
+  // Pass down application's GPU selection made via SYCL or L0 (if any)
+  void *appSyclCtx = getParam<void *>("syclContext", nullptr);
+  internalDevice->setParam<void *>("syclContext", appSyclCtx);
+  void *appSyclDevice = getParam<void *>("syclDevice", nullptr);
+  internalDevice->setParam<void *>("syclDevice", appSyclDevice);
+
+  void *appZeCtx = getParam<void *>("zeContext", nullptr);
+  internalDevice->setParam<void *>("zeContext", appZeCtx);
+  void *appZeDevice = getParam<void *>("zeDevice", nullptr);
+  internalDevice->setParam<void *>("zeDevice", appZeDevice);
 
   internalDevice->commit();
 }
@@ -308,9 +336,12 @@ box3f MPIDistributedDevice::getBounds(OSPObject _obj)
 OSPData MPIDistributedDevice::newSharedData(const void *sharedData,
     OSPDataType type,
     const vec3ul &numItems,
-    const vec3l &byteStride)
+    const vec3l &byteStride,
+    OSPDeleterCallback freeFunction,
+    const void *userPtr)
 {
-  return internalDevice->newSharedData(sharedData, type, numItems, byteStride);
+  return internalDevice->newSharedData(
+      sharedData, type, numItems, byteStride, freeFunction, userPtr);
 }
 
 OSPData MPIDistributedDevice::newData(OSPDataType type, const vec3ul &numItems)
@@ -376,10 +407,9 @@ OSPVolumetricModel MPIDistributedDevice::newVolumetricModel(OSPVolume _vol)
 #endif
 }
 
-OSPMaterial MPIDistributedDevice::newMaterial(
-    const char *unused, const char *material_type)
+OSPMaterial MPIDistributedDevice::newMaterial(const char *material_type)
 {
-  return internalDevice->newMaterial(unused, material_type);
+  return internalDevice->newMaterial(material_type);
 }
 
 OSPTransferFunction MPIDistributedDevice::newTransferFunction(const char *type)
@@ -397,14 +427,32 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
     OSPCamera _camera,
     OSPWorld _world)
 {
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::beginEvent("renderFrame", "MPIDD");
+    rkcommon::tracing::beginEvent("renderFrame-mpibarrier", "MPIDD");
+  });
+
   mpicommon::barrier(mpicommon::worker.comm).wait();
+
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("renderFrame-lookupObjects", "MPIDD");
+  });
+
   auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
   auto *renderer = lookupDistributedObject<Renderer>(_renderer);
   auto *camera = lookupObject<Camera>(_camera);
   auto *world = lookupObject<DistributedWorld>(_world);
 
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("renderFrame-createDLB", "MPIDD");
+  });
+
   auto loadBalancer =
       std::make_shared<DistributedLoadBalancer>(allocateHandle());
+
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 
@@ -413,20 +461,20 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   camera->refInc();
   world->refInc();
 
+  RKCOMMON_IF_TRACING_ENABLED(
+      rkcommon::tracing::setMarker("renderFrame-spawnRenderThread", "MPIDD"));
   auto *f = new ThreadedRenderTask(fb, loadBalancer, [=]() {
-#ifdef ENABLE_PROFILING
-    using namespace mpicommon;
-    ProfilingPoint start;
-#endif
+    RKCOMMON_IF_TRACING_ENABLED({
+      rkcommon::tracing::setThreadName("MPIDD::threadedRenderTask");
+      rkcommon::tracing::beginEvent("renderFrameTask", "MPIDD");
+    });
+
     utility::CodeTimer timer;
     timer.start();
     loadBalancer->renderFrame(fb, renderer, camera, world);
     timer.stop();
-#ifdef ENABLE_PROFILING
-    ProfilingPoint end;
-    std::cout << "Frame took " << elapsedTimeMs(start, end)
-              << "ms, CPU: " << cpuUtilization(start, end) << "%\n";
-#endif
+
+    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
     fb->refDec();
     renderer->refDec();
@@ -435,6 +483,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
 
     return timer.seconds();
   });
+  RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
   return (OSPFuture)f;
 }

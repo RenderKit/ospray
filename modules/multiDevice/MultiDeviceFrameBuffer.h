@@ -16,7 +16,7 @@ namespace api {
  */
 struct MultiDeviceFrameBuffer : MultiDeviceObject
 {
-  Ref<LocalFrameBuffer> rowmajorFb = nullptr;
+  Ref<LocalFrameBuffer> rowmajorFb;
 };
 
 } // namespace api

@@ -9,14 +9,6 @@ cmake_dependent_option(
   OFF
 )
 
-cmake_dependent_option(
-  OSPRAY_MPI_ENABLE_PROFILING
-  "Enable MPI module internal profiling"
-  OFF
-  OSPRAY_MODULE_MPI
-  OFF
-)
-
 if (NOT OSPRAY_MODULE_MPI)
   return()
 endif()

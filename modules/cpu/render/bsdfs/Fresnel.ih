@@ -52,15 +52,10 @@ inline float fresnelDielectricEx(float cosI, float &cosT, float eta)
 // Imageworks"]
 inline float fresnelDielectricAvg(float eta)
 {
-  const float rcpEta = rcp(eta);
+  if (eta < 1.f)
+    eta = rcp(eta);
 
-  if (rcpEta >= 1.f)
-    return (rcpEta - 1.f) / (4.08567f + 1.00071f * rcpEta);
-
-  const float rcpEta2 = sqr(rcpEta);
-  const float rcpEta3 = rcpEta2 * rcpEta;
-  return 0.997118f + 0.1014f * rcpEta - 0.965241f * rcpEta2
-      - 0.130607f * rcpEta3;
+  return (eta - 1.f) / (4.08567f + 1.00071f * eta);
 }
 
 /*! Computes fresnel coefficient for conductor medium with complex
@@ -115,15 +110,6 @@ enum FresnelType
 struct Fresnel
 {
   uniform FresnelType type;
-#ifndef OSPRAY_TARGET_SYCL
-  uniform Fresnel_EvalFunc eval;
-  // F_{\mathit{avg}} = 2 \int_0^1 F(\mu) \mu d\mu
-  // \mu = \cos(\theta)
-  uniform Fresnel_EvalAvgFunc evalAvg;
-#else
-  void *eval;
-  void *evalAvg;
-#endif
 };
 
 inline vec3f Fresnel_evalAvg(const Fresnel *uniform)
@@ -131,19 +117,9 @@ inline vec3f Fresnel_evalAvg(const Fresnel *uniform)
   return make_vec3f(0.f);
 }
 
-inline void Fresnel_Constructor(Fresnel *uniform self,
-#ifndef OSPRAY_TARGET_SYCL
-    uniform Fresnel_EvalFunc eval,
-    uniform Fresnel_EvalAvgFunc evalAvg
-#else
-    void *eval,
-    void *evalAvg
-#endif
-)
+inline void Fresnel_Constructor(Fresnel *uniform self, uniform FresnelType type)
 {
-  self->type = FRESNEL_TYPE_UNKNOWN;
-  self->eval = eval;
-  self->evalAvg = evalAvg;
+  self->type = type;
 }
 
 struct FresnelConductorRGBUniform
@@ -172,16 +148,7 @@ inline Fresnel *uniform FresnelConductorRGBUniform_create(
   FresnelConductorRGBUniform *uniform self =
       (FresnelConductorRGBUniform * uniform)
           ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBUniform));
-  Fresnel_Constructor(&self->super,
-#ifndef OSPRAY_TARGET_SYCL
-      FresnelConductorRGBUniform_eval,
-      Fresnel_evalAvg
-#else
-      NULL,
-      NULL
-#endif
-  );
-  self->super.type = FRESNEL_TYPE_CONDUCTOR_RGB_UNIFORM;
+  Fresnel_Constructor(&self->super, FRESNEL_TYPE_CONDUCTOR_RGB_UNIFORM);
   self->eta = eta;
   self->k = k;
 
@@ -210,16 +177,7 @@ inline Fresnel *uniform FresnelConductorRGBVarying_create(
   FresnelConductorRGBVarying *uniform self =
       (FresnelConductorRGBVarying * uniform)
           ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBVarying));
-  Fresnel_Constructor(&self->super,
-#ifndef OSPRAY_TARGET_SYCL
-      FresnelConductorRGBVarying_eval,
-      Fresnel_evalAvg
-#else
-      NULL,
-      NULL
-#endif
-  );
-  self->super.type = FRESNEL_TYPE_CONDUCTOR_RGB_VARYING;
+  Fresnel_Constructor(&self->super, FRESNEL_TYPE_CONDUCTOR_RGB_VARYING);
   self->eta = eta;
   self->k = k;
 
@@ -260,16 +218,7 @@ inline Fresnel *uniform FresnelSchlick_create(
 {
   FresnelSchlick *uniform self = (FresnelSchlick * uniform)
       ShadingContext_alloc(ctx, sizeof(FresnelSchlick));
-  Fresnel_Constructor(&self->super,
-#ifndef OSPRAY_TARGET_SYCL
-      FresnelSchlick_eval,
-      FresnelSchlick_evalAvg
-#else
-      NULL,
-      NULL
-#endif
-  );
-  self->super.type = FRESNEL_TYPE_SCHLICK;
+  Fresnel_Constructor(&self->super, FRESNEL_TYPE_SCHLICK);
   self->r = r;
   self->g = g;
 
@@ -297,16 +246,7 @@ inline Fresnel *uniform FresnelConductorSpectral_create(
 {
   FresnelConductorSpectral *uniform self = (FresnelConductorSpectral * uniform)
       ShadingContext_alloc(ctx, sizeof(FresnelConductorSpectral));
-  Fresnel_Constructor(&self->super,
-#ifndef OSPRAY_TARGET_SYCL
-      FresnelConductorSpectral_eval,
-      Fresnel_evalAvg
-#else
-      NULL,
-      NULL
-#endif
-  );
-  self->super.type = FRESNEL_TYPE_CONDUCTOR_SPECTRAL;
+  Fresnel_Constructor(&self->super, FRESNEL_TYPE_CONDUCTOR_SPECTRAL);
   self->eta = eta;
   self->k = k;
 
@@ -357,16 +297,7 @@ inline Fresnel *uniform FresnelConductorArtistic_create(
 {
   FresnelConductorArtistic *uniform self = (FresnelConductorArtistic * uniform)
       ShadingContext_alloc(ctx, sizeof(FresnelConductorArtistic));
-  Fresnel_Constructor(&self->super,
-#ifndef OSPRAY_TARGET_SYCL
-      FresnelConductorArtistic_eval,
-      FresnelConductorArtistic_evalAvg
-#else
-      NULL,
-      NULL
-#endif
-  );
-  self->super.type = FRESNEL_TYPE_CONDUCTOR_ARTISTIC;
+  Fresnel_Constructor(&self->super, FRESNEL_TYPE_CONDUCTOR_ARTISTIC);
 
   const vec3f r = min(reflectivity, make_vec3f(0.99f));
   const vec3f g = edgeTint;
@@ -399,11 +330,7 @@ inline vec3f Fresnel_dispatch_eval(const Fresnel *uniform self, float cosI)
   case FRESNEL_TYPE_CONDUCTOR_ARTISTIC:
     return FresnelConductorArtistic_eval(self, cosI);
   default:
-#ifndef OSPRAY_TARGET_SYCL
-    return self->eval(self, cosI);
-#else
     break;
-#endif
   }
   return make_vec3f(0.f);
 }

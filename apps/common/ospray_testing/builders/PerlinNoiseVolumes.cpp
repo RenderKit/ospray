@@ -113,18 +113,14 @@ cpp::VolumetricModel createProceduralVolumetricModel(
   return volumeModel;
 }
 
-cpp::GeometricModel createGeometricModel(
-    cpp::Geometry geo, const std::string &rendererType, const vec3f &kd)
+cpp::GeometricModel createGeometricModel(cpp::Geometry geo, const vec3f &kd)
 {
   cpp::GeometricModel geometricModel(geo);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis"
-      || rendererType == "ao") {
-    cpp::Material objMaterial(rendererType, "obj");
-    objMaterial.setParam("kd", kd);
-    objMaterial.commit();
-    geometricModel.setParam("material", objMaterial);
-  }
+  cpp::Material objMaterial("obj");
+  objMaterial.setParam("kd", kd);
+  objMaterial.commit();
+  geometricModel.setParam("material", objMaterial);
 
   return geometricModel;
 }
@@ -199,7 +195,7 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
         gradientShadingScale));
   }
 
-  for (auto volumetricModel : volumetricModels)
+  for (auto &volumetricModel : volumetricModels)
     volumetricModel.commit();
 
   std::vector<cpp::GeometricModel> geometricModels;
@@ -211,12 +207,12 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
         makeBoxGeometry(box3f(vec3f(0.0f, -1.5f, 0.f), vec3f(2.f, 1.5f, 2.f)));
 
     geometricModels.emplace_back(
-        createGeometricModel(box1, rendererType, vec3f(0.2f, 0.2f, 0.2f)));
+        createGeometricModel(box1, vec3f(0.2f, 0.2f, 0.2f)));
     geometricModels.emplace_back(
-        createGeometricModel(box2, rendererType, vec3f(0.2f, 0.2f, 0.2f)));
+        createGeometricModel(box2, vec3f(0.2f, 0.2f, 0.2f)));
   }
 
-  for (auto geometricModel : geometricModels)
+  for (auto &geometricModel : geometricModels)
     geometricModel.commit();
 
   if (!volumetricModels.empty())

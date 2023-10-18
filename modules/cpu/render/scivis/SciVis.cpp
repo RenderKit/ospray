@@ -42,8 +42,7 @@ void SciVis::commit()
   getSh()->shadowsEnabled = getParam<bool>("shadows", false);
   getSh()->visibleLights = getParam<bool>("visibleLights", false);
   getSh()->aoSamples = getParam<int>("aoSamples", 0);
-  getSh()->aoRadius =
-      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f));
+  getSh()->aoRadius = getParam<float>("aoDistance", 1e20f);
   getSh()->volumeSamplingRate = getParam<float>("volumeSamplingRate", 1.f);
 }
 

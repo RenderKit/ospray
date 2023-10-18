@@ -13,11 +13,21 @@
 using namespace ospray;
 using namespace rkcommon::math;
 
+namespace sycl {
+inline namespace _V1 {
+class queue;
+}
+} // namespace sycl
+
 class OSPRayEnvironment : public ::testing::Environment
 {
  public:
   OSPRayEnvironment(int argc, char **argv);
-  ~OSPRayEnvironment() = default;
+  ~OSPRayEnvironment()
+#ifndef SYCL_LANGUAGE_VERSION
+      = default
+#endif
+      ;
 
   bool GetDumpImg() const
   {
@@ -40,14 +50,22 @@ class OSPRayEnvironment : public ::testing::Environment
     return failedDir;
   }
 
+#ifdef SYCL_LANGUAGE_VERSION
+  sycl::queue *GetAppsSyclQueue();
+#endif
+
   void ParseArgs(int argc, char **argv);
   std::string GetStrArgValue(std::string *arg) const;
   int GetNumArgValue(std::string *arg) const;
 
  private:
-  bool dumpImg;
-  std::string rendererType;
-  std::string baselineDir;
-  std::string failedDir;
+  bool dumpImg{false};
+  std::string rendererType{"scivis"};
+  std::string baselineDir{"regression_test_baseline"};
+  std::string failedDir{false};
   vec2i imgSize{1024, 768};
+  bool ownSYCL{false};
+#ifdef SYCL_LANGUAGE_VERSION
+  sycl::queue *appsSyclQueue{nullptr};
+#endif
 };

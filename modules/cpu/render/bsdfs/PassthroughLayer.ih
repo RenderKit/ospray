@@ -1,0 +1,39 @@
+// Copyright 2009 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "BSDF.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+struct PassthroughLayer
+{
+  BSDF super;
+  float weight;
+};
+
+inline void PassthroughLayer_Constructor(
+    varying PassthroughLayer *uniform self, varying BSDF *uniform substrate)
+{
+  BSDF_Constructor(&self->super,
+      substrate->albedo,
+      substrate->scatteringType,
+      substrate->bsdfType,
+      substrate->frame);
+  self->weight = 0.f;
+}
+
+#ifndef OSPRAY_TARGET_SYCL
+inline void PassthroughLayer_Constructor(
+    varying PassthroughLayer *uniform self, varying BSDF *varying substrate)
+{
+  foreach_unique (s in substrate) {
+    BSDF_Constructor(
+        &self->super, s->albedo, s->scatteringType, s->bsdfType, s->frame);
+  }
+  self->weight = 0.f;
+}
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -8,7 +8,6 @@
 #include "rkcommon/utility/ParameterizedObject.h"
 // ospray
 #include "common/OSPCommon.h"
-#include "common/ObjectFactory.h"
 #include "ospray/version.h"
 // std
 #include <functional>
@@ -21,9 +20,16 @@ namespace api {
 
 /*! abstract base class of all 'devices' that implement the ospray API */
 struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
-                                      public utility::ParameterizedObject,
-                                      public ObjectFactory<Device>
+                                      public utility::ParameterizedObject
 {
+  template <typename D>
+  static void registerType(const char *type)
+  {
+    dfcns[type] = &allocate_device<D>;
+  }
+
+  static Device *createInstance(const char *type);
+
   /*! singleton that points to currently active device */
   static memory::IntrusivePtr<Device> current;
 
@@ -48,7 +54,9 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
   virtual OSPData newSharedData(const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
-      const vec3l &byteStride) = 0;
+      const vec3l &byteStride,
+      OSPDeleterCallback,
+      const void *userPtr) = 0;
 
   virtual OSPData newData(OSPDataType, const vec3ul &numItems) = 0;
 
@@ -70,8 +78,7 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
 
   // Model Meta-Data //////////////////////////////////////////////////////
 
-  virtual OSPMaterial newMaterial(
-      const char *renderer_type, const char *material_type) = 0;
+  virtual OSPMaterial newMaterial(const char *material_type) = 0;
 
   virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
@@ -184,6 +191,16 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
 
  private:
   bool committed{false};
+  using FactoryFcn = Device *(*)();
+  using FactoryMap = std::map<std::string, FactoryFcn>;
+
+  static FactoryMap dfcns;
+
+  template <typename D>
+  static Device *allocate_device()
+  {
+    return new D;
+  }
 };
 
 // Shorthand functions to query current API device //

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ISPCDevice.h"
 #include "fb/FrameBuffer.h"
 #include "fb/LocalFB.h"
 #include "fb/TaskError.h"
@@ -71,11 +72,6 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
    */
   void setTaskError(const uint32_t taskID, const float error);
 
-  /* Set the accum ID for a given task, used by the parent framebuffer managing
-   * the sparse framebuffers to sync the task accumulation IDs.
-   */
-  void setTaskAccumID(const uint32_t taskID, const int accumID);
-
   void beginFrame() override;
 
   void endFrame(const float, const Camera *) override {}
@@ -94,9 +90,14 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   void clear() override;
 
-  const utility::ArrayView<Tile> getTiles() const;
+  size_t getNumTiles() const;
 
-  const utility::ArrayView<uint32_t> getTileIDs() const;
+  const utility::ArrayView<Tile> getTiles();
+
+  // Get a view of the device memory of the tiles
+  const utility::ArrayView<Tile> getTilesDevice() const;
+
+  const utility::ArrayView<uint32_t> getTileIDs();
 
   // Get the index of the tile in the tile ID and Tiles lists that this task
   // falls into
@@ -106,7 +107,11 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
    * storage. New tiles will be allocated if the size of the tileIDs passed
    * exceeds those currently stored in the SparseFrameBuffer
    */
-  void setTiles(const std::vector<uint32_t> &tileIDs);
+  void setTiles(
+      const std::vector<uint32_t> &tileIDs, const int initialTaskAccumID = 0);
+
+  // Return the image region for the tile
+  box2i getTileRegion(uint32_t tileID) const;
 
   //// Data ////
  protected:
@@ -115,27 +120,32 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   uint32_t getNumTasksPerTile() const;
 
+  api::ISPCDevice &device;
+
   // The tiles in this framebuffer
-  std::unique_ptr<BufferShared<Tile>> tiles;
+  std::unique_ptr<BufferDeviceShadowed<Tile>> tiles;
+  // Track if we need to read back tiles to the host
+  bool tilesDirty = false;
 
   // Accumulation buffer for the tile colors for accumulation buffering. The
   // rgba data in the Tiles stores the final color for display in float format,
   // while the accumulation buffer is used for progressive refinement
-  std::unique_ptr<BufferShared<vec4f>> accumulationBuffer;
+  std::unique_ptr<BufferDevice<vec4f>> accumulationBuffer;
 
   // Variance data for the image, stored in tiled order with one RGBA value per
   // pixel, accumulates every other sample, for variance estimation
-  std::unique_ptr<BufferShared<vec4f>> varianceBuffer;
+  std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
 
   // holds accumID per render task, for adaptive accumulation
-  std::unique_ptr<BufferShared<int>> taskAccumID;
+  std::unique_ptr<BufferDeviceShadowed<int>> taskAccumID;
 
   // The sparsefb can also use task accum IDs without accumulation buffering,
   // when it's being used as a component of another framebuffer.
   // this is true by default when created with OSP_FB_ACCUM
   bool useTaskAccumIDs;
 
-  std::unique_ptr<BufferShared<uint32_t>> tileIDs;
+  // Does this need to be USM at all?
+  std::vector<uint32_t> tileIDs;
 
   // Total number of tiles that the framebuffer is divided into, including those
   // not owned by this sparsefb
@@ -143,14 +153,14 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   // Total number of render tasks that the framebuffer is divided into,
   // including those not owned by this sparsefb
-  vec2i numRenderTasks;
+  vec2i numRenderTasks{0};
 
   // holds error per task for each tile, stored in tiled order.
   // The SparseFB doesn't do its own error refinement since it doesn't have
   // access to error data for the entire framebuffer
   std::unique_ptr<BufferShared<float>> taskErrorBuffer;
 
-  std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
-  std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
+  std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
 };
 } // namespace ospray

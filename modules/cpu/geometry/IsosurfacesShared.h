@@ -14,16 +14,12 @@ struct Isosurfaces
 {
   Geometry super; // inherited geometry fields
   float *isovalues;
-  // For backwards compatibility, a volumetric model was used to set
-  // the volume and color
-  VolumetricModel *volumetricModel;
   Volume *volume;
   VKLHitIteratorContext vklHitContext;
 
 #ifdef __cplusplus
   Isosurfaces()
       : isovalues(nullptr),
-        volumetricModel(nullptr),
         volume(nullptr),
         vklHitContext(VKLHitIteratorContext())
   {

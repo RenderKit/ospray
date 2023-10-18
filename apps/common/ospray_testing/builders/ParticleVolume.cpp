@@ -175,22 +175,18 @@ cpp::Group ParticleVolume::buildGroup() const
 
     cpp::GeometricModel isoModel(isoGeom);
 
-    if (rendererType == "pathtracer" || rendererType == "scivis"
-        || rendererType == "ao") {
-      cpp::Material mat(rendererType, "obj");
-      mat.setParam("kd", vec3f(1.f));
-      mat.setParam("d", 0.5f);
-      if (rendererType == "pathtracer" || rendererType == "scivis")
-        mat.setParam("ks", vec3f(0.2f));
-      mat.commit();
+    cpp::Material mat("obj");
+    mat.setParam("kd", vec3f(1.f));
+    mat.setParam("d", 0.5f);
+    mat.setParam("ks", vec3f(0.2f));
+    mat.commit();
 
-      if (multipleIsosurfaces) {
-        std::vector<vec4f> colors = {
-            vec4f(0.2f, 0.2f, 0.8f, 1.f), vec4f(0.8f, 0.2f, 0.2f, 1.f)};
-        isoModel.setParam("color", cpp::CopiedData(colors));
-      }
-      isoModel.setParam("material", mat);
+    if (multipleIsosurfaces) {
+      std::vector<vec4f> colors = {
+          vec4f(0.2f, 0.2f, 0.8f, 1.f), vec4f(0.8f, 0.2f, 0.2f, 1.f)};
+      isoModel.setParam("color", cpp::CopiedData(colors));
     }
+    isoModel.setParam("material", mat);
 
     isoModel.commit();
 

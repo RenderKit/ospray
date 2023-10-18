@@ -93,8 +93,8 @@ cpp::Group VdbVolume::buildGroup() const
   if (origin.empty())
     throw std::runtime_error("vdb volume is empty.");
 
-  volume.setParam("filter", (int)OSP_VOLUME_FILTER_TRILINEAR);
-  volume.setParam("gradientFilter", (int)OSP_VOLUME_FILTER_TRILINEAR);
+  volume.setParam("filter", OSP_VOLUME_FILTER_LINEAR);
+  volume.setParam("gradientFilter", OSP_VOLUME_FILTER_LINEAR);
   volume.setParam(
       "node.level", cpp::CopiedData(std::vector<uint32_t>(origin.size(), 3)));
   volume.setParam("node.origin", cpp::CopiedData(origin));

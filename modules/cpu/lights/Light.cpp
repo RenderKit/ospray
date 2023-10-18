@@ -32,7 +32,7 @@ std::string Light::toString() const
 void Light::queryIntensityQuantityType(const OSPIntensityQuantity &defaultIQ)
 {
   intensityQuantity =
-      (OSPIntensityQuantity)getParam<uint8_t>("intensityQuantity", defaultIQ);
+      (OSPIntensityQuantity)getParam<uint32_t>("intensityQuantity", defaultIQ);
 }
 
 OSPTYPEFOR_DEFINITION(Light *);

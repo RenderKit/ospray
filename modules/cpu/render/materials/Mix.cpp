@@ -30,10 +30,8 @@ std::string MixMaterial::toString() const
 void MixMaterial::commit()
 {
   MaterialParam1f factor = getMaterialParam1f("factor", .5f);
-  ospray::Material *mat1 =
-      (ospray::Material *)getParamObject("material1", nullptr);
-  ospray::Material *mat2 =
-      (ospray::Material *)getParamObject("material2", nullptr);
+  mat1 = getParamObject<Material>("material1");
+  mat2 = getParamObject<Material>("material2");
 
   getSh()->factor = clamp(factor.factor);
   getSh()->factorMap = factor.tex;

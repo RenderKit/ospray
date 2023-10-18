@@ -16,16 +16,13 @@ struct Velvety
   float f;
 };
 
-inline BSDF_EvalRes Velvety_eval(const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec3f &wi,
-    const uniform FeatureFlagsHandler &)
+inline BSDF_EvalRes Velvety_eval(
+    const varying Velvety *uniform self, const vec3f &wo, const vec3f &wi)
 {
-  const varying Velvety *uniform self = (const varying Velvety *uniform)super;
   BSDF_EvalRes res;
 
-  const float cosThetaO = clamp(dot(wo, getN(super)));
-  const float cosThetaI = clamp(dot(wi, getN(super)));
+  const float cosThetaO = clamp(dot(wo, getN(&self->super)));
+  const float cosThetaI = clamp(dot(wi, getN(&self->super)));
   const float sinThetaO = sqrt(1.0f - cosThetaO * cosThetaO);
   const float horizonScatter = pow(sinThetaO, self->f);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
@@ -34,18 +31,15 @@ inline BSDF_EvalRes Velvety_eval(const varying BSDF *uniform super,
   return res;
 }
 
-inline BSDF_SampleRes Velvety_sample(const varying BSDF *uniform super,
-    const vec3f &wo,
-    const vec2f &s,
-    float,
-    const uniform FeatureFlagsHandler &ffh)
+inline BSDF_SampleRes Velvety_sample(
+    const varying Velvety *uniform self, const vec3f &wo, const vec2f &s, float)
 {
   BSDF_SampleRes res;
 
   const vec3f localDir = cosineSampleHemisphere(s);
-  res.wi = getFrame(super) * localDir;
+  res.wi = getFrame(&self->super) * localDir;
   res.type = BSDF_DIFFUSE_REFLECTION;
-  BSDF_EvalRes eval = Velvety_eval(super, wo, res.wi, ffh);
+  BSDF_EvalRes eval = Velvety_eval(self, wo, res.wi);
   res.pdf = eval.pdf;
   res.weight = eval.value * rcp(eval.pdf);
   return res;
@@ -56,18 +50,8 @@ inline void Velvety_Constructor(varying Velvety *uniform self,
     vec3f R,
     float f)
 {
-  BSDF_Constructor(&self->super,
-      R,
-      BSDF_DIFFUSE_REFLECTION,
-      BSDF_TYPE_VELVETY,
-#ifdef OSPRAY_TARGET_SYCL
-      NULL,
-      NULL,
-#else
-      Velvety_eval,
-      Velvety_sample,
-#endif
-      frame);
+  BSDF_Constructor(
+      &self->super, R, BSDF_DIFFUSE_REFLECTION, BSDF_TYPE_VELVETY, frame);
 
   self->f = f;
 }

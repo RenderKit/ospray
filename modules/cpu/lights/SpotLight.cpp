@@ -134,13 +134,12 @@ void SpotLight::processIntensityQuantityType(const float openingAngle)
         radiance = coloredIntensity / (sphericalCapCosInt * ringDiskArea);
       return;
     }
-  }
-  // XXX support for RADIANCE with intensityDistribution is deprecated
-  if (intensityQuantity == OSP_INTENSITY_QUANTITY_RADIANCE) {
-    // a virtual spot light has no surface area therefore radIntensity stays 0
-    if (radius > 0.0f)
-      radiance = coloredIntensity;
-    return;
+    if (intensityQuantity == OSP_INTENSITY_QUANTITY_RADIANCE) {
+      // a virtual spot light has no surface area therefore radIntensity stays 0
+      if (radius > 0.0f)
+        radiance = coloredIntensity;
+      return;
+    }
   }
 
   postStatusMsg(OSP_LOG_WARNING)

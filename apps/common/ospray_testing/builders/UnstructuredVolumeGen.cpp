@@ -85,7 +85,7 @@ std::array<bool, 256> primsNotAllowed;
 
 void initializeFromArray(const std::vector<std::vector<uint32_t>> &array)
 {
-  for (auto order : array) {
+  for (auto &order : array) {
     uint32_t mask = 0;
     for (uint32_t i : order)
       mask |= (1 << i);
@@ -98,7 +98,7 @@ void initializeFromArray(const std::vector<std::vector<uint32_t>> &array)
 void initializePrims()
 {
   // Initialize degenerate tetrahedrons
-  for (auto order : tetraNotAllowed) {
+  for (auto &order : tetraNotAllowed) {
     uint32_t mask = 0;
     for (uint32_t i : order)
       mask |= (1 << i);
@@ -313,16 +313,12 @@ cpp::Group UnstructuredVolumeGen::buildGroup() const
 
     cpp::GeometricModel isoModel(isoGeom);
 
-    if (rendererType == "pathtracer" || rendererType == "scivis"
-        || rendererType == "ao") {
-      cpp::Material mat(rendererType, "obj");
-      mat.setParam("kd", vec3f(0.8f));
-      if (rendererType == "pathtracer" || rendererType == "scivis")
-        mat.setParam("ks", vec3f(0.2f));
-      mat.commit();
+    cpp::Material mat("obj");
+    mat.setParam("kd", vec3f(0.8f));
+    mat.setParam("ks", vec3f(0.2f));
+    mat.commit();
 
-      isoModel.setParam("material", mat);
-    }
+    isoModel.setParam("material", mat);
 
     isoModel.commit();
 

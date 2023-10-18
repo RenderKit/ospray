@@ -10,6 +10,7 @@
 
 #include "common/Ray.ih"
 #include "common/World.ih"
+#include "math/random.ih"
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "lights/LightDispatch.ih"

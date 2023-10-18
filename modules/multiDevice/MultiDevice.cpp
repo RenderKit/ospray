@@ -73,10 +73,6 @@ void MultiDevice::commit()
     loadBalancer =
         rkcommon::make_unique<MultiDeviceLoadBalancer>(subdeviceLoadBalancers);
   }
-
-  // ISPCDevice::commit will init the tasking system but here we can reset
-  // it to the global desired number of threads
-  tasking::initTaskingSystem(numThreads, true);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -97,12 +93,23 @@ int MultiDevice::loadModule(const char *name)
 
 // OSPRay Data Arrays ///////////////////////////////////////////////////
 
+static void multiDeviceObjectDeleter(const void *object, const void *)
+{
+  memory::RefCount *o = (memory::RefCount *)object;
+  o->refDec();
+}
+
 OSPData MultiDevice::newSharedData(const void *sharedData,
     OSPDataType type,
     const vec3ul &numItems,
-    const vec3l &byteStride)
+    const vec3l &byteStride,
+    OSPDeleterCallback freeFunction,
+    const void *userData)
 {
   MultiDeviceObject *o = new MultiDeviceObject;
+  o->freeFunction = freeFunction;
+  o->userData = userData;
+  o->sharedData = sharedData;
   // Data arrays of OSPRay objects need to populate the corresponding subdevice
   // data arrays with the objects for that subdevice
   if (type & OSP_OBJECT) {
@@ -131,8 +138,9 @@ OSPData MultiDevice::newSharedData(const void *sharedData,
     }
   } else {
     for (auto &d : subdevices) {
-      o->objects.push_back(
-          d->newSharedData(sharedData, type, numItems, byteStride));
+      o->refInc();
+      o->objects.push_back(d->newSharedData(
+          sharedData, type, numItems, byteStride, multiDeviceObjectDeleter, o));
     }
   }
   return (OSPData)o;
@@ -220,11 +228,11 @@ OSPVolumetricModel MultiDevice::newVolumetricModel(OSPVolume volume)
 
 // Model Meta-Data //////////////////////////////////////////////////////
 
-OSPMaterial MultiDevice::newMaterial(const char *, const char *material_type)
+OSPMaterial MultiDevice::newMaterial(const char *material_type)
 {
   MultiDeviceObject *o = new MultiDeviceObject;
   for (auto &d : subdevices) {
-    o->objects.push_back(d->newMaterial(nullptr, material_type));
+    o->objects.push_back(d->newMaterial(material_type));
   }
   return (OSPMaterial)o;
 }
