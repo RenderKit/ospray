@@ -256,6 +256,7 @@ jobs:
         update-alternatives --set mpi /usr/bin/mpicc.mpich
         update-alternatives --set mpirun /usr/bin/mpirun.mpich
         tar -xzf build_release/*.gz
+        export OIDN_VERBOSE=2
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX TEST_MPI
       artifact-in: release-sycl-linux
@@ -385,6 +386,7 @@ jobs:
       cmd: |
         Expand-Archive build_release/*.zip -DestinationPath .
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
+        $env:OIDN_VERBOSE="2"
         $exitCode = 0 # keep job status to properly fail
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
         $exitCode += $LastExitCode
@@ -401,6 +403,7 @@ jobs:
       cmd: |
         msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$env:GITHUB_WORKSPACE
         $env:Path += ";$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin"
+        $env:OIDN_VERBOSE="2"
         $exitCode = 0 # keep job status to properly fail
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
         $exitCode += $LastExitCode
