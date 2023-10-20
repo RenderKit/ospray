@@ -183,6 +183,7 @@ jobs:
       artifact-in-linux: release-sycl-linux
       artifact-in-windows: release-sycl-windows
       path: build_release/ospray-*
+      artifact-out-name: binary-analysis-sycl
 
   antivirus-scan:
     needs:
@@ -209,6 +210,7 @@ jobs:
       artifact-in-linux: release-sycl-linux
       artifact-in-windows: release-sycl-windows
       path: build_release/ospray-*
+      artifact-out-name: antivirus-scan-sycl
 
 ### TEST JOBS ###
 
