@@ -205,7 +205,7 @@ jobs:
         export LDFLAGS=-fsanitize=address
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_OIDN=OFF
       artifact-out: build-linux-debug
-      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt build/install/embree
 
   build-ubuntu1804-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -429,6 +429,7 @@ jobs:
       cmd: |
         export LSAN_OPTIONS="suppressions=$GITHUB_WORKSPACE/scripts/tests/sanitize_ignore.txt"
         export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/embree/lib:$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
         export TBB_ENABLE_SANITIZERS=1
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
         build/install/ospray/bin/ospBenchmark --benchmark_min_time=0
