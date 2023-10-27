@@ -218,7 +218,7 @@ task
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
 #endif
       ScreenSample screenSample = PathTracer_renderPixel(
-          self, fb, camera, world, x, y, taskDesc.accumID, ffh);
+          self, fb, camera, world, x, y, fb->frameID, ffh);
 
       FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc, ffh);
     }

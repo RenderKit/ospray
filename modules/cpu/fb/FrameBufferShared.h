@@ -87,6 +87,13 @@ struct FrameBuffer
   // Not used on GPU to avoid USM thrashing
   uint32 numPixelsRendered;
 
+  // Accumulate frames if true
+  bool doAccumulation;
+
+  // Variance accumulation
+  bool accumulateVariance; // do frame accumulation in this frame
+  uint32 varianceAccumCount; // number of accumulated frames in variance buffer
+
 #ifdef __cplusplus
   FrameBuffer()
       : type(FRAMEBUFFER_TYPE_UNKNOWN),
@@ -99,7 +106,10 @@ struct FrameBuffer
         frameID(-1),
         channels(0),
         cancelRender(0),
-        numPixelsRendered(0)
+        numPixelsRendered(0),
+        doAccumulation(false),
+        accumulateVariance(false),
+        varianceAccumCount(0)
   {}
 };
 } // namespace ispc

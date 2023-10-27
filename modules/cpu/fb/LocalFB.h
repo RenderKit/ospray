@@ -46,8 +46,6 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   float taskError(const uint32_t taskID) const override;
 
-  void beginFrame() override;
-
   void endFrame(const float errorThreshold) override;
 
   AsyncEvent postProcess(bool wait) override;
@@ -109,8 +107,6 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   // holds error per tile and adaptive regions
   TaskError taskErrorRegion;
-  uint32_t skipVarianceCounter{1};
-  uint32_t skipVarianceFrameCounter{1};
 
   // Array of frame operations
   std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;

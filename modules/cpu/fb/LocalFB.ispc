@@ -27,9 +27,6 @@ inline void LocalFB_calculateVariance(
   taskDesc.error = max(taskDesc.error, reduce_max(err));
 }
 
-#define ACCUMULATE_VALUE(value, new_value, scale)                              \
-  value = (scale >= 1.f) ? new_value : (1.f - scale) * value + scale * new_value
-
 SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     const varying ScreenSample &screenSample,
     uniform RenderTaskDesc &taskDesc)
@@ -40,23 +37,26 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
 
   // Calculate accumulation scale
   const uniform int accumID = fb->super.frameID;
-  const uniform float accScale = (fb->doAccumulation) ? rcpf(accumID + 1) : 1.f;
+  const uniform float accScale =
+      (fb->super.doAccumulation) ? rcpf(accumID + 1) : 1.f;
 
   // Accumulate color
   const vec4f colorSample = make_vec4f(screenSample.rgb, screenSample.alpha);
   if (fb->colorBuffer)
-    ACCUMULATE_VALUE(fb->colorBuffer[pixelID], colorSample, accScale);
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->colorBuffer[pixelID], colorSample, accScale);
 
   // Accumulate color in variance buffer
-  if (fb->accumulateVariance) {
-    const uniform float accVarScale = rcpf(fb->varianceAccumCount);
-    ACCUMULATE_VALUE(fb->varianceBuffer[pixelID], colorSample, accVarScale);
+  if (fb->super.accumulateVariance) {
+    const uniform float accVarScale = rcpf(fb->super.varianceAccumCount);
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->varianceBuffer[pixelID], colorSample, accVarScale);
     LocalFB_calculateVariance(fb, pixelID, taskDesc);
   }
 
   // Accumulate depth buffer
   if (fb->depthBuffer) {
-    if (fb->doAccumulation) {
+    if (fb->super.doAccumulation) {
       float acc = accumID > 0 ? fb->depthBuffer[pixelID] : inf;
       fb->depthBuffer[pixelID] = min(acc, screenSample.z);
     } else {
@@ -66,11 +66,13 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
 
   // Accumulate normal buffer
   if (fb->normalBuffer)
-    ACCUMULATE_VALUE(fb->normalBuffer[pixelID], screenSample.normal, accScale);
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->normalBuffer[pixelID], screenSample.normal, accScale);
 
   // Accumulate albedo buffer
   if (fb->albedoBuffer)
-    ACCUMULATE_VALUE(fb->albedoBuffer[pixelID], screenSample.albedo, accScale);
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->albedoBuffer[pixelID], screenSample.albedo, accScale);
 
   if (fb->primitiveIDBuffer) {
     if (accumID == 0)
@@ -98,7 +100,6 @@ SYCL_EXTERNAL uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
   LocalFB *uniform fb = (LocalFB * uniform) _fb;
   uniform RenderTaskDesc desc;
   desc.taskID = taskID;
-  desc.accumID = fb->super.frameID;
   desc.error = 0.f;
 
   uniform vec2i renderTaskSize = fb->super.renderTaskSize;
@@ -114,7 +115,7 @@ SYCL_EXTERNAL void LocalFB_completeTask(
 {
   // Write error for the task
   LocalFB *uniform fb = (LocalFB * uniform) _fb;
-  if (fb->varianceBuffer && fb->accumulateVariance)
+  if (fb->varianceBuffer && fb->super.accumulateVariance)
     fb->taskRegionError[taskDesc.taskID] = taskDesc.error;
 }
 

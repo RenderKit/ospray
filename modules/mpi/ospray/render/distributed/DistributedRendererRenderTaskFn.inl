@@ -28,7 +28,7 @@ task
   uniform RenderTaskDesc taskDesc = FrameBuffer_dispatch_getRenderTaskDesc(
       &fb->super, taskIDs[taskIndex0], ffh);
 
-  const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
+  const uniform int startSampleID = max(fb->super.frameID, 0) * spp;
 
 #ifdef OSPRAY_TARGET_SYCL
 #if 0

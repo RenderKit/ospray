@@ -458,13 +458,11 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
 
   const int sparseFbChannelFlags =
       dfb->getChannelFlags() & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE);
-  const bool sparseFbTrackAccumIDs = dfb->getChannelFlags() & OSP_FB_ACCUM;
 
   auto sparseFb = rkcommon::make_unique<SparseFrameBuffer>(dfb->getISPCDevice(),
       dfb->getNumPixels(),
       dfb->getColorBufferFormat(),
-      sparseFbChannelFlags,
-      sparseFbTrackAccumIDs);
+      sparseFbChannelFlags);
 
   while (0 < totalActiveTiles) {
     Work currentWorkItem;
@@ -495,9 +493,9 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
         RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
             "setSparseFBTiles", "DistributedLB,Dynamic"));
         // Set the tiles and fill the right accumID for them
-        sparseFb->setTiles(
-            taskTileIDs, sparseFbTrackAccumIDs ? dfb->getFrameID() : 0);
+        sparseFb->setTiles(taskTileIDs);
         sparseFb->beginFrame();
+        sparseFb->setFrameID(dfb->getFrameID());
 
         RKCOMMON_IF_TRACING_ENABLED({
           rkcommon::tracing::endEvent();

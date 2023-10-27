@@ -29,7 +29,7 @@ task
 
   uniform RenderTaskDesc taskDesc =
       FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0], ffh);
-  const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
+  const uniform int startSampleID = max(fb->frameID, 0) * spp;
 
   if (fb->cancelRender || isEmpty(taskDesc.region)) {
     return;

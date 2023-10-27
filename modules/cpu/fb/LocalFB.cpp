@@ -152,7 +152,6 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
   getSh()->depthBuffer = depthBuffer ? depthBuffer->devicePtr() : nullptr;
   getSh()->normalBuffer = normalBuffer ? normalBuffer->devicePtr() : nullptr;
   getSh()->albedoBuffer = albedoBuffer ? albedoBuffer->devicePtr() : nullptr;
-  getSh()->doAccumulation = doAccum;
   getSh()->taskRegionError = taskErrorRegion.errorBuffer();
   getSh()->numRenderTasks = numRenderTasks;
   getSh()->primitiveIDBuffer =
@@ -258,13 +257,8 @@ void LocalFrameBuffer::clear()
   FrameBuffer::clear();
 
   // always also clear error buffer (if present)
-  if (hasVarianceBuffer) {
+  if (hasVarianceBuffer)
     taskErrorRegion.clear();
-    skipVarianceCounter = 1;
-    skipVarianceFrameCounter = skipVarianceCounter;
-    getSh()->varianceAccumCount = 0;
-    getSh()->accumulateVariance = 0;
-  }
 }
 void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
 {
@@ -408,25 +402,6 @@ vec2i LocalFrameBuffer::getTaskStartPos(const uint32_t taskID) const
 float LocalFrameBuffer::taskError(const uint32_t taskID) const
 {
   return taskErrorRegion[taskID];
-}
-
-void LocalFrameBuffer::beginFrame()
-{
-  FrameBuffer::beginFrame();
-
-  if (hasVarianceBuffer) {
-    // Skip variance buffer accumulation or not
-    if (--skipVarianceFrameCounter == 0) {
-      // Skip variance buffer accumulation, reset counters
-      skipVarianceCounter++;
-      skipVarianceFrameCounter = skipVarianceCounter;
-      getSh()->accumulateVariance = 0;
-    } else {
-      // Accumulate variance buffer in this frame
-      getSh()->accumulateVariance = 1;
-      getSh()->varianceAccumCount++;
-    }
-  }
 }
 
 void LocalFrameBuffer::endFrame(const float errorThreshold)

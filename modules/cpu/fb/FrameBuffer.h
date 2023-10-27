@@ -100,7 +100,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   uint32 getChannelFlags() const;
 
-  int32 getFrameID() const;
+  int32_t getFrameID() const;
+  void setFrameID(int32_t id);
 
   FeatureFlags getFeatureFlags() const;
 
@@ -121,6 +122,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   // indicates whether the app requested this frame buffer to do accumulation
   bool doAccum;
 
+  uint32_t skipVarianceCounter{1};
+  uint32_t skipVarianceFrameCounter{1};
   float frameVariance{0.f};
 
   std::atomic<bool> cancelRender{false};
@@ -187,6 +190,11 @@ inline bool FrameBuffer::doAccumulation() const
 inline int32_t FrameBuffer::getFrameID() const
 {
   return getSh()->frameID;
+}
+
+inline void FrameBuffer::setFrameID(int32_t id)
+{
+  getSh()->frameID = id;
 }
 
 inline FeatureFlags FrameBuffer::getFeatureFlags() const

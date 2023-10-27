@@ -14,6 +14,9 @@ extern "C" uint32 *uniform getThreadNumPixelsRendered();
 extern "C" int *uniform getThreadLastFrameID();
 #endif
 
+#define FRAMEBUFFER_ACCUMULATE_VALUE(value, new_value, factor)                 \
+  value = (factor >= 1.f) ? new_value : lerp(factor, value, new_value)
+
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // Run the chain of pixel ops (if any) to produce the final color to be written

@@ -20,10 +20,7 @@ struct LocalFB
   float *depthBuffer;
   vec3f *normalBuffer;
   vec3f *albedoBuffer;
-  bool doAccumulation;
   float *taskRegionError;
-  uint32 varianceAccumCount;
-  uint32 accumulateVariance; // could be boolean but ISPC hates them
   vec2i numRenderTasks;
   uint32 *primitiveIDBuffer;
   uint32 *objectIDBuffer;
@@ -36,10 +33,7 @@ struct LocalFB
         depthBuffer(nullptr),
         normalBuffer(nullptr),
         albedoBuffer(nullptr),
-        doAccumulation(false),
         taskRegionError(nullptr),
-        varianceAccumCount(0),
-        accumulateVariance(0),
         numRenderTasks(0),
         primitiveIDBuffer(nullptr),
         objectIDBuffer(nullptr),

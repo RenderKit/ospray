@@ -56,6 +56,7 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->size = _size;
   getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
   getSh()->channels = channels;
+  getSh()->doAccumulation = doAccum;
 
 #ifdef OSPRAY_TARGET_SYCL
   // Note: using 2x2, 4x4, etc doesn't change perf much
@@ -88,6 +89,14 @@ void FrameBuffer::commit()
 void FrameBuffer::clear()
 {
   getSh()->frameID = -1; // we increment at the start of the frame
+
+  // Clear variance accumulation counters
+  if (hasVarianceBuffer) {
+    skipVarianceCounter = 1;
+    skipVarianceFrameCounter = skipVarianceCounter;
+    getSh()->varianceAccumCount = 0;
+    getSh()->accumulateVariance = false;
+  }
 }
 
 vec2i FrameBuffer::getRenderTaskSize() const
@@ -110,6 +119,20 @@ void FrameBuffer::beginFrame()
   // TODO: Maybe better as a kernel to avoid USM thrash to host
   getSh()->numPixelsRendered = 0;
 #endif
+
+  if (hasVarianceBuffer) {
+    // Skip variance buffer accumulation or not
+    if (--skipVarianceFrameCounter == 0) {
+      // Skip variance buffer accumulation, reset counters
+      skipVarianceCounter++;
+      skipVarianceFrameCounter = skipVarianceCounter;
+      getSh()->accumulateVariance = false;
+    } else {
+      // Accumulate variance buffer in this frame
+      getSh()->accumulateVariance = true;
+      getSh()->varianceAccumCount++;
+    }
+  }
 }
 
 std::string FrameBuffer::toString() const

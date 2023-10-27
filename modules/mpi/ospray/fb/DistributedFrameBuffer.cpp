@@ -229,15 +229,11 @@ void DistributedFrameBuffer::setSparseFBLayerCount(size_t numLayers)
   // this needs data from all ranks rendering a given tile
   const int channelFlags =
       getChannelFlags() & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE);
-  const bool sparseFbTrackAccumIDs = getChannelFlags() & OSP_FB_ACCUM;
   // Allocate any new layers that have been added to the DFB
   for (size_t i = 1; i < layers.size(); ++i) {
     if (!layers[i]) {
-      layers[i] = rkcommon::make_unique<SparseFrameBuffer>(getISPCDevice(),
-          size,
-          getColorBufferFormat(),
-          channelFlags,
-          sparseFbTrackAccumIDs);
+      layers[i] = rkcommon::make_unique<SparseFrameBuffer>(
+          getISPCDevice(), size, getColorBufferFormat(), channelFlags);
     }
   }
 }
@@ -303,14 +299,9 @@ void DFB::createTiles()
     channels |= OSP_FB_ALBEDO;
   }
 
-  const bool sparseFbTrackAccumIDs = getChannelFlags() & OSP_FB_ACCUM;
   if (layers.empty()) {
-    layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(getISPCDevice(),
-        size,
-        OSP_FB_NONE,
-        channels,
-        myTileIDs,
-        sparseFbTrackAccumIDs));
+    layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(
+        getISPCDevice(), size, OSP_FB_NONE, channels, myTileIDs));
   } else {
     layers[0]->setTiles(myTileIDs);
     layers[0]->clear();
