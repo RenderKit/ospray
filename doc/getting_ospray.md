@@ -10,7 +10,7 @@ need
 
 - To run the example viewer: OpenGL
 - To use the distributed, multi-node rendering feature: Intel® [MPI
-  Library](https://software.intel.com/en-us/intel-mpi-library/))
+  Library](https://software.intel.com/en-us/intel-mpi-library/)
 
 We recommend the latest version of both TBB and Embree libraries.
 
@@ -23,13 +23,13 @@ installed on your system.
 ### GPU drivers on Linux
 
 Install the latest GPGPU drivers for your Intel GPU from:
-https://dgpu-docs.intel.com/. Follow the driver installation
+<https://dgpu-docs.intel.com/>. Follow the driver installation
 instructions for your graphics card.
 
 ### GPU drivers on Windows
 
 Install the latest GPGPU drivers for your Intel GPU from:
-https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html.
+<https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html>.
 Follow the driver installation instructions for your graphics card.
 
 
