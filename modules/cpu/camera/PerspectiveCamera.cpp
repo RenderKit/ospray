@@ -53,7 +53,9 @@ void PerspectiveCamera::commit()
 
   // Set shared structure members
   {
-    getSh()->scaledAperture = apertureRadius / (imgPlaneSize.x * focusDistance);
+    getSh()->scaledAperture = apertureRadius
+        ? apertureRadius / (imgPlaneSize.x * focusDistance)
+        : 0.0f;
     getSh()->aspect = aspect;
     getSh()->stereoMode = stereoMode;
     getSh()->dir_00 = normalize(dir);
