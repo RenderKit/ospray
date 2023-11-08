@@ -6,6 +6,7 @@ Version History
 -   Improve noise in reflections of ThisGlass
 -   Fix indirectly seen albedo and normal buffer
 -   Fix empty image on Windows when focusDistance=0
+-   Fix missing SDK headers for `ISPCDevice*`
 
 ### Changes in v3.0.0:
 

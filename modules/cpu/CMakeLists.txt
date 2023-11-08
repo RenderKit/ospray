@@ -523,7 +523,7 @@ endif()
 
 get_subdirectories(SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
 
-foreach(dir ${SUBDIRS})
+foreach(dir . ${SUBDIRS})
   install(DIRECTORY ${dir}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/cpu
     COMPONENT devel
