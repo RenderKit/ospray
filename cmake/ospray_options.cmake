@@ -97,6 +97,13 @@ if (OSPRAY_ENABLE_VOLUMES)
             " download and extract Open VKL (or compile from source), then"
             " set the 'openvkl_DIR' variable to the installation directory.")
   endif()
+else()
+    set(OPENVKL_ISA_SSE4 TRUE)
+    set(OPENVKL_ISA_AVX TRUE)
+    set(OPENVKL_ISA_AVX2 TRUE)
+    set(OPENVKL_ISA_AVX512SKX TRUE)
+    set(OPENVKL_ISA_NEON TRUE)
+    set(OPENVKL_ISA_NEON2X TRUE)
 endif()
 
 # OpenImageDenoise
