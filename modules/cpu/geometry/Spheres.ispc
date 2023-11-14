@@ -92,48 +92,6 @@ void Spheres_getAreas(const Geometry *const uniform _self,
   }
 }
 
-export void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
-{
-  Spheres *uniform self = (Spheres * uniform) args->geometryUserPtr;
-  const uniform vec4f vertex = get_vec4f(self->sphere, args->primID);
-  const uniform vec3f center = make_vec3f(vertex);
-  const uniform float radius = vertex.w;
-
-  box3fa *uniform out = (box3fa * uniform) args->bounds_o;
-  *out = make_box3fa(center - radius, center + radius);
-}
-
-#if 0
-SYCL_EXTERNAL unmasked void Spheres_intersect_kernel(
-    const RTCIntersectFunctionNArguments *uniform args,
-    const uniform bool isOcclusionTest)
-{
-  // make sure to set the mask
-  if (!args->valid[programIndex])
-    return;
-
-  args->valid[programIndex] = 0;
-
-  Spheres *uniform self = (Spheres * uniform) args->geometryUserPtr;
-  uniform int primID = args->primID;
-
-  // this assumes that the args->rayhit is actually a pointer to a varying ray!
-  varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
-
-  const uniform vec4f vertex = get_vec4f(self->sphere, args->primID);
-  const uniform vec3f center = make_vec3f(vertex);
-  const uniform float radius = vertex.w;
-
-  const Intersections isect =
-      intersectSphere(ray->org, ray->dir, center, radius);
-
-  // call intersection filtering callback and setup hit if accepted
-  if (filterIntersectionBoth(args, isect, isOcclusionTest)) {
-    args->valid[programIndex] = -1;
-  }
-}
-#endif
-
 export void *uniform Spheres_postIntersect_addr()
 {
   return (void *uniform)Spheres_postIntersect;

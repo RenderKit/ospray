@@ -18,8 +18,4 @@ SYCL_EXTERNAL SampleAreaRes Spheres_sampleArea(
     const vec2f &s,
     const float time);
 
-SYCL_EXTERNAL unmasked void Spheres_intersect_kernel(
-    const RTCIntersectFunctionNArguments *uniform args,
-    const uniform bool isOcclusionTest);
-
 OSPRAY_END_ISPC_NAMESPACE

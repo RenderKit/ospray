@@ -9,7 +9,6 @@
 #include "geometry/Spheres_ispc.h"
 #else
 namespace ispc {
-void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args);
 void *Spheres_sampleArea_addr();
 void *Spheres_getAreas_addr();
 } // namespace ispc
@@ -81,7 +80,6 @@ void Spheres::commit()
     }
   }
 
-#if 1
   createEmbreeGeometry(RTC_GEOMETRY_TYPE_SPHERE_POINT);
   rtcSetSharedGeometryBuffer(embreeGeometry,
       RTC_BUFFER_TYPE_VERTEX,
@@ -92,10 +90,6 @@ void Spheres::commit()
       sizeof(vec4f),
       sphereData->size());
   rtcCommitGeometry(embreeGeometry);
-#else
-  // Test the spheres as the old user geometry
-  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Spheres_bounds);
-#endif
 
   getSh()->sphere = *ispc(sphereData);
   getSh()->texcoord = *ispc(texcoordData);
