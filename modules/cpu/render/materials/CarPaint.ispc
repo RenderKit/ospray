@@ -123,64 +123,62 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform CarPaint_getBSDF(
 
     substrate = &bsdf->baseDiffuse.super;
   }
-
   bsdf->flakeMask = flakeMask;
 
   // clear coat layer
-  const float coat = max(self->coat * get1f(self->coatMap, dg, 1.f), 0.f);
-  if (coat > EPS) {
+  if ((self->coat > EPS)
+      && (abs(self->coatIor - 1.f) > EPS || valid(self->coatIorMap))) {
+    const float coat = max(self->coat * get1f(self->coatMap, dg, 1.f), 0.f);
     float coatIor = self->coatIor * get1f(self->coatIorMap, dg, 1.f);
     if (coatIor < 1.f)
       coatIor = rcp(coatIor);
     coatIor = clamp(coatIor, 1.f, 3.f); // clamp to common range due to LUTs
-    if (abs(coatIor - 1.f) > EPS) {
-      // compute the final coat color
-      const vec3f coatColor = clamp(
-          self->coatColor * get3f(self->coatColorMap, dg, make_vec3f(1.f)));
-      vec3f coatFinalColor = coatColor;
-      if (flakeMask) {
-        const float flipflopFalloff = clamp(
-            self->flipflopFalloff * get1f(self->flipflopFalloffMap, dg, 1.f));
-        if (flipflopFalloff < 1.f - EPS) {
-          // pearlescent flakes
-          const vec3f flipflopColor = clamp(self->flipflopColor
-              * get3f(self->flipflopColorMap, dg, make_vec3f(1.f)));
-          const float cosThetaO = max(-dot(ray.dir, flakeFrame->vz), 0.f);
-          const float weight = pow(1.f - cosThetaO,
-              rcp(1.f
-                  - flipflopFalloff)); // use Schlick for the blending weight
-          coatFinalColor = lerp(weight, coatColor, flipflopColor);
-        }
-      }
 
-      const float coatThickness = max(
-          self->coatThickness * get1f(self->coatThicknessMap, dg, 1.f), 0.f);
-      varying linear3f *uniform coatFrame = LinearSpace3f_create(ctx,
-          makeShadingFrame(
-              dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
-
-      if (self->coatRoughness < EPS) {
-        DielectricLayer_Constructor(
-            (varying DielectricLayer * uniform) & bsdf->dielectricLayer,
-            coatFrame,
-            substrate,
-            rcp(coatIor),
-            coatFinalColor,
-            coatThickness,
-            coat);
-      } else {
-        MicrofacetDielectricLayer_Constructor(&bsdf->dielectricLayer,
-            super->microfacetAlbedoTables,
-            coatFrame,
-            substrate,
-            rcp(coatIor),
-            coatFinalColor,
-            coatThickness,
-            max(self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f),
-                0.f),
-            0.f,
-            coat);
+    // compute the final coat color
+    const vec3f coatColor =
+        clamp(self->coatColor * get3f(self->coatColorMap, dg, make_vec3f(1.f)));
+    vec3f coatFinalColor = coatColor;
+    if (flakeMask) {
+      const float flipflopFalloff = clamp(
+          self->flipflopFalloff * get1f(self->flipflopFalloffMap, dg, 1.f));
+      if (flipflopFalloff < 1.f - EPS) {
+        // pearlescent flakes
+        const vec3f flipflopColor = clamp(self->flipflopColor
+            * get3f(self->flipflopColorMap, dg, make_vec3f(1.f)));
+        const float cosThetaO = max(-dot(ray.dir, flakeFrame->vz), 0.f);
+        const float weight = pow(1.f - cosThetaO,
+            rcp(1.f - flipflopFalloff)); // use Schlick for the blending weight
+        coatFinalColor = lerp(weight, coatColor, flipflopColor);
       }
+    }
+
+    const float coatThickness =
+        max(self->coatThickness * get1f(self->coatThicknessMap, dg, 1.f), 0.f);
+    varying linear3f *uniform coatFrame = LinearSpace3f_create(ctx,
+        makeShadingFrame(
+            dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
+
+    if (self->coatRoughness < EPS) {
+      DielectricLayer_Constructor(
+          (varying DielectricLayer * uniform) & bsdf->dielectricLayer,
+          coatFrame,
+          substrate,
+          rcp(coatIor),
+          coatFinalColor,
+          coatThickness,
+          coat);
+    } else {
+      MicrofacetDielectricLayer_Constructor(&bsdf->dielectricLayer,
+          super->microfacetAlbedoTables,
+          coatFrame,
+          substrate,
+          rcp(coatIor),
+          coatFinalColor,
+          coatThickness,
+          max(self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f),
+              0.f),
+          0.f,
+          coat);
     }
   } else {
     PassthroughLayer_Constructor(

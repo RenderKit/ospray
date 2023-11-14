@@ -207,7 +207,7 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
         }
 
         // specular
-        if (specular > EPS && abs(eta - 1.f) > EPS) {
+        if (self->specular > EPS) {
           if (self->roughness < EPS) {
             DielectricLayer_Constructor((varying DielectricLayer * uniform)
                     & plasticBsdf->dielectricLayer,
@@ -229,10 +229,11 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
                 anisotropy,
                 specular);
           }
-        } else
+        } else {
           PassthroughLayer_Constructor((varying PassthroughLayer * uniform)
                   & plasticBsdf->dielectricLayer,
               &plasticBsdf->diffuse.super);
+        }
 
         MultiBSDF_add(multiBase,
             2,
@@ -333,9 +334,6 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
     varying linear3f *uniform coatFrame = frame;
 
     // clear coat
-    PassthroughLayer_Constructor((varying PassthroughLayer * uniform)
-            & bsdf->sheen.clearCoat.dielectricLayer,
-        &bsdf->sheen.clearCoat.base.super);
     if (self->coat > EPS) {
       const float coat = clamp(self->coat * get1f(self->coatMap, dg, 1.f));
       float coatIor = self->coatIor * get1f(self->coatIorMap, dg, 1.f);
@@ -385,6 +383,10 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
               coat);
         }
       }
+    } else {
+      PassthroughLayer_Constructor((varying PassthroughLayer * uniform)
+              & bsdf->sheen.clearCoat.dielectricLayer,
+          &bsdf->sheen.clearCoat.base.super);
     }
 
     // sheen
