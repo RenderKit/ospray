@@ -7,6 +7,10 @@ Version History
 -   Fix indirectly seen albedo and normal buffer
 -   Fix empty image on Windows when focusDistance=0
 -   Fix missing SDK headers for `ISPCDevice*`
+-   Fix artifacts when using specular texture for Principled
+-   Minimum version of rkcommon is 1.13.0, which brings the following
+    improvements:
+    -   Fix crash using GPU and emissive geometry
 
 ### Changes in v3.0.0:
 
