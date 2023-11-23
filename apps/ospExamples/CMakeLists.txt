@@ -5,15 +5,9 @@ if (NOT OSPRAY_ENABLE_APPS_EXAMPLES)
   return()
 endif()
 
-# prefer libGL over libOpenGl for better compatibility with SWR
-set(OpenGL_GL_PREFERENCE "LEGACY")
-find_package(OpenGL 2 REQUIRED)
-find_package(glfw3 REQUIRED)
-
 add_executable(ospExamples
   ${OSPRAY_RESOURCE}
   GLFWOSPRayWindow.cpp
-  imgui_impl_glfw_gl3.cpp
   ospExample.cpp
 )
 
@@ -22,7 +16,6 @@ PRIVATE
   arcball_camera
   ospray_testing
   ospray_imgui
-  glfw
   ${OPENGL_LIBRARIES}
 )
 

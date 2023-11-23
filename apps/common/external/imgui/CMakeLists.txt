@@ -8,10 +8,13 @@ add_library(ospray_imgui SHARED
   imgui_draw.cpp
   imgui_tables.cpp
   imgui_widgets.cpp
+  imgui_impl_opengl3.cpp
+  imgui_impl_glfw.cpp
 )
 
 target_link_libraries(ospray_imgui
 PUBLIC
+  glfw
   ${OPENGL_LIBRARIES}
   rkcommon::rkcommon
 )
