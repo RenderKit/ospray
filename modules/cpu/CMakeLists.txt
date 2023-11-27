@@ -248,6 +248,11 @@ if (WIN32)
   file(READ def_header.txt OSPRAY_DEF)
   file(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
 
+  if (OSPRAY_ENABLE_VOLUMES)
+    file(READ ispc_symbols_volume.txt OSPRAY_ISPC_SYMBOLS_VOLUME)
+    list(APPEND OSPRAY_ISPC_SYMBOLS_IN ${OSPRAY_ISPC_SYMBOLS_VOLUME})
+  endif()
+
   list(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
   foreach(isa ${OSPRAY_ISPC_TARGET_LIST})
     string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512skx-i32x16

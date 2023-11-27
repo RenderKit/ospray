@@ -58,6 +58,13 @@ jobs:
       artifact-out: build-windows-debug-all
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
+  build-windows-no-volume:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
+    with:
+      cmd: |
+        scripts\build\win.ps1 -G "Visual Studio 17 2022" -DBUILD_ISA_AVX=OFF -DOSPRAY_BUILD_ISA=AVX2 -DBUILD_OPENVKL=OFF
+
 ### TEST JOBS ###
 
   test-linux-debug-all:
