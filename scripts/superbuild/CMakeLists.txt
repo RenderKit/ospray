@@ -140,7 +140,7 @@ endif()
 
 option(BUILD_OPENVKL "Build Open VKL as a part of the superbuild." ON)
 if (BUILD_OPENVKL)
-  set(OPENVKL_VERSION "2.0.0" CACHE STRING "Which version of OpenVKL to build?")
+  set(OPENVKL_VERSION "devel" CACHE STRING "Which version of OpenVKL to build?")
   if (OPENVKL_VERSION STREQUAL "2.0.0")
     set(OPENVKL_HASH "df8c253616c8748a5e926671ec42b3ba0a4dca1111ba474a8335275dc000b381")
   endif()
