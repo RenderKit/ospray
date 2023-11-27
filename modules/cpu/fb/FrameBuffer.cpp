@@ -91,8 +91,6 @@ void FrameBuffer::clear()
 
   // Clear variance accumulation counters
   if (hasVarianceBuffer) {
-    skipVarianceCounter = 1;
-    skipVarianceFrameCounter = skipVarianceCounter;
     getSh()->varianceAccumCount = 0;
     getSh()->accumulateVariance = false;
   }
@@ -120,16 +118,12 @@ void FrameBuffer::beginFrame()
 #endif
 
   if (hasVarianceBuffer) {
-    // Skip variance buffer accumulation or not
-    if (--skipVarianceFrameCounter == 0) {
-      // Skip variance buffer accumulation, reset counters
-      skipVarianceCounter++;
-      skipVarianceFrameCounter = skipVarianceCounter;
-      getSh()->accumulateVariance = false;
-    } else {
-      // Accumulate variance buffer in this frame
+    // Decide if accumulate variance in this frame
+    if (mtGen() & 1) {
       getSh()->accumulateVariance = true;
       getSh()->varianceAccumCount++;
+    } else {
+      getSh()->accumulateVariance = false;
     }
   }
 }

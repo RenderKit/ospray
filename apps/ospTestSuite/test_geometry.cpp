@@ -253,7 +253,7 @@ INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
 TEST_P(FromOsprayTestingVariance, testScenes)
 {
   PerformRenderTest();
-  EXPECT_LE(framebuffer.variance(), 1.0f);
+  EXPECT_LE(framebuffer.variance(), 2.0f);
 }
 
 INSTANTIATE_TEST_SUITE_P(TestScenesVariance,

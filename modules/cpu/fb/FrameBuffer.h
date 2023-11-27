@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <atomic>
 // ospray
 #include "ISPCDeviceObject.h"
 #include "common/Data.h"
@@ -13,6 +12,9 @@
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "FrameBufferShared.h"
+
+#include <atomic>
+#include <random>
 
 namespace ospray {
 
@@ -126,8 +128,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   // indicates whether the app requested this frame buffer to do accumulation
   bool doAccum;
 
-  uint32_t skipVarianceCounter{1};
-  uint32_t skipVarianceFrameCounter{1};
+  std::mt19937 mtGen{70921};
   float frameVariance{0.f};
 
   std::atomic<bool> cancelRender{false};
