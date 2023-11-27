@@ -431,8 +431,9 @@ jobs:
         export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/embree/lib:$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
         export TBB_ENABLE_SANITIZERS=1
+        export ASAN_OPTIONS=intercept_tls_get_addr=0 # WA https://github.com/google/sanitizers/issues/1322
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
-        build/install/ospray/bin/ospBenchmark --benchmark_min_time=0
+        build/install/ospray/bin/ospBenchmark --benchmark_min_time=0s
       artifact-in: build-linux-debug
 
 

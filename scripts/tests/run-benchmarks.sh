@@ -12,7 +12,7 @@ source ~/system_token.sh
 # benchmark configuration
 SOURCE_ROOT=`pwd`
 PROJECT_NAME="OSPRay"
-BENCHMARK_FLAGS="--benchmark_min_time=${BENCHMARK_MIN_TIME_SECONDS:-10}"
+BENCHMARK_FLAGS="--benchmark_min_time=${BENCHMARK_MIN_TIME_SECONDS:-10s}"
 
 export LD_LIBRARY_PATH=`pwd`/build/install/ospray/lib:${LD_LIBRARY_PATH}
 
