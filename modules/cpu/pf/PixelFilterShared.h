@@ -19,7 +19,8 @@ struct PixelFilter;
    uniform 2D random variable s with values of the range [0..1) into a
    non-uniform 2D position in the range of [-w/2 .. w/2], where w =
    self->width. The center of the pixel filter kernel is [0,0], which
-   represents a position at the center of the pixel.
+   represents a position at the center of the pixel, which should be sampled
+   for input s = [0.5, 0.5].
 
    Returns a 2D position in the domain [-w/2 .. w/2] distributed proportionally
    to the filter kernel.

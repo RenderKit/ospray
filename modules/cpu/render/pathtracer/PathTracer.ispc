@@ -207,6 +207,8 @@ task
     return;
   }
 
+  const uniform int frameID = fb->doAccumulation ? max(fb->frameID, 0) : 0;
+
 #ifdef OSPRAY_TARGET_SYCL
   for (uint32 y = taskDesc.region.lower.y; y < (uint32)taskDesc.region.upper.y;
        ++y)
@@ -217,8 +219,8 @@ task
   foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
 #endif
-      ScreenSample screenSample = PathTracer_renderPixel(
-          self, fb, camera, world, x, y, fb->frameID, ffh);
+      ScreenSample screenSample =
+          PathTracer_renderPixel(self, fb, camera, world, x, y, frameID, ffh);
 
       FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc, ffh);
     }

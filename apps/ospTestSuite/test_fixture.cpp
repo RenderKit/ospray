@@ -170,8 +170,6 @@ void FromOsprayTesting::SetUp()
 {
   Base::SetUp();
 
-  instances.clear();
-
   auto builder = ospray::testing::newBuilder(sceneName);
   ospray::testing::setParam(builder, "rendererType", rendererType);
   ospray::testing::commit(builder);

@@ -29,7 +29,10 @@ task
 
   uniform RenderTaskDesc taskDesc =
       FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0], ffh);
-  const uniform int startSampleID = max(fb->frameID, 0) * spp;
+
+  const uniform int startSampleID =
+      (fb->doAccumulation ? max(fb->frameID, 0) * spp : 0)
+      + 1; // Halton Sequence starts with 1
 
   if (fb->cancelRender || isEmpty(taskDesc.region)) {
     return;
@@ -61,8 +64,7 @@ task
         const float pixel_du = Halton_sample2(startSampleID + s);
         const float pixel_dv = CranleyPattersonRotation(
             Halton_sample3(self->mathConstants, startSampleID + s),
-            1.f / 6.f); // rotate to sample center
-        // (0.5) of pixel for sampleID=0
+            1.f / 6.f); // rotate to sample center (0.5) of pixel for sampleID=0
         const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
         vec2f pfSample = pixelSample;

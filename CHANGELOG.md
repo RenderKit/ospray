@@ -10,9 +10,13 @@ Version History
 -   Fix missing SDK headers for `ISPCDevice*`
 -   Fix artifacts when using specular texture for Principled
 -   Add native support for disc and oriented disc geometry
+-   Fixes for PixelFilter
+    -   Parameter was ignored (always using the default Gaussian)
+    -   Avoid a shift/misalignment within the pixel for first sample
 -   Minimum version of rkcommon is 1.13.0, which brings the following
     improvements:
     -   Fix crash using GPU and emissive geometry
+-   GPU device now also supports motion blur
 
 ### Changes in v3.0.0:
 
