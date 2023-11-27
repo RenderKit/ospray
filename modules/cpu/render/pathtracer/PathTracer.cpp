@@ -20,7 +20,7 @@ SYCL_EXTERNAL void PathTracer_renderTask(Renderer *uniform _self,
     Camera *uniform camera,
     World *uniform world,
     const uint32 *uniform taskIDs,
-    const int taskIndex0,
+    const sycl::nd_item<3> taskIndex,
     const uniform FeatureFlagsHandler &ffh);
 }
 #else
@@ -107,20 +107,16 @@ AsyncEvent PathTracer::renderTasks(FrameBuffer *fb,
     ff |= camera->getFeatureFlags();
     cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
 
-    const sycl::nd_range<1> dispatchRange =
-        device.computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange,
-        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
-          if (taskIndex.get_global_id(0) < numTasks) {
-            ispc::FeatureFlagsHandler ffh(kh);
-            ispc::PathTracer_renderTask(&rendererSh->super,
-                fbSh,
-                cameraSh,
-                worldSh,
-                taskIDsPtr,
-                taskIndex.get_global_id(0),
-                ffh);
-          }
+    cgh.parallel_for(fb->getDispatchRange(numTasks),
+        [=](sycl::nd_item<3> taskIndex, sycl::kernel_handler kh) {
+          ispc::FeatureFlagsHandler ffh(kh);
+          ispc::PathTracer_renderTask(&rendererSh->super,
+              fbSh,
+              cameraSh,
+              worldSh,
+              taskIDsPtr,
+              taskIndex,
+              ffh);
         });
   });
 

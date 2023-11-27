@@ -19,14 +19,6 @@ extern "C" int *uniform getThreadLastFrameID();
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// Run the chain of pixel ops (if any) to produce the final color to be written
-// into the framebuffer
-SYCL_EXTERNAL vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
-    const vec4f &color,
-    const float depth,
-    const vec3f &normal,
-    const vec3f &albedo);
-
 #ifndef OSPRAY_TARGET_SYCL
 inline void FrameBuffer_updateProgress(
     FrameBuffer *uniform self, const uniform uint32 numPixelsRendered)

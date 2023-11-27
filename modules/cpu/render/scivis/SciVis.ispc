@@ -279,11 +279,10 @@ SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     Camera *uniform camera,
     World *uniform world,
     const uint32 *uniform taskIDs,
-    const int taskIndex0,
+    const sycl::nd_item<3> taskIndex,
     const uniform FeatureFlagsHandler &ffh)
 {
-  Renderer_default_renderTask(
-      self, fb, camera, world, taskIDs, taskIndex0, ffh);
+  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex, ffh);
 }
 #else
 export void SciVis_renderTasks(void *uniform _self,

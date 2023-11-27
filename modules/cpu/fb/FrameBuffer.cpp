@@ -58,11 +58,10 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->channels = channels;
   getSh()->doAccumulation = doAccum;
 
-#ifdef OSPRAY_TARGET_SYCL
-  // Note: using 2x2, 4x4, etc doesn't change perf much
-  vec2i renderTaskSize(1);
-#else
 #if OSPRAY_RENDER_TASK_SIZE == -1
+#ifdef OSPRAY_TARGET_SYCL
+  vec2i renderTaskSize(8);
+#else
   // Compute render task size based on the simd width to get as "square" as
   // possible a task size that has simdWidth pixels
   const int simdWidth = ispc::ISPCDevice_programCount();
@@ -71,11 +70,11 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
     renderTaskSize.y *= 2;
     renderTaskSize.x /= 2;
   }
+#endif
 #else
   // Note: we could also allow changing this at runtime if we want to add this
   // to the API
   vec2i renderTaskSize(OSPRAY_RENDER_TASK_SIZE);
-#endif
 #endif
   getSh()->renderTaskSize = renderTaskSize;
 }

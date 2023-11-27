@@ -105,6 +105,10 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   FeatureFlags getFeatureFlags() const;
 
+#ifdef OSPRAY_TARGET_SYCL
+  sycl::nd_range<3> getDispatchRange(const size_t numTasks) const;
+#endif
+
  protected:
   const vec2i size;
   ColorBufferFormat colorBufferFormat;
@@ -203,5 +207,14 @@ inline FeatureFlags FrameBuffer::getFeatureFlags() const
   ff.other = featureFlags;
   return ff;
 }
+
+#ifdef OSPRAY_TARGET_SYCL
+inline sycl::nd_range<3> FrameBuffer::getDispatchRange(
+    const size_t numTasks) const
+{
+  const vec2i ts = getRenderTaskSize();
+  return sycl::nd_range<3>({numTasks, ts.y, ts.x}, {1, ts.y, ts.x});
+}
+#endif
 
 } // namespace ospray
