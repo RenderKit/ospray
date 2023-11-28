@@ -99,10 +99,11 @@ test_filters+=":Texcoord/Interpolation.Interpolation/0"
 test_filters+=":Texcoord/Interpolation.Interpolation/1"
 test_filters+=":Appearance/Texture2DTransform.simple/0"
 
-
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
 export SYCL_CACHE_PERSISTENT=1
 export OIDN_VERBOSE=2
+
+export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE # WA for PVC
 
 mkdir failed-gpu
 
