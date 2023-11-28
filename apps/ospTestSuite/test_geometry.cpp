@@ -258,7 +258,7 @@ TEST_P(FromOsprayTestingVariance, testScenes)
 
 INSTANTIATE_TEST_SUITE_P(TestScenesVariance,
     FromOsprayTestingVariance,
-    ::testing::Values(std::make_tuple("cornell_box", "pathtracer", 4)));
+    ::testing::Values(std::make_tuple("cornell_box", "pathtracer", 8)));
 
 TEST_P(FromOsprayTestingLightSamples, testScenes)
 {

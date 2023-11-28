@@ -48,6 +48,7 @@ set(OSPRAY_CPP_SOURCES
   fb/frame_ops/ColorConversion.cpp
   fb/frame_ops/Debug.cpp
   fb/frame_ops/ToneMapper.cpp
+  fb/frame_ops/Variance.cpp
 
   pf/PixelFilter.cpp
 
@@ -133,6 +134,7 @@ set(OSPRAY_ISPC_SOURCES
   fb/frame_ops/ColorConversion.ispc
   fb/frame_ops/Debug.ispc
   fb/frame_ops/ToneMapper.ispc
+  fb/frame_ops/Variance.ispc
 
   pf/PixelFilterDispatch.ispc
   pf/LUTPixelFilter.ispc

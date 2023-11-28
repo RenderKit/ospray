@@ -6,7 +6,6 @@
 // ospray
 #include "common/ISPCRTBuffers.h"
 #include "fb/FrameBuffer.h"
-#include "fb/TaskError.h"
 // rkcommon
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/utility/ArrayView.h"
@@ -17,6 +16,7 @@
 namespace ospray {
 
 struct SparseFrameBuffer;
+struct LiveVarianceFrameOp;
 struct LiveColorConversionFrameOp;
 
 struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
@@ -38,15 +38,13 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   virtual uint32_t getTotalRenderTasks() const override;
 
   virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
-      float errorThreshold) override;
+      const float errorThreshold, const uint32_t spp) override;
+
+  virtual float getVariance() const override;
 
   // common function to help printf-debugging, every derived class should
   // override this!
   virtual std::string toString() const override;
-
-  float taskError(const uint32_t taskID) const override;
-
-  void endFrame(const float errorThreshold) override;
 
   AsyncEvent postProcess(bool wait) override;
 
@@ -105,14 +103,21 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
   std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
 
-  // holds error per tile and adaptive regions
-  TaskError taskErrorRegion;
-
   // Array of frame operations
   std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;
 
+  // Variance frame operation
+  std::unique_ptr<LiveVarianceFrameOp> varianceFrameOp;
+
   // Color conversion frame operation
   std::unique_ptr<LiveColorConversionFrameOp> colorConversionFrameOp;
+
+ private:
+  // Not used, to be removed after mpi module refactor
+  float taskError(const uint32_t) const override
+  {
+    return 0.f;
+  }
 };
 
 } // namespace ospray

@@ -57,6 +57,7 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
   getSh()->channels = channels;
   getSh()->doAccumulation = doAccum;
+  getSh()->accumulateVariance = hasVarianceBuffer;
 
 #if OSPRAY_RENDER_TASK_SIZE == -1
 #ifdef OSPRAY_TARGET_SYCL
@@ -91,8 +92,11 @@ void FrameBuffer::clear()
 
   // Clear variance accumulation counters
   if (hasVarianceBuffer) {
+    mtGen.seed(mtSeed);
+    inSeqId = 0;
     getSh()->varianceAccumCount = 0;
-    getSh()->accumulateVariance = false;
+    getSh()->accumulateVariance = true;
+    frameVariance = inf;
   }
 }
 
@@ -118,13 +122,19 @@ void FrameBuffer::beginFrame()
 #endif
 
   if (hasVarianceBuffer) {
-    // Decide if accumulate variance in this frame
-    if (mtGen() & 1) {
-      getSh()->accumulateVariance = true;
-      getSh()->varianceAccumCount++;
-    } else {
-      getSh()->accumulateVariance = false;
+    // Process random sequences, in order to collect half of the samples and do
+    // not run into issues with low discrepancy sequences used in renders, we
+    // randomly vary the length of sequences in which we collect (or do not
+    // collect) variance samples
+    if (inSeqId == 0) {
+      inSeqId = (mtGen() & 1) + 1;
+      getSh()->accumulateVariance = !getSh()->accumulateVariance;
     }
+    inSeqId--;
+
+    // Count how many variance buffer has been accumulated
+    if (getSh()->accumulateVariance)
+      getSh()->varianceAccumCount++;
   }
 }
 

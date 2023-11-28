@@ -192,7 +192,7 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
         world,
         regionVisible.sharedPtr(),
         perFrameData,
-        sparseFb->getRenderTaskIDs(0.f));
+        sparseFb->getRenderTaskIDs());
 
     RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
 
@@ -262,7 +262,7 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
           world,
           world->allRegions[rid],
           perFrameData,
-          sparseFb->getRenderTaskIDs(0.f));
+          sparseFb->getRenderTaskIDs());
 
       RKCOMMON_IF_TRACING_ENABLED({
         rkcommon::tracing::endEvent();
@@ -299,18 +299,17 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
   });
 
   dfb->waitUntilFinished();
-  renderer->endFrame(dfb, perFrameData);
+
+  RKCOMMON_IF_TRACING_ENABLED({
+    rkcommon::tracing::endEvent();
+    rkcommon::tracing::beginEvent("postProcess", "DistributedLB");
+  });
 
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
   dfb->postProcess(true);
-  RKCOMMON_IF_TRACING_ENABLED({
-    rkcommon::tracing::endEvent();
-    rkcommon::tracing::beginEvent("endFrame", "DistributedLB");
-  });
-
-  dfb->endFrame(renderer->errorThreshold);
+  dfb->setCompletedEvent(OSP_FRAME_FINISHED);
 
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();
@@ -367,15 +366,14 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
 
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();
-    rkcommon::tracing::beginEvent("endFrame", "DistributedLB");
+    rkcommon::tracing::beginEvent("postProcess", "DistributedLB");
   });
 
-  renderer->endFrame(dfb, perFrameData);
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
   dfb->postProcess(true);
-  dfb->endFrame(renderer->errorThreshold);
+  dfb->setCompletedEvent(OSP_FRAME_FINISHED);
 
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();
@@ -507,7 +505,8 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
             camera,
             world,
             perFrameData,
-            sparseFb->getRenderTaskIDs(renderer->errorThreshold));
+            sparseFb->getRenderTaskIDs(
+                renderer->errorThreshold, renderer->spp));
 
         RKCOMMON_IF_TRACING_ENABLED({
           rkcommon::tracing::endEvent();
@@ -584,7 +583,7 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
       camera,
       world,
       perFrameData,
-      ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold));
+      ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold, renderer->spp));
 
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();

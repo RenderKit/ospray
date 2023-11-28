@@ -10,6 +10,7 @@
 #include "ISPCDevice.h"
 #include "fb/LocalFB.h"
 #include "fb/SparseFB.h"
+#include "fb/TaskError.h"
 #include "render/Renderer.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/math/vec.h"
@@ -80,7 +81,10 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   /* Get render task IDs will return the render task IDs for layer 0,
    * the tiles owned by the DFB for compositing.
    */
-  utility::ArrayView<uint32_t> getRenderTaskIDs(float errorThreshold) override;
+  utility::ArrayView<uint32_t> getRenderTaskIDs(
+      const float errorThreshold, const uint32_t spp) override;
+
+  virtual float getVariance() const override;
 
   // Task error is not valid for the DFB, as error is tracked at a per-tile
   // level. Use tileError to get rendering error
@@ -98,8 +102,6 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   void closeCurrentFrame();
 
   void waitUntilFinished();
-
-  void endFrame(const float errorThreshold) override;
 
   AsyncEvent postProcess(bool wait) override;
 

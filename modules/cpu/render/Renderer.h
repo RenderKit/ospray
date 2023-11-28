@@ -42,14 +42,11 @@ struct OSPRAY_SDK_INTERFACE Renderer
   // beginning of each frame, and allows the renderer to do whatever
   // is required to initialize a new frame. In particular, this
   // function _can_ return a pointer to some "per-frame-data"; this
-  // pointer (can be NULL) is then passed to 'renderFrame' and
-  // 'endFrame' to do with as they please
+  // pointer (can be NULL) is then passed to 'renderFrame' to do with as they
+  // please
   //
   // returns pointer to per-frame data, or NULL if this does not apply
   virtual void *beginFrame(FrameBuffer *fb, World *world);
-
-  // called exactly once (on each node) at the end of each frame
-  virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
   // called by the load balancer to render one "sample" for each task
   virtual AsyncEvent renderTasks(FrameBuffer *,
@@ -94,7 +91,5 @@ inline void *Renderer::beginFrame(FrameBuffer *, World *)
 {
   return nullptr;
 }
-
-inline void Renderer::endFrame(FrameBuffer *, void *) {}
 
 } // namespace ospray

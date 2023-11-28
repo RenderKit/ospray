@@ -20,7 +20,6 @@ struct LocalFB
   float *depthBuffer;
   vec3f *normalBuffer;
   vec3f *albedoBuffer;
-  float *taskRegionError;
   vec2i numRenderTasks;
   uint32 *primitiveIDBuffer;
   uint32 *objectIDBuffer;
@@ -33,7 +32,6 @@ struct LocalFB
         depthBuffer(nullptr),
         normalBuffer(nullptr),
         albedoBuffer(nullptr),
-        taskRegionError(nullptr),
         numRenderTasks(0),
         primitiveIDBuffer(nullptr),
         objectIDBuffer(nullptr),

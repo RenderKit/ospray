@@ -24,9 +24,9 @@ struct FrameBufferView
   FrameBufferView() = default;
   FrameBufferView(const vec2ui &dims,
       const vec4f *colorBufferInput,
-      const float *depthBuffer,
-      const vec3f *normalBuffer,
-      const vec3f *albedoBuffer)
+      const float *depthBuffer = nullptr,
+      const vec3f *normalBuffer = nullptr,
+      const vec3f *albedoBuffer = nullptr)
       : fbDims(dims),
         viewDims(dims),
         colorBufferInput(colorBufferInput),

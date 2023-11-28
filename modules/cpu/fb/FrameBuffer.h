@@ -57,7 +57,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   // Get the device-side render task IDs
   virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
-      float errorThreshold) = 0;
+      const float errorThreshold, const uint32_t spp) = 0;
 
   // get number of pixels in x and y diretion
   vec2i getNumPixels() const;
@@ -65,14 +65,11 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   // get the color format type for this Buffer
   ColorBufferFormat getColorBufferFormat() const;
 
-  float getVariance() const;
+  virtual float getVariance() const;
 
   virtual float taskError(const uint32_t taskID) const = 0;
 
   virtual void beginFrame();
-
-  // end the frame and run any final post-processing frame ops
-  virtual void endFrame(const float errorThreshold) = 0;
 
   // Invoke post-processing by calling all FrameOps
   virtual AsyncEvent postProcess(bool wait) = 0;
@@ -128,8 +125,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   // indicates whether the app requested this frame buffer to do accumulation
   bool doAccum;
 
-  std::mt19937 mtGen{70921};
-  float frameVariance{0.f};
+  float frameVariance{inf};
 
   std::atomic<bool> cancelRender{false};
 
@@ -138,6 +134,16 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   Ref<const DataT<ImageOp *>> imageOpData;
 
   FeatureFlagsOther featureFlags{FFO_NONE};
+
+  // Initial frame number for adaptive sampling
+  int32_t adaptiveFromFrameID(
+      const float errorThreshold, const uint32_t spp) const;
+
+ private:
+  // Variance accumulation
+  constexpr static uint32_t mtSeed = 43;
+  std::mt19937 mtGen{mtSeed};
+  uint32_t inSeqId{0};
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
@@ -217,5 +223,12 @@ inline sycl::nd_range<3> FrameBuffer::getDispatchRange(
   return sycl::nd_range<3>({numTasks, ts.y, ts.x}, {1, ts.y, ts.x});
 }
 #endif
+
+inline int32_t FrameBuffer::adaptiveFromFrameID(
+    const float errorThreshold, const uint32_t spp) const
+{
+  const float base = 4.f / spp;
+  return max(base / errorThreshold, max(base, 1.f));
+}
 
 } // namespace ospray

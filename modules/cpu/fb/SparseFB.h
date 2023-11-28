@@ -6,7 +6,6 @@
 #include "ISPCDevice.h"
 #include "fb/FrameBuffer.h"
 #include "fb/LocalFB.h"
-#include "fb/TaskError.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
@@ -49,7 +48,7 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   virtual uint32_t getTotalRenderTasks() const override;
 
   virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
-      float errorThreshold) override;
+      const float errorThreshold = 0.f, const uint32_t spp = 1) override;
 
   //! \brief common function to help printf-debugging
   /*! \detailed Every derived class should override this! */
@@ -63,8 +62,6 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   void setTaskError(const uint32_t taskID, const float error);
 
   void beginFrame() override;
-
-  void endFrame(const float) override {}
 
   AsyncEvent postProcess(bool) override
   {

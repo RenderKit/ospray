@@ -107,6 +107,7 @@ mpicommon::Group DFB::getMPIGroup()
 {
   return mpiGroup;
 }
+
 void DFB::startNewFrame(const float errorThreshold)
 {
   {
@@ -883,9 +884,21 @@ uint32_t DFB::getGlobalTotalTiles() const
   return totalTiles.product();
 }
 
-utility::ArrayView<uint32_t> DFB::getRenderTaskIDs(float errorThreshold)
+utility::ArrayView<uint32_t> DFB::getRenderTaskIDs(
+    const float errorThreshold, const uint32_t spp)
 {
-  return layers[0]->getRenderTaskIDs(errorThreshold);
+  return layers[0]->getRenderTaskIDs(errorThreshold, spp);
+}
+
+float DFB::getVariance() const
+{
+  // TODO: No proper error calculation for DFB now,
+  // need to use FrameOp via LocalFB
+  if (mpicommon::IamTheMaster())
+    return 1.f;
+
+  // Return set value otherwise
+  return FrameBuffer::getVariance();
 }
 
 float DFB::taskError(const uint32_t) const
@@ -896,19 +909,6 @@ float DFB::taskError(const uint32_t) const
 float DFB::tileError(const uint32_t tileID)
 {
   return tileErrorRegion[tileID];
-}
-
-void DFB::endFrame(const float errorThreshold)
-{
-  // only refine on master
-  if (mpicommon::IamTheMaster()) {
-    frameVariance = tileErrorRegion.refine(errorThreshold);
-  }
-  for (auto &l : layers) {
-    l->endFrame(errorThreshold);
-  }
-
-  setCompletedEvent(OSP_FRAME_FINISHED);
 }
 
 AsyncEvent DFB::postProcess(bool wait)

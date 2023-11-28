@@ -80,7 +80,7 @@ uint32_t SparseFrameBuffer::getTotalRenderTasks() const
 }
 
 utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs(
-    float errorThreshold)
+    const float errorThreshold, const uint32_t)
 {
   if (!renderTaskIDs)
     return utility::ArrayView<uint32_t>(nullptr, 0);

@@ -6,6 +6,7 @@
 #include "SparseFB.h"
 #include "fb/FrameBufferView.h"
 #include "frame_ops/ColorConversion.h"
+#include "frame_ops/Variance.h"
 #include "render/util.h"
 #include "rkcommon/common.h"
 #include "rkcommon/tasking/parallel_for.h"
@@ -56,9 +57,7 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
         channels,
         FFO_FB_LOCAL),
       device(device),
-      numRenderTasks(divRoundUp(size, getRenderTaskSize())),
-      taskErrorRegion(device.getIspcrtContext(),
-          hasVarianceBuffer ? getNumRenderTasks() : vec2i(0))
+      numRenderTasks(divRoundUp(size, getRenderTaskSize()))
 {
   const size_t numPixels = _size.long_product();
   if (hasColorBuffer)
@@ -69,9 +68,22 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     depthBuffer = make_buffer_device_shadowed_unique<float>(
         device.getIspcrtDevice(), numPixels);
 
-  if (hasVarianceBuffer)
+  // If variance is going to be used we need to construct helper buffer and
+  // FrameOp to do the calculations
+  if (hasVarianceBuffer) {
     varianceBuffer =
         make_buffer_device_unique<vec4f>(device.getIspcrtDevice(), numPixels);
+
+    // Create and initialize FrameBufferView structure which define domain for
+    // VarianceFrameOp. Since the VarianceFrameOp calculates per-RenderTask
+    // error, the viewDims member is RenderTasks dimensions rather then
+    // FrameBuffer dimensions. Perhaps FrameBufferView should be renamed to
+    // FrameOpDomain or similar in future.
+    FrameBufferView fbv(getNumPixels(), colorBuffer->devicePtr());
+    fbv.viewDims = getNumRenderTasks();
+    varianceFrameOp = rkcommon::make_unique<LiveVarianceFrameOp>(
+        device, fbv, varianceBuffer->devicePtr());
+  }
 
   if (hasNormalBuffer)
     normalBuffer = make_buffer_device_shadowed_unique<vec3f>(
@@ -95,11 +107,7 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
 
   // Create color conversion FrameOp if needed
   if ((hasColorBuffer) && (getColorBufferFormat() != OSP_FB_RGBA32F)) {
-    FrameBufferView fbv(getNumPixels(),
-        colorBuffer->devicePtr(),
-        depthBuffer ? depthBuffer->devicePtr() : nullptr,
-        normalBuffer ? normalBuffer->devicePtr() : nullptr,
-        albedoBuffer ? albedoBuffer->devicePtr() : nullptr);
+    FrameBufferView fbv(getNumPixels(), colorBuffer->devicePtr());
     colorConversionFrameOp = rkcommon::make_unique<LiveColorConversionFrameOp>(
         device, fbv, getColorBufferFormat());
   }
@@ -152,7 +160,6 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
   getSh()->depthBuffer = depthBuffer ? depthBuffer->devicePtr() : nullptr;
   getSh()->normalBuffer = normalBuffer ? normalBuffer->devicePtr() : nullptr;
   getSh()->albedoBuffer = albedoBuffer ? albedoBuffer->devicePtr() : nullptr;
-  getSh()->taskRegionError = taskErrorRegion.errorBuffer();
   getSh()->numRenderTasks = numRenderTasks;
   getSh()->primitiveIDBuffer =
       primitiveIDBuffer ? primitiveIDBuffer->devicePtr() : nullptr;
@@ -227,13 +234,17 @@ uint32_t LocalFrameBuffer::getTotalRenderTasks() const
 }
 
 utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
-    float errorThreshold)
+    const float errorThreshold, const uint32_t spp)
 {
-  if (errorThreshold > 0.0f && hasVarianceBuffer) {
+  if (errorThreshold > 0.0f && varianceFrameOp
+      && (getFrameID() > adaptiveFromFrameID(errorThreshold, spp))) {
+    // Select render tasks that needs to be processed
     auto last = std::copy_if(renderTaskIDs->begin(),
         renderTaskIDs->end(),
         activeTaskIDs->begin(),
-        [=](uint32_t i) { return taskError(i) > errorThreshold; });
+        [=](uint32_t i) {
+          return varianceFrameOp->getError(i) > errorThreshold;
+        });
 
     const size_t numActive = last - activeTaskIDs->begin();
     if (numActive) {
@@ -247,6 +258,17 @@ utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
         renderTaskIDs->devicePtr(), renderTaskIDs->size());
 }
 
+float LocalFrameBuffer::getVariance() const
+{
+  // Return maximum error over all tasks if variance has been calculated in a
+  // FrameOp
+  if (varianceFrameOp && varianceFrameOp->validError())
+    return varianceFrameOp->getMaxError();
+
+  // Return set value otherwise
+  return FrameBuffer::getVariance();
+}
+
 std::string LocalFrameBuffer::toString() const
 {
   return "ospray::LocalFrameBuffer";
@@ -256,9 +278,8 @@ void LocalFrameBuffer::clear()
 {
   FrameBuffer::clear();
 
-  // always also clear error buffer (if present)
-  if (hasVarianceBuffer)
-    taskErrorRegion.clear();
+  if (hasVarianceBuffer && varianceFrameOp)
+    varianceFrameOp->restart();
 }
 void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
 {
@@ -375,7 +396,13 @@ void LocalFrameBuffer::writeTiles(SparseFrameBuffer *sparseFb)
     return;
   }
 
+  // Task error is not calculated by varianceFrameOp but is being written
+  // directly from SparseFB, the varianceFrameOp needs to be removed to not
+  // interfere with frameVariance calculation
+  varianceFrameOp.reset();
+
   // Now we do need the tile memory on the host to read the region information
+  frameVariance = 0.f;
   const auto tileIDs = sparseFb->getTileIDs();
   uint32_t renderTaskID = 0;
   for (size_t i = 0; i < tileIDs.size(); ++i) {
@@ -385,8 +412,7 @@ void LocalFrameBuffer::writeTiles(SparseFrameBuffer *sparseFb)
     for (int y = taskRegion.lower.y; y < taskRegion.upper.y; ++y) {
       for (int x = taskRegion.lower.x; x < taskRegion.upper.x;
            ++x, ++renderTaskID) {
-        const vec2i task(x, y);
-        taskErrorRegion.update(task, sparseFb->taskError(renderTaskID));
+        frameVariance = max(frameVariance, sparseFb->taskError(renderTaskID));
       }
     }
   }
@@ -399,20 +425,16 @@ vec2i LocalFrameBuffer::getTaskStartPos(const uint32_t taskID) const
   return taskStart * getRenderTaskSize();
 }
 
-float LocalFrameBuffer::taskError(const uint32_t taskID) const
-{
-  return taskErrorRegion[taskID];
-}
-
-void LocalFrameBuffer::endFrame(const float errorThreshold)
-{
-  frameVariance = taskErrorRegion.refine(errorThreshold);
-}
-
 AsyncEvent LocalFrameBuffer::postProcess(bool wait)
 {
-  // Execute user-defined post-processing kernels
+  // Calculate per-task variance if any samples accumulated into variance
+  // buffer, skip it if frameVariance overriden in writeTiles()
   AsyncEvent event;
+  if (varianceFrameOp && getSh()->super.varianceAccumCount
+      && (frameVariance == float(inf)))
+    varianceFrameOp->process((wait) ? nullptr : &event);
+
+  // Execute user-defined post-processing kernels
   for (auto &p : frameOps)
     p->process((wait) ? nullptr : &event);
 

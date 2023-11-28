@@ -10,26 +10,9 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline void LocalFB_calculateVariance(
-    LocalFB *uniform fb, const int pixelID, uniform RenderTaskDesc &taskDesc)
-{
-  // Calculate error
-  float err = 0.f;
-  const vec4f color = fb->colorBuffer[pixelID];
-  const float den2 = reduce_add(make_vec3f(color))
-      + (1.f - color.w); // invert alpha (bright alpha is more important)
-  if (den2 > 0.f) {
-    const vec4f diff = absf(color - fb->varianceBuffer[pixelID]);
-    err = reduce_add(diff) * rsqrtf(den2);
-  }
-  // We max over the task because we may have more pixels in the task than
-  // the SIMD width
-  taskDesc.error = max(taskDesc.error, reduce_max(err));
-}
-
 SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     const varying ScreenSample &screenSample,
-    uniform RenderTaskDesc &taskDesc)
+    uniform RenderTaskDesc &)
 {
   LocalFB *uniform fb = (LocalFB * uniform) _fb;
   const int pixelID =
@@ -51,7 +34,6 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     const uniform float accVarScale = rcpf(fb->super.varianceAccumCount);
     FRAMEBUFFER_ACCUMULATE_VALUE(
         fb->varianceBuffer[pixelID], colorSample, accVarScale);
-    LocalFB_calculateVariance(fb, pixelID, taskDesc);
   }
 
   // Accumulate depth buffer
@@ -111,12 +93,9 @@ SYCL_EXTERNAL uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
 }
 
 SYCL_EXTERNAL void LocalFB_completeTask(
-    FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc)
+    FrameBuffer *uniform, const uniform RenderTaskDesc &)
 {
-  // Write error for the task
-  LocalFB *uniform fb = (LocalFB * uniform) _fb;
-  if (fb->varianceBuffer && fb->super.accumulateVariance)
-    fb->taskRegionError[taskDesc.taskID] = taskDesc.error;
+  // Do nothing
 }
 
 // TODO: Unify all writeTile functions below into a single one
