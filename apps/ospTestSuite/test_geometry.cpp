@@ -180,7 +180,9 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "planes",
                            "unstructured_volume_isosurface",
                            "instancing",
-                           "nolight"),
+                           "nolight",
+                           "random_discs",
+                           "random_oriented_discs"),
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));
 

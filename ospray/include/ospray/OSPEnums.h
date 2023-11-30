@@ -318,6 +318,17 @@ typedef enum
     : uint32_t
 #endif
 {
+  OSP_SPHERE = 50,
+  OSP_DISC = 51,
+  OSP_ORIENTED_DISC = 52,
+  OSP_UNKNOWN_SPHERE_TYPE = 255
+} OSPSphereType;
+
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
   OSP_LINEAR,
   OSP_BEZIER,
   OSP_BSPLINE,

@@ -1464,8 +1464,13 @@ of specifying the data of center position and radius within a
 |:----------|:----------------|--------:|:--------------------------------------------------------------------------|
 | vec3f\[\] | sphere.position |         | [data](#data) array of center positions                                   |
 | float\[\] | sphere.radius   |    NULL | optional [data](#data) array of the per-sphere radius                     |
+| vec3f\[\] | sphere.normal   |    NULL | optional [data](#data) array of normals (only for “oriented disc”)        |
 | vec2f\[\] | sphere.texcoord |    NULL | optional [data](#data) array of texture coordinates (constant per sphere) |
 | float     | radius          |    0.01 | default radius for all spheres (if `sphere.radius` is not set)            |
+| uint      | type            |         | `OSPSphereType` for rendering the sphere. Supported types are:            |
+|           |                 |         | `OSP_SPHERE`                                                              |
+|           |                 |         | `OSP_DISC`                                                                |
+|           |                 |         | `OSP_ORIENTED_DISC`                                                       |
 
 Parameters defining a spheres geometry.
 

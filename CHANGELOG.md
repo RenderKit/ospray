@@ -8,6 +8,7 @@ Version History
 -   Fix empty image on Windows when focusDistance=0
 -   Fix missing SDK headers for `ISPCDevice*`
 -   Fix artifacts when using specular texture for Principled
+-   Add native support for disc and oriented disc geometry
 -   Minimum version of rkcommon is 1.13.0, which brings the following
     improvements:
     -   Fix crash using GPU and emissive geometry

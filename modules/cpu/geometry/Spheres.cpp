@@ -16,8 +16,13 @@ void *Spheres_getAreas_addr();
 
 namespace ospray {
 
+static std::map<OSPSphereType, FeatureFlagsGeometry> sphereFeatureFlags = {
+    {OSP_SPHERE, FFG_SPHERE},
+    {OSP_DISC, FFG_DISC_POINT},
+    {OSP_ORIENTED_DISC, FFG_ORIENTED_DISC_POINT}};
+
 Spheres::Spheres(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFG_SPHERE)
+    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =
@@ -40,10 +45,15 @@ std::string Spheres::toString() const
 
 void Spheres::commit()
 {
+  sphereType = (OSPSphereType)getParam<uint32_t>("type", OSP_SPHERE);
   radius = getParam<float>("radius", 0.01f);
   vertexData = getParamDataT<vec3f>("sphere.position", true);
   radiusData = getParamDataT<float>("sphere.radius");
   texcoordData = getParamDataT<vec2f>("sphere.texcoord");
+  normalData = nullptr;
+  if (sphereType == OSP_ORIENTED_DISC) {
+    normalData = getParamDataT<vec3f>("sphere.normal", true);
+  }
 
   // If the application's data is already interleaved and they just passed us
   // separate views into the interleaved data to make the sphere.position and
@@ -76,24 +86,21 @@ void Spheres::commit()
       if (radiusData) {
         ptRadius = (*radiusData)[i];
       }
-      (*sphereData)[i] = vec4f((*vertexData)[i], ptRadius);
+      interleaved->as<vec4f, 1>()[i] = vec4f((*vertexData)[i], ptRadius);
     }
   }
 
-  createEmbreeGeometry(RTC_GEOMETRY_TYPE_SPHERE_POINT);
-  rtcSetSharedGeometryBuffer(embreeGeometry,
-      RTC_BUFFER_TYPE_VERTEX,
-      0,
-      RTC_FORMAT_FLOAT4,
-      sphereData->data(),
-      0,
-      sizeof(vec4f),
-      sphereData->size());
+  createEmbreeGeometry((RTCGeometryType)sphereType);
+  featureFlagsGeometry = sphereFeatureFlags[sphereType];
+  setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, sphereData);
+  setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_NORMAL, normalData);
   rtcCommitGeometry(embreeGeometry);
 
   getSh()->sphere = *ispc(sphereData);
   getSh()->texcoord = *ispc(texcoordData);
   getSh()->super.numPrimitives = numPrimitives();
+  getSh()->normalData = *ispc(normalData);
+  getSh()->sphereType = sphereType;
 
   postCreationInfo(numPrimitives());
 }

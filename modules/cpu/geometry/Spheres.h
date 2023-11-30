@@ -32,7 +32,11 @@ struct OSPRAY_SDK_INTERFACE Spheres
   // interleaved, so we should deprecate the non-interleaved format. This array
   // is used to reference the interleaved data for the app or the interleaved
   // data the geometry creates when using the deprecated parameters
-  Ref<DataT<vec4f>> sphereData;
+  Ref<const DataT<vec4f>> sphereData;
+
+  Ref<const DataT<vec3f>> normalData;
+
+  OSPSphereType sphereType{OSP_UNKNOWN_SPHERE_TYPE};
 };
 
 } // namespace ospray

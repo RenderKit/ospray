@@ -52,12 +52,18 @@ SYCL_EXTERNAL SampleAreaRes Spheres_sampleArea(
   const Spheres *const uniform self = (const Spheres *uniform)_self;
 
   const vec4f vertex = get_vec4f(self->sphere, primID);
-
-  const vec3f localNormal = uniformSampleSphere(vertex.w, s);
-  const vec3f localPos = make_vec3f(vertex) + localNormal;
+  vec3f localNormal;
+  vec3f localPos;
+  if (self->sphereType == OSP_ORIENTED_DISC) {
+    localNormal = normalize(get_vec3f(self->normalData, primID));
+    localPos = frame(localNormal) * uniformSampleDisk(vertex.w, s);
+  } else {
+    localNormal = uniformSampleSphere(vertex.w, s);
+    localPos = localNormal;
+  }
 
   SampleAreaRes res;
-  res.pos = xfmPoint(xfm, localPos);
+  res.pos = xfmPoint(xfm, make_vec3f(vertex) + localPos);
   res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
 
   return res;
@@ -83,7 +89,8 @@ void Spheres_getAreas(const Geometry *const uniform _self,
 #endif
 
   // use average as approximation to closest uniform scaling
-  const uniform float scale = (float)four_pi * sqr(reduce_add(scaling3) / 3.f);
+  const uniform float scale = ((self->sphereType == OSP_SPHERE) ? 4.0f : 1.0f)
+      * (float)pi * sqr(reduce_add(scaling3) / 3.f);
 
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
   for (uniform int32 i = 0; i < numPrims; i++) {

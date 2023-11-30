@@ -37,7 +37,7 @@ SYCL_EXTERNAL void Geometry_dispatch_postIntersect(const Geometry *uniform self,
     TriangleMesh_postIntersect(self, dg, ray, flags);
   } else if ((self->type == GEOMETRY_TYPE_BOXES) && (ffg & FFG_BOX)) {
     Boxes_postIntersect(self, dg, ray, flags);
-  } else if ((self->type == GEOMETRY_TYPE_SPHERES) && (ffg & FFG_SPHERE)) {
+  } else if ((self->type == GEOMETRY_TYPE_SPHERES) && (ffg & FFG_SPHERES)) {
     Spheres_postIntersect(self, dg, ray, flags);
   } else if ((self->type == GEOMETRY_TYPE_PLANES) && (ffg & FFG_PLANE)) {
     Planes_postIntersect(self, dg, ray, flags);
