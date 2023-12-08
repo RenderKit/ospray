@@ -410,13 +410,7 @@ inline void postIntersect(const World *uniform world,
   dg.P = ray.org + ray.t * ray.dir;
   dg.epsilon = 0.f; // per default no geometry-type specific epsilon
 
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const uint32 instID = ray.instID;
-#else
   foreach_unique (instID in ray.instID) {
-#endif
     if (instID != RTC_INVALID_GEOMETRY_ID) {
       Instance *uniform instance = *(world->instances + instID);
       Instance_postIntersect(instance, renderer, dg, ray, flags, false, ffh);

@@ -118,7 +118,7 @@ static inline void setupWorker()
     in "workers" mode (startworkers=true) all ranks > 0 become
     workers, and will NOT return to the application; rank 0 is the
     master that controls those workers but doesn't do any
-    rendeirng (we may at some point allow the master to join in
+    rendering (we may at some point allow the master to join in
     working as well, but currently this is not implemented). to
     reach that mode we call this function with
     'startworkers=true', which will make sure that, even though

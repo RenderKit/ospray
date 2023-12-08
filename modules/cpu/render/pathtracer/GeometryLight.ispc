@@ -26,13 +26,7 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
   vec3f L = make_vec3f(0.f);
   Material *material = pathVertex.dg.material;
 
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const Material *m = material;
-#else
   foreach_unique (m in material) {
-#endif
     if (m != NULL && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
       // therefore we can evaluate the selection PDF directly
@@ -84,13 +78,7 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
   const Instance *uniform instance = self->super.instance;
   assert(instance);
   if (instance->motionBlur) {
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      // SYCL execution in a thread is scalar
-      const float utime = time;
-#else
     foreach_unique (utime in time) {
-#endif
       const uniform affine3f xfm = Instance_getTransform(instance, utime);
       as = Geometry_dispatch_sampleArea(
           geo, primID, xfm, rcp(xfm), ns, time, ffh);
@@ -120,14 +108,8 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
   texDg.st = as.st;
 
   vec3f radiance;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    const Material *m = mat;
-#else
-  foreach_unique (m in mat) {
-#endif
+  foreach_unique (m in mat)
     radiance = m->emission * get3f(m->emissionMap, texDg, make_vec3f(1.f));
-  }
 
   res.weight = radiance * rcp(res.pdf);
 

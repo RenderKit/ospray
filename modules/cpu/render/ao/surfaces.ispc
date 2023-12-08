@@ -26,12 +26,7 @@ inline vec4f getSurfaceColor(
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
   const uniform bool fft = ff.other & FFO_TEXTURE_IN_MATERIAL;
 
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    const OBJ *m = mat;
-#else
   foreach_unique (m in mat) {
-#endif
     if (m != NULL && m->super.type == MATERIAL_TYPE_OBJ) {
       surfaceColor = m->Kd;
       if (valid(m->KdMap) && fft) {

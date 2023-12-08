@@ -46,12 +46,7 @@ inline void updateAuxilliaryData(
     sample.normal = make_vec3f(0.f);
   } else if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const BSDF *f = pathVertex.bsdf;
-#else
     foreach_unique (f in pathVertex.bsdf) {
-#endif
       if (f != NULL && f->frame != NULL)
         Ns = getN(f);
     }

@@ -62,12 +62,7 @@ inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
 
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    VolumetricModel *uniform vm = volModel;
-#else
   foreach_unique (vm in volModel) {
-#endif
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
@@ -206,12 +201,7 @@ inline vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
   float opacity = 1.f;
   const OBJ *mat = (const OBJ *)dg.material;
   if (mat) {
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const OBJ *m = mat;
-#else
     foreach_unique (m in mat) {
-#endif
       surfaceColor = surfaceColor * m->Kd;
       opacity = m->d;
       if (valid(m->KdMap)) {

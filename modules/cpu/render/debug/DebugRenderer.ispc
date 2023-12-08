@@ -274,12 +274,7 @@ static void DebugRenderer_volume(Renderer *uniform self,
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    VolumetricModel *uniform m = model;
-#else
   foreach_unique (m in model) {
-#endif
     Volume *uniform volume = m->volume;
 
     float time = 0.5f;

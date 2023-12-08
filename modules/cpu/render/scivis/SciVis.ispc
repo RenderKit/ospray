@@ -103,12 +103,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
 
         if (hadHit(volumeRay) && sample.geomID == RTC_INVALID_GEOMETRY_ID) {
           sample.primID = 0;
-#ifdef OSPRAY_TARGET_SYCL
-          {
-            const uint32 instID = volumeRay.instID;
-#else
           foreach_unique (instID in volumeRay.instID) {
-#endif
             if (instID != RTC_INVALID_GEOMETRY_ID) {
               const Instance *uniform instance = *(world->instances + instID);
               sample.instID = (instance->userID == RTC_INVALID_GEOMETRY_ID)
@@ -117,12 +112,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
               const VolumetricModel *volms =
                   *(instance->group->volumetricModels + volumeRay.geomID);
 
-#ifdef OSPRAY_TARGET_SYCL
-              {
-                const VolumetricModel *uniform volm = volms;
-#else
               foreach_unique (volm in volms) {
-#endif
                 sample.geomID = (volm->userID == RTC_INVALID_GEOMETRY_ID)
                     ? volumeRay.geomID
                     : volm->userID;

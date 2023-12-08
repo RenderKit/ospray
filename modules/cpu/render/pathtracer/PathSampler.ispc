@@ -52,12 +52,7 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.renderer = &pt->super;
 
     pathVertex.dg.instID = ray.instID;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const uint32 instID = ray.instID;
-#else
     foreach_unique (instID in ray.instID) {
-#endif
       if (instID != RTC_INVALID_GEOMETRY_ID) {
         const World *uniform world = pathContext.world;
         const Instance *uniform instance = *(world->instances + instID);
@@ -66,14 +61,8 @@ inline void postIntersect(const PathContext &pathContext,
       }
     }
 
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const VolumetricModel *volm = pathVertex.volume;
-#else
-    foreach_unique (volm in pathVertex.volume) {
-#endif
+    foreach_unique (volm in pathVertex.volume)
       VolumetricModel_postIntersect(volm, pathVertex.dg, ray, 0);
-    }
   }
 #endif
 }
@@ -91,12 +80,7 @@ inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
       LDSampler_getFloat(pathContext.ldSampler, pathState.sampleDim + 2);
   Scattering_SampleRes fs;
   if (ff.geometry && pathVertex.type == SURFACE) {
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const BSDF *f = pathVertex.bsdf;
-#else
     foreach_unique (f in pathVertex.bsdf) {
-#endif
       if (f != NULL) {
         fs = BSDF_dispatch_sample(f, pathVertex.wo, ss, s, ffh);
         pathVertex.wi = fs.wi;
@@ -106,12 +90,7 @@ inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
   }
 #ifdef OSPRAY_ENABLE_VOLUMES
   if ((ff.other & FFO_VOLUME_IN_SCENE) && pathVertex.type == VOLUME) {
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const VolumetricModel *v = pathVertex.volume;
-#else
     foreach_unique (v in pathVertex.volume) {
-#endif
       if (v != NULL) {
         fs = HenyeyGreenstein_sample(v->anisotropy, pathVertex.wo, ss, s);
         pathVertex.wi = fs.wi;
@@ -267,12 +246,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     ShadingContext_Constructor(&ctx);
     if (ff.geometry && pathVertex.type == SURFACE) {
       Material *material = (Material *)pathVertex.dg.material;
-#ifdef OSPRAY_TARGET_SYCL
-      {
-        const Material *m = material;
-#else
       foreach_unique (m in material) {
-#endif
         if (m != NULL) {
           pathVertex.bsdf = Material_dispatch_getBSDF(
               m, &ctx, pathVertex.dg, ray, pathState.currentMedium, ffh);
@@ -333,12 +307,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       if (fs.type & SCATTERING_TRANSMISSION) {
         ray_org = ray_org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
         Material *material = (Material *)pathVertex.dg.material;
-#ifdef OSPRAY_TARGET_SYCL
-        {
-          const Material *m = material;
-#else
         foreach_unique (m in material) {
-#endif
           if (m != NULL) {
             Material_dispatch_selectNextMedium(
                 m, pathVertex.dg, pathState.currentMedium, ffh);

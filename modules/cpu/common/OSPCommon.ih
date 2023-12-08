@@ -8,6 +8,10 @@
 
 #define __noinline __attribute__((noinline))
 
+#define in ,
+#define foreach_unique(var_in_set) FOREACH_UNIQUE(var_in_set)
+#define FOREACH_UNIQUE(var, set) for (const auto &var : {set})
+
 namespace ispc {
 using uint64 = uint64_t;
 using uint32 = uint32_t;

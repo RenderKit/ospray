@@ -144,25 +144,15 @@ SYCL_EXTERNAL float volumeSampleFreePath(const World *uniform world,
       continue;
 
     AffineSpace3f xfm;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const Instance *inst = volumeIntervals.intervals[i].instance;
-#else
-    foreach_unique (inst in volumeIntervals.intervals[i].instance) {
-#endif
+    foreach_unique (inst in volumeIntervals.intervals[i].instance)
       xfm = Instance_getTransform(inst, volumeRay.time);
-    }
+
     Ray transformedVolumeRay = volumeRay;
     transformRay(transformedVolumeRay, rcp(xfm));
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const VolumetricModel *inst = instance;
-#else
     foreach_unique (inst in instance) {
-#endif
       for (uint32 j = 0; j < rayIntervals.count; j++) {
         range1f rInterval = rayIntervals.intervals[j];
 
@@ -245,25 +235,15 @@ SYCL_EXTERNAL float volumeTransmittance(const World *uniform world,
       continue;
 
     AffineSpace3f xfm;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const Instance *inst = volumeIntervals.intervals[i].instance;
-#else
-    foreach_unique (inst in volumeIntervals.intervals[i].instance) {
-#endif
+    foreach_unique (inst in volumeIntervals.intervals[i].instance)
       xfm = Instance_getTransform(inst, volumeRay.time);
-    }
+
     Ray transformedVolumeRay = volumeRay;
     transformRay(transformedVolumeRay, rcp(xfm));
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const VolumetricModel *inst = instance;
-#else
     foreach_unique (inst in instance) {
-#endif
       for (uint32 j = 0; j < rayIntervals.count && transmittance > 0.f; j++) {
         range1f rInterval = rayIntervals.intervals[j];
 

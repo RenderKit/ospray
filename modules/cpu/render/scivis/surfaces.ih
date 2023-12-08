@@ -60,12 +60,7 @@ inline SciVisBSDF evalMaterial(
   res.transmission = make_vec3f(1.f - dg.color.w);
   res.opacity = dg.color.w;
 
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    const OBJ *m = mat;
-#else
   foreach_unique (m in mat) {
-#endif
     if (m != NULL && m->super.type == MATERIAL_TYPE_OBJ) {
       float d = m->d * get1f_ff(m->dMap, dg, 1.f, ffh) * dg.color.w;
       res.diffuse = res.diffuse * m->Kd;

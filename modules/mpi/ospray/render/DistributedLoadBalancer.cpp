@@ -155,10 +155,11 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
    * region per rank configs. Right now this is serial to avoid a race condition
    * on the SYCL queue.
    */
-  tasking::serial_for(dfb->getSparseLayerCount(), [&](size_t layer) {
+  tasking::serial_for(dfb->getSparseLayerCount(), [&](size_t layer)
 #else
-  tasking::parallel_for(dfb->getSparseLayerCount(), [&](size_t layer) {
+  tasking::parallel_for(dfb->getSparseLayerCount(), [&](size_t layer)
 #endif
+  {
     // Just render the background color and compute visibility information for
     // the tiles we own for layer "0"
     SparseFrameBuffer *sparseFb = dfb->getSparseFBLayer(layer);
@@ -409,7 +410,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
   // work, they can
   // We target 1/3rd of tiles per-round by default to balance between executing
   // work locally and allowing work to be stolen for load balancing.
-  // This can be overriden by the environment variable
+  // This can be overridden by the environment variable
   // OSPRAY_MPI_LB_TILES_PER_ROUND
   const float percentTilesPerRound =
       utility::getEnvVar<float>("OSPRAY_MPI_LB_TILES_PER_ROUND")

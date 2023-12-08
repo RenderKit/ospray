@@ -144,9 +144,8 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
     VolumeContext &vc = volumeContexts[i];
     if (vc.ready == 0) {
       const VolumeInterval &vi = volumeIntervals.intervals[i];
-      foreach_unique (m in vi.volumetricModel) {
+      foreach_unique (m in vi.volumetricModel)
         sampleVolume(rc, vc, m, ray, vi, samplingRate);
-      }
       vc.ready = 1;
     }
 
@@ -257,15 +256,14 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       // so we must iterate over them
       float time = 0.5f;
       VolumetricModel *varying model = vi.volumetricModel;
-      foreach_unique (m in model) {
-        // Create volume interval iterator
+      // Create volume interval iterator
+      foreach_unique (m in model)
         vc.intervalIterator = vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
             &time,
             vc.intervalIteratorBuffer);
-      }
     }
 
     // Propagate ray across all volumes till opaque

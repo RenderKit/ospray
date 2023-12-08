@@ -7,6 +7,7 @@
 #include "../geometry/GeometricModel.ih"
 #include "DifferentialGeometry.ih"
 #include "MotionTransform.ih"
+#include "OSPCommon.ih"
 #include "Ray.ih"
 // c++ shared
 #include "GroupShared.h"
@@ -47,16 +48,8 @@ inline void Instance_postIntersect(const Instance *uniform self,
 {
   GeometricModel **uniform models =
       clip ? self->group->clipModels : self->group->geometricModels;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const uint32 geomID = ray.geomID;
-#else
-  foreach_unique (geomID in ray.geomID) {
-#endif
-    GeometricModel_postIntersect(
-        *(models + geomID), renderer, dg, ray, flags, ffh);
-  }
+  foreach_unique (geomID in ray.geomID)
+    GeometricModel_postIntersect(models[geomID], renderer, dg, ray, flags, ffh);
 
   dg.instID =
       (self->userID == RTC_INVALID_GEOMETRY_ID) ? ray.instID : self->userID;
@@ -70,13 +63,7 @@ inline void Instance_postIntersect(const Instance *uniform self,
   if ((flags & DG_MOTIONBLUR) == DG_MOTIONBLUR && self->motionBlur) {
     uniform float utime;
     uniform int cnt = 0;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      // SYCL execution in a thread is scalar
-      const float t = ray.time;
-#else
     foreach_unique (t in ray.time) {
-#endif
       utime = t;
       cnt++;
     }
