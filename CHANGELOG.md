@@ -4,6 +4,7 @@ Version History
 ### Changes in v3.1.0:
 
 -   Improve noise in reflections of ThisGlass
+-   Principled and Luminous materials support emissive textures
 -   Fix indirectly seen albedo and normal buffer
 -   Fix empty image on Windows when focusDistance=0
 -   Fix missing SDK headers for `ISPCDevice*`

@@ -105,7 +105,8 @@ GeometricLight::GeometricLight()
   auto params = GetParam();
   size = std::get<0>(params);
   useMaterialList = std::get<1>(params);
-  motionBlur = std::get<2>(params);
+  textureMode = std::get<2>(params);
+  motionBlur = std::get<3>(params);
 }
 
 void GeometricLight::SetUp()
@@ -133,12 +134,34 @@ void GeometricLight::SetUp()
     lightMesh.setParam("motion.vertex.position", cpp::CopiedData(mposdata));
   } else
     lightMesh.setParam("vertex.position", cpp::CopiedData(lightVertices));
+  if (textureMode == 2) {
+    std::array<vec2f, 4> data = {vec2f(0.3f, 0.4f),
+        vec2f(1.3f, 0.4f),
+        vec2f(1.3f, 1.4f),
+        vec2f(0.3f, 1.4f)};
+    lightMesh.setParam("vertex.texcoord", cpp::CopiedData(data));
+  }
   lightMesh.commit();
   cpp::GeometricModel lightModel(lightMesh);
 
   cpp::Material lightMaterial("luminous");
-  lightMaterial.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
   lightMaterial.setParam("intensity", 10.f / area);
+  if (textureMode) {
+    cpp::Texture tex("texture2d");
+    std::array<vec3f, 4> data = {vec3f(0.f, 0.f, 0.f),
+        vec3f(0.78f, 0.551f, 0.183f),
+        vec3f(1.f, 1.f, 1.f),
+        vec3f(0.f, 0.f, 1.f)};
+    cpp::CopiedData texData(data.data(), vec2ul(2, 2));
+    tex.setParam("format", OSP_TEXTURE_RGB32F);
+    tex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
+    tex.setParam("data", texData);
+    tex.commit();
+    lightMaterial.setParam("map_color", tex);
+    if (textureMode == 2)
+      lightMaterial.setParam("map_color.translation", vec2f(0.3f, 0.4f));
+  } else
+    lightMaterial.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
   lightMaterial.commit();
 
   if (useMaterialList) {
@@ -499,13 +522,22 @@ INSTANTIATE_TEST_SUITE_P(Light,
     GeometricLight,
     ::testing::Combine(::testing::Values(0.2f, 0.4f),
         ::testing::Bool(),
+        ::testing::Values(0),
         ::testing::Values(0)));
 
 INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
     GeometricLight,
     ::testing::Combine(::testing::Values(0.2f),
         ::testing::Values(false),
+        ::testing::Values(0),
         ::testing::Values(1, 2)));
+
+INSTANTIATE_TEST_SUITE_P(LightTexture,
+    GeometricLight,
+    ::testing::Combine(::testing::Values(0.5f),
+        ::testing::Values(false),
+        ::testing::Values(1, 2),
+        ::testing::Values(0)));
 
 // Quad Light
 

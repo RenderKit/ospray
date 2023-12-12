@@ -82,14 +82,14 @@ SYCL_EXTERNAL SampleAreaRes Geometry_dispatch_sampleArea(
   } else if ((self->type == GEOMETRY_TYPE_SPHERES) && (ffg & FFG_SPHERE)) {
     return Spheres_sampleArea(self, primID, xfm, rcp_xfm, s, time);
   } else {
-#ifndef OSPRAY_TARGET_SYCL
-    return self->sampleArea(self, primID, xfm, rcp_xfm, s, time);
-#endif
 #ifdef OSPRAY_TARGET_SYCL
     SampleAreaRes res;
     res.pos = make_vec3f(0.f);
     res.normal = make_vec3f(0.f);
+    res.st = make_vec2f(0.f);
     return res;
+#else
+    return self->sampleArea(self, primID, xfm, rcp_xfm, s, time);
 #endif
   }
 }

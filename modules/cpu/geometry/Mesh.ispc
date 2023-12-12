@@ -65,7 +65,8 @@ SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
   const float u = ray.u;
   const float v = ray.v;
   vec4f uv;
-#if 1 // bilinear for quads
+#define QUAD_BILINEAR
+#ifdef QUAD_BILINEAR
   if (index.z == index.w)
     uv = make_vec4f(1.f - u - v, u, v, 0.f);
   else
@@ -284,29 +285,30 @@ SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
     const uint8 *a1 = self->motionVertex[idx + 1];
     a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
     b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
-    c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+    d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
     if (quad)
-      d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
+      c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
   } else {
     a = get_vec3f(self->vertex, index.x);
     b = get_vec3f(self->vertex, index.y);
-    c = get_vec3f(self->vertex, index.z);
+    d = get_vec3f(self->vertex, index.w);
     if (quad)
-      d = get_vec3f(self->vertex, index.w);
+      c = get_vec3f(self->vertex, index.z);
   }
-  const vec3f e1 = xfmVector(xfm, a - c);
-  const vec3f e2 = xfmVector(xfm, b - c);
+  const vec3f e1 = xfmVector(xfm, a - d);
+  const vec3f e2 = xfmVector(xfm, b - d);
   const vec3f m1 = cross(e1, e2);
 
   res.normal = m1;
   vec3f v0 = a;
   vec3f v1 = b;
-  vec3f v2 = c;
+  vec3f v2 = d;
   vec2f sp = s;
 
+  bool invertUV = false;
   if (quad) {
     // painfully slow: re-calculate areas to decide which triangle to sample
-    const vec3f e3 = xfmVector(xfm, d - c);
+    const vec3f e3 = xfmVector(xfm, c - d);
     const vec3f m2 = cross(e2, e3);
     const float a1 = length(m1);
     const float a2 = length(m2);
@@ -316,16 +318,50 @@ SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
       sp.x *= rcp(p1); // reproject
     } else { // sample second tri
       sp.x = (s.x - p1) * rcp(1.f - p1); // reproject
-      v0 = d;
-      v1 = c;
-      v2 = a;
+      // same split and parametrization as Embree
+      invertUV = true;
+      v0 = c;
+      v1 = d;
+      v2 = b;
       res.normal = m2;
     }
   }
 
-  const vec3f localPos = uniformSampleTriangle(v0, v1, v2, sp);
+  const vec2f uv = uniformSampleTriangleUV(sp);
+  const vec3f localPos = v0 + uv.x * (v1 - v0) + uv.y * (v2 - v0);
   res.normal = normalize(res.normal);
   res.pos = xfmPoint(xfm, localPos);
+
+  res.st = invertUV ? 1.0f - uv : uv;
+  if (valid(self->texcoord)) {
+    const float u = res.st.x;
+    const float v = res.st.y;
+    vec4f uv4;
+#ifdef QUAD_BILINEAR
+    if (quad)
+      uv4 = make_vec4f((1 - v) * (1 - u), (1 - v) * u, v * u, v * (1 - u));
+    else
+      uv4 = make_vec4f(1.f - u - v, u, v, 0.f);
+#else // always as triangles
+    if (invertUV)
+      uv4 = make_vec4f(0.f, 1.f - v, u + v - 1.f, 1.f - u);
+    else
+      uv4 = make_vec4f(1.f - u - v, u, 0.f, v);
+#endif
+    const int iOffs = primID * (self->is_triangleMesh ? 3 : 4);
+    const vec4ui findex = make_vec4ui(iOffs, iOffs + 1, iOffs + 2, iOffs + 3);
+    const vec4ui tindex = self->isTexcoordFaceVarying ? findex : index;
+    const vec2f a = get_vec2f(self->texcoord, tindex.x);
+    const vec2f b = get_vec2f(self->texcoord, tindex.y);
+    const vec2f c = get_vec2f(self->texcoord, tindex.z);
+    if (self->is_triangleMesh) {
+      res.st = interpolate(make_vec3f(uv4), a, b, c);
+    } else {
+      const vec2f d = get_vec2f(self->texcoord, tindex.w);
+      res.st = quad_interpolate(uv4, a, b, c, d);
+    }
+  }
+
   return res;
 }
 
@@ -339,21 +375,29 @@ void Mesh_getAreas(const Geometry *const uniform _self,
   // TODO vectorize this loop, with for each or ProgramCount & ProgramIndex
   // XXX for deformation motion blur the areas (i.e. selection probabilities)
   // are calculated using the first key only
+  uniform vec4ui index;
   for (uniform int32 i = 0; i < numPrims; i++) {
-    const uniform vec4ui index = self->is_triangleMesh
-        ? make_vec4ui(get_vec3ui(self->index, primIDs[i]))
-        : get_vec4ui(self->index, primIDs[i]);
+    uniform bool quad = false;
+    if (self->is_triangleMesh) {
+      const uniform vec3ui index3 = get_vec3ui(self->index, primIDs[i]);
+      index = make_vec4ui(index3.x, index3.y, index3.z, index3.z);
+    } else {
+      index = get_vec4ui(self->index, primIDs[i]);
+      quad = index.z != index.w;
+    }
     const uniform vec3f a = get_vec3f(self->vertex, index.x);
     const uniform vec3f b = get_vec3f(self->vertex, index.y);
-    const uniform vec3f c = get_vec3f(self->vertex, index.z);
-    const uniform vec3f e1 = xfmVector(xfm, a - c);
-    const uniform vec3f e2 = xfmVector(xfm, b - c);
-    areas[i] = 0.5f * length(cross(e1, e2));
-    if (!self->is_triangleMesh) {
-      const uniform vec3f d = get_vec3f(self->vertex, index.w);
-      const uniform vec3f e3 = xfmVector(xfm, d - c);
-      areas[i] += 0.5f * length(cross(e2, e3));
+    // use same splitting diagonal as Embree
+    const uniform vec3f d = get_vec3f(self->vertex, index.w);
+    const uniform vec3f e1 = xfmVector(xfm, a - d);
+    const uniform vec3f e2 = xfmVector(xfm, b - d);
+    areas[i] = length(cross(e1, e2));
+    if (quad) {
+      const uniform vec3f c = get_vec3f(self->vertex, index.z);
+      const uniform vec3f e3 = xfmVector(xfm, c - d);
+      areas[i] += length(cross(e2, e3));
     }
+    areas[i] *= 0.5f;
   }
 }
 

@@ -1791,8 +1791,8 @@ Note that the [SciVis renderer] only computes illumination from the sun
 ### Emissive Objects
 
 The [path tracer] will consider illumination by [geometries] which have
-a light emitting material assigned (for example the [Luminous]
-material).
+a light emitting material assigned (for example the [Luminous] or
+[Principled] material).
 
 
 Materials
@@ -1966,6 +1966,8 @@ listed in the table below.
   float  sheenRoughness           0.2  sheen roughness in [0–1], 0 is perfectly smooth
 
   float  opacity                    1  cut-out opacity/transparency, 1 is fully opaque
+
+  vec3f  emissiveColor          black  color (and intensity) of the emitted light
   ------ ----------------- ----------  ------------------------------------------------------
   : Parameters of the Principled material.
 
@@ -2223,6 +2225,9 @@ parameter `intensityQuantity` is not needed because it is always
   float  transparency        1  material transparency
   ------ ------------ --------  ---------------------------------------
   : Parameters accepted by the Luminous material.
+
+The emission can be textured by passing a `map_color` [texture] handle,
+[texture transformations] are supported as well.
 
 ![Rendering of a yellow Luminous material.][imgMaterialLuminous]
 

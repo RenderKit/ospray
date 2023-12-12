@@ -65,6 +65,8 @@ SYCL_EXTERNAL SampleAreaRes Spheres_sampleArea(
   SampleAreaRes res;
   res.pos = xfmPoint(xfm, make_vec3f(vertex) + localPos);
   res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
+  res.st = valid(self->texcoord) ? get_vec2f(self->texcoord, primID)
+                                 : make_vec2f(0.f);
 
   return res;
 }

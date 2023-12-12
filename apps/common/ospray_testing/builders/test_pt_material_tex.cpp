@@ -106,8 +106,7 @@ std::vector<cpp::Material> PtMaterialTex::buildMaterials(
 
     // luminous emissive
     materials.push_back(cpp::Material("luminous"));
-    materials.back().setParam("color", vec3f(1.f, 0.8f, 0.7f));
-    setTexture<vec3f>(materials.back(), "emissiveColor", texRGBA);
+    setTexture(materials.back(), "color", texRGBA, vec3f(1.f, 0.8f, 0.7f));
 
     // alloy roughness
     materials.push_back(cpp::Material("alloy"));
