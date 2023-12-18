@@ -91,12 +91,17 @@ void PRINT3(const rkcommon::math::vec3f &x)
   print(#x "[%] = %\n",                                                        \
       count_trailing_zeros(lanemask()),                                        \
       extract(x, count_trailing_zeros(lanemask())))
-#define PRINT3U(x)                                                             \
-  print(#x "[%] = (%, %, %)\n",                                                \
+#define PRINT2U(v)                                                             \
+  print(#v "[%] = (%, %)\n",                                                   \
       count_trailing_zeros(lanemask()),                                        \
-      extract(get(x, 0), count_trailing_zeros(lanemask())),                    \
-      extract(get(x, 1), count_trailing_zeros(lanemask())),                    \
-      extract(get(x, 2), count_trailing_zeros(lanemask())))
+      extract(v.x, count_trailing_zeros(lanemask())),                          \
+      extract(v.y, count_trailing_zeros(lanemask())))
+#define PRINT3U(v)                                                             \
+  print(#v "[%] = (%, %, %)\n",                                                \
+      count_trailing_zeros(lanemask()),                                        \
+      extract(v.x, count_trailing_zeros(lanemask())),                          \
+      extract(v.y, count_trailing_zeros(lanemask())),                          \
+      extract(v.z, count_trailing_zeros(lanemask())))
 
 #define PRINT_STR(s) print(s);
 #endif
