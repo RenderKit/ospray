@@ -66,7 +66,7 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
     ff |= fb->getFeatureFlags();
     ff |= camera->getFeatureFlags();
     // Disable features we don't need for the region visibility computation
-    ff.geometry = FFG_BOX | FFG_USER_GEOMETRY;
+    ff.geometry = FFG_BOX;
 #ifdef OSPRAY_ENABLE_VOLUMES
     ff.volume = VKL_FEATURE_FLAGS_NONE;
 #endif

@@ -16,8 +16,7 @@ void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args);
 namespace ospray {
 
 Boxes::Boxes(api::ISPCDevice &device)
-    : AddStructShared(
-        device.getIspcrtContext(), device, FFG_BOX | FFG_USER_GEOMETRY)
+    : AddStructShared(device.getIspcrtContext(), device, FFG_BOX)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =
