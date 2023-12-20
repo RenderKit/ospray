@@ -60,6 +60,7 @@ class Base
   std::string rendererType;
   int frames;
   int samplesPerPixel;
+  bool denoised{false}; // relax test that assume uniformly distributed noise
 
   cpp::FrameBuffer framebuffer{nullptr};
   cpp::Renderer renderer{nullptr};

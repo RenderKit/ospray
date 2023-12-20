@@ -11,26 +11,12 @@ namespace OSPRayTestScenes {
 
 Base::Base()
 {
-  const ::testing::TestCase *const testCase =
-      ::testing::UnitTest::GetInstance()->current_test_case();
-  const ::testing::TestInfo *const testInfo =
-      ::testing::UnitTest::GetInstance()->current_test_info();
-
-  {
-    std::string testCaseName = testCase->name();
-    std::string testInfoName = testInfo->name();
-    size_t pos = testCaseName.find('/');
-    if (pos == std::string::npos) {
-      testName = testCaseName + "_" + testInfoName;
-    } else {
-      std::string instantiationName = testCaseName.substr(0, pos);
-      std::string className = testCaseName.substr(pos + 1);
-      testName = className + "_" + instantiationName + "_" + testInfoName;
-    }
-    for (char &byte : testName)
-      if (byte == '/')
-        byte = '_';
-  }
+  testName = ::testing::UnitTest::GetInstance()->current_test_case()->name();
+  testName += ".";
+  testName += ::testing::UnitTest::GetInstance()->current_test_info()->name();
+  for (char &byte : testName)
+    if (byte == '/')
+      byte = '_';
 
   imgSize = ospEnv->GetImgSize();
   rendererType = "scivis";
@@ -108,10 +94,10 @@ void Base::PerformRenderTest()
   void *framebuffer_data = framebuffer.map(OSP_FB_COLOR);
 
   if (ospEnv->GetDumpImg()) {
-    EXPECT_EQ(imageTool->saveTestImage(framebuffer_data), OsprayStatus::Ok);
+    EXPECT_TRUE(imageTool->saveTestImage(framebuffer_data) == OsprayStatus::Ok);
   } else {
-    EXPECT_EQ(
-        imageTool->compareImgWithBaseline(framebuffer_data), OsprayStatus::Ok);
+    EXPECT_TRUE(imageTool->compareImgWithBaseline(framebuffer_data, denoised)
+        == OsprayStatus::Ok);
   }
 
   framebuffer.unmap(framebuffer_data);

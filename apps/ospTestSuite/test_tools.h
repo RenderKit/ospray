@@ -23,8 +23,10 @@
 
 using pixelColorValue = float;
 
-const pixelColorValue pixelThreshold = 13.f;
-const float errorRate = 0.1;
+const pixelColorValue pixelThreshold = 0.05f;
+const float errorRate = 0.0004f;
+const float sumThreshold = 9.0f; // XXX disabled, should be 0.00005f;
+const float sumThresholdRatio = 0.1f;
 
 enum class OsprayStatus
 {
@@ -57,7 +59,11 @@ class OSPImageTools
   // helper method to write the rendered image as HDR file
   OsprayStatus writeHDR(std::string fileName, const float *pixel);
   // helper method to write the image with given format
-  OsprayStatus writeImg(std::string fileName, const void *pixel);
+  OsprayStatus writeImage(std::string fileName, const void *pixel);
+  OsprayStatus writeImg(std::string fileName,
+      std::string typeName,
+      const void *pixel,
+      bool killAlpha = false);
   // average pixels over some window
   OsprayStatus verifyBaselineImage(const int sizeX,
       const int sizeY,
@@ -72,7 +78,8 @@ class OSPImageTools
       const T *baselineImage,
       const std::string &baselineName,
       const bool writeImages,
-      const float pixelConversionFactor = 1.0f);
+      const bool denoised, // relax test that assume uniformly distributed noise
+      const float pixelConversionFactor = 1.0f / 255.f);
 
  public:
   OSPImageTools(vec2i imgSize,
@@ -83,5 +90,6 @@ class OSPImageTools
   // helper method to saved rendered file
   OsprayStatus saveTestImage(const void *pixel);
   // helper method to compare gold image with current framebuffer render
-  OsprayStatus compareImgWithBaseline(const void *testImage);
+  OsprayStatus compareImgWithBaseline(
+      const void *testImage, const bool denoised = false);
 };

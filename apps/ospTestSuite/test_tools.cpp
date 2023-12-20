@@ -56,7 +56,7 @@ OsprayStatus OSPImageTools::writeHDR(std::string fileName, const float *pixel)
 }
 
 // helper function to write the rendered image
-OsprayStatus OSPImageTools::writeImg(std::string fileName, const void *pixel)
+OsprayStatus OSPImageTools::writeImage(std::string fileName, const void *pixel)
 {
   OsprayStatus writeErr = OsprayStatus::Error;
   fileName += GetFileFormat();
@@ -81,6 +81,72 @@ OsprayStatus OSPImageTools::writeImg(std::string fileName, const void *pixel)
   }
 
   return writeErr;
+}
+
+OsprayStatus OSPImageTools::writeImg(std::string fileName,
+    std::string typeName,
+    const void *pixel,
+    bool killAlpha)
+{
+  const size_t pixels = size.x * size.y;
+  const bool ldr = GetFileFormat() == ".ppm" || GetFileFormat() == ".png";
+  std::vector<char> buffer;
+  bool splitAlpha = false;
+
+  if (ldr) {
+    const auto *px = (const vec4uc *)pixel;
+    buffer.resize(pixels * sizeof(vec4uc));
+    auto *dst = (vec4uc *)buffer.data();
+    for (size_t i = 0; i < pixels; i++) {
+      if (px[i].w != 255)
+        splitAlpha = true;
+      dst[i].x = px[i].w;
+      dst[i].y = px[i].w;
+      dst[i].z = px[i].w;
+      dst[i].w = 255;
+    }
+  } else {
+    const auto *px = (const vec4f *)pixel;
+    buffer.resize(pixels * sizeof(vec4f));
+    auto *dst = (vec4f *)buffer.data();
+    for (size_t i = 0; i < pixels; i++) {
+      if (px[i].w < 1.0f)
+        splitAlpha = true;
+      dst[i].x = px[i].w;
+      dst[i].y = px[i].w;
+      dst[i].z = px[i].w;
+      dst[i].w = 1.0f;
+    }
+  }
+  if (splitAlpha
+      && writeImage(fileName + "_alpha" + typeName, buffer.data())
+          != OsprayStatus::Ok)
+    return OsprayStatus::Error;
+
+  if (killAlpha) {
+    if (ldr) {
+      const auto *px = (const vec4uc *)pixel;
+      auto *dst = (vec4uc *)buffer.data();
+      for (size_t i = 0; i < pixels; i++) {
+        dst[i].x = px[i].x;
+        dst[i].y = px[i].y;
+        dst[i].z = px[i].z;
+        dst[i].w = 255;
+      }
+    } else {
+      const auto *px = (const vec4f *)pixel;
+      auto *dst = (vec4f *)buffer.data();
+      for (size_t i = 0; i < pixels; i++) {
+        dst[i].x = px[i].x;
+        dst[i].y = px[i].y;
+        dst[i].z = px[i].z;
+        dst[i].w = 1.0f;
+      }
+    }
+    pixel = buffer.data();
+  }
+
+  return writeImage(fileName + typeName, pixel);
 }
 
 OsprayStatus OSPImageTools::verifyBaselineImage(const int sizeX,
@@ -123,13 +189,23 @@ OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(const T *testImage,
     const T *baselineImage,
     const std::string &baselineName,
     const bool writeImages,
+    const bool denoised,
     const float pixelConversionFactor)
 {
   bool notPerfect = false;
   double totalError = 0.;
+  // if noise is the only difference, the averaged signed error should be very
+  // close to zero
+  vec4d errorSum = 0.f;
+  // as additional sanity check to catch non-noise related errors which also
+  // result in low averaged signed error (e.g., a 1-pixel shift resulting in
+  // positive diff at one edge which is compensated by a negative diff at the
+  // other edge) also compute a localized averaged signed error
+  vec4d errorSumAbsAvg = 0.f;
 
   rkcommon::index_sequence_2D imageIndices(size);
   std::vector<T> diffAbsImage(imageIndices.total_indices());
+  std::vector<T> diffAvgImage(imageIndices.total_indices());
   {
     // Prepare temporary diff image with floats
     std::vector<vec4f> diffImage(imageIndices.total_indices());
@@ -142,9 +218,11 @@ OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(const T *testImage,
 
     for (vec2i i : imageIndices) {
       const unsigned int pixelIndex = imageIndices.flatten(i);
+      errorSum += diffImage[pixelIndex];
       const T diffValue = abs(diffImage[pixelIndex]);
       const vec4f diffAvgValue =
           abs(getAveragedPixel(diffImage.data(), i, imageIndices));
+      errorSumAbsAvg += diffAvgValue;
 
       // Only count errors if above specified threshold, this removes blurred
       // noise
@@ -156,8 +234,8 @@ OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(const T *testImage,
       notPerfect = notPerfect || reduce_add(diffValue);
 
       // Set values for output diff image
-      diffAbsImage[pixelIndex] = diffValue;
-      diffAbsImage[pixelIndex].w = std::numeric_limits<unsigned char>::max();
+      diffAbsImage[pixelIndex] = diffValue * 10;
+      diffAvgImage[pixelIndex] = diffAvgValue * 10;
     }
   }
 
@@ -165,30 +243,46 @@ OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(const T *testImage,
     std::cerr << "[ WARNING  ] " << baselineName << " is not pixel perfect"
               << std::endl;
 
-  double meanError = totalError / double(4 * size.x * size.y);
+  const double rcpAvg = 1.0 / (4.0 * size.x * size.y);
+  const double meanError = totalError * rcpAvg;
   if (totalError) {
     std::cerr << "[ STATISTIC] Total/mean error: " << totalError << "/"
               << std::fixed << std::setprecision(3) << meanError << std::endl;
   }
 
   bool failed = meanError > errorRate;
-  if (failed && writeImages) {
-    writeImg(
-        ospEnv->GetFailedDir() + "/" + imgName + "_baseline", baselineImage);
-    writeImg(ospEnv->GetFailedDir() + "/" + imgName + "_rendered", testImage);
-    writeImg(
-        ospEnv->GetFailedDir() + "/" + imgName + "_diff", diffAbsImage.data());
+  if (!denoised) {
+    const double meanSum =
+        reduce_add(abs(errorSum)) * rcpAvg * pixelConversionFactor;
+    failed = failed || meanSum > sumThreshold;
+
+    const double meanSumAbsAvg =
+        reduce_add(errorSumAbsAvg) * rcpAvg * pixelConversionFactor;
+    if (meanSumAbsAvg > sumThreshold) {
+      const double sumRatio = meanSum / meanSumAbsAvg;
+      std::cerr << "[ STATISTIC] Error Sums ratio sum / absAvg: "
+                << std::setprecision(3) << meanSum << " / " << meanSumAbsAvg
+                << " = " << sumRatio << std::endl;
+      failed = failed || sumRatio > sumThresholdRatio;
+    }
   }
 
-  if (failed)
+  if (failed && writeImages) {
+    auto fileName = ospEnv->GetFailedDir() + "/" + imgName;
+    writeImg(fileName, "_reference", baselineImage);
+    writeImg(fileName, "_rendered", testImage);
+    writeImg(fileName, "_diff", diffAbsImage.data(), true);
+    writeImg(fileName, "_diffAvg", diffAvgImage.data(), true);
+
     return OsprayStatus::Fail;
-  else
-    return OsprayStatus::Ok;
+  }
+
+  return OsprayStatus::Ok;
 }
 
 OsprayStatus OSPImageTools::saveTestImage(const void *pixel)
 {
-  return writeImg(ospEnv->GetBaselineDir() + "/" + imgName, pixel);
+  return writeImg(ospEnv->GetBaselineDir() + "/" + imgName, "", pixel);
 }
 
 vec4f *loadPF4(std::string fileName, int &sizeX, int &sizeY)
@@ -225,7 +319,8 @@ vec4f *loadPF4(std::string fileName, int &sizeX, int &sizeY)
 }
 
 // compare the baseline image with the values form the framebuffer
-OsprayStatus OSPImageTools::compareImgWithBaseline(const void *testImage)
+OsprayStatus OSPImageTools::compareImgWithBaseline(
+    const void *testImage, const bool denoised)
 {
   const std::string baselineNameBase = ospEnv->GetBaselineDir() + "/" + imgName;
   std::string nextCandidate = baselineNameBase + GetFileFormat();
@@ -248,8 +343,11 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const void *testImage)
           baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
       compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
       if (compErr == OsprayStatus::Ok)
-        compErr = compareImgWithBaselineTmpl<vec4uc>(
-            (vec4uc *)testImage, baselineImage, baselineName, lastCandidate);
+        compErr = compareImgWithBaselineTmpl<vec4uc>((vec4uc *)testImage,
+            baselineImage,
+            baselineName,
+            lastCandidate,
+            denoised);
       if (baselineImage)
         stbi_image_free(baselineImage);
     } else if (GetFileFormat() == ".hdr") {
@@ -261,7 +359,8 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const void *testImage)
             baselineImage,
             baselineName,
             lastCandidate,
-            255.0f);
+            denoised,
+            1.f);
       if (baselineImage)
         stbi_image_free(baselineImage);
     } else if (GetFileFormat() == ".pfm") {
@@ -272,7 +371,8 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const void *testImage)
             baselineImage,
             baselineName,
             lastCandidate,
-            255.0f);
+            denoised,
+            1.f);
       if (baselineImage)
         delete[] baselineImage;
     } else {

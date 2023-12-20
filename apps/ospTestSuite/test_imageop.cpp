@@ -58,6 +58,7 @@ class DenoiserOp : public ImageOpBase,
 
     rendererType = "pathtracer";
     imageOpType = "denoiser";
+    denoised = true;
   }
   void SetUp() override
   {
