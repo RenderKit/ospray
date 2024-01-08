@@ -87,17 +87,22 @@ test_filters+=":Primitive/IDBuffer.*"
 # Different noise
 test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/1"
 
+# Artifacts
+test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/5"
+
 ## Linux only (driver?)
 
 # Artifacts
-test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/12"
 test_filters+=":Renderers/TextureVolumeTransform.simple/0"
 test_filters+=":Appearance/Texture2D.filter/*"
-
-# Artifacts on PVC only (DG2 is fine)
 test_filters+=":Texcoord/Interpolation.Interpolation/0"
 test_filters+=":Texcoord/Interpolation.Interpolation/1"
+
+# Artifacts on PVC only (DG2 is fine)
 test_filters+=":Appearance/Texture2DTransform.simple/0"
+
+# Crashing with dpcpp nightly (icx fine)
+test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/2"
 
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
 export SYCL_CACHE_PERSISTENT=1

@@ -23,9 +23,9 @@ cd build_regression_tests
 $exitCode = 0
 
 cmake -D OSPRAY_TEST_ISA=AVX512SKX $osprayDir/test_image_data
-$exitCode += $LastExitCode
+if ($LastExitCode) { $exitCode++ }
 cmake --build . --config Release --target ospray_test_data
-$exitCode += $LastExitCode
+if ($LastExitCode) { $exitCode++ }
 
 ### Excluded tests on GPU
 #########################
@@ -73,18 +73,22 @@ $test_filters+=":Primitive/IDBuffer.*"
 # Different noise
 $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/1"
 
+# Artifacts
+$test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/5"
+
 ## Windows only (driver?)
 
-# Artifacts with dpcpp (icx is fine)
-$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/7"
-$test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/2"
-$test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/3"
+# Artifacts
+$test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/4"
 
-# Artifacts with icx 2024 (dpcpp and icx 2023 is fine)
-$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/12"
-$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/14"
-$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/15"
-$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/17"
+# Artifacts with dpcpp (icx is fine)
+$test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/23"
+$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/7"
+
+# Artifacts with icx (dpcpp is fine)
+$test_filters+=":Light/GeometricLight.parameter/2"
+$test_filters+=":LightTexture/GeometricLight.parameter/0"
+$test_filters+=":LightTexture/GeometricLight.parameter/1"
 
 
 $env:ONEAPI_DEVICE_SELECTOR="level_zero:*"
@@ -93,30 +97,30 @@ $env:OIDN_VERBOSE="2"
 
 md failed-gpu
 ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters" --own-SYCL
-$exitCode += $LastExitCode
+if ($LastExitCode) { $exitCode++ }
 
 $env:OSPRAY_ALLOW_DEVICE_MEMORY = "1"
 ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter=SharedData/TestUSMSharing.structured_regular/2 --own-SYCL
-$exitCode += $LastExitCode
+if ($LastExitCode) { $exitCode++ }
 $env:OSPRAY_ALLOW_DEVICE_MEMORY = "0"
 
 if ( $testMultiDevice ) {
   md failed-multidevice
   $env:OSPRAY_NUM_SUBDEVICES = "2"
   ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice --gtest_filter="-$test_filters"
-  $exitCode += $LastExitCode
+  if ($LastExitCode) { $exitCode++ }
 }
 
 if ( $testMPI ) {
   md failed-mpi-gpu
   $env:OSPRAY_MPI_DISTRIBUTED_GPU = "1"
   mpiexec.exe -np 1 ospTestSuite.exe --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi-gpu --gtest_filter="-$test_filters" : -np 2 ospray_mpi_worker.exe
-  $exitCode += $LastExitCode
+  if ($LastExitCode) { $exitCode++ }
 
   md failed-mpi-gpu-data-parallel
   $test_filters="MPIDistribTestScenesVolumes/MPIFromOsprayTesting.test_scenes/1" # FIXME
   mpiexec.exe -np 3 -prepend-rank ospMPIDistribTestSuite.exe --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="-$test_filters"
-  $exitCode += $LastExitCode
+  if ($LastExitCode) { $exitCode++ }
 }
 
 exit $exitCode

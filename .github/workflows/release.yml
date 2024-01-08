@@ -15,6 +15,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
 
 ### DOC JOBS ###
@@ -103,9 +105,9 @@ jobs:
       cmd: |
         $exitCode = 0 # keep job status to properly fail
         scripts\release\win.ps1 -G "Visual Studio 15 2017 Win64"
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         & $env:SIGN_FILE_WINDOWS ospray*.msi
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: pdf
       artifact-out: release-windows
@@ -128,9 +130,9 @@ jobs:
         $env:CFLAGS = '-w'
         $exitCode = 0 # keep job status to properly fail
         scripts\release\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_C_COMPILER=clang-cl -DBUILD_GPU_SUPPORT=ON -DOSPRAY_MODULE_GPU=ON
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         & $env:SIGN_FILE_WINDOWS ospray*.msi
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: pdf
       artifact-out: release-sycl-windows
@@ -338,9 +340,9 @@ jobs:
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
         $exitCode = 0 # keep job status to properly fail
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         & $env:SIGN_FILE_WINDOWS -t (Get-ChildItem "$env:GITHUB_WORKSPACE\ospray-*\bin\*" | Select-Object -Expand FullName)
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: release-windows
 
@@ -374,9 +376,9 @@ jobs:
         $env:Path += ";$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin"
         $exitCode = 0 # keep job status to properly fail
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         & $env:SIGN_FILE_WINDOWS -t $env:GITHUB_WORKSPACE\build_release\*.msi (Get-ChildItem "$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin\*" | Select-Object -Expand FullName)
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: release-windows
 
@@ -391,9 +393,9 @@ jobs:
         $env:OIDN_VERBOSE="2"
         $exitCode = 0 # keep job status to properly fail
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         & $env:SIGN_FILE_WINDOWS -t (Get-ChildItem "$env:GITHUB_WORKSPACE\ospray-*\bin\*" | Select-Object -Expand FullName)
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: release-sycl-windows
 
@@ -408,9 +410,9 @@ jobs:
         $env:OIDN_VERBOSE="2"
         $exitCode = 0 # keep job status to properly fail
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         & $env:SIGN_FILE_WINDOWS -t $env:GITHUB_WORKSPACE\build_release\*.msi (Get-ChildItem "$env:GITHUB_WORKSPACE\Intel\OSPRay v3\bin\*" | Select-Object -Expand FullName)
-        $exitCode += $LastExitCode
+        if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: release-sycl-windows
 
