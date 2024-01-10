@@ -3,6 +3,8 @@
 
 #include "Camera.ih"
 #include "common/Embree.h"
+#include "common/FeatureFlags.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
 // c++ shared
@@ -14,7 +16,8 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
-    const varying CameraSample &sample)
+    const varying CameraSample &sample,
+    const uniform FeatureFlagsHandler &)
 {
   const PerspectiveCamera *uniform self =
       (const PerspectiveCamera *uniform)_self;
@@ -53,7 +56,8 @@ SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
 
 SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
     varying Ray &ray,
-    const varying CameraSample &sample)
+    const varying CameraSample &sample,
+    const uniform FeatureFlagsHandler &)
 {
   const PerspectiveCamera *uniform self =
       (const PerspectiveCamera *uniform)_self;

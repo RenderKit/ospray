@@ -58,7 +58,7 @@ void PathTracer::commit()
   const float rl = rcp(l);
   getSh()->shadowCatcherPlane = vec4f(normal * rl, shadowCatcherPlane.w * rl);
 
-  importanceSampleGeometryLights = getParam<bool>("geometryLights", true);
+  scanForGeometryLights = getParam<bool>("geometryLights", true);
   getSh()->backgroundRefraction = getParam<bool>("backgroundRefraction", false);
 }
 
@@ -67,22 +67,24 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   if (!world)
     return nullptr;
 
-  const bool geometryLightListValid =
-      importanceSampleGeometryLights == scannedGeometryLights;
+  if (!world->pathtracerData
+      || (scanForGeometryLights
+          && !world->pathtracerData->scannedForGeometryLights)) {
+    // Create PathTracerData object
+    std::unique_ptr<PathTracerData> pathtracerData =
+        rkcommon::make_unique<PathTracerData>(
+            *world, scanForGeometryLights, *this);
 
-  if (world->pathtracerData.get() && geometryLightListValid)
-    return nullptr;
+    world->getSh()->pathtracerData = pathtracerData->getSh();
+    world->pathtracerData = std::move(pathtracerData);
+  }
 
-  // Create PathTracerData object
-  std::unique_ptr<PathTracerData> pathtracerData =
-      rkcommon::make_unique<PathTracerData>(
-          *world, importanceSampleGeometryLights, *this);
-  if (pathtracerData->getSh()->numGeoLights)
+  if (world->pathtracerData->getSh()->numGeoLights)
     featureFlags.other |= FFO_LIGHT_GEOMETRY;
+  else
+    featureFlags.other =
+        (FeatureFlagsOther)(featureFlags.other & ~FFO_LIGHT_GEOMETRY);
 
-  world->getSh()->pathtracerData = pathtracerData->getSh();
-  world->pathtracerData = std::move(pathtracerData);
-  scannedGeometryLights = importanceSampleGeometryLights;
   return nullptr;
 }
 

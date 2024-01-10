@@ -28,12 +28,9 @@ struct PathTracer : public AddStructShared<Renderer, ispc::PathTracer>
       bool wait) const override;
 
  private:
-  bool importanceSampleGeometryLights{
-      true}; // if geometry lights are importance
-             // sampled using NEE (requires scanning
-             // the scene for geometric lights)
-  bool scannedGeometryLights{
-      false}; // if the scene was scanned for geometric lights
+  bool scanForGeometryLights{true}; // if geometry lights are importance
+                                    // sampled using NEE (requires scanning
+                                    // the scene for geometric lights)
 };
 
 } // namespace ospray

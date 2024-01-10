@@ -12,6 +12,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
+struct FeatureFlagsHandler;
+
 // Specifies the input parameters (time, screen, and lens
 // samples) required for 'initRay' to generate a primary ray
 struct CameraSample

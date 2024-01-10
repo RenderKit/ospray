@@ -26,6 +26,8 @@ enum FeatureFlagsGeometry
 {
   FFG_NONE = RTC_FEATURE_FLAG_NONE,
 
+  FFG_MOTION_BLUR = RTC_FEATURE_FLAG_MOTION_BLUR,
+
   FFG_TRIANGLE = RTC_FEATURE_FLAG_TRIANGLE,
   FFG_QUAD = RTC_FEATURE_FLAG_QUAD,
   FFG_GRID = RTC_FEATURE_FLAG_GRID,
@@ -126,6 +128,8 @@ enum FeatureFlagsOther
 
   // Volume shading in SciVis renderer
   FFO_VOLUME_SCIVIS_SHADING = 1 << 28,
+
+  FFO_CAMERA_MOTION_BLUR = 1 << 29,
 
   FFO_ALL = 0xffffffff
 };

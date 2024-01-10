@@ -77,7 +77,8 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
   SampleAreaRes as;
   const Instance *uniform instance = self->super.instance;
   assert(instance);
-  if (instance->motionBlur) {
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
+  if (instance->motionBlur && (ffg & FFG_MOTION_BLUR)) {
     foreach_unique (utime in time) {
       const uniform affine3f xfm = Instance_getTransform(instance, utime);
       as = Geometry_dispatch_sampleArea(

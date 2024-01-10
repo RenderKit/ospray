@@ -150,6 +150,8 @@ void World::commit()
 #endif
       // Gather feature flags from all groups
       const FeatureFlags &gff = inst->group->getFeatureFlags();
+      if (inst->motionTransform.motionBlur)
+        featureFlags.geometry |= FFG_MOTION_BLUR;
       featureFlags |= gff;
       id++;
     }

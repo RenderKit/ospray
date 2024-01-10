@@ -26,9 +26,7 @@ SYCL_EXTERNAL void Geometry_dispatch_postIntersect(const Geometry *uniform self,
     uniform int64 flags,
     const uniform FeatureFlagsHandler &ffh)
 {
-  const uniform FeatureFlags ff = getFeatureFlags(ffh);
-  // See https://github.com/ispc/ispc/issues/2533
-  const uniform FeatureFlagsGeometry ffg = ff.geometry;
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
 
   if ((self->type == GEOMETRY_TYPE_QUAD_MESH) && (ffg & FFG_QUAD)) {
     QuadMesh_postIntersect(self, dg, ray, flags);
@@ -71,9 +69,7 @@ SYCL_EXTERNAL SampleAreaRes Geometry_dispatch_sampleArea(
     const uniform FeatureFlagsHandler &ffh)
 
 {
-  const uniform FeatureFlags ff = getFeatureFlags(ffh);
-  // See https://github.com/ispc/ispc/issues/2533
-  const uniform FeatureFlagsGeometry ffg = ff.geometry;
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
 
   if (((self->type == GEOMETRY_TYPE_QUAD_MESH) && (ffg & FFG_QUAD))
       || ((self->type == GEOMETRY_TYPE_TRIANGLE_MESH)
@@ -101,9 +97,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
       (RayQueryContextDefault * uniform) args->context;
 
   const uniform FeatureFlagsHandler &ffh = *ctx->ffh;
-  const uniform FeatureFlags ff = getFeatureFlags(ffh);
-  // See https://github.com/ispc/ispc/issues/2533
-  const uniform FeatureFlagsGeometry ffg = ff.geometry;
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
 
   Geometry *uniform geom = (Geometry * uniform) args->geometryUserPtr;
   if ((geom->type == GEOMETRY_TYPE_BOXES) && (ffg & FFG_BOX)) {
@@ -128,9 +122,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
   RayQueryContextDefault *uniform ctx =
       (RayQueryContextDefault * uniform) args->context;
   const uniform FeatureFlagsHandler &ffh = *ctx->ffh;
-  const uniform FeatureFlags ff = getFeatureFlags(ffh);
-  // See https://github.com/ispc/ispc/issues/2533
-  const uniform FeatureFlagsGeometry ffg = ff.geometry;
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
 
   Geometry *uniform geom = (Geometry * uniform) args->geometryUserPtr;
   if ((geom->type == GEOMETRY_TYPE_BOXES) && (ffg & FFG_BOX)) {

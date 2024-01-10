@@ -105,6 +105,11 @@ void Camera::commit()
   getSh()->rollingShutterHorizontal = (shutterType == OSP_SHUTTER_ROLLING_RIGHT
       || shutterType == OSP_SHUTTER_ROLLING_LEFT);
   getSh()->rollingShutterDuration = rollingShutterDuration;
+
+  if (motionTransform.motionBlur)
+    featureFlags |= FFO_CAMERA_MOTION_BLUR;
+  else
+    featureFlags = (FeatureFlagsOther)(featureFlags & ~FFO_CAMERA_MOTION_BLUR);
 }
 
 OSPTYPEFOR_DEFINITION(Camera *);

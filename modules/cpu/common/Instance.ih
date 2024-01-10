@@ -60,7 +60,9 @@ inline void Instance_postIntersect(const Instance *uniform self,
   uniform AffineSpace3f uxfm = self->xfm;
   uniform AffineSpace3f rcp_uxfm = self->rcp_xfm;
 
-  if ((flags & DG_MOTIONBLUR) == DG_MOTIONBLUR && self->motionBlur) {
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
+  if ((flags & DG_MOTIONBLUR) == DG_MOTIONBLUR && self->motionBlur
+      && (ffg & FFG_MOTION_BLUR)) {
     uniform float utime;
     uniform int cnt = 0;
     foreach_unique (t in ray.time) {

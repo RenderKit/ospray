@@ -48,6 +48,12 @@ inline uniform FeatureFlags getFeatureFlags(
 }
 
 // For working around https://github.com/ispc/ispc/issues/2533
+inline uniform FeatureFlagsGeometry getFeatureFlagsGeometry(
+    const uniform FeatureFlagsHandler &ffh)
+{
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  return ff.geometry;
+}
 inline uniform FeatureFlagsOther getFeatureFlagsOther(
     const uniform FeatureFlagsHandler &ffh)
 {
