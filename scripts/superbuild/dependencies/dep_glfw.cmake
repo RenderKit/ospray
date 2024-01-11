@@ -14,8 +14,8 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/glfw/glfw/archive/refs/tags/3.3.8.zip"
-  URL_HASH "SHA256=8106e1a432305a8780b986c24922380df6a009a96b2ca590392cb0859062c8ff"
+  URL "https://github.com/glfw/glfw/archive/refs/tags/3.3.9.zip"
+  URL_HASH "SHA256=c49d895b1f32fa3e072626f6dc928887fc814f445d3ba1fbb97598fea8e48933"
   # `patch` is not available on all systems, so use `git apply` instead. Note
   # that we initialize a Git repo in the GLFW download directory to allow the
   # Git patching approach to work. Also note that we don't want to actually
