@@ -96,7 +96,7 @@ endif()
 option(OSPRAY_SYCL_LARGEGRF "Enable SYCL Large GRF Support" ON)
 mark_as_advanced(OSPRAY_SYCL_LARGEGRF)
 if (OSPRAY_SYCL_LARGEGRF)
-  list(APPEND OSPRAY_OCL_OPTIONS "-internal_options -cl-intel-256-GRF-per-thread")
+  list(APPEND OSPRAY_OCL_OTHER_OPTIONS "-ze-opt-large-register-file")
 endif()
 
 string(REPLACE ";" "," OSPRAY_IGC_OPTIONS_STR "${OSPRAY_IGC_OPTIONS}")
