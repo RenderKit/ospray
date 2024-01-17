@@ -33,6 +33,12 @@ inline uniform bool valid(const uniform Data1D data)
 // special 64-bit safe code:
 #define BITS 20
 
+template <typename T>
+inline varying T get(const uniform Data1D &data, const varying int index)
+{
+  return *((const uniform T *)(data.addr + data.byteStride * index));
+}
+
 // ok to pass-by-value, will be inlined and optimized
 #ifdef OSPRAY_TARGET_SYCL
 // SYCL execution in a thread is scalar
@@ -42,13 +48,6 @@ inline uniform bool valid(const uniform Data1D data)
   {                                                                            \
     return *((const T *)(data.addr + data.byteStride * index));                \
   }
-
-// New templated version
-template <typename T>
-inline T get(const Data1D data, const int index)
-{
-  return *((const T *)(data.addr + data.byteStride * index));
-}
 #else
 #define __define_get(T)                                                        \
   inline T get_##T(const uniform Data1D data, const varying int index)         \

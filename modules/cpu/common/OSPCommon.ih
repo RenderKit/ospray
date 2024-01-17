@@ -89,7 +89,7 @@ void PRINT3(const rkcommon::math::vec3f &x)
 #define LOG(x)
 
 #define PRINT(x) print(#x " = %\n", x)
-#define PRINT3(x) print(#x " = (%, %, %)\n", get(x, 0), get(x, 1), get(x, 2))
+#define PRINT3(v) print(#v " = (%, %, %)\n", v.x, v.y, v.z)
 // prints first unmasked element
 #define PRINTU(x)                                                              \
   print(#x "[%] = %\n",                                                        \
