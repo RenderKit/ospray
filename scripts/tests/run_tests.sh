@@ -47,6 +47,7 @@ exitCode=0
 
 cmake -D OSPRAY_TEST_ISA=$TESTISA ${SOURCEDIR}/test_image_data
 let exitCode+=$?
+export CMAKE_BUILD_PARALLEL_LEVEL=32
 cmake --build . --target ospray_test_data
 let exitCode+=$?
 

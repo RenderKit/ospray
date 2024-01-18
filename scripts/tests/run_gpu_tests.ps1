@@ -1,18 +1,22 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-# to run:  ./run_tests.ps1 <path to ospray source> <reference images ISA> [TEST_MPI]
+# to run:  ./run_tests.ps1 <path to ospray source> [SKIP_GPU] [TEST_MPI] [TEST_MULTIDEVICE]
 # a new folder is created called build_regression_tests with results
 
 $osprayDir=$args[0]
 
+$testGPU = $TRUE
 $testMPI = $FALSE
 $testMultiDevice = $FALSE
 foreach ($arg in $args) {
-  if ( $arg -eq "TEST_MPI" ) {
+  if ($arg -eq "SKIP_GPU") {
+    $testGPU = $FALSE
+  }
+  if ($arg -eq "TEST_MPI") {
     $testMPI = $TRUE
   }
-  if ( $arg -eq "TEST_MULTIDEVICE" ) {
+  if ($arg -eq "TEST_MULTIDEVICE") {
     $testMultiDevice = $TRUE
   }
 }
@@ -22,8 +26,12 @@ cd build_regression_tests
 
 $exitCode = 0
 
-cmake -D OSPRAY_TEST_ISA=AVX512SKX $osprayDir/test_image_data
-if ($LastExitCode) { $exitCode++ }
+# try Ninja first
+cmake -G Ninja -D OSPRAY_TEST_ISA=AVX512SKX $osprayDir/test_image_data
+if ($LastExitCode) {
+  cmake -D OSPRAY_TEST_ISA=AVX512SKX $osprayDir/test_image_data
+  if ($LastExitCode) { $exitCode++ }
+}
 cmake --build . --config Release --target ospray_test_data
 if ($LastExitCode) { $exitCode++ }
 
@@ -90,25 +98,27 @@ $env:ONEAPI_DEVICE_SELECTOR="level_zero:*"
 $env:SYCL_CACHE_PERSISTENT="1"
 $env:OIDN_VERBOSE="2"
 
-md failed-gpu
-ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters" --own-SYCL
-if ($LastExitCode) { $exitCode++ }
+if ($testGPU) {
+  md failed-gpu
+  ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters" --own-SYCL
+  if ($LastExitCode) { $exitCode++ }
+  
+  $env:OSPRAY_ALLOW_DEVICE_MEMORY = "1"
+  ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter=SharedData/TestUSMSharing.structured_regular/2 --own-SYCL
+  if ($LastExitCode) { $exitCode++ }
+  $env:OSPRAY_ALLOW_DEVICE_MEMORY = "0"
+}
 
-$env:OSPRAY_ALLOW_DEVICE_MEMORY = "1"
-ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter=SharedData/TestUSMSharing.structured_regular/2 --own-SYCL
-if ($LastExitCode) { $exitCode++ }
-$env:OSPRAY_ALLOW_DEVICE_MEMORY = "0"
-
-if ( $testMultiDevice ) {
+if ($testMultiDevice) {
   md failed-multidevice
-  $env:OSPRAY_NUM_SUBDEVICES = "2"
+  $env:OSPRAY_NUM_SUBDEVICES=2
   ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice --gtest_filter="-$test_filters"
   if ($LastExitCode) { $exitCode++ }
 }
 
-if ( $testMPI ) {
+if ($testMPI) {
   md failed-mpi-gpu
-  $env:OSPRAY_MPI_DISTRIBUTED_GPU = "1"
+  $env:OSPRAY_MPI_DISTRIBUTED_GPU=1
   mpiexec.exe -np 1 ospTestSuite.exe --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi-gpu --gtest_filter="-$test_filters" : -np 2 ospray_mpi_worker.exe
   if ($LastExitCode) { $exitCode++ }
 

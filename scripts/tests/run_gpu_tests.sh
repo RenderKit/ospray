@@ -2,7 +2,8 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-# to run:  ./run_tests.sh <path to ospray source> [TEST_MPI] [TEST_MULTIDEVICE]
+# to run:  ./run_tests.sh <path to ospray source> [SKIP_GPU] [TEST_MPI] [TEST_MULTIDEVICE]
+# a new folder is created called build_regression_tests with results
 
 SOURCEDIR=$([[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}")
 
@@ -14,10 +15,15 @@ if [ -z "$MPI_WORKER_CONFIG" ]; then
 fi
 
 # optional command line arguments
+TEST_GPU=true
 while [[ $# -gt 0 ]]
 do
 key="$1"
 case $key in
+    SKIP_GPU)
+    unset TEST_GPU
+    shift
+    ;;
     TEST_MPI)
     TEST_MPI=true
     shift
@@ -38,7 +44,9 @@ cd build_regression_tests
 exitCode=0
 
 cmake -D OSPRAY_TEST_ISA=AVX512SKX "${SOURCEDIR}/test_image_data"
-make -j 4 ospray_test_data
+let exitCode+=$?
+export CMAKE_BUILD_PARALLEL_LEVEL=32
+cmake --build . --target ospray_test_data
 let exitCode+=$?
 
 ### Excluded tests on GPU
@@ -96,22 +104,20 @@ test_filters+=":Texcoord/Interpolation.Interpolation/1"
 # Artifacts on PVC only (DG2 is fine)
 test_filters+=":Appearance/Texture2DTransform.simple/0"
 
-# Crashing with dpcpp nightly (icx fine)
-test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/2"
-
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
 export SYCL_CACHE_PERSISTENT=1
 export OIDN_VERBOSE=2
 
 export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE # WA for PVC
 
-mkdir failed-gpu
-
-ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters" --own-SYCL
-let exitCode+=$?
-
-OSPRAY_ALLOW_DEVICE_MEMORY=1 ospTestSuite --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter=SharedData/TestUSMSharing.structured_regular/2 --own-SYCL
-let exitCode+=$?
+if [ $TEST_GPU ]; then
+  mkdir failed-gpu
+  ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters" --own-SYCL
+  let exitCode+=$?
+  
+  OSPRAY_ALLOW_DEVICE_MEMORY=1 ospTestSuite --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter=SharedData/TestUSMSharing.structured_regular/2 --own-SYCL
+  let exitCode+=$?
+fi
 
 if [ $TEST_MULTIDEVICE ]; then
   mkdir failed-multidevice

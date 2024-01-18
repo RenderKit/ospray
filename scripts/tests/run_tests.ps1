@@ -1,7 +1,7 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-# to run:  ./run_tests.ps1 <path to ospray source> <reference images ISA> [TEST_MPI]
+# to run:  ./run_tests.ps1 <path to ospray source> <reference images ISA> [TEST_MPI] [TEST_MULTIDEVICE]
 # a new folder is created called build_regression_tests with results
 
 $osprayDir=$args[0]
@@ -23,8 +23,12 @@ cd build_regression_tests
 
 $exitCode = 0
 
-cmake -D OSPRAY_TEST_ISA=$testISA $osprayDir/test_image_data
-if ($LastExitCode) { $exitCode++ }
+# try Ninja first
+cmake -G Ninja -D OSPRAY_TEST_ISA=$testISA $osprayDir/test_image_data
+if ($LastExitCode) {
+  cmake -D OSPRAY_TEST_ISA=$testISA $osprayDir/test_image_data
+  if ($LastExitCode) { $exitCode++ }
+}
 cmake --build . --config Release --target ospray_test_data
 if ($LastExitCode) { $exitCode++ }
 
@@ -34,7 +38,7 @@ if ($LastExitCode) { $exitCode++ }
 
 if ( $testMultiDevice ) {
   md failed-multidevice
-  $Env:OSPRAY_NUM_SUBDEVICES = 2
+  $env:OSPRAY_NUM_SUBDEVICES=2
   ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice --gtest_filter="-$test_filters"
   if ($LastExitCode) { $exitCode++ }
 }

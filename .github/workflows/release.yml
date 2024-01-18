@@ -65,7 +65,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-release.env
+      env-from-files: .github/workflows/dpcpp.env
       level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
@@ -121,7 +121,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["build", "mpi"]'
-      env-from-files: .github/workflows/dpcpp-release.env
+      env-from-files: .github/workflows/dpcpp.env
       level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
@@ -235,7 +235,7 @@ jobs:
     secrets: inherit
     with:
       image: ubuntu:22.04
-      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
       cmd: |
@@ -271,7 +271,7 @@ jobs:
     with:
       image: ubuntu:22.04
       runs-on: '"dg2"'
-      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         update-alternatives --set mpi /usr/bin/mpicc.mpich
@@ -287,7 +287,7 @@ jobs:
     with:
       image: ubuntu:22.04
       runs-on: '"pvc"'
-      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         update-alternatives --set mpi /usr/bin/mpicc.mpich
@@ -353,7 +353,7 @@ jobs:
     with:
       runs-on: '"dg2"'
       force-delete: true
-      env-from-files: .github/workflows/gfx-windows-release.env
+      env-from-files: .github/workflows/gfx-windows.env
       cmd: |
         Expand-Archive build_release/*.zip -DestinationPath .
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
@@ -421,7 +421,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
     with:
       runs-on: '"dg2"' # FIXME: mpi
-      env-from-files: .github/workflows/gfx-windows-release.env
+      env-from-files: .github/workflows/gfx-windows.env
       cmd: |
         $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
         Expand-Archive build_release/*.zip -DestinationPath .
@@ -434,7 +434,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
     with:
       runs-on: '"dg2"' # FIXME: mpi
-      env-from-files: .github/workflows/gfx-windows-release.env
+      env-from-files: .github/workflows/gfx-windows.env
       cmd: |
         $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
         msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$env:GITHUB_WORKSPACE
