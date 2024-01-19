@@ -79,12 +79,6 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
     world->pathtracerData = std::move(pathtracerData);
   }
 
-  if (world->pathtracerData->getSh()->numGeoLights)
-    featureFlags.other |= FFO_LIGHT_GEOMETRY;
-  else
-    featureFlags.other =
-        (FeatureFlagsOther)(featureFlags.other & ~FFO_LIGHT_GEOMETRY);
-
   return nullptr;
 }
 
@@ -106,6 +100,8 @@ AsyncEvent PathTracer::renderTasks(FrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
+    if (world->pathtracerData->getSh()->numGeoLights)
+      ff.other |= FFO_LIGHT_GEOMETRY;
     ff |= featureFlags;
     ff |= fb->getFeatureFlags();
     ff |= camera->getFeatureFlags();
