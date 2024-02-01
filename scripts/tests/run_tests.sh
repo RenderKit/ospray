@@ -2,7 +2,7 @@
 ## Copyright 2016 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-# to run:  ./run_tests.sh <path to ospray source> <reference images ISA> [TEST_MPI] [TEST_MULTIDEVICE]
+# to run:  ./run_tests.sh <path to ospray source> <reference images ISA> [SKIP_CPU] [TEST_MPI] [TEST_MULTIDEVICE]
 # a new folder is created called build_regression_tests with results
 
 if [ -z "$MPI_ROOT_CONFIG" ]; then
@@ -22,10 +22,15 @@ SOURCEDIR=$([[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}")
 TESTISA=$2
 
 # optional command line arguments
+TEST_CPU=true
 while [[ $# -gt 0 ]]
 do
 key="$1"
 case $key in
+    SKIP_CPU)
+    unset TEST_CPU
+    shift
+    ;;
     TEST_MPI)
     TEST_MPI=true
     shift
@@ -53,9 +58,11 @@ let exitCode+=$?
 
 export OIDN_VERBOSE=2
 
-mkdir failed
-ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
-let exitCode+=$?
+if [ $TEST_CPU ]; then
+  mkdir failed
+  ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
+  let exitCode+=$?
+fi
 
 if [ $TEST_MULTIDEVICE ]; then
   mkdir failed-multidevice

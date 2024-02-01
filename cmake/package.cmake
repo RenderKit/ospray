@@ -73,10 +73,7 @@ endif()
 ##############################################################
 
 set(CPACK_PACKAGE_NAME "OSPRay")
-if (OSPRAY_MODULE_GPU)
-  set(OSPRAY_PACKAGE_SYCL ".sycl")
-endif()
-set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}${OSPRAY_PACKAGE_SYCL}.x86_64")
+set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}.x86_64")
 
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)
@@ -107,6 +104,9 @@ set(CPACK_COMPONENT_APPS_DESCRIPTION "Example, viewer and test applications as w
 set(CPACK_COMPONENT_MPI_DISPLAY_NAME "MPI Module")
 set(CPACK_COMPONENT_MPI_DESCRIPTION "OSPRay module for MPI-based distributed rendering.")
 
+set(CPACK_COMPONENT_GPU_DISPLAY_NAME "GPU Module")
+set(CPACK_COMPONENT_GPU_DESCRIPTION "OSPRay module for Intel Xe GPU-based rendering.")
+
 set(CPACK_COMPONENT_REDIST_DISPLAY_NAME "Redistributables")
 set(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, imgui) that may or may not be already installed on your system.")
 
@@ -114,6 +114,7 @@ set(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, 
 set(CPACK_COMPONENT_DEVEL_DEPENDS lib)
 set(CPACK_COMPONENT_APPS_DEPENDS lib)
 set(CPACK_COMPONENT_MPI_DEPENDS lib)
+set(CPACK_COMPONENT_GPU_DEPENDS lib)
 set(CPACK_COMPONENT_LIB_REQUIRED ON) # always install the libs
 
 # point to readme and license files
@@ -145,6 +146,9 @@ if (WIN32) # Windows specific settings
     list(APPEND CPACK_COMPONENTS_ALL redist)
     if (OSPRAY_MODULE_MPI)
       list(APPEND CPACK_COMPONENTS_ALL mpi)
+    endif()
+    if (OSPRAY_MODULE_GPU)
+      list(APPEND CPACK_COMPONENTS_ALL gpu)
     endif()
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION_MAJOR}")
     math(EXPR OSPRAY_VERSION_NUMBER "10000*${OSPRAY_VERSION_MAJOR} + 100*${OSPRAY_VERSION_MINOR} + ${OSPRAY_VERSION_PATCH}")

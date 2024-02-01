@@ -88,7 +88,7 @@ version) and [Embree](https://github.com/embree/embree/releases/).
 To build OSPRay's GPU module you need
 
 -   a SYCL compiler, either the open source [oneAPI DPC++ Compiler
-    2023-09-22](https://github.com/intel/llvm/releases/tag/nightly-2023-09-22)
+    2023-10-26](https://github.com/intel/llvm/releases/tag/nightly-2023-10-26)
     or the latest [Intel oneAPI DPC++/C++
     Compiler](https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#dpcpp-cpp)
 -   a recent [CMake](http://www.cmake.org), version 3.25.3 or higher

@@ -518,7 +518,7 @@ if (OSPRAY_MODULE_GPU)
     ospray_module_gpu_kernels
   )
 
-  ospray_install_library(ospray_module_gpu lib)
+  ospray_install_library(ospray_module_gpu gpu)
 endif()
 
 # -------------------------------------------------------
