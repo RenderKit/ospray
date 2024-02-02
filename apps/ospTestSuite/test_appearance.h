@@ -25,6 +25,17 @@ class Texture2DTransform : public Base,
   void SetUp() override;
 };
 
+class Texture2DWrapMode
+    : public Base,
+      public ::testing::TestWithParam<OSPTextureFilter /*filter*/>
+{
+  OSPTextureFilter filter;
+
+ public:
+  Texture2DWrapMode();
+  void SetUp() override;
+};
+
 class RendererMaterialList : public Base,
                              public ::testing::TestWithParam<const char *>
 {

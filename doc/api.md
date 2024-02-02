@@ -1235,7 +1235,7 @@ array:
   uint     type                       `OSPSphereType` for rendering the sphere.
                                        Supported types are:
 
-                                      `OSP_SPHERE`
+                                      `OSP_SPHERE` (default)
 
                                       `OSP_DISC`
 
@@ -2247,12 +2247,16 @@ To create a new texture use
 The `texture2d` texture type implements an image-based texture, where
 its parameters are as follows
 
-  Type    Name         Description
-  ------- ------------ ----------------------------------
-  uint    format       `OSPTextureFormat` for the texture
-  uint    filter       default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
-  OSPData data         the actual texel 2D [data]
-  ------- ------------ ----------------------------------
+  Type           Name      Description
+  -------------- --------- ----------------------------------
+  uint           format    `OSPTextureFormat` for the texture
+  uint           filter    default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
+  OSPData        data      the actual texel 2D [data]
+  uint / vec2ui  wrapMode  `OSPTextureWrapMode` for the texture coordinates s and t; supported wrap modes are:
+                           `OSP_TEXTURE_WRAP_REPEAT` (default)
+                           `OSP_TEXTURE_WRAP_MIRRORED_REPEAT`
+                           `OSP_TEXTURE_WRAP_CLAMP_TO_EDGE`
+  -------------- --------- ----------------------------------
   : Parameters of `texture2d` texture type.
 
 The supported texture formats for `texture2d` are:

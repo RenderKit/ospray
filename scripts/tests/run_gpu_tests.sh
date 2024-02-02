@@ -103,6 +103,7 @@ test_filters+=":Texcoord/Interpolation.Interpolation/1"
 
 # Artifacts on PVC only (DG2 is fine)
 test_filters+=":Appearance/Texture2DTransform.simple/0"
+test_filters+=":Appearance/Texture2DWrapMode.wrap/*"
 
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
 export SYCL_CACHE_PERSISTENT=1

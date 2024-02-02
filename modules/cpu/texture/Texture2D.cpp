@@ -13,11 +13,13 @@ namespace ispc {
 void Texture2D::set(const vec2i &aSize,
     void *aData,
     OSPTextureFormat aFormat,
-    OSPTextureFilter aFilter)
+    OSPTextureFilter aFilter,
+    vec2ui aWrapMode)
 {
   size = aSize;
   format = aFormat;
   filter = aFilter;
+  wrapMode = aWrapMode;
 
   // Due to float rounding frac(x) can be exactly 1.0f (e.g. for very small
   // negative x), although it should be strictly smaller than 1.0f. We handle
@@ -74,6 +76,8 @@ void Texture2D::commit()
       getParam<uint32_t>("format", OSP_TEXTURE_FORMAT_INVALID));
   filter = static_cast<OSPTextureFilter>(
       getParam<uint32_t>("filter", OSP_TEXTURE_FILTER_LINEAR));
+  wrapMode = getParam<vec2ui>("wrapMode",
+      vec2ui(getParam<uint32_t>("wrapMode", OSP_TEXTURE_WRAP_REPEAT)));
 
   if (format == OSP_TEXTURE_FORMAT_INVALID)
     throw std::runtime_error(toString() + ": invalid 'format'");
@@ -84,7 +88,7 @@ void Texture2D::commit()
         + "'!");
 
   // Initialize ispc shared structure
-  getSh()->set(size, texData->data(), format, filter);
+  getSh()->set(size, texData->data(), format, filter, wrapMode);
 }
 
 } // namespace ospray

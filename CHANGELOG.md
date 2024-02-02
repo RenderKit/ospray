@@ -17,6 +17,7 @@ Version History
     improvements:
     -   Fix crash using GPU and emissive geometry
 -   GPU device now also supports motion blur
+-   Add support for mirror repeat and clamp to edge texture wrap modes
 
 ### Changes in v3.0.0:
 

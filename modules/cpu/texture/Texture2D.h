@@ -25,6 +25,7 @@ struct OSPRAY_SDK_INTERFACE Texture2D
 
   OSPTextureFormat format{OSP_TEXTURE_FORMAT_INVALID};
   OSPTextureFilter filter{OSP_TEXTURE_FILTER_LINEAR};
+  vec2ui wrapMode{OSP_TEXTURE_WRAP_REPEAT};
 
  protected:
   Ref<const Data> texData;

@@ -1468,7 +1468,7 @@ of specifying the data of center position and radius within a
 | vec2f\[\] | sphere.texcoord |    NULL | optional [data](#data) array of texture coordinates (constant per sphere) |
 | float     | radius          |    0.01 | default radius for all spheres (if `sphere.radius` is not set)            |
 | uint      | type            |         | `OSPSphereType` for rendering the sphere. Supported types are:            |
-|           |                 |         | `OSP_SPHERE`                                                              |
+|           |                 |         | `OSP_SPHERE` (default)                                                    |
 |           |                 |         | `OSP_DISC`                                                                |
 |           |                 |         | `OSP_ORIENTED_DISC`                                                       |
 
@@ -2417,11 +2417,15 @@ OSPTexture ospNewTexture(const char *type);
 The `texture2d` texture type implements an image-based texture, where
 its parameters are as follows
 
-| Type    | Name   | Description                                                                     |
-|:--------|:-------|:--------------------------------------------------------------------------------|
-| uint    | format | `OSPTextureFormat` for the texture                                              |
-| uint    | filter | default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST` |
-| OSPData | data   | the actual texel 2D [data](#data)                                               |
+| Type          | Name     | Description                                                                         |
+|:--------------|:---------|:------------------------------------------------------------------------------------|
+| uint          | format   | `OSPTextureFormat` for the texture                                                  |
+| uint          | filter   | default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`     |
+| OSPData       | data     | the actual texel 2D [data](#data)                                                   |
+| uint / vec2ui | wrapMode | `OSPTextureWrapMode` for the texture coordinates s and t; supported wrap modes are: |
+|               |          | `OSP_TEXTURE_WRAP_REPEAT` (default)                                                 |
+|               |          | `OSP_TEXTURE_WRAP_MIRRORED_REPEAT`                                                  |
+|               |          | `OSP_TEXTURE_WRAP_CLAMP_TO_EDGE`                                                    |
 
 Parameters of `texture2d` texture type.
 
