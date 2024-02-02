@@ -65,33 +65,18 @@ export CMAKE_PREFIX_PATH=$DEP_DIR
 
 # set release and installer settings
 cmake -L \
+  "$@" \
   -D OSPRAY_BUILD_ISA=ALL \
   -D TBB_ROOT=$DEP_DIR \
-  -D OSPRAY_ZIP_MODE=OFF \
-  -D OSPRAY_MODULE_DENOISER=ON \
-  -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
-  -D CMAKE_INSTALL_PREFIX=/opt/local \
-  -D CMAKE_INSTALL_INCLUDEDIR=include \
-  -D CMAKE_INSTALL_LIBDIR=lib \
-  -D CMAKE_INSTALL_DOCDIR=../../Applications/OSPRay/doc \
-  -D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay/bin \
-  -D CMAKE_BUILD_WITH_INSTALL_RPATH=ON \
-  -D OSPRAY_SIGN_FILE=$SIGN_FILE_MAC \
-  ..
-
-# create installers
-make -j $THREADS package || exit 2
-
-# change settings for zip mode
-cmake -L \
   -D OSPRAY_ZIP_MODE=ON \
+  -D OSPRAY_MODULE_DENOISER=ON \
   -D OSPRAY_INSTALL_DEPENDENCIES=ON \
   -D CMAKE_INSTALL_INCLUDEDIR=include \
   -D CMAKE_INSTALL_LIBDIR=lib \
   -D CMAKE_INSTALL_DOCDIR=doc \
   -D CMAKE_INSTALL_BINDIR=bin \
+  -D CMAKE_BUILD_WITH_INSTALL_RPATH=ON \
+  -D CPACK_PRE_BUILD_SCRIPTS=$CPACK_PRE_BUILD_SIGNING_SCRIPT \
   ..
 
-# create ZIP files
-make sign_files || exit 2
 make -j $THREADS package || exit 2

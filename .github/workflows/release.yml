@@ -57,7 +57,7 @@ jobs:
       artifact-out: release-linux
       artifact-path: build_release/*.gz
 
-  release-osx-clang:
+  release-osx:
     needs: pdf
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
@@ -68,11 +68,22 @@ jobs:
         export CC=clang
         export CXX=clang++
         scripts/release/macosx.sh -DBUILD_EMBREE_FROM_SOURCE=ON # FIXME invalid symlinks in Embree v4.3 package
-        $SIGN_FILE_MAC -o runtime -e scripts/release/ospray.entitlements build_release/ospray-*pkg
-        scripts/release/macosx_notarization.sh build_release/ospray-*.pkg
       artifact-in: pdf
-      artifact-out: release-osx-clang
-      artifact-path: "build_release/*.zip build_release/*.pkg"
+      artifact-out: release-osx
+      artifact-path: build_release/*.zip
+
+  release-osx-arm:
+    needs: pdf
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      runs-on: '["arm", "build"]'
+      cmd: |
+        scripts/release/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+      artifact-in: pdf
+      artifact-out: release-osx-arm
+      artifact-path: build_release/*.zip
 
   release-windows:
     needs: pdf
@@ -123,29 +134,49 @@ jobs:
   binary-analysis:
     needs:
       - release-linux
-      - release-osx-clang
+      - release-osx
       - release-windows
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/binary_analysis.yml@main
     with:
       project: ospray
       artifact-in-linux: release-linux
-      artifact-in-macos: release-osx-clang
+      artifact-in-macos: release-osx
       artifact-in-windows: release-windows
+      path: build_release/ospray-*
+
+  binary-analysis-arm:
+    needs:
+      - release-osx-arm
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/binary_analysis.yml@main
+    with:
+      project: ospray
+      artifact-in-macos: release-osx-arm
       path: build_release/ospray-*
 
   antivirus-scan:
     needs:
       - release-linux
-      - release-osx-clang
+      - release-osx
       - release-windows
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/antivirus_scan.yml@main
     with:
       project: ospray
       artifact-in-linux: release-linux
-      artifact-in-macos: release-osx-clang
+      artifact-in-macos: release-osx
       artifact-in-windows: release-windows
+      path: build_release/ospray-*
+
+  antivirus-scan-arm:
+    needs:
+      - release-osx-arm
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/antivirus_scan.yml@main
+    with:
+      project: ospray
+      artifact-in-macos: release-osx-arm
       path: build_release/ospray-*
 
 ### TEST JOBS ###
@@ -294,8 +325,8 @@ jobs:
         scripts/tests/run_gpu_tests.sh $GITHUB_WORKSPACE SKIP_GPU TEST_MPI
       artifact-in: release-linux
 
-  test-osx:
-    needs: release-osx-clang
+  test-osx-avx2:
+    needs: release-osx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       runs-on: '["x86_64", "build", "avx2"]'
@@ -303,29 +334,51 @@ jobs:
         unzip build_release/*.zip
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX2
-      artifact-in: release-osx-clang
+      artifact-in: release-osx
 
-# TODO
-# test-release-osx-avx512:
-#   needs: release-osx-clang
-#   uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
-#   with:
-#     runs-on: '[ "macOS", "x86_64", "build" ]'
-#     cmd: |
-#       unzip build_release/*.zip
-#       export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-#       scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
-#     artifact-in: release-osx-clang
+  test-osx-avx512:
+    needs: release-osx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      runs-on: '["x86_64", "build", "avx512"]'
+      cmd: |
+        unzip build_release/*.zip
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+      artifact-in: release-osx
+
+  test-osx-arm:
+    needs: release-osx-arm
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      runs-on: '["arm", "build"]'
+      cmd: |
+        unzip build_release/*.zip
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+      artifact-in: release-osx-arm
 
   test-osx-signing:
-    needs: release-osx-clang
+    needs: release-osx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    secrets: inherit
     with:
       runs-on: '["sign", "x86_64" ]'
       cmd: |
         unzip build_release/*.zip
-        $SIGN_FILE_MAC -t ./ospray-*/bin/* ./ospray-*/lib/*.dylib ./build_release/*.pkg
-      artifact-in: release-osx-clang
+      sign-path-verify: ospray-*
+      artifact-in: release-osx
+
+  test-osx-signing-arm:
+    needs: release-osx-arm
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    secrets: inherit
+    with:
+      runs-on: '"arm"'
+      cmd: |
+        unzip build_release/*.zip
+      sign-path-verify: ospray-*
+      artifact-in: release-osx-arm
 
   test-windows-signing:
     needs: release-windows

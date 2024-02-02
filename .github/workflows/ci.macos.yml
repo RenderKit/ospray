@@ -56,7 +56,7 @@ jobs:
     needs: build-osx-clang
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '["x86_64", "avx2"]'
+      runs-on: '["x86_64", "avx2", "build"]'
       cmd: |
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MULTIDEVICE
@@ -69,7 +69,7 @@ jobs:
     needs: build-osx-arm
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '"arm"'
+      runs-on: '["arm", "build"]'
       cmd: |
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
@@ -82,7 +82,7 @@ jobs:
     needs: build-osx-x64-on-arm
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '"arm"'
+      runs-on: '["arm", "build"]'
       cmd: |
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
