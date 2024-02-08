@@ -222,10 +222,10 @@ void ISPCDevice::commit()
       return;
     }
 
-    ze_context_handle_t *appZeCtx = static_cast<ze_context_handle_t *>(
+    ze_context_handle_t appZeCtx = static_cast<ze_context_handle_t>(
         getParam<void *>("zeContext", nullptr));
-    ze_device_handle_t *appZeDevice = static_cast<ze_device_handle_t *>(
-        getParam<void *>("zeDevice", nullptr));
+    ze_device_handle_t appZeDevice =
+        static_cast<ze_device_handle_t>(getParam<void *>("zeDevice", nullptr));
     if ((appZeCtx && !appZeDevice) || (!appZeCtx && appZeDevice)) {
       handleError(OSP_INVALID_OPERATION,
           "OSPRay ISPCDevice invalid configuration: if providing a zeContext and zeDevice both must be provided");
@@ -240,17 +240,11 @@ void ISPCDevice::commit()
 
     // If we got a SYCL context just get the native handles and set the "app" L0
     // context/device to them, since we can take the same code path from there
-    ze_context_handle_t syclZeCtxHandle;
-    ze_device_handle_t syclZeDeviceHandle;
     if (appSyclCtx) {
-      syclZeCtxHandle =
+      appZeCtx =
           sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*appSyclCtx);
-      syclZeDeviceHandle =
-          sycl::get_native<sycl::backend::ext_oneapi_level_zero>(
-              *appSyclDevice);
-
-      appZeCtx = &syclZeCtxHandle;
-      appZeDevice = &syclZeDeviceHandle;
+      appZeDevice = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(
+          *appSyclDevice);
     }
 
     const bool newContext = appZeCtx || !ispcrtContext;
@@ -258,9 +252,9 @@ void ISPCDevice::commit()
     if (appZeCtx) {
       userContext = true;
       ispcrtContext = ispcrt::Context(
-          ISPCRT_DEVICE_TYPE_GPU, (ISPCRTGenericHandle)*appZeCtx);
+          ISPCRT_DEVICE_TYPE_GPU, (ISPCRTGenericHandle)appZeCtx);
       ispcrtDevice =
-          ispcrt::Device(ispcrtContext, (ISPCRTGenericHandle)*appZeDevice);
+          ispcrt::Device(ispcrtContext, (ISPCRTGenericHandle)appZeDevice);
     } else if (!ispcrtContext) {
       // internally, from Multidevice GPU
       ispcrt::Context *ispcrtContextPtr = static_cast<ispcrt::Context *>(
@@ -278,9 +272,10 @@ void ISPCDevice::commit()
     }
 
     if (newContext) {
-      syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
-          reinterpret_cast<pi_native_handle>(
-              ispcrtDevice.nativePlatformHandle()));
+      syclPlatform = appSyclCtx ? appSyclCtx->get_platform()
+                                : sycl::ext::oneapi::level_zero::make_platform(
+                                    reinterpret_cast<pi_native_handle>(
+                                        ispcrtDevice.nativePlatformHandle()));
       syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
           reinterpret_cast<pi_native_handle>(
               ispcrtDevice.nativeDeviceHandle()));

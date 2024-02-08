@@ -13,11 +13,16 @@ Version History
 -   Fixes for PixelFilter
     -   Parameter was ignored (always using the default Gaussian)
     -   Avoid a shift/misalignment within the pixel for first sample
--   Minimum version of rkcommon is 1.13.0, which brings the following
-    improvements:
-    -   Fix crash using GPU and emissive geometry
 -   GPU device now also supports motion blur
 -   Add support for mirror repeat and clamp to edge texture wrap modes
+-   The new minimum versions of dependencies:
+    -    Embree v4.3.1
+    -    Open VKL v2.0.1
+    -    Open Image Denoise v2.2 (better quality with fine details,
+         support AArch64 CPU on Linux)
+    -    ISPCRT v1.23.0 (uses environment variable `ISPCRT_GPU_DRIVER`
+         to select GPU to run on when multiple (i)GPUs are present)
+    -    rkcommon v1.13.0 (fixes crash using GPU and emissive geometry)
 
 ### Changes in v3.0.0:
 

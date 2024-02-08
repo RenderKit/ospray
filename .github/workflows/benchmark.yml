@@ -25,7 +25,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: rockylinux:8.7
       env-from-files: .github/workflows/dpcpp.env
-      level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
         module load mpi/mpich-x86_64

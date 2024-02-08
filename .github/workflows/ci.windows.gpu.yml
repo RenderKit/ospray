@@ -24,7 +24,6 @@ jobs:
       force-delete: true
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/dpcpp.env
-      level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
         # disable warnings which lead to excessively large log files
@@ -41,7 +40,7 @@ jobs:
       force-delete: true
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/icx-windows.env
-      level-zero-version: public/1.12.0 # for ispcrt
+      ocloc-version: 77a13ae6-6100-4ddc-b069-0086ff44730c/ocloc_win_101.5082
       cmd: |
         # disable warnings which lead to excessively large log files
         $env:CXXFLAGS = '-w'

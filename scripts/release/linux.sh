@@ -56,6 +56,13 @@ DEP_DIR=$ROOT_DIR/deps
 DEP_BUILD_DIR=$ROOT_DIR/build_deps
 THREADS=`nproc`
 
+if [ `uname -m` == aarch64 ]; then
+  GPU=OFF
+else
+  GPU=ON
+  SYM_TEST=true # FIXME: currently building ARM on Ubuntu
+fi
+
 
 #### Build dependencies ####
 
@@ -74,7 +81,7 @@ cmake \
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
   -D CMAKE_INSTALL_LIBDIR=lib \
   -D BUILD_OSPRAY_MODULE_MPI=ON \
-  -D BUILD_GPU_SUPPORT=ON \
+  -D BUILD_GPU_SUPPORT=$GPU \
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   ../scripts/superbuild
 
@@ -102,7 +109,7 @@ cmake -L \
   -D OSPRAY_INSTALL_DEPENDENCIES=ON \
   -D OSPRAY_MODULE_DENOISER=ON \
   -D OSPRAY_MODULE_MPI=ON \
-  -D OSPRAY_MODULE_GPU=ON \
+  -D OSPRAY_MODULE_GPU=$GPU \
   -D CMAKE_INSTALL_INCLUDEDIR=include \
   -D CMAKE_INSTALL_LIBDIR=lib \
   -D CMAKE_INSTALL_DOCDIR=doc \
@@ -113,6 +120,8 @@ cmake -L \
 
 # create tar.gz
 make -j $THREADS preinstall
+
+if [ $SYM_TEST ] ; then
 
 # verify libs
 for lib in libospray.so libospray_module_cpu.so libospray_module_mpi_offload.so libospray_module_mpi_distributed_cpu.so ; do
@@ -146,5 +155,7 @@ for lib in libospray_module_mpi_offload.so libospray_module_mpi_distributed_cpu.
     exit 3
   fi
 done
+
+fi
 
 cmake --build . --target package || exit 2

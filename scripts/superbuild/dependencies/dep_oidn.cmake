@@ -67,7 +67,7 @@ if (BUILD_OIDN_FROM_SOURCE)
 else()
 
   if (APPLE)
-    set(OIDN_OSSUFFIX "x86_64.macos.tar.gz")
+    set(OIDN_OSSUFFIX "${CMAKE_SYSTEM_PROCESSOR}.macos.tar.gz")
   elseif (WIN32)
     set(OIDN_OSSUFFIX "x64.windows.zip")
   else()

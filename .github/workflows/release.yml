@@ -46,7 +46,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: rockylinux:8.7
       env-from-files: .github/workflows/dpcpp.env
-      level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
         module load mpi/mpich-x86_64
@@ -56,6 +55,20 @@ jobs:
         cp build_release/*.gz $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-linux
+      artifact-path: build_release/*.gz
+
+  release-linux-arm:
+    needs: pdf
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    secrets: inherit
+    with:
+      runs-on: '[ "Linux", "ARM64" ]'
+      env-from-files: .github/workflows/dpcpp.env
+      cmd: |
+        scripts/release/linux.sh -DBUILD_GLFW=OFF -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        cp build_release/*.gz $STORAGE_PATH/packages/renderkit/ || true
+      artifact-in: pdf
+      artifact-out: release-linux-arm
       artifact-path: build_release/*.gz
 
   release-osx:
@@ -68,7 +81,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        scripts/release/macosx.sh -DBUILD_EMBREE_FROM_SOURCE=ON # FIXME invalid symlinks in Embree v4.3 package
+        scripts/release/macosx.sh
         cp build_release/*.zip $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-osx
@@ -82,7 +95,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["arm", "build"]'
       cmd: |
-        scripts/release/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        scripts/release/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON
         cp build_release/*.zip $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-osx-arm
@@ -96,7 +109,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/dpcpp.env
-      level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
         # disable warnings which lead to excessively large log files
@@ -152,11 +164,13 @@ jobs:
 
   binary-analysis-arm:
     needs:
+      - release-linux-arm
       - release-osx-arm
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/binary_analysis.yml@main
     with:
       project: ospray
+      artifact-in-linux: release-linux-arm
       artifact-in-macos: release-osx-arm
       path: build_release/ospray-*
 
@@ -176,11 +190,13 @@ jobs:
 
   antivirus-scan-arm:
     needs:
+      - release-linux-arm
       - release-osx-arm
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/antivirus_scan.yml@main
     with:
       project: ospray
+      artifact-in-linux: release-linux-arm
       artifact-in-macos: release-osx-arm
       path: build_release/ospray-*
 
@@ -334,6 +350,30 @@ jobs:
         export PATH=$OSPDIR/bin:$PATH
         scripts/tests/run_gpu_tests.sh $GITHUB_WORKSPACE SKIP_GPU TEST_MPI
       artifact-in: release-linux
+
+  test-ubuntu-cpu-arm:
+    needs: release-linux-arm
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '[ "Linux", "ARM64" ]'
+      cmd: |
+        tar -xzf build_release/*.gz
+        export OIDN_VERBOSE=2
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+      artifact-in: release-linux-arm
+
+  test-ubuntu-mpi-cpu-arm:
+    needs: release-linux-arm
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '[ "Linux", "ARM64" ]'
+      cmd: |
+        tar -xzf build_release/*.gz
+        export OIDN_VERBOSE=2
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX SKIP_CPU TEST_MPI
+      artifact-in: release-linux-arm
 
   test-osx-avx2:
     needs: release-osx

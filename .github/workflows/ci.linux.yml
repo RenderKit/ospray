@@ -240,6 +240,16 @@ jobs:
       artifact-out: build-ubuntu2204-oidn-mpi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
+  build-ubuntu2204-arm:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '[ "Linux", "ARM64" ]'
+      cmd: |
+        scripts/build/linux.sh -DBUILD_GLFW=OFF -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+      artifact-out: build-ubuntu2204-arm
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
 ### TEST JOBS ###
 
   test-centos7-gcc-avx2:
@@ -396,6 +406,18 @@ jobs:
         ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 mpiexec -np 1 ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp" --osp:load-modules=mpi_offload --osp:device=mpiOffload : -np 2 ospray_mpi_worker
       artifact-in: build-ubuntu2204-oidn-mpi
+
+  test-ubuntu2204-arm:
+    needs: build-ubuntu2204-arm
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '[ "Linux", "ARM64" ]'
+      cmd: |
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+      artifact-in: build-ubuntu2204-arm
+      artifact-out: test-ubuntu2204-arm
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      #artifact-on-failure: true
 
   test-tutorials:
     needs: build-centos7-gcc

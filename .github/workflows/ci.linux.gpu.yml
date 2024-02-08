@@ -24,7 +24,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
       env-from-files: .github/workflows/dpcpp.env
-      level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
         export CC=clang
@@ -41,7 +40,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env # OIDN AOT needs ocloc
-      level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
@@ -56,7 +54,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: opensuse/leap:15.3
       env-from-files: .github/workflows/icx-linux.env
-      level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON
@@ -68,7 +65,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: rockylinux:8.7
       env-from-files: .github/workflows/dpcpp.env
-      level-zero-version: public/1.12.0 # for ispcrt
       cmd: |
         module load cmake/3.25.3
         module load mpi/mpich-x86_64
