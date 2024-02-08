@@ -87,6 +87,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -105,6 +106,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -123,6 +125,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -141,6 +144,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -159,6 +163,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -176,6 +181,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -193,6 +199,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -210,6 +217,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -227,6 +235,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri

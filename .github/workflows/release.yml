@@ -53,6 +53,7 @@ jobs:
         export CC=clang
         export CXX=clang++
         scripts/release/linux.sh
+        cp build_release/*.gz $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-linux
       artifact-path: build_release/*.gz
@@ -68,6 +69,7 @@ jobs:
         export CC=clang
         export CXX=clang++
         scripts/release/macosx.sh -DBUILD_EMBREE_FROM_SOURCE=ON # FIXME invalid symlinks in Embree v4.3 package
+        cp build_release/*.zip $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-osx
       artifact-path: build_release/*.zip
@@ -81,6 +83,7 @@ jobs:
       runs-on: '["arm", "build"]'
       cmd: |
         scripts/release/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        cp build_release/*.zip $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-osx-arm
       artifact-path: build_release/*.zip
@@ -104,6 +107,8 @@ jobs:
         if ($LastExitCode) { $exitCode++ }
         & $env:SIGN_FILE_WINDOWS ospray*.msi
         if ($LastExitCode) { $exitCode++ }
+        cp (Get-ChildItem *.zip | Select-Object -Expand FullName) $env:STORAGE_PATH/packages/renderkit/
+        cp (Get-ChildItem *.msi | Select-Object -Expand FullName) $env:STORAGE_PATH/packages/renderkit/
         exit $exitCode
       artifact-in: pdf
       artifact-out: release-windows
@@ -211,6 +216,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
@@ -261,6 +267,7 @@ jobs:
     needs: release-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       runs-on: '"dg2"'
       env-from-files: .github/workflows/gfx-ubuntu22.env
@@ -275,6 +282,7 @@ jobs:
     needs: release-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       runs-on: '"dg2"'
       env-from-files: .github/workflows/gfx-ubuntu22.env
@@ -295,6 +303,7 @@ jobs:
     needs: release-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       runs-on: '"pvc"'
       env-from-files: .github/workflows/gfx-ubuntu22.env
@@ -309,6 +318,7 @@ jobs:
     needs: release-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
       runs-on: '"pvc"'
       env-from-files: .github/workflows/gfx-ubuntu22.env
@@ -425,6 +435,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       runs-on: '"dg2"'
       force-delete: true
       env-from-files: .github/workflows/gfx-windows.env
@@ -444,6 +455,7 @@ jobs:
     needs: release-windows
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
     with:
+      timeout-minutes: 100
       runs-on: '"dg2"'
       env-from-files: .github/workflows/gfx-windows.env
       cmd: |
@@ -457,6 +469,7 @@ jobs:
     needs: release-windows
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
     with:
+      timeout-minutes: 100
       runs-on: '"dg2"' # FIXME: mpi
       env-from-files: .github/workflows/gfx-windows.env
       cmd: |

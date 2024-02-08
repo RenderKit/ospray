@@ -116,7 +116,7 @@ endif()
 
 if (OSPRAY_SIGN_FILE)
   add_custom_target(sign_files
-    COMMAND ${OSPRAY_SIGN_FILE} ${OSPRAY_SIGN_FILE_ARGS} ${DEPENDENT_LIBS}
+    COMMAND ${OSPRAY_SIGN_FILE} -q ${DEPENDENT_LIBS}
     COMMENT "Signing files"
     VERBATIM
   )
