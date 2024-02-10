@@ -162,7 +162,14 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 
 ISPCDevice::ISPCDevice()
     : loadBalancer(std::make_shared<LocalTiledLoadBalancer>())
-{}
+{
+#if (defined(__APPLE__) || defined(MACOSX) || defined(__MACOSX__))             \
+    && (defined(__x86_64__) || defined(__ia64__) || defined(_M_X64))
+  // trigger enabling AVX512, see e.g. https://github.com/ispc/ispc/issues/1854
+  float vf[16];
+  float f = ispc::ISPCDevice_dummyCompute(vf);
+#endif
+}
 
 ISPCDevice::~ISPCDevice()
 {

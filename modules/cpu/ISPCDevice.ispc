@@ -42,5 +42,11 @@ export uniform int ISPCDevice_isa()
   return 0;
 #endif
 }
+
+export uniform float ISPCDevice_dummyCompute(const float *uniform fp)
+{
+  const float f = *((const varying float *uniform)fp);
+  return reduce_add(f * f);
+}
 #endif
 OSPRAY_END_ISPC_NAMESPACE
