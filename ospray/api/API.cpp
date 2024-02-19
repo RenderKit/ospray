@@ -133,7 +133,7 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
     auto OSPRAY_DEVICE = utility::getEnvVar<std::string>("OSPRAY_DEVICE");
 
     if (OSPRAY_DEVICE) {
-      auto device_name = OSPRAY_DEVICE.value();
+      const auto &device_name = OSPRAY_DEVICE.value();
       currentDevice = Device::createDevice(device_name.c_str());
     } else {
       ospLoadModule("cpu");

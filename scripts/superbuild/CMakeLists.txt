@@ -286,6 +286,13 @@ endif()
 
 ##### FIXME WA for VKL and OSPRay to build with GNU-style options
 if (WIN32 AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"))
+  # remember CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS before switching to GNU-style
+  # frontend, which won't look for MSVCRT anymore
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+  include(InstallRequiredSystemLibraries)
+  file(CONFIGURE OUTPUT ospray_system_runtime.cmake
+       CONTENT "set(OSPRAY_INSTALL_SYSTEM_RUNTIME_LIBS \"@CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS@\")"
+       @ONLY NEWLINE_STYLE WIN32)
   set(CMAKE_C_COMPILER clang)
   set(CMAKE_CXX_COMPILER clang++)
 endif()

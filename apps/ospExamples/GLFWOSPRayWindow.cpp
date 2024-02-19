@@ -624,7 +624,7 @@ void GLFWOSPRayWindow::buildUI()
           vec_string_getter,
           (void *)&g_AOVs,
           g_AOVs.size())) {
-    auto aovStr = g_AOVs[whichAOV];
+    const auto &aovStr = g_AOVs[whichAOV];
     showDepth = showAlbedo = showPrimID = showGeomID = showInstID = false;
     if (aovStr == "depth")
       showDepth = true;

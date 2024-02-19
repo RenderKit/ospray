@@ -135,6 +135,13 @@ endforeach()
 if (WIN32)
   set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
   include(InstallRequiredSystemLibraries)
+
+  # FIXME WA for OSPRay to build with GNU-style options 
+  file(TO_CMAKE_PATH ${OSPRAY_MODULE_PATH} OSPRAY_MODULE_PATH)
+  list(APPEND CMAKE_MODULE_PATH ${OSPRAY_MODULE_PATH})
+  include(ospray_system_runtime OPTIONAL)
+  list(APPEND CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS "${OSPRAY_INSTALL_SYSTEM_RUNTIME_LIBS}")
+
   list(FILTER CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS INCLUDE REGEX
       ".*msvcp[0-9]+\.dll|.*vcruntime[0-9]+\.dll|.*vcruntime[0-9]+_[0-9]+\.dll")
   install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}

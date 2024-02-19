@@ -38,8 +38,8 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
       colorBufferFormat(_colorBufferFormat),
       hasColorBuffer(channels & OSP_FB_COLOR),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
-      hasVarianceBuffer(
-          (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
+      hasVarianceBuffer((channels & OSP_FB_COLOR)
+          && (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
       hasNormalBuffer(channels & OSP_FB_NORMAL),
       hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
       hasPrimitiveIDBuffer(channels & OSP_FB_ID_PRIMITIVE),

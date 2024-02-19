@@ -113,7 +113,7 @@ inline utility::Optional<T> ManagedObject::getOptParam(const char *name)
           ManagedObject *,
           T>::type;
   if (param && param->data.is<S>()) {
-    auto val = param->data.get<S>();
+    const auto &val = param->data.get<S>();
     if (checkObjType(val, OSPTypeFor<T>::value)) {
       retval = (T)val;
       param->query = true;
