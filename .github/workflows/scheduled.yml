@@ -23,7 +23,6 @@ jobs:
     secrets: inherit
     with:
       image: ospray/docker-images:arch
-      level-zero-version: public/1.15.1 # for ispcrt
       cmd: |
         export CC=clang
         export CXX=clang++
@@ -34,7 +33,6 @@ jobs:
     secrets: inherit
     with:
       image: ospray/docker-images:arch
-      level-zero-version: public/1.15.1 # for ispcrt
       cmd: |
         export CC=clang
         export CXX=clang++
@@ -57,7 +55,6 @@ jobs:
     secrets: inherit
     with:
       runs-on: '["build", "NAS", "mpi"]'
-      level-zero-version: public/1.15.1 # for ispcrt
       cmd: |
         scripts\build\win.ps1 -G "Visual Studio 17 2022" -buildType Debug -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_ISPCRT_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-windows-debug-all

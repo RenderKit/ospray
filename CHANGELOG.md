@@ -3,19 +3,19 @@ Version History
 
 ### Changes in v3.1.0:
 
--   Improve noise in reflections of ThisGlass
 -   Principled and Luminous materials support emissive textures
+-   Add native support for disc and oriented disc geometry
+-   Add support for mirror repeat and clamp to edge texture wrap modes
+-   GPU device now also supports motion blur
+-   Improve noise in reflections of ThinGlass
 -   Improve adaptive accumulation: working with GPU, fix correlations
 -   Fix indirectly seen albedo and normal buffer
--   Fix empty image on Windows when focusDistance=0
--   Fix missing SDK headers for `ISPCDevice*`
 -   Fix artifacts when using specular texture for Principled
--   Add native support for disc and oriented disc geometry
 -   Fixes for PixelFilter
     -   Parameter was ignored (always using the default Gaussian)
     -   Avoid a shift/misalignment within the pixel for first sample
--   GPU device now also supports motion blur
--   Add support for mirror repeat and clamp to edge texture wrap modes
+-   Fix empty image on Windows when `focusDistance=0`
+-   Fix missing SDK headers for `ISPCDevice*`
 -   The new minimum versions of dependencies:
     -    Embree v4.3.1
     -    Open VKL v2.0.1
@@ -286,7 +286,7 @@ Version History
     Toolkit
 -   OSPRay now requires minimum Open VKL v0.13.0 to bring the following
     improvements:
-    -   Support half precision float (fp16) voxel data in strutured
+    -   Support half precision float (fp16) voxel data in structured
         volumes (regular and spherical) and VDB volume
     -   Supporting tricubic filtering via `VKL_FILTER_TRICUBIC` filter
         for VDB volume

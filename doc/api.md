@@ -3076,7 +3076,7 @@ additional project dependency at compile time. The module implements a
 "`denoiser`" frame operation, which denoises the entire frame before the
 frame is completed. OIDN will automatically select the fastest device,
 using a GPU when available. The device selection be overridden by the
-environment valiable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
+environment variable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
 `sycl`, `cuda`, `hip`, or a physical device ID
 
 

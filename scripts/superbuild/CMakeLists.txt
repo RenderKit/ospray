@@ -130,7 +130,7 @@ endif()
 
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" OFF)
 set(EMBREE_VERSION "4.3.1" CACHE STRING "Which version of Embree to build?")
-if (EMBREE_VERSION STREQUAL "4.3.0")
+if (EMBREE_VERSION STREQUAL "4.3.1")
   if (BUILD_EMBREE_FROM_SOURCE)
     set(EMBREE_HASH "bdab87b285efa1a9f1f57fe74b2743c659c487fee7e32221db43a6b8f5e36e5f")
   else()

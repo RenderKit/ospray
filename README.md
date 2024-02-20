@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v3.1.0 (devel) of Intel® OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
-for more information.
+This is release v3.1.0 of Intel® OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -81,7 +81,7 @@ before you can build OSPRay you need the following prerequisites:
   Linux development tools.
 
 - Additionally you require a copy of the [Intel® Implicit SPMD Program
-  Compiler (ISPC)](http://ispc.github.io), version 1.21.1 or later.
+  Compiler (ISPC)](http://ispc.github.io), version 1.23.0 or later.
   Please obtain a release of ISPC from the [ISPC downloads
   page](https://ispc.github.io/downloads.html). If ISPC is not found by
   CMake its location can be hinted with the variable `ispcrt_DIR`.
@@ -98,19 +98,19 @@ before you can build OSPRay you need the following prerequisites:
   variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or `Internal`.
 
 - OSPRay also heavily uses Intel [Embree](https://www.embree.org/),
-  installing version 4.3.0 or newer is required. If Embree is not found
+  installing version 4.3.1 or newer is required. If Embree is not found
   by CMake its location can be hinted with the variable `embree_DIR`.
 
 - OSPRay supports volume rendering (enabled by default via
   `OSPRAY_ENABLE_VOLUMES`), which heavily uses Intel [Open
-  VKL](https://www.openvkl.org/), version 2.0.0 or newer is required. If
+  VKL](https://www.openvkl.org/), version 2.0.1 or newer is required. If
   Open VKL is not found by CMake its location can be hinted with the
   variable `openvkl_DIR`, or disable `OSPRAY_ENABLE_VOLUMES`.
 
 - OSPRay also provides an optional module implementing the `denoiser`
   image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
   module requires Intel [Open Image
-  Denoise](https://openimagedenoise.github.io/) in version 2.1.0 or
+  Denoise](https://openimagedenoise.github.io/) in version 2.2.0 or
   newer. You may need to hint the location of the library with the CMake
   variable `OpenImageDenoise_DIR`.
 
@@ -159,7 +159,7 @@ version) and [Embree](https://github.com/embree/embree/releases/).
 To build OSPRay’s GPU module you need
 
 - a SYCL compiler, either the open source [oneAPI DPC++ Compiler
-  2023-09-22](https://github.com/intel/llvm/releases/tag/nightly-2023-09-22)
+  2023-10-26](https://github.com/intel/llvm/releases/tag/nightly-2023-10-26)
   or the latest [Intel oneAPI DPC++/C++
   Compiler](https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#dpcpp-cpp)
 - a recent [CMake](http://www.cmake.org), version 3.25.3 or higher
@@ -340,18 +340,6 @@ CMake is easy:
 - You should now have `libospray.[so,dylib]` as well as a set of
   [example applications](#tutorials).
 
-### Entitlements on Mac OS X
-
-Mac OS X requires notarization of applications as a security mechanism,
-and [entitlements must be
-declared](https://developer.apple.com/documentation/bundleresources/entitlements)
-during the notarization process. OSPRay’s `denoiser` uses OIDN, which
-uses just-in-time compilation through
-[oneDNN](https://github.com/oneapi-src/oneDNN) and thus requires the
-following entitlement:
-
-- [`com.apple.security.cs.allow-jit`](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_cs_allow-jit)
-
 ### Compiling OSPRay on Windows
 
 On Windows using the CMake GUI (`cmake-gui.exe`) is the most convenient
@@ -433,9 +421,9 @@ Documentation
 =============
 
 The following [API
-documentation](https://www.ospray.org/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](https://www.ospray.org/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -1941,7 +1929,8 @@ like an environment map).
 
 The [path tracer](#path-tracer) will consider illumination by
 [geometries](#geometries) which have a light emitting material assigned
-(for example the [Luminous](#luminous) material).
+(for example the [Luminous](#luminous) or [Principled](#principled)
+material).
 
 Materials
 ---------
@@ -2101,6 +2090,7 @@ table below.
 | float | sheenTint         |         0 | how much sheen is tinted from sheenColor toward baseColor                                                               |
 | float | sheenRoughness    |       0.2 | sheen roughness in \[0–1\], 0 is perfectly smooth                                                                       |
 | float | opacity           |         1 | cut-out opacity/transparency, 1 is fully opaque                                                                         |
+| vec3f | emissiveColor     |     black | color (and intensity) of the emitted light                                                                              |
 
 Parameters of the Principled material.
 
@@ -2389,6 +2379,10 @@ because it is always `OSP_INTENSITY_QUANTITY_RADIANCE`).
 | float | transparency |       1 | material transparency                   |
 
 Parameters accepted by the Luminous material.
+
+The emission can be textured by passing a `map_color`
+[texture](#texture) handle, [texture
+transformations](#texture-transformations) are supported as well.
 
 <figure>
 <img src="https://ospray.github.io/images/material_Luminous.jpg"
@@ -3135,7 +3129,7 @@ additional project dependency at compile time. The module implements a
 “`denoiser`” frame operation, which denoises the entire frame before the
 frame is completed. OIDN will automatically select the fastest device,
 using a GPU when available. The device selection be overridden by the
-environment valiable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
+environment variable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
 `sycl`, `cuda`, `hip`, or a physical device ID
 
 Rendering
