@@ -57,7 +57,7 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
   getSh()->channels = channels;
   getSh()->doAccumulation = doAccum;
-  getSh()->accumulateVariance = hasVarianceBuffer;
+  getSh()->accumulateVariance = false;
 
 #if OSPRAY_RENDER_TASK_SIZE == -1
 #ifdef OSPRAY_TARGET_SYCL
@@ -90,12 +90,8 @@ void FrameBuffer::clear()
 {
   getSh()->frameID = -1; // we increment at the start of the frame
 
-  // Clear variance accumulation counters
   if (hasVarianceBuffer) {
-    mtGen.seed(mtSeed);
-    inSeqId = 0;
-    getSh()->varianceAccumCount = 0;
-    getSh()->accumulateVariance = true;
+    mtGen.seed(mtSeed); // reset the RNG with same seed
     frameVariance = inf;
   }
 }
@@ -122,19 +118,15 @@ void FrameBuffer::beginFrame()
 #endif
 
   if (hasVarianceBuffer) {
-    // Process random sequences, in order to collect half of the samples and do
-    // not run into issues with low discrepancy sequences used in renders, we
-    // randomly vary the length of sequences in which we collect (or do not
-    // collect) variance samples
-    if (inSeqId == 0) {
-      inSeqId = (mtGen() & 1) + 1;
-      getSh()->accumulateVariance = !getSh()->accumulateVariance;
-    }
-    inSeqId--;
+    // collect half of the samples
+    // To not run into correlation issues with low discrepancy sequences used
+    // in renders, we randomly pick whether the even or the odd frame is
+    // accumulated into the variance buffer.
+    const bool evenFrame = (getSh()->frameID & 1) == 0;
+    if (evenFrame)
+      pickOdd = mtGen() & 1; // coin flip every other frame
 
-    // Count how many variance buffer has been accumulated
-    if (getSh()->accumulateVariance)
-      getSh()->varianceAccumCount++;
+    getSh()->accumulateVariance = evenFrame != pickOdd;
   }
 }
 

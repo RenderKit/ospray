@@ -5,6 +5,7 @@ Version History
 
 -   Improve noise in reflections of ThisGlass
 -   Principled and Luminous materials support emissive textures
+-   Improve adaptive accumulation: working with GPU, fix correlations
 -   Fix indirectly seen albedo and normal buffer
 -   Fix empty image on Windows when focusDistance=0
 -   Fix missing SDK headers for `ISPCDevice*`

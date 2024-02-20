@@ -207,14 +207,14 @@ void FromOsprayTestingVariance::SetUp()
 {
   FromOsprayTesting::SetUp();
 
-  frames = 20;
+  frames = 22;
 
   framebuffer = cpp::FrameBuffer(imgSize.x,
       imgSize.y,
       frameBufferFormat,
       OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
 
-  renderer.setParam("varianceThreshold", 2.f);
+  renderer.setParam("varianceThreshold", 10.0f);
 }
 
 void FromOsprayTestingLightSamples::SetUp()

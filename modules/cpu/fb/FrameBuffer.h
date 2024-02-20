@@ -135,15 +135,13 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   FeatureFlagsOther featureFlags{FFO_NONE};
 
-  // Initial frame number for adaptive sampling
-  int32_t adaptiveFromFrameID(
-      const float errorThreshold, const uint32_t spp) const;
+  int32_t minimumAdaptiveFrames(const uint32_t spp) const;
 
  private:
-  // Variance accumulation
+  // for consistent reproducability of variance accumulation
   constexpr static uint32_t mtSeed = 43;
   std::mt19937 mtGen{mtSeed};
-  uint32_t inSeqId{0};
+  bool pickOdd{false};
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
@@ -224,11 +222,9 @@ inline sycl::nd_range<3> FrameBuffer::getDispatchRange(
 }
 #endif
 
-inline int32_t FrameBuffer::adaptiveFromFrameID(
-    const float errorThreshold, const uint32_t spp) const
+inline int32_t FrameBuffer::minimumAdaptiveFrames(const uint32_t spp) const
 {
-  const float base = 4.f / spp;
-  return max(base / errorThreshold, max(base, 1.f));
+  return std::max(2u, 16 / spp);
 }
 
 } // namespace ospray

@@ -113,6 +113,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   std::unique_ptr<LiveColorConversionFrameOp> colorConversionFrameOp;
 
  private:
+  float errorThreshold; // remember
   // Not used, to be removed after mpi module refactor
   float taskError(const uint32_t) const override
   {

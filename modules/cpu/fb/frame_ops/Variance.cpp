@@ -5,8 +5,6 @@
 #include "ISPCDevice.h"
 #include "fb/FrameBufferView.h"
 
-#include <algorithm>
-
 #ifndef OSPRAY_TARGET_SYCL
 extern "C" {
 #endif
@@ -29,7 +27,6 @@ LiveVarianceFrameOp::LiveVarianceFrameOp(api::ISPCDevice &device,
   getSh()->rtSize = divRoundUp(fbView.fbDims, fbView.viewDims);
   getSh()->varianceBuffer = varianceBuffer;
   getSh()->taskVarianceBuffer = taskVariance.data();
-  getSh()->firstRun = true;
 }
 
 void LiveVarianceFrameOp::process(void *waitEvent)
@@ -40,12 +37,22 @@ void LiveVarianceFrameOp::process(void *waitEvent)
   cmdQueue = &device.getSyclQueue();
 #endif
   ispc::Variance_kernelLauncher(&getSh()->super, cmdQueue, waitEvent);
-  getSh()->firstRun = false;
+  firstRun = false;
 }
 
-float LiveVarianceFrameOp::getMaxError() const
+float LiveVarianceFrameOp::getAvgError(const float errorThreshold) const
 {
-  return *std::max_element(taskVariance.cbegin(), taskVariance.cend());
+  float maxErr = 0.f;
+  float sumActErr = 0.f;
+  int activeTasks = 0;
+  std::for_each(taskVariance.cbegin(), taskVariance.cend(), [&](const float &err) {
+    maxErr = std::max(maxErr, err);
+    if (err >= errorThreshold) {
+      sumActErr += err;
+      activeTasks++;
+    }
+  });
+  return activeTasks ? sumActErr / activeTasks : maxErr;
 }
 
 } // namespace ospray

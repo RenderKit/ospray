@@ -23,6 +23,7 @@ inline void Variance_kernel(
   // Iterate over all pixels within single render task and calculate maximum
   // variance over collected samples
   float v = 0.f;
+  int cnt = 0;
   for (uniform uint32 rtY = 0; rtY < rtSize.y; rtY++) {
     // Skip if out of range
     const uint32 fbY = rtLower.y + rtY;
@@ -42,20 +43,19 @@ inline void Variance_kernel(
       const float den2 = reduce_add(make_vec3f(color))
           + (1.f - color.w); // invert alpha (bright alpha is more important)
       if (den2 > 0.f) {
+        cnt++;
         const vec4f diff = absf(color - variance);
-        v = max(v, reduce_add(diff) * rsqrtf(den2));
+        v += reduce_add(diff) * rsqrtf(den2);
       }
     }
   }
 
-  // Average maximum variance between two subsequent accumulations to have more
-  // uniform spatial distribution
-  const uint32 lId = id.y * rtDims.x + id.x;
-  if (!self->firstRun)
-    v = lerp(.25f, self->taskVarianceBuffer[lId], v);
+  if (cnt)
+    v *= rcp((float)cnt); // avg
 
-  // Output final variance
-  self->taskVarianceBuffer[lId] = v;
+  const uint32 lId = id.y * rtDims.x + id.x;
+  // scale to be backwards compatible with the old default tile size of 64x64
+  self->taskVarianceBuffer[lId] = v * 64.f;
 }
 
 DEFINE_KERNEL_LAUNCHER(Variance_kernel);

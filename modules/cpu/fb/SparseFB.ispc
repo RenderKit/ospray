@@ -87,8 +87,8 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   tile->iid[tilePixelIdx] = screenSample.instID;
 
   uniform vec4f *uniform variance = fb->varianceBuffer;
-  if (variance && fb->super.accumulateVariance) {
-    const uniform float accVarScale = rcpf(fb->super.varianceAccumCount);
+  if (fb->super.accumulateVariance) {
+    const uniform float accVarScale = rcpf(accumID / 2 + 1);
     const uint32 varianceAccumIndex = tileIdx * TILE_SIZE * TILE_SIZE
         + sampleTilePos.x + TILE_SIZE * sampleTilePos.y;
     FRAMEBUFFER_ACCUMULATE_VALUE(
@@ -96,15 +96,18 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
 
     // Calculate error
     float err = 0.f;
+    int cnt = 0;
     const float den2 = reduce_add(make_vec3f(color))
         + (1.f - color.w); // invert alpha (bright alpha is more important)
     if (den2 > 0.f) {
       const vec4f diff = absf(color - variance[varianceAccumIndex]);
       err = reduce_add(diff) * rsqrtf(den2);
+      cnt = 1;
     }
     // We max over the task because we may have more pixels in the task than
     // the SIMD width
-    taskDesc.error = max(taskDesc.error, reduce_max(err));
+    taskDesc.error += reduce_add(err);
+    taskDesc.count += reduce_add(cnt);
   }
 }
 
@@ -136,6 +139,7 @@ SYCL_EXTERNAL uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
   uniform RenderTaskDesc desc;
   desc.taskID = taskID;
   desc.error = 0.f;
+  desc.count = 0;
 
   const uniform uint32 tileIdx = SparseFB_getTileIndexForTask(fb, taskID);
 
@@ -170,8 +174,14 @@ SYCL_EXTERNAL void SparseFB_completeTask(
 {
   // Write error for the task
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
-  if (fb->varianceBuffer && fb->super.accumulateVariance)
-    fb->taskRegionError[taskDesc.taskID] = taskDesc.error;
+  if (fb->super.accumulateVariance) {
+    uniform float err = taskDesc.error;
+    if (taskDesc.count)
+      err *= rcp((uniform float)taskDesc.count); // avg
+
+    // scale to be backwards compatible with the old default tile size of 64x64
+    fb->taskRegionError[taskDesc.taskID] = err * 64.f;
+  }
 }
 
 #ifndef OSPRAY_TARGET_SYCL

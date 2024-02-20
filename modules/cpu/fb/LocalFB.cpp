@@ -234,10 +234,11 @@ uint32_t LocalFrameBuffer::getTotalRenderTasks() const
 }
 
 utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
-    const float errorThreshold, const uint32_t spp)
+    const float errorThreshold_, const uint32_t spp)
 {
+  errorThreshold = errorThreshold_; // remember
   if (errorThreshold > 0.0f && varianceFrameOp
-      && (getFrameID() > adaptiveFromFrameID(errorThreshold, spp))) {
+      && (getFrameID() >= minimumAdaptiveFrames(spp))) {
     // Select render tasks that needs to be processed
     auto last = std::copy_if(renderTaskIDs->begin(),
         renderTaskIDs->end(),
@@ -263,7 +264,7 @@ float LocalFrameBuffer::getVariance() const
   // Return maximum error over all tasks if variance has been calculated in a
   // FrameOp
   if (varianceFrameOp && varianceFrameOp->validError())
-    return varianceFrameOp->getMaxError();
+    return varianceFrameOp->getAvgError(errorThreshold);
 
   // Return set value otherwise
   return FrameBuffer::getVariance();
@@ -430,8 +431,8 @@ AsyncEvent LocalFrameBuffer::postProcess(bool wait)
   // Calculate per-task variance if any samples accumulated into variance
   // buffer, skip it if frameVariance overriden in writeTiles()
   AsyncEvent event;
-  if (varianceFrameOp && getSh()->super.varianceAccumCount
-      && (frameVariance == float(inf)))
+  const bool oddFrame = (getSh()->super.frameID & 1) == 1;
+  if (varianceFrameOp && oddFrame && (frameVariance == float(inf)))
     varianceFrameOp->process((wait) ? nullptr : &event);
 
   // Execute user-defined post-processing kernels

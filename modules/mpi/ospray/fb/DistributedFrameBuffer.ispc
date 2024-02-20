@@ -51,6 +51,7 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
     const uniform float rcpAccumID = rcpf(accumID + 1);
     const uniform float accHalfScale = rcpf(accumID / 2 + 1);
     float err = 0.f;
+    int cnt = 0;
     for (uniform int i = 0; i < maxi; i++) {
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
       vec4f acc =
@@ -78,8 +79,10 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
         const float den2 = reduce_add(make_vec3f(acc)) + (1.f - acc.w);
         if (den2 > 0.0f) {
           const vec4f diff = absf(acc - accHalfScale * vari);
-          if ((i * programCount % TILE_SIZE) + programIndex < size.x)
+          if ((i * programCount % TILE_SIZE) + programIndex < size.x) {
             err += reduce_add(diff) * rsqrtf(den2);
+            cnt++;
+          }
         }
       }
 
@@ -91,9 +94,8 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
     /* error is also only updated every other frame to avoid alternating
      * error (get a monotone sequence) */
     if (accumulateVariance) {
-      uniform float cntu = (uniform float)size.x * size.y;
       // scaling factor to stay backward compatible to default TILE_SIZE=64
-      errf = reduce_add(err) * rcp(cntu) * 64.f;
+      errf = reduce_add(err) * rcp((uniform float)reduce_add(cnt)) * 64.f;
     }
   }
   return errf;

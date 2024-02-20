@@ -15,7 +15,6 @@ struct LiveVariance
   vec2ui rtSize;
   const vec4f *varianceBuffer;
   float *taskVarianceBuffer;
-  bool firstRun;
 };
 #ifdef __cplusplus
 }

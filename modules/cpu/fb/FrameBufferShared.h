@@ -92,7 +92,6 @@ struct FrameBuffer
 
   // Variance accumulation
   bool accumulateVariance; // do frame accumulation in this frame
-  uint32 varianceAccumCount; // number of accumulated frames in variance buffer
 
 #ifdef __cplusplus
   FrameBuffer()
@@ -108,8 +107,7 @@ struct FrameBuffer
         cancelRender(0),
         numPixelsRendered(0),
         doAccumulation(false),
-        accumulateVariance(false),
-        varianceAccumCount(0)
+        accumulateVariance(false)
   {}
 };
 } // namespace ispc

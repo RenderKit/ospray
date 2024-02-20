@@ -21,20 +21,21 @@ struct OSPRAY_SDK_INTERFACE LiveVarianceFrameOp
 
   bool validError() const;
   float getError(const uint32_t id) const;
-  float getMaxError() const;
+  float getAvgError(const float errorThreshold) const;
 
  private:
   BufferShared<float> taskVariance;
+  bool firstRun{true};
 };
 
 inline void LiveVarianceFrameOp::restart()
 {
-  getSh()->firstRun = true;
+  firstRun = true;
 }
 
 inline bool LiveVarianceFrameOp::validError() const
 {
-  return getSh()->firstRun == false;
+  return firstRun == false;
 }
 
 inline float LiveVarianceFrameOp::getError(const uint32_t id) const

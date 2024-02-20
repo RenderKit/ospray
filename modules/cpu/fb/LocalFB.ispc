@@ -31,7 +31,7 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
 
   // Accumulate color in variance buffer
   if (fb->super.accumulateVariance) {
-    const uniform float accVarScale = rcpf(fb->super.varianceAccumCount);
+    const uniform float accVarScale = rcpf(accumID / 2 + 1);
     FRAMEBUFFER_ACCUMULATE_VALUE(
         fb->varianceBuffer[pixelID], colorSample, accVarScale);
   }
