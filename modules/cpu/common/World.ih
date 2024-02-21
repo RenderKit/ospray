@@ -8,7 +8,6 @@
 #include "common/DGEnum.h"
 #include "common/DifferentialGeometry.ih"
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 #include "common/Instance.ih"
 #include "common/Ray.ih"
 #include "common/RayQueryContext.ih"

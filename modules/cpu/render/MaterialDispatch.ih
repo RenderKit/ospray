@@ -4,7 +4,6 @@
 #pragma once
 
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 #include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

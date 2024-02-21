@@ -8,6 +8,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL void Curves_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags);
+    uniform int64 flags,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

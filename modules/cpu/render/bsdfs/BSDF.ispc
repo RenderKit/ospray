@@ -4,7 +4,6 @@
 #include "render/bsdfs/BSDF.ih"
 
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 #include "render/materials/Alloy.ih"
 #include "render/materials/CarPaint.ih"
 #include "render/materials/Glass.ih"

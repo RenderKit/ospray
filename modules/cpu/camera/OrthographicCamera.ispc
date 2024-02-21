@@ -4,7 +4,6 @@
 #include "Camera.ih"
 #include "common/Embree.h"
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 // c++ shared
 #include "OrthographicCameraShared.h"
 
