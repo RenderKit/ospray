@@ -43,8 +43,8 @@ inline void traceGeometryRay(const World *uniform world,
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Geometry_dispatch_intersect;
-  intersectArgs.feature_mask =
-      (uniform RTCFeatureFlags)(ff.geometry & ~FFG_OSPRAY_MASK);
+  intersectArgs.feature_mask = (uniform RTCFeatureFlags)(
+      ff.geometry & ~FFG_OSPRAY_MASK | RTC_FEATURE_FLAG_INSTANCE);
 
   rtcIntersectV(world->embreeSceneHandleGeometries,
       (varying RTCRayHit * uniform) & ray,
@@ -77,8 +77,8 @@ inline void traceVolumeRay(
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
-  intersectArgs.feature_mask =
-      RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS;
+  intersectArgs.feature_mask = RTC_FEATURE_FLAG_INSTANCE
+      | RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS;
 
   rtcIntersectV(world->embreeSceneHandleVolumes,
       (varying RTCRayHit * uniform) & ray,
@@ -111,8 +111,8 @@ inline void traceVolumeRay(
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
-  intersectArgs.feature_mask =
-      RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS;
+  intersectArgs.feature_mask = RTC_FEATURE_FLAG_INSTANCE
+      | RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS;
 
   rtcIntersectV(world->embreeSceneHandleVolumes,
       (varying RTCRayHit * uniform) & ray,
@@ -324,8 +324,8 @@ inline bool isOccludedNoClipping(const World *uniform world,
   rtcInitOccludedArguments(&occludedArgs);
   occludedArgs.context = &context.ectx;
   occludedArgs.occluded = (RTCOccludedFunctionN)Geometry_dispatch_occluded;
-  occludedArgs.feature_mask =
-      (uniform RTCFeatureFlags)(ff.geometry & ~FFG_OSPRAY_MASK);
+  occludedArgs.feature_mask = (uniform RTCFeatureFlags)(
+      ff.geometry & ~FFG_OSPRAY_MASK | RTC_FEATURE_FLAG_INSTANCE);
 
   rtcOccludedV(world->embreeSceneHandleGeometries,
       (varying RTCRay * uniform) & ray,
@@ -410,13 +410,7 @@ inline void postIntersect(const World *uniform world,
   dg.P = ray.org + ray.t * ray.dir;
   dg.epsilon = 0.f; // per default no geometry-type specific epsilon
 
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const uint32 instID = ray.instID;
-#else
   foreach_unique (instID in ray.instID) {
-#endif
     if (instID != RTC_INVALID_GEOMETRY_ID) {
       Instance *uniform instance = *(world->instances + instID);
       Instance_postIntersect(instance, renderer, dg, ray, flags, false, ffh);

@@ -122,10 +122,8 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
     ff |= camera->getFeatureFlags();
     cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
 
-    const sycl::nd_range<1> dispatchRange =
-        device.computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange,
-        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
+    cgh.parallel_for(fb->getDispatchRange(numTasks),
+        [=](sycl::nd_item<3> taskIndex, sycl::kernel_handler kh) {
           const box3f regionCopy = region;
           if (taskIndex.get_global_id(0) < numTasks) {
             ispc::FeatureFlagsHandler ffh(kh);

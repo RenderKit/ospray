@@ -24,81 +24,60 @@ inline vec2i SparseFB_getTilePixelPos(SparseFB *uniform fb,
   return tilePixelPos;
 }
 
-/* Accumulates the screenSample color and alpha into the framebuffer's
-   accumulation buffer. The accumulation buffer will store
-
-       prevAccum + sampleValue
-
-   while the returned current accumulated color will be
-
-      (prevAccum + sampleValue) / numAccumulated
-
-   I.e., the color to be written to the final framebuffer for display for
-   the current frame
-
-   tileIdx is the index of the tile that this task/sample belongs to, as
-   computed by SparseFB_getTileIndexForTask. sampleTilePos is the position of
-   the sample within this tile, via SparseFB_getTilePixelPos
- */
+// Accumulates the screenSample color and alpha into the framebuffer's
+// accumulation buffer.
+// I.e., the color to be written to the final framebuffer for display for
+// the current frame
+//
+// tileIdx is the index of the tile that this task/sample belongs to, as
+// computed by SparseFB_getTileIndexForTask. sampleTilePos is the position of
+// the sample within this tile, via SparseFB_getTilePixelPos
 inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
     const ScreenSample &screenSample,
     const uniform uint32 tileIdx,
     const vec2i &sampleTilePos,
     uniform RenderTaskDesc &taskDesc)
 {
-  uniform vec4f *uniform accumulation = fb->accumulationBuffer;
-  uniform vec4f *uniform variance = fb->varianceBuffer;
   // The location of this pixel's data within the tiled accumulation and
   // variance buffers
-  const uint32 varianceAccumIndex = tileIdx * TILE_SIZE * TILE_SIZE
-      + sampleTilePos.x + TILE_SIZE * sampleTilePos.y;
   const uint32 tilePixelIdx = sampleTilePos.x + TILE_SIZE * sampleTilePos.y;
-
-  const uniform float accScale = rcpf(taskDesc.accumID + 1);
-  const uniform float accHalfScale = rcpf(taskDesc.accumID / 2 + 1);
 
   const vec4f sampleValue = make_vec4f(screenSample.rgb, screenSample.alpha);
   uniform Tile *uniform tile = fb->tiles + tileIdx;
 
-  vec4f acc = sampleValue;
+  const uniform int accumID = fb->super.frameID;
+  const uniform float accScale =
+      (fb->super.doAccumulation) ? rcpf(accumID + 1) : 1.f;
+
+  // Accumulate color
+  vec4f color = make_vec4f(tile->r[tilePixelIdx],
+      tile->g[tilePixelIdx],
+      tile->b[tilePixelIdx],
+      tile->a[tilePixelIdx]);
+  FRAMEBUFFER_ACCUMULATE_VALUE(color, sampleValue, accScale);
+  tile->r[tilePixelIdx] = color.x;
+  tile->g[tilePixelIdx] = color.y;
+  tile->b[tilePixelIdx] = color.z;
+  tile->a[tilePixelIdx] = color.w;
+
+  // Accumulate depth
   float depth = screenSample.z;
-  vec3f normal = screenSample.normal;
-  vec3f albedo = screenSample.albedo;
-
-  if (accumulation) {
-    if (taskDesc.accumID > 0) {
-      acc = accumulation[varianceAccumIndex] + sampleValue;
-
-      depth = min(tile->z[tilePixelIdx], screenSample.z);
-
-      normal = make_vec3f(tile->nx[tilePixelIdx],
-          tile->ny[tilePixelIdx],
-          tile->nz[tilePixelIdx]);
-      normal = (normal * taskDesc.accumID + screenSample.normal) * accScale;
-
-      albedo = make_vec3f(tile->ar[tilePixelIdx],
-          tile->ag[tilePixelIdx],
-          tile->ab[tilePixelIdx]);
-      albedo = (albedo * taskDesc.accumID + screenSample.albedo) * accScale;
-    }
-    accumulation[varianceAccumIndex] = acc;
-    acc = acc * accScale;
-  }
-
-  const vec4f finalColor =
-      FrameBuffer_runPixelOps(&fb->super, acc, depth, normal, albedo);
-
-  tile->r[tilePixelIdx] = finalColor.x;
-  tile->g[tilePixelIdx] = finalColor.y;
-  tile->b[tilePixelIdx] = finalColor.z;
-  tile->a[tilePixelIdx] = finalColor.w;
-
+  if (fb->super.doAccumulation)
+    depth = min(tile->z[tilePixelIdx], screenSample.z);
   tile->z[tilePixelIdx] = depth;
 
+  // Accumulate normal
+  vec3f normal = make_vec3f(
+      tile->nx[tilePixelIdx], tile->ny[tilePixelIdx], tile->nz[tilePixelIdx]);
+  FRAMEBUFFER_ACCUMULATE_VALUE(normal, screenSample.normal, accScale);
   tile->nx[tilePixelIdx] = normal.x;
   tile->ny[tilePixelIdx] = normal.y;
   tile->nz[tilePixelIdx] = normal.z;
 
+  // Accumulate albedo
+  vec3f albedo = make_vec3f(
+      tile->ar[tilePixelIdx], tile->ag[tilePixelIdx], tile->ab[tilePixelIdx]);
+  FRAMEBUFFER_ACCUMULATE_VALUE(albedo, screenSample.albedo, accScale);
   tile->ar[tilePixelIdx] = albedo.x;
   tile->ag[tilePixelIdx] = albedo.y;
   tile->ab[tilePixelIdx] = albedo.z;
@@ -107,25 +86,28 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   tile->gid[tilePixelIdx] = screenSample.geomID;
   tile->iid[tilePixelIdx] = screenSample.instID;
 
-  // Variance and error accumulates every other frame  to ensure we get a
-  // monotonically decreasing sequence of error values
-  if (variance && (taskDesc.accumID & 1)) {
-    vec4f vari = make_vec4f(0.f);
-    if (taskDesc.accumID > 1) {
-      vari = variance[varianceAccumIndex];
-    }
-    vari = vari + sampleValue;
-    variance[varianceAccumIndex] = vari;
+  uniform vec4f *uniform variance = fb->varianceBuffer;
+  if (fb->super.accumulateVariance) {
+    const uniform float accVarScale = rcpf(accumID / 2 + 1);
+    const uint32 varianceAccumIndex = tileIdx * TILE_SIZE * TILE_SIZE
+        + sampleTilePos.x + TILE_SIZE * sampleTilePos.y;
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        variance[varianceAccumIndex], sampleValue, accVarScale);
 
+    // Calculate error
     float err = 0.f;
-    const float den2 = reduce_add(make_vec3f(acc)) + (1.f - acc.w);
+    int cnt = 0;
+    const float den2 = reduce_add(make_vec3f(color))
+        + (1.f - color.w); // invert alpha (bright alpha is more important)
     if (den2 > 0.f) {
-      const vec4f diff = absf(acc - accHalfScale * vari);
-      err += reduce_add(diff) * rsqrt(den2);
+      const vec4f diff = absf(color - variance[varianceAccumIndex]);
+      err = reduce_add(diff) * rsqrtf(den2);
+      cnt = 1;
     }
-    // We sum over the task because we may have more pixels in the task than
-    // SIMD width
+    // We max over the task because we may have more pixels in the task than
+    // the SIMD width
     taskDesc.error += reduce_add(err);
+    taskDesc.count += reduce_add(cnt);
   }
 }
 
@@ -156,8 +138,8 @@ SYCL_EXTERNAL uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
   // Map to the tile and then the set of pixels within that tile.
   uniform RenderTaskDesc desc;
   desc.taskID = taskID;
-  desc.accumID = fb->taskAccumID ? fb->taskAccumID[taskID] : 0;
   desc.error = 0.f;
+  desc.count = 0;
 
   const uniform uint32 tileIdx = SparseFB_getTileIndexForTask(fb, taskID);
 
@@ -190,23 +172,15 @@ SYCL_EXTERNAL uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
 SYCL_EXTERNAL void SparseFB_completeTask(
     FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc)
 {
+  // Write error for the task
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
+  if (fb->super.accumulateVariance) {
+    uniform float err = taskDesc.error;
+    if (taskDesc.count)
+      err *= rcp((uniform float)taskDesc.count); // avg
 
-  // Write error for the task every other frame to get a monotonically
-  // decreasing sequence of error values
-  if (fb->varianceBuffer && (taskDesc.accumID & 1)) {
-    // Scale to be backwards compatible with the old default tile/task
-    // size of 64x64
-    const uniform vec2i dia = taskDesc.region.upper - taskDesc.region.lower;
-    const uniform float taskSize = dia.x * dia.y;
-
-    fb->taskRegionError[taskDesc.taskID] =
-        taskDesc.error * rcp(taskSize) * 64.f;
-  }
-
-  // Increment accumID for this task
-  if (fb->taskAccumID) {
-    fb->taskAccumID[taskDesc.taskID] = taskDesc.accumID + 1;
+    // scale to be backwards compatible with the old default tile size of 64x64
+    fb->taskRegionError[taskDesc.taskID] = err * 64.f;
   }
 }
 

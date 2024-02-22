@@ -18,7 +18,7 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
     VaryingTile *uniform final,
     VaryingTile *uniform accum,
     VaryingTile *uniform variance,
-    uniform bool hasAccumBuffer,
+    uniform bool doAccumulation,
     uniform bool hasVarianceBuffer)
 {
   const uniform int accumID = tile->accumID;
@@ -28,7 +28,7 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
   /* variance buffer accumulates every other frame */
   const uniform bool accumulateVariance =
       hasVarianceBuffer && (accumID & 1) == 1;
-  if (!hasAccumBuffer || accumID < 1) {
+  if (!doAccumulation || accumID < 1) {
     for (uniform int i = 0; i < maxi; i++) {
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
       accum->r[i] = col.x;
@@ -51,6 +51,7 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
     const uniform float rcpAccumID = rcpf(accumID + 1);
     const uniform float accHalfScale = rcpf(accumID / 2 + 1);
     float err = 0.f;
+    int cnt = 0;
     for (uniform int i = 0; i < maxi; i++) {
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
       vec4f acc =
@@ -78,8 +79,10 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
         const float den2 = reduce_add(make_vec3f(acc)) + (1.f - acc.w);
         if (den2 > 0.0f) {
           const vec4f diff = absf(acc - accHalfScale * vari);
-          if ((i * programCount % TILE_SIZE) + programIndex < size.x)
+          if ((i * programCount % TILE_SIZE) + programIndex < size.x) {
             err += reduce_add(diff) * rsqrtf(den2);
+            cnt++;
+          }
         }
       }
 
@@ -91,9 +94,8 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
     /* error is also only updated every other frame to avoid alternating
      * error (get a monotone sequence) */
     if (accumulateVariance) {
-      uniform float cntu = (uniform float)size.x * size.y;
       // scaling factor to stay backward compatible to default TILE_SIZE=64
-      errf = reduce_add(err) * rcp(cntu) * 64.f;
+      errf = reduce_add(err) * rcp((uniform float)reduce_add(cnt)) * 64.f;
     }
   }
   return errf;
@@ -257,38 +259,20 @@ export uniform float DFB_computeErrorForTile(
 }
 
 // writes the final normalized colors in a tile into a color buffer
-#define template_writeTile(name, dst_fmt, cvt)                                 \
-  export void DFB_writeTile_##name(                                            \
-      const VaryingTile *uniform tile, void *uniform _color)                   \
-  {                                                                            \
-    const uniform vec2i size = box_size(tile->region);                         \
-    const uniform int maxi = size.y * (TILE_SIZE / programCount);              \
-    dst_fmt *uniform color = (dst_fmt * uniform) _color;                       \
-    for (uniform int i = 0; i < maxi; i++) {                                   \
-      const vec4f c =                                                          \
-          make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);          \
-      color[i] = cvt(c);                                                       \
-    }                                                                          \
-  }
-
-template_writeTile(RGBA8, varying uint32, cvt_uint32);
-template_writeTile(SRGBA, varying uint32, linear_to_srgba8);
+export void DFB_writeTile(const VaryingTile *uniform tile, void *uniform _color)
+{
+  const uniform vec2i size = box_size(tile->region);
+  const uniform int maxi = size.y * (TILE_SIZE / programCount);
+  varying vec4f *uniform color = (varying vec4f * uniform) _color;
+  for (uniform int i = 0; i < maxi; i++) {
+    const vec4f c = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
 #ifndef OSPRAY_TARGET_SYCL
-inline vec4f soa_to_aos4f(varying vec4f s)
-{
-  vec4f a;
-  soa_to_aos4(s.x, s.y, s.z, s.w, (uniform float *uniform) & a);
-  return a;
-}
-template_writeTile(RGBA32F, varying vec4f, soa_to_aos4f);
+    soa_to_aos4(c.x, c.y, c.z, c.w, (uniform float *uniform) & color[i]);
 #else
-inline vec4f cvt_nop(const vec4f &v)
-{
-  return v;
-}
-template_writeTile(RGBA32F, varying vec4f, cvt_nop);
+    color[i] = c;
 #endif
-#undef template_writeTile
+  }
+}
 
 export void DFB_zComposite(
     const VaryingTile *uniform delta, VaryingTile *uniform current)
@@ -412,56 +396,6 @@ export void DFB_sortAndBlendFragments(
 {
   sortAndBlendFragments(
       tileArray, numTiles, 0, TILE_SIZE * TILE_SIZE / programCount);
-}
-
-#ifndef OSPRAY_TARGET_SYCL
-task
-#else
-SYCL_EXTERNAL
-#endif
-    void
-    DFB_runPixelOpsTask(FrameBuffer *uniform fb,
-        VaryingTile *uniform tile
-#ifdef OSPRAY_TARGET_SYCL
-        ,
-        const int taskIndex0
-#endif
-    )
-{
-  const uniform int chunk = taskIndex0;
-  vec4f color = make_vec4f(
-      tile->r[chunk], tile->g[chunk], tile->b[chunk], tile->a[chunk]);
-
-  const float depth = tile->z[chunk];
-
-  const vec3f normal =
-      make_vec3f(tile->nx[chunk], tile->ny[chunk], tile->nz[chunk]);
-
-  const vec3f albedo =
-      make_vec3f(tile->ar[chunk], tile->ag[chunk], tile->ab[chunk]);
-
-  color = FrameBuffer_runPixelOps(fb, color, depth, normal, albedo);
-
-  tile->r[chunk] = color.x;
-  tile->g[chunk] = color.y;
-  tile->b[chunk] = color.z;
-  tile->a[chunk] = color.w;
-}
-
-export void DFB_runPixelOpsForTile(void *uniform _self, void *uniform _tile)
-{
-  Tile *uniform tile = (Tile * uniform) _tile;
-  FrameBuffer *uniform fb = (FrameBuffer * uniform) _self;
-  // Each task processes programCount pixels
-  const uniform int ntasks = TILE_SIZE * TILE_SIZE / programCount;
-#ifndef OSPRAY_TARGET_SYCL
-  launch[ntasks] DFB_runPixelOpsTask(fb, (VaryingTile * uniform) tile);
-#else
-  // Later can lift this up to be a parallel loop on the CPU for SYCL builds
-  for (int i = 0; i < ntasks; ++i) {
-    DFB_runPixelOpsTask(fb, (VaryingTile * uniform) tile, i);
-  }
-#endif
 }
 
 OSPRAY_END_ISPC_NAMESPACE

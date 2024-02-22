@@ -29,9 +29,8 @@ static void addGeometryInstance(RTCScene &scene,
   // Create geometry instance
   auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
   rtcSetGeometryInstancedScene(eInst, instScene);
-  inst->setEmbreeGeom(eInst);
-
   rtcAttachGeometryByID(scene, eInst, id);
+  inst->setEmbreeGeom(scene, id);
   rtcReleaseGeometry(eInst);
 }
 
@@ -151,6 +150,8 @@ void World::commit()
 #endif
       // Gather feature flags from all groups
       const FeatureFlags &gff = inst->group->getFeatureFlags();
+      if (inst->motionTransform.motionBlur)
+        featureFlags.geometry |= FFG_MOTION_BLUR;
       featureFlags |= gff;
       id++;
     }

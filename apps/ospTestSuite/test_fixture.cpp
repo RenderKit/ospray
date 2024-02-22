@@ -149,12 +149,8 @@ void Base::SetLights()
 
 void Base::RenderFrame()
 {
-  for (int frame = 0; frame < frames; ++frame) {
+  for (int frame = 0; frame < frames; ++frame)
     cpp::Future future = framebuffer.renderFrame(renderer, camera, world);
-    // TODO: Need to wait after every frame or variance
-    // is incorrectly calculated
-    future.wait();
-  }
 }
 
 FromOsprayTesting::FromOsprayTesting()
@@ -169,8 +165,6 @@ FromOsprayTesting::FromOsprayTesting()
 void FromOsprayTesting::SetUp()
 {
   Base::SetUp();
-
-  instances.clear();
 
   auto builder = ospray::testing::newBuilder(sceneName);
   ospray::testing::setParam(builder, "rendererType", rendererType);
@@ -213,14 +207,14 @@ void FromOsprayTestingVariance::SetUp()
 {
   FromOsprayTesting::SetUp();
 
-  frames = 20;
+  frames = 22;
 
   framebuffer = cpp::FrameBuffer(imgSize.x,
       imgSize.y,
       frameBufferFormat,
       OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
 
-  renderer.setParam("varianceThreshold", 20.f);
+  renderer.setParam("varianceThreshold", 10.0f);
 }
 
 void FromOsprayTestingLightSamples::SetUp()

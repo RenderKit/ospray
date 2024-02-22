@@ -8,9 +8,7 @@ namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE DebugFrameOp : public FrameOp
 {
-  DebugFrameOp(api::Device &device)
-      : FrameOp(static_cast<api::ISPCDevice &>(device))
-  {}
+  DebugFrameOp(api::Device &device);
 
   std::unique_ptr<LiveFrameOpInterface> attach(
       FrameBufferView &fbView) override;
@@ -20,8 +18,11 @@ struct OSPRAY_SDK_INTERFACE DebugFrameOp : public FrameOp
 
 struct OSPRAY_SDK_INTERFACE LiveDebugFrameOp : public LiveFrameOp
 {
-  LiveDebugFrameOp(api::ISPCDevice &device, FrameBufferView &fbView);
-  void process(void *waitEvent, const Camera *) override;
+  LiveDebugFrameOp(api::ISPCDevice &device, FrameBufferView &fbView)
+      : LiveFrameOp(device, fbView)
+  {}
+
+  void process(void *waitEvent) override;
 };
 
 } // namespace ospray

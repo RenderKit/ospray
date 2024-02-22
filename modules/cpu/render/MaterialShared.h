@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+#include "texture/TextureParamShared.h"
 
 #define EPS 1e-5f
 
@@ -77,8 +78,8 @@ struct Material
   Material_GetBSDFFunc getBSDF;
   Material_GetTransparencyFunc getTransparency;
   Material_SelectNextMediumFunc selectNextMedium;
-  vec3f emission; // simple constant (spatially and angular) emission, returns
-                  // radiance; TODO SV-EDFs
+  vec3f emission; // angular constant, returns radiance
+  TextureParam emissionMap; // spatially varying emission (SV-EDF)
 
   MicrofacetAlbedoTables *microfacetAlbedoTables;
 

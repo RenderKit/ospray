@@ -39,44 +39,9 @@ void MultiDeviceLoadBalancer::renderFrame(
   });
   framebuffer->rowmajorFb->setCompletedEvent(OSP_WORLD_RENDERED);
 
-  // TODO: These might not be accessible to the local fb on the CPU,
-  // so the multidevice needs to kind of manage "a bit" of a CPU device?
-  // Also here, for executing frame ops, the rowmajorFb doesn't get parameters
-  // set on it. It either needs params to be set on it (and then params from
-  // which subdevice?) or borrow them here from a subdevice, which also doesn't
-  // fit well
-  Renderer *r0 = (Renderer *)renderer->objects[0];
-  Camera *c0 = (Camera *)camera->objects[0];
-  framebuffer->rowmajorFb->endFrame(r0->errorThreshold, c0);
-
-  // Now copy the task error data back into the sparse fb's task error buffer,
-  // since the rowmajorFb has done the task error region refinement on the full
-  // framebuffer
-  if (framebuffer->rowmajorFb->hasVarianceBuf()) {
-    tasking::parallel_for(framebuffer->objects.size(), [&](size_t i) {
-      SparseFrameBuffer *fbi = (SparseFrameBuffer *)framebuffer->objects[i];
-      const vec2i totalRenderTasks =
-          framebuffer->rowmajorFb->getNumRenderTasks();
-      const vec2i renderTaskSize = fbi->getRenderTaskSize();
-
-      const auto tileIDs = fbi->getTileIDs();
-      uint32_t renderTaskID = 0;
-      for (size_t tid = 0; tid < tileIDs.size(); ++tid) {
-        const box2i tileRegion = fbi->getTileRegion(tileIDs[i]);
-        const box2i taskRegion(tileRegion.lower / renderTaskSize,
-            tileRegion.upper / renderTaskSize);
-        for (int y = taskRegion.lower.y; y < taskRegion.upper.y; ++y) {
-          for (int x = taskRegion.lower.x; x < taskRegion.upper.x;
-               ++x, ++renderTaskID) {
-            const vec2i task(x, y);
-            float error = framebuffer->rowmajorFb->taskError(
-                task.x + task.y * totalRenderTasks.x);
-            fbi->setTaskError(renderTaskID, error);
-          }
-        }
-      }
-    });
-  }
+  // We need to call post-processing operations on fully compositioned
+  // (rowmajorFb) frame buffer and wait for it to finish
+  framebuffer->rowmajorFb->postProcess(true);
 
   for (size_t i = 0; i < framebuffer->objects.size(); ++i) {
     SparseFrameBuffer *fbi = (SparseFrameBuffer *)framebuffer->objects[i];

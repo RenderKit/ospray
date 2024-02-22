@@ -41,21 +41,16 @@ inline float misHeuristic(const PathState &pathState, float pdf1, float pdf2)
 inline void updateAuxilliaryData(
     PathState &pathState, const PathVertex &pathVertex, ScreenSample &sample)
 {
-  sample.albedo = pathVertex.albedo;
+  sample.albedo = pathState.throughput * pathVertex.albedo;
   if (pathVertex.type == VOLUME) {
     sample.normal = make_vec3f(0.f);
   } else if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const BSDF *f = pathVertex.bsdf;
-#else
     foreach_unique (f in pathVertex.bsdf) {
-#endif
       if (f != NULL && f->frame != NULL)
         Ns = getN(f);
     }
-    sample.normal = Ns;
+    sample.normal = pathState.throughput * Ns;
   }
   pathState.auxFree = false;
 }

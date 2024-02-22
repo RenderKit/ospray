@@ -74,6 +74,13 @@ void Principled::commit()
   float outsideTransmissionDepth =
       getParam<float>("outsideTransmissionDepth", 1.f);
 
+  MaterialParam3f emissiveColor =
+      getMaterialParam3f("emissiveColor", vec3f(0.f));
+  // intensity is an additional constant factor to emission
+  emissiveColor.factor *= getParam<float>("intensity", 1.f);
+  getSh()->super.emission = emissiveColor.factor;
+  getSh()->super.emissionMap = emissiveColor.tex;
+
   getSh()->baseColor = baseColor.factor;
   getSh()->baseColorMap = baseColor.tex;
   getSh()->edgeColor = edgeColor.factor;

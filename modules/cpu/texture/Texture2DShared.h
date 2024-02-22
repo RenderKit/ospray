@@ -22,6 +22,7 @@ struct Texture2D
 
   OSPTextureFormat format;
   OSPTextureFilter filter;
+  vec2ui wrapMode;
 
 #ifdef __cplusplus
   Texture2D()
@@ -30,14 +31,16 @@ struct Texture2D
         halfTexel(0.f),
         data(nullptr),
         format(OSP_TEXTURE_FORMAT_INVALID),
-        filter(OSP_TEXTURE_FILTER_LINEAR)
+        filter(OSP_TEXTURE_FILTER_LINEAR),
+        wrapMode(vec2ui(OSP_TEXTURE_WRAP_REPEAT))
   {
     super.type = TEXTURE_TYPE_2D;
   }
   void set(const vec2i &aSize,
       void *aData,
       OSPTextureFormat format,
-      OSPTextureFilter flags);
+      OSPTextureFilter flags,
+      vec2ui wrapMode = vec2ui(OSP_TEXTURE_WRAP_REPEAT));
 };
 } // namespace ispc
 #else

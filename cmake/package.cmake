@@ -73,20 +73,13 @@ endif()
 ##############################################################
 
 set(CPACK_PACKAGE_NAME "OSPRay")
-if (OSPRAY_MODULE_GPU)
-  set(OSPRAY_PACKAGE_SYCL ".sycl")
-endif()
-set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}${OSPRAY_PACKAGE_SYCL}.x86_64")
+set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}")
 
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)
-if (APPLE AND OSPRAY_SIGN_FILE)
-  # on OSX we strip files during signing
-  set(CPACK_STRIP_FILES FALSE)
-else()
-  # do not disable, stripping symbols is important for security reasons
-  set(CPACK_STRIP_FILES TRUE)
-endif()
+
+# do not disable, stripping symbols is important for security reasons
+set(CPACK_STRIP_FILES TRUE)
 
 set(CPACK_PACKAGE_VERSION_MAJOR ${OSPRAY_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${OSPRAY_VERSION_MINOR})
@@ -107,6 +100,9 @@ set(CPACK_COMPONENT_APPS_DESCRIPTION "Example, viewer and test applications as w
 set(CPACK_COMPONENT_MPI_DISPLAY_NAME "MPI Module")
 set(CPACK_COMPONENT_MPI_DESCRIPTION "OSPRay module for MPI-based distributed rendering.")
 
+set(CPACK_COMPONENT_GPU_DISPLAY_NAME "GPU Module")
+set(CPACK_COMPONENT_GPU_DESCRIPTION "OSPRay module for Intel Xe GPU-based rendering.")
+
 set(CPACK_COMPONENT_REDIST_DISPLAY_NAME "Redistributables")
 set(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, imgui) that may or may not be already installed on your system.")
 
@@ -114,6 +110,7 @@ set(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, 
 set(CPACK_COMPONENT_DEVEL_DEPENDS lib)
 set(CPACK_COMPONENT_APPS_DEPENDS lib)
 set(CPACK_COMPONENT_MPI_DEPENDS lib)
+set(CPACK_COMPONENT_GPU_DEPENDS lib)
 set(CPACK_COMPONENT_LIB_REQUIRED ON) # always install the libs
 
 # point to readme and license files
@@ -133,7 +130,7 @@ if (WIN32) # Windows specific settings
     message(FATAL_ERROR "Only 64bit architecture supported.")
   endif()
 
-  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.windows")
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.windows")
 
   if (OSPRAY_ZIP_MODE)
     set(CPACK_GENERATOR ZIP)
@@ -145,6 +142,9 @@ if (WIN32) # Windows specific settings
     list(APPEND CPACK_COMPONENTS_ALL redist)
     if (OSPRAY_MODULE_MPI)
       list(APPEND CPACK_COMPONENTS_ALL mpi)
+    endif()
+    if (OSPRAY_MODULE_GPU)
+      list(APPEND CPACK_COMPONENTS_ALL gpu)
     endif()
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION_MAJOR}")
     math(EXPR OSPRAY_VERSION_NUMBER "10000*${OSPRAY_VERSION_MAJOR} + 100*${OSPRAY_VERSION_MINOR} + ${OSPRAY_VERSION_PATCH}")
@@ -158,21 +158,12 @@ elseif(APPLE) # MacOSX specific settings
 
   configure_file(${PROJECT_SOURCE_DIR}/README.md ${PROJECT_BINARY_DIR}/ReadMe.txt COPYONLY)
   set(CPACK_RESOURCE_FILE_README ${PROJECT_BINARY_DIR}/ReadMe.txt)
-  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.macosx")
-
-  if (OSPRAY_ZIP_MODE)
-    set(CPACK_GENERATOR ZIP)
-  else()
-    set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-    set(CPACK_GENERATOR productbuild)
-    set(CPACK_PACKAGE_NAME ospray-${OSPRAY_VERSION})
-    set(CPACK_PACKAGE_VENDOR "intel") # creates short name com.intel.ospray.xxx in pkgutil
-  endif()
-
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.${CMAKE_SYSTEM_PROCESSOR}.macosx")
+  set(CPACK_GENERATOR ZIP)
 
 else() # Linux specific settings
 
-  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.linux")
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.${CMAKE_SYSTEM_PROCESSOR}.linux")
   set(CPACK_GENERATOR TGZ)
 
 endif()

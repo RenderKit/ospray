@@ -22,11 +22,6 @@ struct SparseFB
   uint32 numTiles;
   // Image data for the tiles in this SparseFrameBuffer
   Tile *tiles;
-  // holds accumID per task region, for adaptive accumulation
-  int32 *taskAccumID;
-  // holds the accumulated color for each tile, tile's rgba stores the final
-  // color
-  vec4f *accumulationBuffer;
   // accumulates every other sample, for variance estimation / stopping
   vec4f *varianceBuffer;
   // holds error per task region, for adaptive accumulation
@@ -38,8 +33,6 @@ struct SparseFB
         totalTiles(0),
         numTiles(0),
         tiles(nullptr),
-        taskAccumID(nullptr),
-        accumulationBuffer(nullptr),
         varianceBuffer(nullptr),
         taskRegionError(nullptr)
   {

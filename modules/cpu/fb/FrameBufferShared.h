@@ -3,9 +3,6 @@
 
 #pragma once
 
-#include "fb/PixelOpShared.h"
-#include "ospray/OSPEnums.h"
-
 #ifdef __cplusplus
 namespace ispc {
 #endif // __cplusplus
@@ -75,16 +72,11 @@ struct FrameBuffer
   // The default size of each each render task, in pixels
   vec2i renderTaskSize;
 
-  // Not used on GPU to avoid USM thrashing
+  // Rendered frame index
   int32 frameID;
 
   // The channels stored in the framebuffer
   uint32 channels;
-
-  OSPFrameBufferFormat colorBufferFormat;
-
-  LivePixelOp **pixelOps;
-  uint32 numPixelOps;
 
   // If the frame has been cancelled or not. Note: we don't share bools between
   // ISPC and C++ as the true value representation may differ (as it does with
@@ -94,6 +86,12 @@ struct FrameBuffer
   // The number of pixels rendered this frame, for tracking rendering progress
   // Not used on GPU to avoid USM thrashing
   uint32 numPixelsRendered;
+
+  // Accumulate frames if true
+  bool doAccumulation;
+
+  // Variance accumulation
+  bool accumulateVariance; // do frame accumulation in this frame
 
 #ifdef __cplusplus
   FrameBuffer()
@@ -106,11 +104,10 @@ struct FrameBuffer
         renderTaskSize(4),
         frameID(-1),
         channels(0),
-        colorBufferFormat(OSP_FB_NONE),
-        pixelOps(nullptr),
-        numPixelOps(0),
         cancelRender(0),
-        numPixelsRendered(0)
+        numPixelsRendered(0),
+        doAccumulation(false),
+        accumulateVariance(false)
   {}
 };
 } // namespace ispc

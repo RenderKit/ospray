@@ -18,12 +18,9 @@ struct Curves
   OSPCurveType curveType;
   OSPCurveBasis curveBasis;
 
-#ifdef OSPRAY_TARGET_SYCL
-  // In SYCL we need to implement the interpolation ourselves in postIntersect
   Data1D index;
   Data1D color;
   Data1D texcoord;
-#endif
 
 #ifdef __cplusplus
   Curves()

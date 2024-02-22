@@ -129,6 +129,7 @@ struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
           ispcrt::SharedMemoryUsageHint::HostDeviceReadWrite);
 
   T *data();
+  const T *data() const;
 
   T *begin();
   T *end();
@@ -176,6 +177,12 @@ BufferShared<T>::BufferShared(ispcrt::Context &context,
 
 template <typename T>
 T *BufferShared<T>::data()
+{
+  return sharedPtr();
+}
+
+template <typename T>
+const T *BufferShared<T>::data() const
 {
   return sharedPtr();
 }

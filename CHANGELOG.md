@@ -1,6 +1,30 @@
 Version History
 ---------------
 
+### Changes in v3.1.0:
+
+-   Principled and Luminous materials support emissive textures
+-   Add native support for disc and oriented disc geometry
+-   Add support for mirror repeat and clamp to edge texture wrap modes
+-   GPU device now also supports motion blur
+-   Improve noise in reflections of ThinGlass
+-   Improve adaptive accumulation: working with GPU, fix correlations
+-   Fix indirectly seen albedo and normal buffer
+-   Fix artifacts when using specular texture for Principled
+-   Fixes for PixelFilter
+    -   Parameter was ignored (always using the default Gaussian)
+    -   Avoid a shift/misalignment within the pixel for first sample
+-   Fix empty image on Windows when `focusDistance=0`
+-   Fix missing SDK headers for `ISPCDevice*`
+-   The new minimum versions of dependencies:
+    -    Embree v4.3.1
+    -    Open VKL v2.0.1
+    -    Open Image Denoise v2.2 (better quality with fine details,
+         support AArch64 CPU on Linux)
+    -    ISPCRT v1.23.0 (uses environment variable `ISPCRT_GPU_DRIVER`
+         to select GPU to run on when multiple (i)GPUs are present)
+    -    rkcommon v1.13.0 (fixes crash using GPU and emissive geometry)
+
 ### Changes in v3.0.0:
 
 -   Beta support for Intel Xe GPUs (Intel Arc™ GPUs a Intel Data Center
@@ -70,7 +94,6 @@ Version History
         -   `spot` light with `intensityDistribution`: `intensityQuantity` other than `OSP_INTENSITY_QUANTITY_SCALE`
 
 
-
 ### Changes in v2.12.0:
 
 -   Support denoising on the GPU with OIDN 2.0, which is the new minimum
@@ -84,7 +107,6 @@ Version History
 -   Fix transparent shadows with too high `minContribution` setting
 -   The new minimum version for ISPC is v1.20.0
 -   Release binaries on Linux are built on Rocky 8
-
 
 ### Changes in v2.11.0:
 
@@ -264,7 +286,7 @@ Version History
     Toolkit
 -   OSPRay now requires minimum Open VKL v0.13.0 to bring the following
     improvements:
-    -   Support half precision float (fp16) voxel data in strutured
+    -   Support half precision float (fp16) voxel data in structured
         volumes (regular and spherical) and VDB volume
     -   Supporting tricubic filtering via `VKL_FILTER_TRICUBIC` filter
         for VDB volume

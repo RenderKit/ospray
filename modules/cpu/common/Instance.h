@@ -23,7 +23,7 @@ struct OSPRAY_SDK_INTERFACE Instance
 
   box3f getBounds() const override;
 
-  void setEmbreeGeom(RTCGeometry geom);
+  void setEmbreeGeom(RTCScene scene, unsigned int geomID);
 
   Ref<Group> group;
   const Ref<Group> groupAPI;

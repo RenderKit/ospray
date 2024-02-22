@@ -180,7 +180,9 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "planes",
                            "unstructured_volume_isosurface",
                            "instancing",
-                           "nolight"),
+                           "nolight",
+                           "random_discs",
+                           "random_oriented_discs"),
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));
 
@@ -251,7 +253,7 @@ INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
 TEST_P(FromOsprayTestingVariance, testScenes)
 {
   PerformRenderTest();
-  EXPECT_LE(framebuffer.variance(), 20.0f);
+  EXPECT_LE(framebuffer.variance(), 10.0f);
 }
 
 INSTANTIATE_TEST_SUITE_P(TestScenesVariance,

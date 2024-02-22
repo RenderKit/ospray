@@ -43,7 +43,7 @@ inline BSDF_SampleRes RobustThinDielectric_sample(
   // Sample the reflection or the transmission
   float pR = luminance(R);
   float pT = luminance(T);
-  float p = pR * rcp(pR + pT);
+  float p = clamp(pR * rcp(pR + pT), 0.25f, 0.75f);
 
   bool doReflection = (ss <= p);
   if (doReflection) {

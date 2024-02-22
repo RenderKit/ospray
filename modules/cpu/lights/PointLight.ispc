@@ -100,7 +100,6 @@ SYCL_EXTERNAL Light_SampleRes PointLight_sample(const Light *uniform super,
   return Sample(self, self->pre, dg, s);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_SampleRes PointLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -123,7 +122,6 @@ SYCL_EXTERNAL Light_SampleRes PointLight_sample_instanced(
   }
   return res;
 }
-#endif
 
 inline Light_EvalRes Eval(const PointLight *uniform self,
     const uniform PointLightDynamic &dyn,
@@ -170,7 +168,6 @@ SYCL_EXTERNAL Light_EvalRes PointLight_eval(const Light *uniform super,
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_EvalRes PointLight_eval_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -194,7 +191,6 @@ SYCL_EXTERNAL Light_EvalRes PointLight_eval_instanced(
   }
   return res;
 }
-#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////

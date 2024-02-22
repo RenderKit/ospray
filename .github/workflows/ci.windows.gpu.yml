@@ -1,7 +1,7 @@
 ## Copyright 2023 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI Windows GPU Workflow
+name: CI Windows GPU
 
 on:
   push:
@@ -11,143 +11,110 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
 
 ### BUILD JOBS ###
 
-  dpcpp-release-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
+  dpcpp-build:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true
       runs-on: '["build", "mpi"]'
-      env-from-files: .github/workflows/dpcpp-release.env
-      level-zero-version: public/1.12.0 # for ispcrt
+      env-from-files: .github/workflows/dpcpp.env
       cmd: |
         $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
         # disable warnings which lead to excessively large log files
         $env:CXXFLAGS = '-w'
         $env:CFLAGS = '-w'
         scripts\build\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_C_COMPILER=clang-cl -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON
-      artifact-out: build-windows-dpcpp-release
+      artifact-out: build-windows-dpcpp
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
-  dpcpp-nightly-build:
+  icx-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
-    secrets: inherit
-    with:
-      force-delete: true
-      runs-on: '["Windows", "build"]'
-      env-from-files: .github/workflows/dpcpp-nightly.env
-      level-zero-version: public/1.12.0 # for ispcrt
-      cmd: |
-        $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
-        # disable warnings which lead to excessively large log files
-        $env:CXXFLAGS = '-w'
-        $env:CFLAGS = '-w'
-        scripts\build\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_C_COMPILER=clang-cl -DBUILD_GPU_SUPPORT=ON
-      artifact-out: build-windows-dpcpp-nightly
-      artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
-
-  icx-release-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
-    secrets: inherit
-    with:
-      force-delete: true
-      runs-on: '["Windows", "build"]'
-      env-from-files: .github/workflows/icx-win-release.env
-      level-zero-version: public/1.12.0 # for ispcrt
-      cmd: |
-        # disable warnings which lead to excessively large log files
-        $env:CXXFLAGS = '-w'
-        $env:CFLAGS = '-w'
-        scripts\build\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=icx -DCMAKE_C_COMPILER=icx -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
-      artifact-out: build-windows-icx-release
-      artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
-
-  icx-nightly-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
     secrets: inherit
     with:
       force-delete: true
       runs-on: '["build", "mpi"]'
-      env-from-files: .github/workflows/icx-nightly.env
-      ocloc-version: fcd74e0e-43b3-4930-9bad-29c8b9581339/ocloc_win_101.4824
-      level-zero-version: public/1.12.0 # for ispcrt
+      env-from-files: .github/workflows/icx-windows.env
+      ocloc-version: 77a13ae6-6100-4ddc-b069-0086ff44730c/ocloc_win_101.5082
       cmd: |
         # disable warnings which lead to excessively large log files
         $env:CXXFLAGS = '-w'
         $env:CFLAGS = '-w'
         scripts\build\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=icx -DCMAKE_C_COMPILER=icx -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
-      artifact-out: build-windows-icx-nightly
+      artifact-out: build-windows-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
 
 
 ### TEST JOBS ###
 
-  dpcpp-release-test:
-    needs: dpcpp-release-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
-    secrets: inherit
-    with:
-      force-delete: true
-      runs-on: '"dg2"' # FIXME: mpi
-      env-from-files: .github/workflows/gfx-windows-release.env
-      cmd: |
-        $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
-        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE" TEST_MPI
-      artifact-in: build-windows-dpcpp-release
-      artifact-out: test-windows-dpcpp-release
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
-
-  dpcpp-nightly-test:
-    needs: dpcpp-nightly-build
+  dpcpp-test:
+    needs: dpcpp-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
     secrets: inherit
     with:
-      force-delete: true
-      runs-on: '["Windows", "dg2"]'
-      env-from-files: .github/workflows/gfx-windows-release.env
+      timeout-minutes: 100
+      runs-on: '"dg2"'
+      env-from-files: .github/workflows/gfx-windows.env
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE"
-      artifact-in: build-windows-dpcpp-nightly
-      artifact-out: test-windows-dpcpp-nightly
+      artifact-in: build-windows-dpcpp
+      artifact-out: test-windows-dpcpp
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
-  icx-release-test:
-    needs: icx-release-build
+  mpi-dpcpp-test:
+    needs: dpcpp-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
     secrets: inherit
     with:
-      force-delete: true
-      runs-on: '["Windows", "dg2"]'
-      env-from-files: .github/workflows/icx-win-release.env .github/workflows/gfx-windows-release.env
-      cmd: |
-        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE"
-      artifact-in: build-windows-icx-release
-      artifact-out: test-windows-icx-release
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
-
-  icx-nightly-test:
-    needs: icx-nightly-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@devel
-    secrets: inherit
-    with:
-      force-delete: true
-      runs-on: '"dg2"' # FIXME: mpi
-      env-from-files: .github/workflows/icx-win-release.env .github/workflows/gfx-windows-release.env
+      timeout-minutes: 100
+      runs-on: '["dg2"]' # FIXME, "mpi"
+      env-from-files: .github/workflows/gfx-windows.env
       cmd: |
         $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE" TEST_MPI
-      artifact-in: build-windows-icx-nightly
-      artifact-out: test-windows-icx-nightly
+        scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE" SKIP_GPU TEST_MPI
+      artifact-in: build-windows-dpcpp
+      artifact-out: test-windows-dpcpp-mpi
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  icx-test:
+    needs: icx-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      runs-on: '"dg2"'
+      env-from-files: .github/workflows/icx-windows.env .github/workflows/gfx-windows.env
+      cmd: |
+        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
+        scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE"
+      artifact-in: build-windows-icx
+      artifact-out: test-windows-icx
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  mpi-icx-test:
+    needs: icx-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      runs-on: '["dg2"]' # FIXME, "mpi"
+      env-from-files: .github/workflows/icx-windows.env .github/workflows/gfx-windows.env
+      cmd: |
+        $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
+        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
+        scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE" SKIP_GPU TEST_MPI
+      artifact-in: build-windows-icx
+      artifact-out: test-windows-icx-mpi
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true

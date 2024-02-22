@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v3.0.0 of Intel® OSPRay. For changes and new features
+This is release v3.1.0 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -81,7 +81,7 @@ before you can build OSPRay you need the following prerequisites:
   Linux development tools.
 
 - Additionally you require a copy of the [Intel® Implicit SPMD Program
-  Compiler (ISPC)](http://ispc.github.io), version 1.21.1 or later.
+  Compiler (ISPC)](http://ispc.github.io), version 1.23.0 or later.
   Please obtain a release of ISPC from the [ISPC downloads
   page](https://ispc.github.io/downloads.html). If ISPC is not found by
   CMake its location can be hinted with the variable `ispcrt_DIR`.
@@ -98,19 +98,19 @@ before you can build OSPRay you need the following prerequisites:
   variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or `Internal`.
 
 - OSPRay also heavily uses Intel [Embree](https://www.embree.org/),
-  installing version 4.3.0 or newer is required. If Embree is not found
+  installing version 4.3.1 or newer is required. If Embree is not found
   by CMake its location can be hinted with the variable `embree_DIR`.
 
 - OSPRay supports volume rendering (enabled by default via
   `OSPRAY_ENABLE_VOLUMES`), which heavily uses Intel [Open
-  VKL](https://www.openvkl.org/), version 2.0.0 or newer is required. If
+  VKL](https://www.openvkl.org/), version 2.0.1 or newer is required. If
   Open VKL is not found by CMake its location can be hinted with the
   variable `openvkl_DIR`, or disable `OSPRAY_ENABLE_VOLUMES`.
 
 - OSPRay also provides an optional module implementing the `denoiser`
   image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
   module requires Intel [Open Image
-  Denoise](https://openimagedenoise.github.io/) in version 2.1.0 or
+  Denoise](https://openimagedenoise.github.io/) in version 2.2.0 or
   newer. You may need to hint the location of the library with the CMake
   variable `OpenImageDenoise_DIR`.
 
@@ -159,7 +159,7 @@ version) and [Embree](https://github.com/embree/embree/releases/).
 To build OSPRay’s GPU module you need
 
 - a SYCL compiler, either the open source [oneAPI DPC++ Compiler
-  2023-09-22](https://github.com/intel/llvm/releases/tag/nightly-2023-09-22)
+  2023-10-26](https://github.com/intel/llvm/releases/tag/nightly-2023-10-26)
   or the latest [Intel oneAPI DPC++/C++
   Compiler](https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#dpcpp-cpp)
 - a recent [CMake](http://www.cmake.org), version 3.25.3 or higher
@@ -339,18 +339,6 @@ CMake is easy:
 
 - You should now have `libospray.[so,dylib]` as well as a set of
   [example applications](#tutorials).
-
-### Entitlements on Mac OS X
-
-Mac OS X requires notarization of applications as a security mechanism,
-and [entitlements must be
-declared](https://developer.apple.com/documentation/bundleresources/entitlements)
-during the notarization process. OSPRay’s `denoiser` uses OIDN, which
-uses just-in-time compilation through
-[oneDNN](https://github.com/oneapi-src/oneDNN) and thus requires the
-following entitlement:
-
-- [`com.apple.security.cs.allow-jit`](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_cs_allow-jit)
 
 ### Compiling OSPRay on Windows
 
@@ -1464,8 +1452,13 @@ of specifying the data of center position and radius within a
 |:----------|:----------------|--------:|:--------------------------------------------------------------------------|
 | vec3f\[\] | sphere.position |         | [data](#data) array of center positions                                   |
 | float\[\] | sphere.radius   |    NULL | optional [data](#data) array of the per-sphere radius                     |
+| vec3f\[\] | sphere.normal   |    NULL | optional [data](#data) array of normals (only for “oriented disc”)        |
 | vec2f\[\] | sphere.texcoord |    NULL | optional [data](#data) array of texture coordinates (constant per sphere) |
 | float     | radius          |    0.01 | default radius for all spheres (if `sphere.radius` is not set)            |
+| uint      | type            |         | `OSPSphereType` for rendering the sphere. Supported types are:            |
+|           |                 |         | `OSP_SPHERE` (default)                                                    |
+|           |                 |         | `OSP_DISC`                                                                |
+|           |                 |         | `OSP_ORIENTED_DISC`                                                       |
 
 Parameters defining a spheres geometry.
 
@@ -1936,7 +1929,8 @@ like an environment map).
 
 The [path tracer](#path-tracer) will consider illumination by
 [geometries](#geometries) which have a light emitting material assigned
-(for example the [Luminous](#luminous) material).
+(for example the [Luminous](#luminous) or [Principled](#principled)
+material).
 
 Materials
 ---------
@@ -2096,6 +2090,7 @@ table below.
 | float | sheenTint         |         0 | how much sheen is tinted from sheenColor toward baseColor                                                               |
 | float | sheenRoughness    |       0.2 | sheen roughness in \[0–1\], 0 is perfectly smooth                                                                       |
 | float | opacity           |         1 | cut-out opacity/transparency, 1 is fully opaque                                                                         |
+| vec3f | emissiveColor     |     black | color (and intensity) of the emitted light                                                                              |
 
 Parameters of the Principled material.
 
@@ -2385,6 +2380,10 @@ because it is always `OSP_INTENSITY_QUANTITY_RADIANCE`).
 
 Parameters accepted by the Luminous material.
 
+The emission can be textured by passing a `map_color`
+[texture](#texture) handle, [texture
+transformations](#texture-transformations) are supported as well.
+
 <figure>
 <img src="https://ospray.github.io/images/material_Luminous.jpg"
 style="width:60.0%" alt="Rendering of a yellow Luminous material." />
@@ -2412,11 +2411,15 @@ OSPTexture ospNewTexture(const char *type);
 The `texture2d` texture type implements an image-based texture, where
 its parameters are as follows
 
-| Type    | Name   | Description                                                                     |
-|:--------|:-------|:--------------------------------------------------------------------------------|
-| uint    | format | `OSPTextureFormat` for the texture                                              |
-| uint    | filter | default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST` |
-| OSPData | data   | the actual texel 2D [data](#data)                                               |
+| Type          | Name     | Description                                                                         |
+|:--------------|:---------|:------------------------------------------------------------------------------------|
+| uint          | format   | `OSPTextureFormat` for the texture                                                  |
+| uint          | filter   | default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`     |
+| OSPData       | data     | the actual texel 2D [data](#data)                                                   |
+| uint / vec2ui | wrapMode | `OSPTextureWrapMode` for the texture coordinates s and t; supported wrap modes are: |
+|               |          | `OSP_TEXTURE_WRAP_REPEAT` (default)                                                 |
+|               |          | `OSP_TEXTURE_WRAP_MIRRORED_REPEAT`                                                  |
+|               |          | `OSP_TEXTURE_WRAP_CLAMP_TO_EDGE`                                                    |
 
 Parameters of `texture2d` texture type.
 
@@ -3126,7 +3129,7 @@ additional project dependency at compile time. The module implements a
 “`denoiser`” frame operation, which denoises the entire frame before the
 frame is completed. OIDN will automatically select the fastest device,
 using a GPU when available. The device selection be overridden by the
-environment valiable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
+environment variable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
 `sycl`, `cuda`, `hip`, or a physical device ID
 
 Rendering

@@ -23,6 +23,8 @@ struct PathTracerData
       const Renderer &renderer);
   ~PathTracerData() override;
 
+  bool scannedForGeometryLights{false};
+
  private:
   ISPCRTMemoryView createGeometryLight(const Instance *instance,
       const GeometricModel *model,

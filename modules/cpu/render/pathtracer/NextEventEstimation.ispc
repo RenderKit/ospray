@@ -48,14 +48,9 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const vec2f s2 = LDSampler_getFloat2(
         pathContext.ldSampler, pathState.sampleDim + 3 + i * 3 + 1);
     Light_SampleRes ls;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      const Light *l = light;
-#else
-    foreach_unique (l in light) {
-#endif
+    foreach_unique (l in light)
       ls = Light_dispatch_sample(l, pathVertex.dg, s2, pathState.time, ffh);
-    }
+
     // adjust the contibution with the probabiltiy of selecting the light source
     ls.weight = ls.weight / lightSelectionProb;
     ls.pdf = ls.pdf * lightSelectionProb;
@@ -67,27 +62,15 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     // evaluate BSDF
     Scattering_EvalRes fe;
     if (ff.geometry && pathVertex.type == SURFACE) {
-#ifdef OSPRAY_TARGET_SYCL
-      {
-        const BSDF *f = pathVertex.bsdf;
-#else
-      foreach_unique (f in pathVertex.bsdf) {
-#endif
+      foreach_unique (f in pathVertex.bsdf)
         if (f != NULL)
           fe = BSDF_dispatch_eval(f, pathVertex.wo, ls.dir, ffh);
-      }
     } else {
 #ifdef OSPRAY_ENABLE_VOLUMES
       if (ff.other & FFO_VOLUME_IN_SCENE) {
-#ifdef OSPRAY_TARGET_SYCL
-        {
-          const VolumetricModel *v = pathVertex.volume;
-#else
-        foreach_unique (v in pathVertex.volume) {
-#endif
+        foreach_unique (v in pathVertex.volume)
           if (v != NULL)
             fe = HenyeyGreenstein_eval(v->anisotropy, pathVertex.wo, ls.dir);
-        }
       }
 #endif
     }

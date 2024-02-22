@@ -4,7 +4,7 @@
 #pragma once
 
 // oidn
-#include "OpenImageDenoise/oidn.h"
+#include "OpenImageDenoise/oidn.hpp"
 // ospray
 #include "fb/ImageOp.h"
 #include "ospray_module_denoiser_export.h"
@@ -15,15 +15,13 @@ struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOpInterface
 {
   DenoiseFrameOp(api::Device &device);
 
-  ~DenoiseFrameOp() override;
-
   std::unique_ptr<LiveFrameOpInterface> attach(
       FrameBufferView &fbView) override;
 
   std::string toString() const override;
 
  private:
-  OIDNDevice oidnDevice;
+  oidn::DeviceRef oidnDevice;
   bool sharedMem{false};
 };
 

@@ -104,12 +104,18 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
 OSPTYPEFOR_SPECIALIZATION(Data *, OSP_DATA);
 
 template <typename T>
-class Iter : public std::iterator<std::forward_iterator_tag, T>
+class Iter
 {
   const Data &data;
   vec3ul idx;
 
  public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = T;
+  using difference_type = std::ptrdiff_t;
+  using pointer = T *;
+  using reference = T &;
+
   Iter(const Data &data, vec3ul idx) : data(data), idx(idx) {}
   Iter &operator++()
   {
@@ -139,12 +145,18 @@ class Iter : public std::iterator<std::forward_iterator_tag, T>
 };
 
 template <typename T>
-class Iter1D : public std::iterator<std::forward_iterator_tag, T>
+class Iter1D
 {
   char *addr{nullptr};
   int64_t byteStride{1};
 
  public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = T;
+  using difference_type = std::ptrdiff_t;
+  using pointer = T *;
+  using reference = T &;
+
   Iter1D(char *addr, int64_t byteStride) : addr(addr), byteStride(byteStride) {}
   Iter1D &operator++()
   {

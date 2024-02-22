@@ -274,12 +274,7 @@ static void DebugRenderer_volume(Renderer *uniform self,
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    VolumetricModel *uniform m = model;
-#else
   foreach_unique (m in model) {
-#endif
     Volume *uniform volume = m->volume;
 
     float time = 0.5f;
@@ -353,6 +348,12 @@ static void DebugRenderer_volume(Renderer *uniform self,
       }
     }
   }
+#else
+  (void)self;
+  (void)fb;
+  (void)world;
+  (void)sample;
+  (void)ffh;
 #endif
 }
 
@@ -431,11 +432,10 @@ SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
     Camera *uniform camera,
     World *uniform world,
     const uint32 *uniform taskIDs,
-    const int taskIndex0,
+    const sycl::nd_item<3> taskIndex,
     const uniform FeatureFlagsHandler &ffh)
 {
-  Renderer_default_renderTask(
-      self, fb, camera, world, taskIDs, taskIndex0, ffh);
+  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex, ffh);
 }
 #else
 export void DebugRenderer_renderTasks(void *uniform _self,

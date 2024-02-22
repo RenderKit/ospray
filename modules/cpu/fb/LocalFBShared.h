@@ -14,17 +14,12 @@ namespace ispc {
 struct LocalFB
 {
   FrameBuffer super; // superclass that we inherit from
-  void *colorBuffer;
+  vec4f *colorBuffer;
+  vec4f *varianceBuffer; // accumulates every other sample, for variance
+                         // estimation / stopping
   float *depthBuffer;
-  vec4f *accumBuffer;
-
-  // accumulates every other sample, for variance estimation / stopping
-  vec4f *varianceBuffer;
   vec3f *normalBuffer;
   vec3f *albedoBuffer;
-  // holds accumID per tile, for adaptive accumulation
-  int32 *taskAccumID;
-  float *taskRegionError;
   vec2i numRenderTasks;
   uint32 *primitiveIDBuffer;
   uint32 *objectIDBuffer;
@@ -33,13 +28,10 @@ struct LocalFB
 #ifdef __cplusplus
   LocalFB()
       : colorBuffer(nullptr),
-        depthBuffer(nullptr),
-        accumBuffer(nullptr),
         varianceBuffer(nullptr),
+        depthBuffer(nullptr),
         normalBuffer(nullptr),
         albedoBuffer(nullptr),
-        taskAccumID(nullptr),
-        taskRegionError(nullptr),
         numRenderTasks(0),
         primitiveIDBuffer(nullptr),
         objectIDBuffer(nullptr),

@@ -42,7 +42,7 @@ struct Camera
   bool globalShutter;
   bool rollingShutterHorizontal;
   float rollingShutterDuration;
-  RTCGeometry geom; // only to access rtcGetGeometryTransform
+  RTCScene scene; // only to call rtcGetGeometryTransformFromScene
 
 #ifdef __cplusplus
   Camera()
@@ -55,7 +55,7 @@ struct Camera
         globalShutter(false),
         rollingShutterHorizontal(false),
         rollingShutterDuration(0.f),
-        geom(nullptr)
+        scene(nullptr)
   {}
 };
 } // namespace ispc

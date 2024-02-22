@@ -171,8 +171,9 @@ task
           intersectArgs.intersect =
               (RTCIntersectFunctionN)Regions_intersect_kernel;
           intersectArgs.flags = RTC_RAY_QUERY_FLAG_COHERENT;
-          intersectArgs.feature_mask = (uniform RTCFeatureFlags)(
-              RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS);
+          intersectArgs.feature_mask =
+              (uniform RTCFeatureFlags)(RTC_FEATURE_FLAG_INSTANCE
+                  | RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS);
           intersectArgs.context = &context.ectx;
 
           rtcIntersectV(world->regionScene,

@@ -59,7 +59,6 @@ SYCL_EXTERNAL Light_SampleRes HDRILight_sample(const Light *uniform super,
   return Sample(self, self->light2world, s);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_SampleRes HDRILight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &,
@@ -80,7 +79,6 @@ SYCL_EXTERNAL Light_SampleRes HDRILight_sample_instanced(
   }
   return res;
 }
-#endif
 
 inline Light_EvalRes Eval(const HDRILight *uniform self,
     const uniform linear3f &world2light,
@@ -128,7 +126,6 @@ SYCL_EXTERNAL Light_EvalRes HDRILight_eval(const Light *uniform super,
   return Eval(self, self->world2light, dir, maxDist);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,
     const DifferentialGeometry &,
     const vec3f &dir,
@@ -149,7 +146,6 @@ SYCL_EXTERNAL Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,
   }
   return res;
 }
-#endif
 
 // bin i represents the average contribution of (i-0.5, i+0.5) when we sample
 // the texture bilinearly at i

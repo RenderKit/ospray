@@ -87,24 +87,31 @@ inline float RenderTask::getProgress()
 
 inline float RenderTask::getTaskDuration()
 {
-  const auto t0 =
-      rendererEvent
-          .get_profiling_info<sycl::info::event_profiling::command_start>();
-  const auto t1 =
-      rendererEvent
-          .get_profiling_info<sycl::info::event_profiling::command_end>();
-  // TODO: We need a way to tell if the fbEvent was actually submitted,
-  // otherwise getting the time gives an error
-  /*
-  const auto t2 =
-      frameBufferEvent
-          .get_profiling_info<sycl::info::event_profiling::command_start>();
-  const auto t3 =
-      frameBufferEvent
-          .get_profiling_info<sycl::info::event_profiling::command_end>();
-  return ((t1 - t0) + (t3 - t2)) * 1E-9;
-          */
-  return (t1 - t0) * 1.0e-9;
+  try {
+    const auto t0 =
+        rendererEvent
+            .get_profiling_info<sycl::info::event_profiling::command_start>();
+    const auto t1 =
+        rendererEvent
+            .get_profiling_info<sycl::info::event_profiling::command_end>();
+
+    return (t1 - t0) * 1.0e-9;
+
+    // TODO: We need a way to tell if the fbEvent was actually submitted,
+    // otherwise getting the time gives an error
+    /*
+    const auto t2 =
+        frameBufferEvent
+            .get_profiling_info<sycl::info::event_profiling::command_start>();
+    const auto t3 =
+        frameBufferEvent
+            .get_profiling_info<sycl::info::event_profiling::command_end>();
+    return ((t1 - t0) + (t3 - t2)) * 1E-9;
+            */
+  } catch (...) {
+    // In case no profiling data is available
+    return 0.f;
+  }
 }
 
 } // namespace ospray

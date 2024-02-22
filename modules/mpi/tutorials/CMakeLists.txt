@@ -75,17 +75,9 @@ if (OSPRAY_ENABLE_APPS_EXAMPLES)
     )
   endmacro()
 
-  find_package(glfw3 REQUIRED)
-  if (TARGET glfw)
-    get_property(glfw3_INCLUDE_DIRS TARGET glfw
-      PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-    )
-  endif()
-
   # MPI Tutorial utilities library
   add_library(mpi_tutorial_common STATIC
     GLFWDistribOSPRayWindow.cpp
-    ${CMAKE_SOURCE_DIR}/apps/ospExamples/imgui_impl_glfw_gl3.cpp
   )
 
   target_include_directories(mpi_tutorial_common PRIVATE
@@ -95,9 +87,8 @@ if (OSPRAY_ENABLE_APPS_EXAMPLES)
     rkcommon::rkcommon
     ospray
     ospray_imgui
-    glfw
-    arcball_camera
     ${OPENGL_LIBRARIES}
+    arcball_camera
     MPI::MPI_CXX
   )
 

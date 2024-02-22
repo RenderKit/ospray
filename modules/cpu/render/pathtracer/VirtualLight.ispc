@@ -42,8 +42,6 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
     Ray &ray,
     const uniform FeatureFlagsHandler &ffh)
 {
-  const uniform FeatureFlags ff = getFeatureFlags(ffh);
-
   // add light from *virtual* lights by intersecting them
   vec3f L = make_vec3f(0.f);
 
@@ -89,6 +87,7 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
 
         float T = 1.f;
 #ifdef OSPRAY_ENABLE_VOLUMES
+        const uniform FeatureFlags ff = getFeatureFlags(ffh);
         if (ff.other & FFO_VOLUME_IN_SCENE) {
           T = volumeTransmittance(pathContext.world,
               shadowRay,

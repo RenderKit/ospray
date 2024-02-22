@@ -3,6 +3,7 @@
 
 #include "common/DifferentialGeometry.ih"
 #include "common/FeatureFlagsEnum.h"
+#include "common/Instance.ih"
 #include "lights/LightDispatch.ih"
 #include "lights/LightShared.h"
 
@@ -23,6 +24,7 @@ SYCL_EXTERNAL Light_SampleRes Light_dispatch_sample(const Light *uniform self,
     const float time,
     const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
   const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
 
 #ifndef OSPRAY_TARGET_SYCL
@@ -32,18 +34,36 @@ SYCL_EXTERNAL Light_SampleRes Light_dispatch_sample(const Light *uniform self,
     return AmbientLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_DIRECTIONAL)
       && (ffo & FFO_LIGHT_DIRECTIONAL)) {
-    return DirectionalLight_sample(self, dg, s, time, ffh);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return DirectionalLight_sample_instanced(self, dg, s, time, ffh);
+    else
+      return DirectionalLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_POINT) && (ffo & FFO_LIGHT_POINT)) {
-    return PointLight_sample(self, dg, s, time, ffh);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return PointLight_sample_instanced(self, dg, s, time, ffh);
+    else
+      return PointLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_SPOT) && (ffo & FFO_LIGHT_SPOT)) {
-    return SpotLight_sample(self, dg, s, time, ffh);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return SpotLight_sample_instanced(self, dg, s, time, ffh);
+    else
+      return SpotLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_HDRI) && (ffo & FFO_LIGHT_HDRI)) {
-    return HDRILight_sample(self, dg, s, time, ffh);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return HDRILight_sample_instanced(self, dg, s, time, ffh);
+    else
+      return HDRILight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_QUAD) && (ffo & FFO_LIGHT_QUAD)) {
-    return QuadLight_sample(self, dg, s, time, ffh);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return QuadLight_sample_instanced(self, dg, s, time, ffh);
+    else
+      return QuadLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_CYLINDER)
       && (ffo & FFO_LIGHT_CYLINDER)) {
-    return CylinderLight_sample(self, dg, s, time, ffh);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return CylinderLight_sample_instanced(self, dg, s, time, ffh);
+    else
+      return CylinderLight_sample(self, dg, s, time, ffh);
   } else if ((self->type == LIGHT_TYPE_GEOMETRY)
       && (ffo & FFO_LIGHT_GEOMETRY)) {
     return GeometryLight_sample(self, dg, s, time, ffh);
@@ -66,6 +86,7 @@ SYCL_EXTERNAL Light_EvalRes Light_dispatch_eval(const Light *uniform self,
     const float time,
     const uniform FeatureFlagsHandler &ffh)
 {
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
   const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
 
 #ifndef OSPRAY_TARGET_SYCL
@@ -75,18 +96,38 @@ SYCL_EXTERNAL Light_EvalRes Light_dispatch_eval(const Light *uniform self,
     return AmbientLight_eval(self, dg, dir, minDist, maxDist, time);
   } else if ((self->type == LIGHT_TYPE_DIRECTIONAL)
       && (ffo & FFO_LIGHT_DIRECTIONAL)) {
-    return DirectionalLight_eval(self, dg, dir, minDist, maxDist, time);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return DirectionalLight_eval_instanced(
+          self, dg, dir, minDist, maxDist, time);
+    else
+      return DirectionalLight_eval(self, dg, dir, minDist, maxDist, time);
   } else if ((self->type == LIGHT_TYPE_POINT) && (ffo & FFO_LIGHT_POINT)) {
-    return PointLight_eval(self, dg, dir, minDist, maxDist, time);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return PointLight_eval_instanced(self, dg, dir, minDist, maxDist, time);
+    else
+      return PointLight_eval(self, dg, dir, minDist, maxDist, time);
   } else if ((self->type == LIGHT_TYPE_SPOT) && (ffo & FFO_LIGHT_SPOT)) {
-    return SpotLight_eval(self, dg, dir, minDist, maxDist, time);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return SpotLight_eval_instanced(self, dg, dir, minDist, maxDist, time);
+    else
+      return SpotLight_eval(self, dg, dir, minDist, maxDist, time);
   } else if ((self->type == LIGHT_TYPE_HDRI) && (ffo & FFO_LIGHT_HDRI)) {
-    return HDRILight_eval(self, dg, dir, minDist, maxDist, time);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return HDRILight_eval_instanced(self, dg, dir, minDist, maxDist, time);
+    else
+      return HDRILight_eval(self, dg, dir, minDist, maxDist, time);
   } else if ((self->type == LIGHT_TYPE_QUAD) && (ffo & FFO_LIGHT_QUAD)) {
-    return QuadLight_eval(self, dg, dir, minDist, maxDist, time);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return QuadLight_eval_instanced(self, dg, dir, minDist, maxDist, time);
+    else
+      return QuadLight_eval(self, dg, dir, minDist, maxDist, time);
   } else if ((self->type == LIGHT_TYPE_CYLINDER)
       && (ffo & FFO_LIGHT_CYLINDER)) {
-    return CylinderLight_eval(self, dg, dir, minDist, maxDist, time);
+    if (self->instance->motionBlur && (ffg & FFG_MOTION_BLUR))
+      return CylinderLight_eval_instanced(
+          self, dg, dir, minDist, maxDist, time);
+    else
+      return CylinderLight_eval(self, dg, dir, minDist, maxDist, time);
   } else {
     Light_EvalRes res;
     res.radiance = make_vec3f(0.f);

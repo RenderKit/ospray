@@ -27,27 +27,26 @@ std::pair<AsyncEvent, AsyncEvent> LocalTiledLoadBalancer::renderFrame(
   fb->beginFrame();
   void *perFrameData = renderer->beginFrame(fb, world);
 
-  AsyncEvent rendererEvent = renderer->renderTasks(fb,
-      camera,
-      world,
-      perFrameData,
-      fb->getRenderTaskIDs(renderer->errorThreshold),
-      wait);
+  // Get render tasks and process them all
+  utility::ArrayView<uint32_t> taskIds =
+      fb->getRenderTaskIDs(renderer->errorThreshold, renderer->spp);
+  AsyncEvent rendererEvent;
+  if (taskIds.size())
+    rendererEvent =
+        renderer->renderTasks(fb, camera, world, perFrameData, taskIds, wait);
 
-  // Can't call renderer->endFrame() because we might still render
-  if (wait) {
-    renderer->endFrame(fb, perFrameData);
+  // Can set flag only if we wait
+  if (wait)
     fb->setCompletedEvent(OSP_WORLD_RENDERED);
-  }
 
-  // But we can queue FB post-processing kernel
-  AsyncEvent fbEvent = fb->postProcess(camera, wait);
+  // But we can queue FB post-processing kernel if any tasks has been rendered
+  AsyncEvent fbEvent;
+  if (taskIds.size())
+    fbEvent = fb->postProcess(wait);
 
-  // Can't call fb->endFrame() because we might still post-process
-  if (wait) {
-    fb->endFrame(renderer->errorThreshold, camera);
+  // Can set flag only if we wait
+  if (wait)
     fb->setCompletedEvent(OSP_FRAME_FINISHED);
-  }
 
   return std::make_pair(rendererEvent, fbEvent);
 }

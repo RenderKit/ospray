@@ -6,7 +6,6 @@
 // ospray
 #include "common/ISPCRTBuffers.h"
 #include "fb/FrameBuffer.h"
-#include "fb/TaskError.h"
 // rkcommon
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/utility/ArrayView.h"
@@ -17,6 +16,8 @@
 namespace ospray {
 
 struct SparseFrameBuffer;
+struct LiveVarianceFrameOp;
+struct LiveColorConversionFrameOp;
 
 struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
     : public AddStructShared<FrameBuffer, ispc::LocalFB>
@@ -26,13 +27,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
       ColorBufferFormat colorBufferFormat,
       const uint32 channels);
 
-  virtual ~LocalFrameBuffer() override
-  {
-#ifdef OSPRAY_TARGET_SYCL
-    device.getSyclQueue().wait_and_throw();
-    device.getIspcrtQueue().sync();
-#endif
-  }
+  virtual ~LocalFrameBuffer() override;
 
   virtual void commit() override;
 
@@ -43,19 +38,15 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   virtual uint32_t getTotalRenderTasks() const override;
 
   virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
-      float errorThreshold) override;
+      const float errorThreshold, const uint32_t spp) override;
+
+  virtual float getVariance() const override;
 
   // common function to help printf-debugging, every derived class should
   // override this!
   virtual std::string toString() const override;
 
-  float taskError(const uint32_t taskID) const override;
-
-  void beginFrame() override;
-
-  void endFrame(const float errorThreshold, const Camera *camera) override;
-
-  AsyncEvent postProcess(const Camera *camera, bool wait) override;
+  AsyncEvent postProcess(bool wait) override;
 
   const void *mapBuffer(OSPFrameBufferChannel channel) override;
 
@@ -82,14 +73,15 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   // NOTE: All per-pixel data is only allocated if the corresponding channel
   //       flag was passed on construction
 
-  // format depends on FrameBuffer::colorBufferFormat
-  std::unique_ptr<BufferDeviceShadowed<uint8_t>> colorBuffer;
+  // one RGBA per pixel
+  std::unique_ptr<BufferDeviceShadowed<vec4f>> colorBuffer;
+  // one RGBA per pixel, post-processing output
+  std::unique_ptr<BufferDeviceShadowed<vec4f>> ppColorBuffer;
+  // one RGBA per pixel, does not accumulate all samples, for variance
+  // estimation
+  std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
   // one float per pixel
   std::unique_ptr<BufferDeviceShadowed<float>> depthBuffer;
-  // one RGBA per pixel
-  std::unique_ptr<BufferDevice<vec4f>> accumBuffer;
-  // one RGBA per pixel, accumulates every other sample, for variance estimation
-  std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
   // accumulated world-space normal per pixel
   std::unique_ptr<BufferDeviceShadowed<vec3f>> normalBuffer;
   // accumulated, one RGB per pixel
@@ -110,11 +102,23 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
   std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
-  // holds accumID per render task, for adaptive accumulation
-  std::unique_ptr<BufferDeviceShadowed<int32_t>> taskAccumID;
 
-  // holds error per tile and adaptive regions
-  TaskError taskErrorRegion;
+  // Array of frame operations
+  std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;
+
+  // Variance frame operation
+  std::unique_ptr<LiveVarianceFrameOp> varianceFrameOp;
+
+  // Color conversion frame operation
+  std::unique_ptr<LiveColorConversionFrameOp> colorConversionFrameOp;
+
+ private:
+  float errorThreshold; // remember
+  // Not used, to be removed after mpi module refactor
+  float taskError(const uint32_t) const override
+  {
+    return 0.f;
+  }
 };
 
 } // namespace ospray

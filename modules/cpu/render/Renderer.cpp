@@ -150,7 +150,7 @@ OSPPickResult Renderer::pick(
 
 void Renderer::setupPixelFilter()
 {
-  OSPPixelFilterType pixelFilterType = getParam<OSPPixelFilterType>(
+  const auto pixelFilterType = (OSPPixelFilterType)getParam<uint32_t>(
       "pixelFilter", OSPPixelFilterType::OSP_PIXELFILTER_GAUSS);
   pixelFilter = nullptr;
   switch (pixelFilterType) {

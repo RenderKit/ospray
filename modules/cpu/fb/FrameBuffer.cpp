@@ -4,6 +4,7 @@
 #include "FrameBuffer.h"
 #include "FrameOp.h"
 #include "OSPConfig.h"
+#include "fb/FrameBufferView.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
 #endif
@@ -34,15 +35,17 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
     const FeatureFlagsOther ffo)
     : AddStructShared(device.getIspcrtContext(), device),
       size(_size),
+      colorBufferFormat(_colorBufferFormat),
+      hasColorBuffer(channels & OSP_FB_COLOR),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
-      hasAccumBuffer(channels & OSP_FB_ACCUM),
-      hasVarianceBuffer(
-          (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
+      hasVarianceBuffer((channels & OSP_FB_COLOR)
+          && (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
       hasNormalBuffer(channels & OSP_FB_NORMAL),
       hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
       hasPrimitiveIDBuffer(channels & OSP_FB_ID_PRIMITIVE),
       hasObjectIDBuffer(channels & OSP_FB_ID_OBJECT),
       hasInstanceIDBuffer(channels & OSP_FB_ID_INSTANCE),
+      doAccum(channels & OSP_FB_ACCUM),
       featureFlags(ffo)
 {
   managedObjectType = OSP_FRAMEBUFFER;
@@ -53,13 +56,13 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->size = _size;
   getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
   getSh()->channels = channels;
-  getSh()->colorBufferFormat = _colorBufferFormat;
+  getSh()->doAccumulation = doAccum;
+  getSh()->accumulateVariance = false;
 
-#ifdef OSPRAY_TARGET_SYCL
-  // Note: using 2x2, 4x4, etc doesn't change perf much
-  vec2i renderTaskSize(1);
-#else
 #if OSPRAY_RENDER_TASK_SIZE == -1
+#ifdef OSPRAY_TARGET_SYCL
+  vec2i renderTaskSize(8);
+#else
   // Compute render task size based on the simd width to get as "square" as
   // possible a task size that has simdWidth pixels
   const int simdWidth = ispc::ISPCDevice_programCount();
@@ -68,46 +71,34 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
     renderTaskSize.y *= 2;
     renderTaskSize.x /= 2;
   }
+#endif
 #else
   // Note: we could also allow changing this at runtime if we want to add this
   // to the API
   vec2i renderTaskSize(OSPRAY_RENDER_TASK_SIZE);
-#endif
 #endif
   getSh()->renderTaskSize = renderTaskSize;
 }
 
 void FrameBuffer::commit()
 {
-  // Erase all image operations arrays
-  frameOps.clear();
-  pixelOps.clear();
-  pixelOpShs.clear();
-  getSh()->pixelOps = nullptr;
-  getSh()->numPixelOps = 0;
-
   // Read image operations array set by user
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
 }
 
 void FrameBuffer::clear()
 {
-  frameID = -1; // we increment at the start of the frame
+  getSh()->frameID = -1; // we increment at the start of the frame
+
+  if (hasVarianceBuffer) {
+    mtGen.seed(mtSeed); // reset the RNG with same seed
+    frameVariance = inf;
+  }
 }
 
 vec2i FrameBuffer::getRenderTaskSize() const
 {
   return getSh()->renderTaskSize;
-}
-
-vec2i FrameBuffer::getNumPixels() const
-{
-  return size;
-}
-
-OSPFrameBufferFormat FrameBuffer::getColorBufferFormat() const
-{
-  return getSh()->colorBufferFormat;
 }
 
 float FrameBuffer::getVariance() const
@@ -118,14 +109,25 @@ float FrameBuffer::getVariance() const
 void FrameBuffer::beginFrame()
 {
   cancelRender = false;
-  frameID++;
-  // TODO: Cancellation isn't supported on the GPU
+  getSh()->frameID++;
 #ifndef OSPRAY_TARGET_SYCL
+  // TODO: Cancellation isn't supported on the GPU
   getSh()->cancelRender = 0;
   // TODO: Maybe better as a kernel to avoid USM thrash to host
   getSh()->numPixelsRendered = 0;
-  getSh()->frameID = frameID;
 #endif
+
+  if (hasVarianceBuffer) {
+    // collect half of the samples
+    // To not run into correlation issues with low discrepancy sequences used
+    // in renders, we randomly pick whether the even or the odd frame is
+    // accumulated into the variance buffer.
+    const bool evenFrame = (getSh()->frameID & 1) == 0;
+    if (evenFrame)
+      pickOdd = mtGen() & 1; // coin flip every other frame
+
+    getSh()->accumulateVariance = evenFrame != pickOdd;
+  }
 }
 
 std::string FrameBuffer::toString() const
@@ -183,85 +185,9 @@ bool FrameBuffer::frameCancelled() const
   return cancelRender;
 }
 
-void FrameBuffer::prepareLiveOpsForFBV(
-    FrameBufferView &fbv, bool fillFrameOps, bool fillPixelOps)
-{
-  // Iterate through all image operations set on commit
-  for (auto &&obj : *imageOpData) {
-    // Populate pixel operations
-    PixelOp *pop = dynamic_cast<PixelOp *>(obj);
-    if (pop) {
-      if (fillPixelOps) {
-        pixelOps.push_back(pop->attach());
-        pixelOpShs.push_back(pixelOps.back()->getSh());
-      }
-    } else {
-      // Populate frame operations
-      FrameOpInterface *fopi = dynamic_cast<FrameOpInterface *>(obj);
-      if (fillFrameOps && fopi)
-        frameOps.push_back(fopi->attach(fbv));
-    }
-  }
-
-  // Prepare shared parameters for kernel
-  getSh()->pixelOps = pixelOpShs.empty() ? nullptr : pixelOpShs.data();
-  getSh()->numPixelOps = pixelOpShs.size();
-}
-
-bool FrameBuffer::hasAccumBuf() const
-{
-  return hasAccumBuffer;
-}
-
-bool FrameBuffer::hasVarianceBuf() const
-{
-  return hasVarianceBuffer;
-}
-
-bool FrameBuffer::hasNormalBuf() const
-{
-  return hasNormalBuffer;
-}
-
-bool FrameBuffer::hasAlbedoBuf() const
-{
-  return hasAlbedoBuffer;
-}
-
 uint32 FrameBuffer::getChannelFlags() const
 {
-  uint32 channels = 0;
-  if (hasDepthBuffer) {
-    channels |= OSP_FB_DEPTH;
-  }
-  if (hasAccumBuffer) {
-    channels |= OSP_FB_ACCUM;
-  }
-  if (hasVarianceBuffer) {
-    channels |= OSP_FB_VARIANCE;
-  }
-  if (hasNormalBuffer) {
-    channels |= OSP_FB_NORMAL;
-  }
-  if (hasAlbedoBuffer) {
-    channels |= OSP_FB_ALBEDO;
-  }
-  return channels;
-}
-
-bool FrameBuffer::hasPrimitiveIDBuf() const
-{
-  return hasPrimitiveIDBuffer;
-}
-
-bool FrameBuffer::hasObjectIDBuf() const
-{
-  return hasObjectIDBuffer;
-}
-
-bool FrameBuffer::hasInstanceIDBuf() const
-{
-  return hasInstanceIDBuffer;
+  return getSh()->channels;
 }
 
 OSPTYPEFOR_DEFINITION(FrameBuffer *);

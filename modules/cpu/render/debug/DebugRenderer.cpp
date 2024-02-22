@@ -93,23 +93,18 @@ AsyncEvent DebugRenderer::renderTasks(FrameBuffer *fb,
     ff |= fb->getFeatureFlags();
     ff |= camera->getFeatureFlags();
     cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
-
     cgh.set_specialization_constant<debugRendererType>(rendererSh->type);
 
-    const sycl::nd_range<1> dispatchRange =
-        device.computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange,
-        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
-          if (taskIndex.get_global_id(0) < numTasks) {
-            ispc::FeatureFlagsHandler ffh(kh);
-            ispc::DebugRenderer_renderTask(&rendererSh->super,
-                fbSh,
-                cameraSh,
-                worldSh,
-                taskIDsPtr,
-                taskIndex.get_global_id(0),
-                ffh);
-          }
+    cgh.parallel_for(fb->getDispatchRange(numTasks),
+        [=](sycl::nd_item<3> taskIndex, sycl::kernel_handler kh) {
+          ispc::FeatureFlagsHandler ffh(kh);
+          ispc::DebugRenderer_renderTask(&rendererSh->super,
+              fbSh,
+              cameraSh,
+              worldSh,
+              taskIDsPtr,
+              taskIndex,
+              ffh);
         });
   });
 

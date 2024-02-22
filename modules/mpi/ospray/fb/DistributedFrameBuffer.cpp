@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedFrameBuffer.h"
-#include <snappy.h>
-#include <numeric>
-#include <thread>
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "ISPCDevice.h"
 #include "TileOperation.h"
@@ -20,6 +17,10 @@
 #include "api/Device.h"
 #include "common/Collectives.h"
 #include "common/MPICommon.h"
+
+#include <snappy.h>
+#include <numeric>
+#include <thread>
 
 using namespace std::chrono;
 
@@ -91,37 +92,14 @@ void DFB::commit()
 {
   FrameBuffer::commit();
 
-  if (imageOpData) {
-    FrameBuffer *fb = static_cast<FrameBuffer *>(this);
-    void *colorBuffer = nullptr;
-    float *depthBuffer = nullptr;
-    vec3f *normalBuffer = nullptr;
-    vec3f *albedoBuffer = nullptr;
-    if (localFBonMaster) {
-      fb = localFBonMaster.get();
-      colorBuffer = localFBonMaster->colorBuffer
-          ? localFBonMaster->colorBuffer->devicePtr()
-          : nullptr;
-      depthBuffer = localFBonMaster->depthBuffer
-          ? localFBonMaster->depthBuffer->devicePtr()
-          : nullptr;
-      normalBuffer = localFBonMaster->normalBuffer
-          ? localFBonMaster->normalBuffer->devicePtr()
-          : nullptr;
-      albedoBuffer = localFBonMaster->albedoBuffer
-          ? localFBonMaster->albedoBuffer->devicePtr()
-          : nullptr;
-    }
-
-    FrameBufferView fbv(fb,
-        getColorBufferFormat(),
-        getNumPixels(),
-        colorBuffer,
-        depthBuffer,
-        normalBuffer,
-        albedoBuffer);
-
-    prepareLiveOpsForFBV(fbv, localFBonMaster != nullptr, true);
+  if (localFBonMaster) {
+    // We need image operations to be added to inner local FB as well, the local
+    // FB possess complete image and is responsible for post-processing
+    // execution
+    if (hasParam("imageOperation"))
+      localFBonMaster->setParam("imageOperation",
+          static_cast<ManagedObject *>(getParamObject<Data>("imageOperation")));
+    localFBonMaster->commit();
   }
 }
 
@@ -129,6 +107,7 @@ mpicommon::Group DFB::getMPIGroup()
 {
   return mpiGroup;
 }
+
 void DFB::startNewFrame(const float errorThreshold)
 {
   {
@@ -136,16 +115,13 @@ void DFB::startNewFrame(const float errorThreshold)
     nextTileWrite = 0;
     tileBufferOffsets.clear();
   }
-  if (getSh()->colorBufferFormat != OSP_FB_NONE) {
+  if (colorBufferFormat != OSP_FB_NONE) {
     RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
         "startFrame::reserveTileGatherBuf", "DFB"));
     // Allocate a conservative upper bound of space which we'd need to
     // store the compressed tiles
-    const size_t uncompressedSize = masterMsgSize(getSh()->colorBufferFormat,
-        hasDepthBuffer,
-        hasNormalBuffer,
-        hasAlbedoBuffer,
-        hasIDBuf());
+    const size_t uncompressedSize = masterMsgSize(
+        hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer, hasIDBuf());
     const size_t compressedSize = snappy::MaxCompressedLength(uncompressedSize);
     tileGatherBuffer.resize(myTiles.size() * compressedSize, 0);
     RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
@@ -171,7 +147,7 @@ void DFB::startNewFrame(const float errorThreshold)
 
     tileErrorRegion.sync();
 
-    if (getSh()->colorBufferFormat == OSP_FB_NONE) {
+    if (colorBufferFormat == OSP_FB_NONE) {
       std::lock_guard<std::mutex> errsLock(tileErrorsMutex);
       tileIDs.clear();
       tileErrors.clear();
@@ -196,7 +172,7 @@ void DFB::startNewFrame(const float errorThreshold)
     globalTilesCompletedThisFrame = 0;
     numTilesCompletedThisFrame = 0;
     for (uint32_t t = 0; t < getGlobalTotalTiles(); t++) {
-      if (hasAccumBuffer && tileError(t) <= errorThreshold) {
+      if (doAccumulation() && tileError(t) <= errorThreshold) {
         if (allTiles[t]->mine()) {
           numTilesCompletedThisFrame++;
         }
@@ -254,15 +230,11 @@ void DistributedFrameBuffer::setSparseFBLayerCount(size_t numLayers)
   // this needs data from all ranks rendering a given tile
   const int channelFlags =
       getChannelFlags() & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE);
-  const bool sparseFbTrackAccumIDs = getChannelFlags() & OSP_FB_ACCUM;
   // Allocate any new layers that have been added to the DFB
   for (size_t i = 1; i < layers.size(); ++i) {
     if (!layers[i]) {
-      layers[i] = rkcommon::make_unique<SparseFrameBuffer>(getISPCDevice(),
-          size,
-          getColorBufferFormat(),
-          channelFlags,
-          sparseFbTrackAccumIDs);
+      layers[i] = rkcommon::make_unique<SparseFrameBuffer>(
+          getISPCDevice(), size, getColorBufferFormat(), channelFlags);
     }
   }
 }
@@ -328,14 +300,9 @@ void DFB::createTiles()
     channels |= OSP_FB_ALBEDO;
   }
 
-  const bool sparseFbTrackAccumIDs = getChannelFlags() & OSP_FB_ACCUM;
   if (layers.empty()) {
-    layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(getISPCDevice(),
-        size,
-        OSP_FB_NONE,
-        channels,
-        myTileIDs,
-        sparseFbTrackAccumIDs));
+    layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(
+        getISPCDevice(), size, OSP_FB_NONE, channels, myTileIDs));
   } else {
     layers[0]->setTiles(myTileIDs);
     layers[0]->clear();
@@ -376,53 +343,7 @@ const void *DFB::mapBuffer(OSPFrameBufferChannel channel)
         "#osp:mpi:dfb: tried to 'ospMap()' a frame "
         "buffer that doesn't have a host-side correspondence");
   }
-
-  const void *buf = nullptr;
-
-  // DFB writes directly to the localFB's host-side memory, so we don't want
-  // to call map/unmap here because it'll copy over the unused/empty GPU
-  // buffers for the channel.
-  switch (channel) {
-  case OSP_FB_COLOR: {
-    buf = localFBonMaster->colorBuffer ? localFBonMaster->colorBuffer->data()
-                                       : nullptr;
-  } break;
-  case OSP_FB_DEPTH: {
-    buf = localFBonMaster->depthBuffer ? localFBonMaster->depthBuffer->data()
-                                       : nullptr;
-  } break;
-  case OSP_FB_NORMAL: {
-    buf = localFBonMaster->normalBuffer ? localFBonMaster->normalBuffer->data()
-                                        : nullptr;
-  } break;
-  case OSP_FB_ALBEDO: {
-    buf = localFBonMaster->albedoBuffer ? localFBonMaster->albedoBuffer->data()
-                                        : nullptr;
-  } break;
-  case OSP_FB_ID_PRIMITIVE: {
-    buf = localFBonMaster->primitiveIDBuffer
-        ? localFBonMaster->primitiveIDBuffer->data()
-        : nullptr;
-  } break;
-  case OSP_FB_ID_OBJECT: {
-    buf = localFBonMaster->objectIDBuffer
-        ? localFBonMaster->objectIDBuffer->data()
-        : nullptr;
-  } break;
-  case OSP_FB_ID_INSTANCE: {
-    buf = localFBonMaster->instanceIDBuffer
-        ? localFBonMaster->instanceIDBuffer->data()
-        : nullptr;
-  } break;
-  default:
-    break;
-  }
-
-  if (buf) {
-    this->refInc();
-  }
-
-  return buf;
+  return localFBonMaster->mapBuffer(channel);
 }
 
 void DFB::unmap(const void *mappedMem)
@@ -433,9 +354,7 @@ void DFB::unmap(const void *mappedMem)
         "buffer that doesn't have a host-side color "
         "buffer");
   }
-  if (mappedMem) {
-    this->refDec();
-  }
+  localFBonMaster->unmap(mappedMem);
 }
 
 void DFB::waitUntilFinished()
@@ -460,9 +379,9 @@ void DFB::waitUntilFinished()
 
   RKCOMMON_IF_TRACING_ENABLED(
       rkcommon::tracing::beginEvent("finalGather", "DFB"));
-  if (getSh()->colorBufferFormat != OSP_FB_NONE) {
+  if (colorBufferFormat != OSP_FB_NONE) {
     gatherFinalTiles();
-  } else if (hasVarianceBuffer) {
+  } else if (hasVarianceBuf()) {
     gatherFinalErrors();
   }
   RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
@@ -479,8 +398,7 @@ void DFB::processMessage(WriteTileMessage *msg)
   td->process(tile);
 }
 
-template <typename ColorT>
-void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
+void DistributedFrameBuffer::processMessage(MasterTileMessage_FB *msg)
 {
   if (hasVarianceBuffer) {
     const vec2i tileID = msg->coords / TILE_SIZE;
@@ -491,14 +409,14 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
 
   vec2i numPixels = getNumPixels();
 
-  MasterTileMessage_FB_Depth<ColorT> *depth = nullptr;
+  MasterTileMessage_FB_Depth *depth = nullptr;
   if (hasDepthBuffer && msg->command & MASTER_TILE_HAS_DEPTH) {
-    depth = reinterpret_cast<MasterTileMessage_FB_Depth<ColorT> *>(msg);
+    depth = reinterpret_cast<MasterTileMessage_FB_Depth *>(msg);
   }
 
-  MasterTileMessage_FB_Depth_Aux<ColorT> *aux = nullptr;
+  MasterTileMessage_FB_Depth_Aux *aux = nullptr;
   if (msg->command & MASTER_TILE_HAS_AUX)
-    aux = reinterpret_cast<MasterTileMessage_FB_Depth_Aux<ColorT> *>(msg);
+    aux = reinterpret_cast<MasterTileMessage_FB_Depth_Aux *>(msg);
 
   uint32 *pidBuf = nullptr;
   uint32 *gidBuf = nullptr;
@@ -510,12 +428,12 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
     uint8 *data = reinterpret_cast<uint8 *>(msg);
     if (!aux) {
       if (depth) {
-        data += sizeof(MasterTileMessage_FB_Depth<ColorT>);
+        data += sizeof(MasterTileMessage_FB_Depth);
       } else {
-        data += sizeof(MasterTileMessage_FB<ColorT>);
+        data += sizeof(MasterTileMessage_FB);
       }
     } else {
-      data += sizeof(MasterTileMessage_FB_Depth_Aux<ColorT>);
+      data += sizeof(MasterTileMessage_FB_Depth_Aux);
     }
     // All IDs are sent if any were requested, however we need to write only the
     // ones that actually exist in the local FB since it doesn't allocate
@@ -535,8 +453,9 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
 
   // TODO: Here we're just accessing the local fb on the host, but have it
   // allocated in USM. Will work, but maybe wasting some USM space?
-  ColorT *color =
-      reinterpret_cast<ColorT *>(localFBonMaster->colorBuffer->data());
+  vec4f *color = (localFBonMaster->colorBuffer)
+      ? localFBonMaster->colorBuffer->data()
+      : nullptr;
   for (int iy = 0; iy < TILE_SIZE; iy++) {
     int iiy = iy + msg->coords.y;
     if (iiy >= numPixels.y) {
@@ -549,7 +468,9 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
         continue;
       }
 
-      color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
+      if (color) {
+        color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
+      }
       if (depth) {
         (*localFBonMaster->depthBuffer)[iix + iiy * numPixels.x] =
             depth->depth[ix + iy * TILE_SIZE];
@@ -588,31 +509,13 @@ bool DFB::hasIDBuf() const
 
 void DFB::tileIsFinished(LiveTileOperation *tile)
 {
-  // Run any pixel operations we have for this tile
-  if (!pixelOpShs.empty()) {
-    ispc::DFB_runPixelOpsForTile(getSh(), (ispc::Tile *)&tile->finished);
-  }
-
   // Write the final colors into the color buffer
   // normalize and write final color, and compute error
-  if (getSh()->colorBufferFormat != OSP_FB_NONE) {
-    auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
-    switch (getSh()->colorBufferFormat) {
-    case OSP_FB_RGBA8:
-      DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
-      break;
-    case OSP_FB_SRGBA:
-      DFB_writeTile = &ispc::DFB_writeTile_SRGBA;
-      break;
-    default:
-      break;
-    }
+  if (colorBufferFormat != OSP_FB_NONE)
     DFB_writeTile((ispc::VaryingTile *)&tile->finished, &tile->color);
-  }
 
   auto msg = [&] {
-    MasterTileMessageBuilder msg(getSh()->colorBufferFormat,
-        hasDepthBuffer,
+    MasterTileMessageBuilder msg(hasDepthBuffer,
         hasNormalBuffer,
         hasAlbedoBuffer,
         hasIDBuf(),
@@ -629,7 +532,7 @@ void DFB::tileIsFinished(LiveTileOperation *tile)
   };
 
   // TODO still send normal & albedo?
-  if (getSh()->colorBufferFormat == OSP_FB_NONE) {
+  if (colorBufferFormat == OSP_FB_NONE) {
     std::lock_guard<std::mutex> lock(tileErrorsMutex);
     tileIDs.push_back(tile->begin / TILE_SIZE);
     tileErrors.push_back(tile->error);
@@ -718,9 +621,7 @@ void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
 {
   tasking::schedule([=]() {
     auto *msg = (TileMessage *)message->data;
-    if (msg->command & MASTER_WRITE_TILE_I8) {
-      throw std::runtime_error("#dfb: master msg should not be scheduled!");
-    } else if (msg->command & MASTER_WRITE_TILE_F32) {
+    if (msg->command & MASTER_WRITE_TILE) {
       throw std::runtime_error("#dfb: master msg should not be scheduled!");
     } else if (msg->command & WORKER_WRITE_TILE) {
       this->processMessage((WriteTileMessage *)msg);
@@ -740,11 +641,8 @@ void DFB::gatherFinalTiles()
   RKCOMMON_IF_TRACING_ENABLED(
       rkcommon::tracing::beginEvent("preGatherComputeStart", "DFB"));
 
-  const size_t tileSize = masterMsgSize(getSh()->colorBufferFormat,
-      hasDepthBuffer,
-      hasNormalBuffer,
-      hasAlbedoBuffer,
-      hasIDBuf());
+  const size_t tileSize = masterMsgSize(
+      hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer, hasIDBuf());
 
   const int totalTilesExpected =
       std::accumulate(numTilesExpected.begin(), numTilesExpected.end(), 0);
@@ -847,14 +745,9 @@ void DFB::gatherFinalTiles()
             compressedSize,
             decompressedTile);
 
-        auto *msg = reinterpret_cast<TileMessage *>(decompressedTile);
-        if (msg->command & MASTER_WRITE_TILE_I8) {
-          this->processMessage((MasterTileMessage_RGBA_I8 *)msg);
-        } else if (msg->command & MASTER_WRITE_TILE_F32) {
-          this->processMessage((MasterTileMessage_RGBA_F32 *)msg);
-        } else {
-          throw std::runtime_error("#dfb: non-master tile in final gather!");
-        }
+        MasterTileMessage_FB *msg =
+            reinterpret_cast<MasterTileMessage_FB *>(decompressedTile);
+        this->processMessage(msg);
       });
     });
     RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
@@ -960,7 +853,7 @@ void DFB::clear()
 {
   FrameBuffer::clear();
 
-  if (hasAccumBuffer) {
+  if (hasVarianceBuffer) {
     tileErrorRegion.clear();
   }
   if (localFBonMaster) {
@@ -991,9 +884,21 @@ uint32_t DFB::getGlobalTotalTiles() const
   return totalTiles.product();
 }
 
-utility::ArrayView<uint32_t> DFB::getRenderTaskIDs(float errorThreshold)
+utility::ArrayView<uint32_t> DFB::getRenderTaskIDs(
+    const float errorThreshold, const uint32_t spp)
 {
-  return layers[0]->getRenderTaskIDs(errorThreshold);
+  return layers[0]->getRenderTaskIDs(errorThreshold, spp);
+}
+
+float DFB::getVariance() const
+{
+  // TODO: No proper error calculation for DFB now,
+  // need to use FrameOp via LocalFB
+  if (mpicommon::IamTheMaster())
+    return 1.f;
+
+  // Return set value otherwise
+  return FrameBuffer::getVariance();
 }
 
 float DFB::taskError(const uint32_t) const
@@ -1006,27 +911,14 @@ float DFB::tileError(const uint32_t tileID)
   return tileErrorRegion[tileID];
 }
 
-void DFB::endFrame(const float errorThreshold, const Camera *camera)
-{
-  // only refine on master
-  if (mpicommon::IamTheMaster()) {
-    frameVariance = tileErrorRegion.refine(errorThreshold);
-  }
-  for (auto &l : layers) {
-    l->endFrame(errorThreshold, camera);
-  }
-
-  setCompletedEvent(OSP_FRAME_FINISHED);
-}
-
-AsyncEvent DFB::postProcess(const Camera *camera, bool)
+AsyncEvent DFB::postProcess(bool wait)
 {
   AsyncEvent event;
-  if (localFBonMaster && !frameOps.empty()) {
+  if (localFBonMaster) {
     // FrameOps are run on the device, but the DFB receives the final image
     // data over MPI into host-memory, and returns host-memory pointers
     // directly. So, we need to copy the host data to the device, run the frame
-    // ops, then copy it back. If we can receive with MPI directly into device
+    // ops. If we can receive with MPI directly into device
     // memory we can drop this first copy step. When running on the CPU device,
     // these copies will become no-ops.
     ispcrt::TaskQueue &tq = getISPCDevice().getIspcrtQueue();
@@ -1043,24 +935,7 @@ AsyncEvent DFB::postProcess(const Camera *camera, bool)
       tq.copyToDevice(*localFBonMaster->albedoBuffer);
     }
     tq.sync();
-
-    for (auto &p : frameOps) {
-      p->process(nullptr, camera);
-    }
-
-    if (localFBonMaster->colorBuffer) {
-      tq.copyToHost(*localFBonMaster->colorBuffer);
-    }
-    if (localFBonMaster->depthBuffer) {
-      tq.copyToHost(*localFBonMaster->depthBuffer);
-    }
-    if (localFBonMaster->normalBuffer) {
-      tq.copyToHost(*localFBonMaster->normalBuffer);
-    }
-    if (localFBonMaster->albedoBuffer) {
-      tq.copyToHost(*localFBonMaster->albedoBuffer);
-    }
-    tq.sync();
+    event = localFBonMaster->postProcess(wait);
   }
   return event;
 }

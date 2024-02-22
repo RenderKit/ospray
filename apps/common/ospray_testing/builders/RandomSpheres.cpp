@@ -14,7 +14,7 @@ namespace testing {
 
 struct Spheres : public detail::Builder
 {
-  Spheres() = default;
+  Spheres(OSPSphereType type);
   ~Spheres() override = default;
 
   void commit() override;
@@ -24,10 +24,13 @@ struct Spheres : public detail::Builder
  private:
   // Data //
 
+  OSPSphereType sphereType;
   int numSpheres{100};
 };
 
 // Inlined definitions ////////////////////////////////////////////////////
+
+Spheres::Spheres(OSPSphereType type) : sphereType(type) {}
 
 void Spheres::commit()
 {
@@ -70,7 +73,12 @@ cpp::Group Spheres::buildGroup() const
   // create the sphere geometry, and assign attributes
   cpp::Geometry spheresGeometry("sphere");
 
+  spheresGeometry.setParam("type", sphereType);
   spheresGeometry.setParam("sphere.position", cpp::CopiedData(s_center));
+  if (sphereType == OSP_ORIENTED_DISC) {
+    spheresGeometry.setParam("sphere.normal", cpp::CopiedData(s_center));
+  }
+
   spheresGeometry.setParam("sphere.radius", cpp::CopiedData(s_radius));
   spheresGeometry.commit();
 
@@ -100,7 +108,9 @@ cpp::Group Spheres::buildGroup() const
   return group;
 }
 
-OSP_REGISTER_TESTING_BUILDER(Spheres, random_spheres);
+OSP_REGISTER_TESTING_BUILDER(Spheres(OSP_SPHERE), random_spheres);
+OSP_REGISTER_TESTING_BUILDER(Spheres(OSP_DISC), random_discs);
+OSP_REGISTER_TESTING_BUILDER(Spheres(OSP_ORIENTED_DISC), random_oriented_discs);
 
 } // namespace testing
 } // namespace ospray

@@ -6,12 +6,14 @@
 // ospray stuff
 #include "../geometry/GeometricModel.ih"
 #include "DifferentialGeometry.ih"
-#include "MotionTransform.ih"
+#include "OSPCommon.ih"
 #include "Ray.ih"
 // c++ shared
 #include "GroupShared.h"
 #include "InstanceShared.h"
 #include "common/FeatureFlagsEnum.h"
+
+#include "rkcommon/math/AffineSpace.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -20,20 +22,22 @@ struct Renderer;
 inline uniform AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const uniform float time)
 {
-#ifndef OSPRAY_TARGET_SYCL
-  // TODO: rtcGetGeometryTransform is not callable on the device yet
-  return getInterpolatedTransform(self->geom, time);
-#else
-  (void)time;
-  return self->xfm;
-#endif
+  uniform AffineSpace3f xfm;
+  rtcGetGeometryTransformFromScene(
+      self->scene, self->geomID, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+
+  return xfm;
 }
 
 #ifndef OSPRAY_TARGET_SYCL
 inline AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const float time)
 {
-  return getInterpolatedTransform(self->geom, time);
+  AffineSpace3f xfm;
+  rtcGetGeometryTransformFromScene(
+      self->scene, self->geomID, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+
+  return xfm;
 }
 #endif
 
@@ -47,16 +51,8 @@ inline void Instance_postIntersect(const Instance *uniform self,
 {
   GeometricModel **uniform models =
       clip ? self->group->clipModels : self->group->geometricModels;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const uint32 geomID = ray.geomID;
-#else
-  foreach_unique (geomID in ray.geomID) {
-#endif
-    GeometricModel_postIntersect(
-        *(models + geomID), renderer, dg, ray, flags, ffh);
-  }
+  foreach_unique (geomID in ray.geomID)
+    GeometricModel_postIntersect(models[geomID], renderer, dg, ray, flags, ffh);
 
   dg.instID =
       (self->userID == RTC_INVALID_GEOMETRY_ID) ? ray.instID : self->userID;
@@ -64,19 +60,12 @@ inline void Instance_postIntersect(const Instance *uniform self,
   uniform AffineSpace3f uxfm = self->xfm;
   uniform AffineSpace3f rcp_uxfm = self->rcp_xfm;
 
-  // TODO: rtcGetGeometryTransform is not callable on the device yet, so motion
-  // blur not supported
-#ifndef OSPRAY_TARGET_SYCL
-  if ((flags & DG_MOTIONBLUR) == DG_MOTIONBLUR && self->motionBlur) {
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
+  if ((flags & DG_MOTIONBLUR) == DG_MOTIONBLUR && self->motionBlur
+      && (ffg & FFG_MOTION_BLUR)) {
     uniform float utime;
     uniform int cnt = 0;
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      // SYCL execution in a thread is scalar
-      const float t = ray.time;
-#else
     foreach_unique (t in ray.time) {
-#endif
       utime = t;
       cnt++;
     }
@@ -102,7 +91,6 @@ inline void Instance_postIntersect(const Instance *uniform self,
       rcp_uxfm = rcp(uxfm);
     }
   }
-#endif
 
   dg.lP = xfmPoint(rcp_uxfm, dg.P);
   dg.Ns = xfmVector(transposed(rcp_uxfm.l), dg.Ns);

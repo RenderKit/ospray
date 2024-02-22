@@ -1,15 +1,3 @@
-From 8dfd5804447a1f35c15e650737fee3694bc71f26 Mon Sep 17 00:00:00 2001
-From: Florian Reibold <florian.reibold@intel.com>
-Date: Mon, 6 Feb 2023 17:29:44 +0100
-Subject: [PATCH] fix LoadLibraryA
-
----
- src/null_platform.h  |  2 +-
- src/wgl_context.c    |  2 +-
- src/win32_init.c     | 12 ++++++------
- src/win32_platform.h |  2 +-
- 4 files changed, 9 insertions(+), 9 deletions(-)
-
 diff --git a/src/null_platform.h b/src/null_platform.h
 index 708975d1..d916b922 100644
 --- a/src/null_platform.h
@@ -24,10 +12,10 @@ index 708975d1..d916b922 100644
   #define _glfw_dlsym(handle, name) GetProcAddress((HMODULE) handle, name)
  #else
 diff --git a/src/wgl_context.c b/src/wgl_context.c
-index 72ad11de..5c42fa81 100644
+index eebf6cd5..8a72d676 100644
 --- a/src/wgl_context.c
 +++ b/src/wgl_context.c
-@@ -416,7 +416,7 @@ GLFWbool _glfwInitWGL(void)
+@@ -405,7 +405,7 @@ GLFWbool _glfwInitWGL(void)
      if (_glfw.wgl.instance)
          return GLFW_TRUE;
  
@@ -95,7 +83,7 @@ index 885f32fa..5e698cc2 100644
      {
          _glfw.win32.ntdll.RtlVerifyVersionInfo_ = (PFN_RtlVerifyVersionInfo)
 diff --git a/src/win32_platform.h b/src/win32_platform.h
-index bf703d7e..55b8425b 100644
+index e729709f..4a7d8068 100644
 --- a/src/win32_platform.h
 +++ b/src/win32_platform.h
 @@ -289,7 +289,7 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR)(
@@ -107,6 +95,3 @@ index bf703d7e..55b8425b 100644
  #define _glfw_dlclose(handle) FreeLibrary((HMODULE) handle)
  #define _glfw_dlsym(handle, name) GetProcAddress((HMODULE) handle, name)
  
--- 
-2.38.1.windows.1
-

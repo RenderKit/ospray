@@ -3,16 +3,18 @@
 
 #pragma once
 
-#include <atomic>
 // ospray
 #include "ISPCDeviceObject.h"
-#include "PixelOp.h"
 #include "common/Data.h"
 #include "common/FeatureFlagsEnum.h"
+#include "fb/ImageOp.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "FrameBufferShared.h"
+
+#include <atomic>
+#include <random>
 
 namespace ospray {
 
@@ -55,7 +57,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   // Get the device-side render task IDs
   virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
-      float errorThreshold) = 0;
+      const float errorThreshold, const uint32_t spp) = 0;
 
   // get number of pixels in x and y diretion
   vec2i getNumPixels() const;
@@ -63,17 +65,14 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   // get the color format type for this Buffer
   ColorBufferFormat getColorBufferFormat() const;
 
-  float getVariance() const;
+  virtual float getVariance() const;
 
   virtual float taskError(const uint32_t taskID) const = 0;
 
   virtual void beginFrame();
 
-  // end the frame and run any final post-processing frame ops
-  virtual void endFrame(const float errorThreshold, const Camera *camera) = 0;
-
   // Invoke post-processing by calling all FrameOps
-  virtual AsyncEvent postProcess(const Camera *camera, bool wait) = 0;
+  virtual AsyncEvent postProcess(bool wait) = 0;
 
   // common function to help printf-debugging, every derived class should
   // override this
@@ -88,7 +87,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual void cancelFrame();
   bool frameCancelled() const;
 
-  bool hasAccumBuf() const;
+  bool hasColorBuf() const;
   bool hasVarianceBuf() const;
   bool hasNormalBuf() const;
   bool hasAlbedoBuf() const;
@@ -96,27 +95,26 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   bool hasObjectIDBuf() const;
   bool hasInstanceIDBuf() const;
 
+  bool doAccumulation() const;
+
   uint32 getChannelFlags() const;
 
-  int32 getFrameID() const;
+  int32_t getFrameID() const;
+  void setFrameID(int32_t id);
 
   FeatureFlags getFeatureFlags() const;
 
+#ifdef OSPRAY_TARGET_SYCL
+  sycl::nd_range<3> getDispatchRange(const size_t numTasks) const;
+#endif
+
  protected:
-  // Fill vectors with instantiated live objects
-  void prepareLiveOpsForFBV(
-      FrameBufferView &fbv, bool fillFrameOps = true, bool fillPixelOps = true);
-
   const vec2i size;
+  ColorBufferFormat colorBufferFormat;
 
-  int32_t frameID{-1};
-
-  // indicates whether the app requested this frame buffer to have
-  // an (application-mappable) depth buffer
+  // Frame buffer optional buffers
+  bool hasColorBuffer;
   bool hasDepthBuffer;
-  // indicates whether the app requested this frame buffer to have
-  // an accumulation buffer
-  bool hasAccumBuffer;
   bool hasVarianceBuffer;
   bool hasNormalBuffer;
   bool hasAlbedoBuffer;
@@ -124,25 +122,88 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   bool hasObjectIDBuffer;
   bool hasInstanceIDBuffer;
 
-  float frameVariance{0.f};
+  // indicates whether the app requested this frame buffer to do accumulation
+  bool doAccum;
+
+  float frameVariance{inf};
 
   std::atomic<bool> cancelRender{false};
 
   std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
   Ref<const DataT<ImageOp *>> imageOpData;
-  std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;
-  std::vector<std::unique_ptr<LivePixelOp>> pixelOps;
-  std::vector<ispc::LivePixelOp *> pixelOpShs;
 
   FeatureFlagsOther featureFlags{FFO_NONE};
+
+  int32_t minimumAdaptiveFrames(const uint32_t spp) const;
+
+ private:
+  // for consistent reproducability of variance accumulation
+  constexpr static uint32_t mtSeed = 43;
+  std::mt19937 mtGen{mtSeed};
+  bool pickOdd{false};
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
 
+inline vec2i FrameBuffer::getNumPixels() const
+{
+  return size;
+}
+
+inline FrameBuffer::ColorBufferFormat FrameBuffer::getColorBufferFormat() const
+{
+  return colorBufferFormat;
+}
+
+inline bool FrameBuffer::hasColorBuf() const
+{
+  return hasColorBuffer;
+}
+
+inline bool FrameBuffer::hasVarianceBuf() const
+{
+  return hasVarianceBuffer;
+}
+
+inline bool FrameBuffer::hasNormalBuf() const
+{
+  return hasNormalBuffer;
+}
+
+inline bool FrameBuffer::hasAlbedoBuf() const
+{
+  return hasAlbedoBuffer;
+}
+
+inline bool FrameBuffer::hasPrimitiveIDBuf() const
+{
+  return hasPrimitiveIDBuffer;
+}
+
+inline bool FrameBuffer::hasObjectIDBuf() const
+{
+  return hasObjectIDBuffer;
+}
+
+inline bool FrameBuffer::hasInstanceIDBuf() const
+{
+  return hasInstanceIDBuffer;
+}
+
+inline bool FrameBuffer::doAccumulation() const
+{
+  return doAccum;
+}
+
 inline int32_t FrameBuffer::getFrameID() const
 {
-  return frameID;
+  return getSh()->frameID;
+}
+
+inline void FrameBuffer::setFrameID(int32_t id)
+{
+  getSh()->frameID = id;
 }
 
 inline FeatureFlags FrameBuffer::getFeatureFlags() const
@@ -150,6 +211,20 @@ inline FeatureFlags FrameBuffer::getFeatureFlags() const
   FeatureFlags ff;
   ff.other = featureFlags;
   return ff;
+}
+
+#ifdef OSPRAY_TARGET_SYCL
+inline sycl::nd_range<3> FrameBuffer::getDispatchRange(
+    const size_t numTasks) const
+{
+  const vec2i ts = getRenderTaskSize();
+  return sycl::nd_range<3>({numTasks, ts.y, ts.x}, {1, ts.y, ts.x});
+}
+#endif
+
+inline int32_t FrameBuffer::minimumAdaptiveFrames(const uint32_t spp) const
+{
+  return std::max(2u, 16 / spp);
 }
 
 } // namespace ospray

@@ -10,239 +10,65 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// write tile into the given frame buffer's color buffer,
-// this buffer _must_ exist when this fct is called, and it
-// _must_ have format 'name'
-#define template_writeTile(name, type, cvt)                                    \
-export SYCL_EXTERNAL void LocalFrameBuffer_writeTile_##name(                   \
-      void *uniform _fb, const void *uniform _tile)                            \
-  {                                                                            \
-    Tile *uniform tile = (Tile * uniform) _tile;                               \
-    uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;             \
-    uniform type *uniform color = (uniform type * uniform) fb->colorBuffer;    \
-    if (!color)                                                                \
-      /* actually, this should never happen ... */                             \
-      return;                                                                  \
-                                                                               \
-    color += (uniform uint64)tile->region.lower.y * fb->super.size.x;          \
-    VaryingTile *uniform varyTile = (VaryingTile * uniform) tile;              \
-    for (uniform uint32 iiy = tile->region.lower.y;                            \
-         iiy < (uniform uint32)tile->region.upper.y;                           \
-         iiy++) {                                                              \
-      uniform uint32 chunkID =                                                 \
-          (iiy - tile->region.lower.y) * (TILE_SIZE / programCount);           \
-      for (uint32 iix = tile->region.lower.x + programIndex;                   \
-           iix < (uniform uint32)tile->region.upper.x;                         \
-           iix += programCount, chunkID++) {                                   \
-        type cvtCol;                                                           \
-        unmasked                                                               \
-        {                                                                      \
-          varying vec4f col = make_vec4f(varyTile->r[chunkID],                 \
-              varyTile->g[chunkID],                                            \
-              varyTile->b[chunkID],                                            \
-              varyTile->a[chunkID]);                                           \
-                                                                               \
-          cvtCol = cvt(col);                                                   \
-        }                                                                      \
-        color[iix] = cvtCol;                                                   \
-      }                                                                        \
-      color += fb->super.size.x;                                               \
-    }                                                                          \
-  }
-
-template_writeTile(RGBA8, uint32, cvt_uint32);
-template_writeTile(SRGBA, uint32, linear_to_srgba8);
-inline vec4f cvt_nop(const vec4f &v)
-{
-  return v;
-};
-template_writeTile(RGBA32F, vec4f, cvt_nop);
-#undef template_writeTile
-
-// Write the samples into the given frame buffers color buffer in the color
-// buffer's format
-#define template_writeSample(name, type, cvt)                                  \
-  inline void LocalFB_writeSample_##name(                                      \
-      LocalFB *uniform fb, vec4f &col, const int pixelID)                      \
-  {                                                                            \
-    uniform type *uniform color = (uniform type * uniform) fb->colorBuffer;    \
-    if (!color)                                                                \
-      /* actually, this should never happen ... */                             \
-      return;                                                                  \
-                                                                               \
-    const type cvtCol = cvt(col);                                              \
-    color[pixelID] = cvtCol;                                                   \
-  }
-
-template_writeSample(RGBA8, uint32, cvt_uint32);
-template_writeSample(SRGBA, uint32, linear_to_srgba8);
-template_writeSample(RGBA32F, vec4f, cvt_nop);
-#undef template_writeSample
-
-/* Accumulates the screenSample color and alpha into the framebuffer's
- * accumulation buffer. The accumulation buffer will store
- *
- *     prevAccum + sampleValue
- *
- * while the returned current accumulated color will be
- *
- *    (prevAccum + sampleValue) / numAccumulated
- *
- * I.e., the color to be written to the final framebuffer for display for
- * the current frame
- *
- * Variance and error computation based based on
- * Dammertz et al., "A Hierarchical Automatic Stopping Condition for Monte Carlo
- * Global Illumination", WSCG 2010
- */
-inline vec4f LocalFB_accumulateColorSample(LocalFB *uniform fb,
-    const ScreenSample &screenSample,
-    const int pixelID,
-    uniform RenderTaskDesc &taskDesc)
-{
-  uniform vec4f *uniform accum = fb->accumBuffer;
-  uniform vec4f *uniform variance = fb->varianceBuffer;
-  const uniform float accScale = rcpf(taskDesc.accumID + 1);
-  const uniform float accHalfScale = rcpf(taskDesc.accumID / 2 + 1);
-
-  const vec4f sampleValue = make_vec4f(screenSample.rgb, screenSample.alpha);
-
-  vec4f acc = make_vec4f(0.f);
-  if (taskDesc.accumID > 0) {
-    acc = accum[pixelID];
-  }
-  acc = acc + sampleValue;
-  accum[pixelID] = acc;
-
-  acc = acc * accScale;
-
-  // Variance and error buffers accumulate every other frame to ensure we get a
-  // monotonically decreasing sequence of error values
-  if (variance && (taskDesc.accumID & 1)) {
-    vec4f vari = make_vec4f(0.f);
-    if (taskDesc.accumID > 1) {
-      vari = variance[pixelID];
-    }
-    vari = vari + sampleValue;
-    variance[pixelID] = vari;
-
-    float err = 0.f;
-    // Invert alpha (bright alpha is more important)
-    const float den2 = reduce_add(make_vec3f(acc)) + (1.f - acc.w);
-    if (den2 > 0.f) {
-      const vec4f diff = absf(acc - accHalfScale * vari);
-      err += reduce_add(diff) * rsqrtf(den2);
-    }
-    // We sum over the task because we may have more pixels in the task than
-    // the SIMD width
-    taskDesc.error += reduce_add(err);
-  }
-  return acc;
-}
-
-inline void LocalFB_accumulateDepth(LocalFB *uniform fb,
-    const float &sampleDepth,
-    const int pixelID,
-    const uniform int accumID)
-{
-  uniform float *uniform depth = (uniform float *uniform)fb->depthBuffer;
-
-  float acc = accumID > 0 ? depth[pixelID] : inf;
-  depth[pixelID] = min(acc, sampleDepth);
-}
-
-inline void LocalFB_accumulateAux(uniform vec3f *uniform auxBuffer,
-    const vec3f &sampleAux,
-    const int pixelID,
-    const uniform int accumID)
-{
-  const uniform float accScale = rcpf(accumID + 1);
-
-  vec3f acc = accumID > 0 ? auxBuffer[pixelID] : make_vec3f(0.f);
-  acc = (acc * accumID + sampleAux) * accScale;
-  auxBuffer[pixelID] = acc;
-}
-
-/* Write the samples into the framebuffer. Accumulates color (if accumulation is
- * enabled) and writes aux channels (depth, normal, albedo) that the framebuffer
- * has and writes the accumulated color in to the framebuffer for display.
- */
 SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     const varying ScreenSample &screenSample,
-    uniform RenderTaskDesc &taskDesc)
+    uniform RenderTaskDesc &)
 {
   LocalFB *uniform fb = (LocalFB * uniform) _fb;
   const int pixelID =
       screenSample.sampleID.x + fb->super.size.x * screenSample.sampleID.y;
 
-  // Default final color is the current sample color, used if we don't have
-  // accumulation enabled
-  vec4f finalColor = make_vec4f(screenSample.rgb, screenSample.alpha);
-  if (fb->accumBuffer) {
-    finalColor =
-        LocalFB_accumulateColorSample(fb, screenSample, pixelID, taskDesc);
+  // Calculate accumulation scale
+  const uniform int accumID = fb->super.frameID;
+  const uniform float accScale =
+      (fb->super.doAccumulation) ? rcpf(accumID + 1) : 1.f;
+
+  // Accumulate color
+  const vec4f colorSample = make_vec4f(screenSample.rgb, screenSample.alpha);
+  if (fb->colorBuffer)
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->colorBuffer[pixelID], colorSample, accScale);
+
+  // Accumulate color in variance buffer
+  if (fb->super.accumulateVariance) {
+    const uniform float accVarScale = rcpf(accumID / 2 + 1);
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->varianceBuffer[pixelID], colorSample, accVarScale);
   }
 
-  float depth = inf;
+  // Accumulate depth buffer
   if (fb->depthBuffer) {
-    LocalFB_accumulateDepth(fb, screenSample.z, pixelID, taskDesc.accumID);
-
-    depth = fb->depthBuffer[pixelID];
+    if (fb->super.doAccumulation) {
+      float acc = accumID > 0 ? fb->depthBuffer[pixelID] : inf;
+      fb->depthBuffer[pixelID] = min(acc, screenSample.z);
+    } else {
+      fb->depthBuffer[pixelID] = screenSample.z;
+    }
   }
 
-  vec3f normal = make_vec3f(0.f);
-  if (fb->normalBuffer) {
-    LocalFB_accumulateAux(
-        fb->normalBuffer, screenSample.normal, pixelID, taskDesc.accumID);
+  // Accumulate normal buffer
+  if (fb->normalBuffer)
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->normalBuffer[pixelID], screenSample.normal, accScale);
 
-    normal = fb->normalBuffer[pixelID];
-  }
-
-  vec3f albedo = make_vec3f(0.f);
-  if (fb->albedoBuffer) {
-    LocalFB_accumulateAux(
-        fb->albedoBuffer, screenSample.albedo, pixelID, taskDesc.accumID);
-
-    albedo = fb->albedoBuffer[pixelID];
-  }
+  // Accumulate albedo buffer
+  if (fb->albedoBuffer)
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->albedoBuffer[pixelID], screenSample.albedo, accScale);
 
   if (fb->primitiveIDBuffer) {
-    if (taskDesc.accumID == 0)
+    if (accumID == 0)
       fb->primitiveIDBuffer[pixelID] = screenSample.primID;
   }
 
   if (fb->objectIDBuffer) {
-    if (taskDesc.accumID == 0)
+    if (accumID == 0)
       fb->objectIDBuffer[pixelID] = screenSample.geomID;
   }
 
   if (fb->instanceIDBuffer) {
-    if (taskDesc.accumID == 0)
+    if (accumID == 0)
       fb->instanceIDBuffer[pixelID] = screenSample.instID;
-  }
-
-  // Run any pixel ops for this pixel
-  // TODO: Best as inline in this kernel? Or a separate kernel?
-  finalColor =
-      FrameBuffer_runPixelOps(&fb->super, finalColor, depth, normal, albedo);
-
-  // Write the final color out to the color buffer in the color format
-  // requested by the app
-  if (fb->colorBuffer) {
-    switch (fb->super.colorBufferFormat) {
-    case OSP_FB_RGBA8:
-      LocalFB_writeSample_RGBA8(fb, finalColor, pixelID);
-      break;
-    case OSP_FB_SRGBA:
-      LocalFB_writeSample_SRGBA(fb, finalColor, pixelID);
-      break;
-    case OSP_FB_RGBA32F:
-      LocalFB_writeSample_RGBA32F(fb, finalColor, pixelID);
-      break;
-    default:
-      // Nothing to do for color format none
-      break;
-    }
   }
 
 #ifndef OSPRAY_TARGET_SYCL
@@ -256,7 +82,6 @@ SYCL_EXTERNAL uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
   LocalFB *uniform fb = (LocalFB * uniform) _fb;
   uniform RenderTaskDesc desc;
   desc.taskID = taskID;
-  desc.accumID = fb->taskAccumID ? fb->taskAccumID[taskID] : 0;
   desc.error = 0.f;
 
   uniform vec2i renderTaskSize = fb->super.renderTaskSize;
@@ -268,24 +93,35 @@ SYCL_EXTERNAL uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
 }
 
 SYCL_EXTERNAL void LocalFB_completeTask(
-    FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc)
+    FrameBuffer *uniform, const uniform RenderTaskDesc &)
 {
-  LocalFB *uniform fb = (LocalFB * uniform) _fb;
+  // Do nothing
+}
 
-  // Write error for the task every other frame to get a monotonically
-  // decreasing sequence of error values
-  if (fb->varianceBuffer && (taskDesc.accumID & 1)) {
-    // Scale to be backwards compatible with the old default tile/task
-    // size of 64x64
-    const uniform vec2i dia = box_size(taskDesc.region);
-    const uniform float taskSize = (uniform float)dia.x * dia.y;
-    fb->taskRegionError[taskDesc.taskID] =
-        taskDesc.error * rcp(taskSize) * 64.f;
-  }
+// TODO: Unify all writeTile functions below into a single one
+export SYCL_EXTERNAL void LocalFrameBuffer_writeColorTile(
+    void *uniform _fb, const void *uniform _tile)
+{
+  Tile *uniform tile = (Tile * uniform) _tile;
+  uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;
+  uniform vec4f *uniform color = (uniform vec4f * uniform) fb->colorBuffer;
 
-  // Increment accumID for this task
-  if (fb->taskAccumID) {
-    fb->taskAccumID[taskDesc.taskID] = taskDesc.accumID + 1;
+  color += (uniform uint64)tile->region.lower.y * fb->super.size.x;
+  VaryingTile *uniform varyTile = (VaryingTile * uniform) tile;
+  for (uniform uint32 iiy = tile->region.lower.y;
+       iiy < (uniform uint32)tile->region.upper.y;
+       iiy++) {
+    uniform uint32 chunkID =
+        (iiy - tile->region.lower.y) * (TILE_SIZE / programCount);
+    for (uint32 iix = tile->region.lower.x + programIndex;
+         iix < (uniform uint32)tile->region.upper.x;
+         iix += programCount, chunkID++) {
+      color[iix] = make_vec4f(varyTile->r[chunkID],
+          varyTile->g[chunkID],
+          varyTile->b[chunkID],
+          varyTile->a[chunkID]);
+    }
+    color += fb->super.size.x;
   }
 }
 

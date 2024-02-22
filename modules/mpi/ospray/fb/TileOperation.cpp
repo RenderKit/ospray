@@ -31,7 +31,7 @@ void LiveTileOperation::accumulate(const ispc::Tile &tile)
       (ispc::VaryingTile *)&finished,
       (ispc::VaryingTile *)&accum,
       (ispc::VaryingTile *)&variance,
-      dfb->hasAccumBuffer,
+      dfb->doAccum,
       dfb->hasVarianceBuffer);
 
   if (dfb->hasNormalBuffer || dfb->hasAlbedoBuffer) {

@@ -16,8 +16,7 @@ void Planes_bounds(const RTCBoundsFunctionArguments *args);
 namespace ospray {
 
 Planes::Planes(api::ISPCDevice &device)
-    : AddStructShared(
-        device.getIspcrtContext(), device, FFG_PLANE | FFG_USER_GEOMETRY)
+    : AddStructShared(device.getIspcrtContext(), device, FFG_PLANE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =

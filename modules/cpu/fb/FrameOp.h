@@ -3,12 +3,16 @@
 
 #pragma once
 
-#include "ISPCDevice.h"
-#include "common/ISPCRTBuffers.h"
-#include "fb/FrameBufferView.h"
+#include "common/StructShared.h"
 #include "fb/ImageOp.h"
+// ispc shared
+#include "fb/FrameBufferView.ih"
 
 namespace ospray {
+
+namespace api {
+struct ISPCDevice;
+}
 
 struct OSPRAY_SDK_INTERFACE FrameOp : public FrameOpInterface
 {
@@ -19,21 +23,14 @@ struct OSPRAY_SDK_INTERFACE FrameOp : public FrameOpInterface
   api::ISPCDevice &device;
 };
 
-struct OSPRAY_SDK_INTERFACE LiveFrameOp : public LiveFrameOpInterface
+struct OSPRAY_SDK_INTERFACE LiveFrameOp
+    : public AddStructShared<LiveFrameOpInterface, ispc::FrameBufferView>
 {
   LiveFrameOp(api::ISPCDevice &device, FrameBufferView &fbView);
   ~LiveFrameOp() override = default;
 
  protected:
-  inline const FrameBufferView &getFBView()
-  {
-    return *fbViewSh.data();
-  }
-
   api::ISPCDevice &device;
-
- private:
-  BufferShared<FrameBufferView> fbViewSh;
 };
 
 } // namespace ospray

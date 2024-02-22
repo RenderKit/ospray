@@ -10,6 +10,8 @@ if (WIN32 AND (SYCL_COMPILER_NAME STREQUAL "icx" OR SYCL_COMPILER_NAME STREQUAL 
   include(msvc) # icx on Windows behaves like msvc
   set(CMAKE_CXX_FLAGS "/fp:precise ${CMAKE_CXX_FLAGS}")
   set(OSPRAY_COMPILER_NEEDS_X_CPP FALSE) # icx on Win does not support "-x"
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /Qoption,link,/DEPENDENTLOADFLAG:0x2000")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /Qoption,link,/DEPENDENTLOADFLAG:0x2000")
 else()
   include(clang) # DPCPP compiler is based on Clang, so bring in clang options
   set(CMAKE_CXX_FLAGS "-ffp-model=precise ${CMAKE_CXX_FLAGS}")
@@ -96,7 +98,7 @@ endif()
 option(OSPRAY_SYCL_LARGEGRF "Enable SYCL Large GRF Support" ON)
 mark_as_advanced(OSPRAY_SYCL_LARGEGRF)
 if (OSPRAY_SYCL_LARGEGRF)
-  list(APPEND OSPRAY_OCL_OPTIONS "-internal_options -cl-intel-256-GRF-per-thread")
+  list(APPEND OSPRAY_OCL_OTHER_OPTIONS "-ze-opt-large-register-file")
 endif()
 
 string(REPLACE ";" "," OSPRAY_IGC_OPTIONS_STR "${OSPRAY_IGC_OPTIONS}")

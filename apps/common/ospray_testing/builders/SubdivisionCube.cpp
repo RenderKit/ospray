@@ -29,7 +29,8 @@ cpp::Group SubdivisionCube::buildGroup() const
       {-1.0f, 1.0f, -1.0f},
       {1.0f, 1.0f, -1.0f},
       {1.0f, 1.0f, 1.0f},
-      {-1.0f, 1.0f, 1.0f}};
+      {-1.0f, 1.0f, 1.0f},
+      /*WA: pad for Embree*/ {0.0f}};
 
   // color per vertex
   std::vector<vec4f> colors = {{0.0f, 0.0f, 0.0f, 1.f},

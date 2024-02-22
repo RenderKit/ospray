@@ -17,7 +17,7 @@ float DFB_accumulateTile(const VaryingTile *uniform tile,
     VaryingTile *uniform final,
     VaryingTile *uniform accum,
     VaryingTile *uniform variance,
-    uniform bool hasAccumBuffer,
+    uniform bool doAccumulation,
     uniform bool hasVarianceBuffer);
 
 void DFB_accumulateTileSimple(const VaryingTile *uniform tile,
@@ -34,11 +34,7 @@ export uniform float DFB_computeErrorForTile(
     const VaryingTile *uniform variance,
     const uniform float accumID);
 
-void DFB_runPixelOpsForTile(void *_self, void *_tile);
-
-void DFB_writeTile_RGBA8(const VaryingTile *tile, void *_color);
-void DFB_writeTile_SRGBA(const VaryingTile *tile, void *_color);
-void DFB_writeTile_RGBA32F(const VaryingTile *tile, void *_color);
+void DFB_writeTile(const VaryingTile *tile, void *_color);
 
 void DFB_sortAndBlendFragments(
     VaryingTile *uniform *uniform tileArray, uniform int32 numTiles);

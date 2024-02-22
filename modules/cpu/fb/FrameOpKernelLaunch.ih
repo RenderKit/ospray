@@ -1,0 +1,52 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#define ROUND_RANGE(global, group) ((global - 1) / group + 1) * group
+
+#ifndef OSPRAY_TARGET_SYCL
+
+#define DEFINE_KERNEL_LAUNCHER(kernel_name)                                    \
+  task static void kernel_name##Task(const FrameBufferView *uniform self)      \
+  {                                                                            \
+    const vec2ui id =                                                          \
+        make_vec2ui(taskIndex0 * programCount + programIndex, taskIndex1);     \
+    if (id.x < self->viewDims.x)                                               \
+      kernel_name(self, id);                                                   \
+  }                                                                            \
+                                                                               \
+  export void kernel_name##Launcher(                                           \
+      const FrameBufferView *uniform self, void *uniform, void *uniform)       \
+  {                                                                            \
+    launch[ROUND_RANGE(self->viewDims.x, programCount),                        \
+        self->viewDims.y] kernel_name##Task(self);                             \
+    sync;                                                                      \
+  }
+
+#else
+
+#define DEFINE_KERNEL_LAUNCHER(kernel_name)                                    \
+  void kernel_name##Launcher(                                                  \
+      const FrameBufferView *self, void *cmdQueue, void *waitEvent)            \
+  {                                                                            \
+    const vec2ui workgroupSize = vec2ui(16, 1);                                \
+    const vec2ui roundedSize = ROUND_RANGE(self->viewDims, workgroupSize);     \
+    sycl::nd_range<2> dispatchRange(                                           \
+        {roundedSize.x, roundedSize.y}, {workgroupSize.x, workgroupSize.y});   \
+    sycl::queue *syclQueue = static_cast<sycl::queue *>(cmdQueue);             \
+    sycl::event event = syclQueue->submit([&](sycl::handler &cgh) {            \
+      cgh.parallel_for(dispatchRange, [=](sycl::nd_item<2> taskIndex) {        \
+        if (taskIndex.get_global_id(0) < self->viewDims.x)                     \
+          kernel_name(self,                                                    \
+              vec2ui(taskIndex.get_global_id(0), taskIndex.get_global_id(1))); \
+      });                                                                      \
+    });                                                                        \
+    sycl::event *syclEvent = static_cast<sycl::event *>(waitEvent);            \
+    if (!syclEvent)                                                            \
+      event.wait_and_throw();                                                  \
+    else                                                                       \
+      *syclEvent = event;                                                      \
+  }
+
+#endif

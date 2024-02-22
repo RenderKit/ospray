@@ -207,7 +207,7 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
         }
 
         // specular
-        if (specular > EPS && abs(eta - 1.f) > EPS) {
+        if (self->specular > EPS) {
           if (self->roughness < EPS) {
             DielectricLayer_Constructor((varying DielectricLayer * uniform)
                     & plasticBsdf->dielectricLayer,
@@ -229,10 +229,11 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
                 anisotropy,
                 specular);
           }
-        } else
+        } else {
           PassthroughLayer_Constructor((varying PassthroughLayer * uniform)
                   & plasticBsdf->dielectricLayer,
               &plasticBsdf->diffuse.super);
+        }
 
         MultiBSDF_add(multiBase,
             2,
@@ -333,9 +334,6 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
     varying linear3f *uniform coatFrame = frame;
 
     // clear coat
-    PassthroughLayer_Constructor((varying PassthroughLayer * uniform)
-            & bsdf->sheen.clearCoat.dielectricLayer,
-        &bsdf->sheen.clearCoat.base.super);
     if (self->coat > EPS) {
       const float coat = clamp(self->coat * get1f(self->coatMap, dg, 1.f));
       float coatIor = self->coatIor * get1f(self->coatIorMap, dg, 1.f);
@@ -346,45 +344,47 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
       coatEta =
           clamp(coatEta, 1.f / 3.f, 3.f); // clamp to common range due to LUTs
 
-      if (abs(coatEta - 1.f) > EPS) {
-        const vec3f coatColor = clamp(
-            self->coatColor * get3f(self->coatColorMap, dg, make_vec3f(1.f)));
-        const float coatThickness = max(
-            self->coatThickness * get1f(self->coatThicknessMap, dg, 1.f), 0.f);
+      const vec3f coatColor = clamp(
+          self->coatColor * get3f(self->coatColorMap, dg, make_vec3f(1.f)));
+      const float coatThickness = max(
+          self->coatThickness * get1f(self->coatThicknessMap, dg, 1.f), 0.f);
 
-        if (valid(self->coatNormalMap)) {
-          coatFrame = LinearSpace3f_create(ctx,
-              makeShadingFrame(dg,
-                  self->coatNormalMap,
-                  self->coatNormalRot,
-                  self->coatNormal));
-        }
-
-        if (self->coatRoughness < EPS) {
-          DielectricLayer_Constructor((varying DielectricLayer * uniform)
-                  & bsdf->sheen.clearCoat.dielectricLayer,
-              coatFrame,
-              &bsdf->sheen.clearCoat.base.super,
-              coatEta,
-              coatColor,
-              coatThickness,
-              coat);
-        } else {
-          const float coatRoughness = clamp(
-              self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f));
-          MicrofacetDielectricLayer_Constructor(
-              &bsdf->sheen.clearCoat.dielectricLayer,
-              super->microfacetAlbedoTables,
-              coatFrame,
-              &bsdf->sheen.clearCoat.base.super,
-              coatEta,
-              coatColor,
-              coatThickness,
-              coatRoughness,
-              0.f,
-              coat);
-        }
+      if (valid(self->coatNormalMap)) {
+        coatFrame = LinearSpace3f_create(ctx,
+            makeShadingFrame(dg,
+                self->coatNormalMap,
+                self->coatNormalRot,
+                self->coatNormal));
       }
+
+      if (self->coatRoughness < EPS || abs(coatEta - 1.f) < EPS) {
+        DielectricLayer_Constructor((varying DielectricLayer * uniform)
+                & bsdf->sheen.clearCoat.dielectricLayer,
+            coatFrame,
+            &bsdf->sheen.clearCoat.base.super,
+            coatEta,
+            coatColor,
+            coatThickness,
+            coat);
+      } else {
+        const float coatRoughness =
+            clamp(self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f));
+        MicrofacetDielectricLayer_Constructor(
+            &bsdf->sheen.clearCoat.dielectricLayer,
+            super->microfacetAlbedoTables,
+            coatFrame,
+            &bsdf->sheen.clearCoat.base.super,
+            coatEta,
+            coatColor,
+            coatThickness,
+            coatRoughness,
+            0.f,
+            coat);
+      }
+    } else {
+      PassthroughLayer_Constructor((varying PassthroughLayer * uniform)
+              & bsdf->sheen.clearCoat.dielectricLayer,
+          &bsdf->sheen.clearCoat.base.super);
     }
 
     // sheen

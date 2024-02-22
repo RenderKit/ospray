@@ -2,32 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
-#include "common/MotionTransform.ih"
+#include "common/Embree.h"
+#include "common/FeatureFlags.ih"
+#include "common/FeatureFlagsEnum.h"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
 // c++ shared
 #include "PerspectiveCameraShared.h"
 
-OSPRAY_BEGIN_ISPC_NAMESPACE
+#include "rkcommon/math/AffineSpace.ih"
 
-SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
-    varying Ray &ray,
-    const varying CameraSample &sample);
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
-    const varying CameraSample &sample)
+    const varying CameraSample &sample,
+    const uniform FeatureFlagsHandler &)
 {
-#ifndef OSPRAY_TARGET_SYCL
-  // Motion blur not supported in SYCL yet, when it is we'd do better calling
-  // initRayMB directly instead of calling into this function first to reduce
-  // our register usage
-  if (_self->motionBlur) {
-    PerspectiveCamera_initRayMB(_self, ray, sample);
-    return;
-  }
-#endif
-
   const PerspectiveCamera *uniform self =
       (const PerspectiveCamera *uniform)_self;
 
@@ -65,7 +56,8 @@ SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
 
 SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
     varying Ray &ray,
-    const varying CameraSample &sample)
+    const varying CameraSample &sample,
+    const uniform FeatureFlagsHandler &)
 {
   const PerspectiveCamera *uniform self =
       (const PerspectiveCamera *uniform)_self;
@@ -85,7 +77,10 @@ SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
 
   screen = Camera_subRegion(_self, screen);
   const float time = Camera_shutterTime(_self, screen, sample.time);
-  const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
+
+  AffineSpace3f xfm;
+  rtcGetGeometryTransformFromScene(
+      self->super.scene, 0, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
 
   vec3f org = xfmPoint(xfm, self->org);
   vec3f dir = normalize(xfmVector(xfm, self->dir_00));

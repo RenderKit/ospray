@@ -15,8 +15,10 @@ Camera::Camera(api::ISPCDevice &device, const FeatureFlagsOther featureFlags)
 
 Camera::~Camera()
 {
-  if (embreeGeometry)
+  if (embreeGeometry) {
     rtcReleaseGeometry(embreeGeometry);
+    rtcReleaseScene(embreeScene);
+  }
 }
 
 std::string Camera::toString() const
@@ -52,15 +54,19 @@ void Camera::commit()
 
   if (motionTransform.motionBlur || motionTransform.quaternion) {
     // create dummy RTCGeometry for transform interpolation or conversion
-    if (!embreeGeometry)
+    if (!embreeGeometry) {
       embreeGeometry = rtcNewGeometry(
           getISPCDevice().getEmbreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
+      embreeScene = rtcNewScene(getISPCDevice().getEmbreeDevice());
+      rtcAttachGeometryByID(embreeScene, embreeGeometry, 0);
+    }
 
     motionTransform.setEmbreeTransform(embreeGeometry);
 
     if (shutter.lower == shutter.upper || !motionTransform.motionBlur) {
       // directly interpolate to single shutter time
-      rtcGetGeometryTransform(embreeGeometry,
+      rtcGetGeometryTransformFromScene(embreeScene,
+          0,
           shutter.lower,
           RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
           &motionTransform.transform);
@@ -72,7 +78,10 @@ void Camera::commit()
     if (embreeGeometry) {
       rtcReleaseGeometry(embreeGeometry);
       embreeGeometry = nullptr;
+      rtcReleaseScene(embreeScene);
+      embreeScene = nullptr;
     }
+
     // apply transform right away
     pos = xfmPoint(motionTransform.transform, pos);
     dir = normalize(xfmVector(motionTransform.transform, dir));
@@ -91,11 +100,16 @@ void Camera::commit()
   getSh()->subImage.upper = imageEnd;
   getSh()->shutter = shutter;
   getSh()->motionBlur = motionTransform.motionBlur;
-  getSh()->geom = embreeGeometry;
+  getSh()->scene = embreeScene;
   getSh()->globalShutter = shutterType == OSP_SHUTTER_GLOBAL;
   getSh()->rollingShutterHorizontal = (shutterType == OSP_SHUTTER_ROLLING_RIGHT
       || shutterType == OSP_SHUTTER_ROLLING_LEFT);
   getSh()->rollingShutterDuration = rollingShutterDuration;
+
+  if (motionTransform.motionBlur)
+    featureFlags |= FFO_CAMERA_MOTION_BLUR;
+  else
+    featureFlags = (FeatureFlagsOther)(featureFlags & ~FFO_CAMERA_MOTION_BLUR);
 }
 
 OSPTYPEFOR_DEFINITION(Camera *);

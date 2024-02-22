@@ -29,10 +29,11 @@ struct OSPRAY_SDK_INTERFACE Mesh : public AddStructShared<Geometry, ispc::Mesh>
   Ref<const Data> indexData;
   bool motionBlur{false};
   Ref<const DataT<const DataT<vec3f> *>> motionVertexData;
-  std::vector<vec3f *> motionVertexAddr;
+  std::unique_ptr<BufferShared<vec3f *>> motionVertexAddr;
   Ref<const DataT<const DataT<vec3f> *>> motionNormalData;
-  std::vector<vec3f *> motionNormalAddr;
+  std::unique_ptr<BufferShared<vec3f *>> motionNormalAddr;
   range1f time{0.0f, 1.0f};
+  api::ISPCDevice &device;
 };
 
 } // namespace ospray

@@ -36,7 +36,7 @@ void init(mpicommon::Group parentGroup);
 
 void shutdown();
 
-void registerMessageListener(int handleObjID, MessageHandler *listener);
+void registerMessageListener(int handleObjID, maml::MessageHandler *listener);
 
 void removeMessageListener(int handleObjID);
 

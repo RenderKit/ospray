@@ -20,7 +20,7 @@ SYCL_EXTERNAL void PathTracer_renderTask(Renderer *uniform _self,
     Camera *uniform camera,
     World *uniform world,
     const uint32 *uniform taskIDs,
-    const int taskIndex0,
+    const sycl::nd_item<3> taskIndex,
     const uniform FeatureFlagsHandler &ffh);
 }
 #else
@@ -58,7 +58,7 @@ void PathTracer::commit()
   const float rl = rcp(l);
   getSh()->shadowCatcherPlane = vec4f(normal * rl, shadowCatcherPlane.w * rl);
 
-  importanceSampleGeometryLights = getParam<bool>("geometryLights", true);
+  scanForGeometryLights = getParam<bool>("geometryLights", true);
   getSh()->backgroundRefraction = getParam<bool>("backgroundRefraction", false);
 }
 
@@ -67,22 +67,18 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   if (!world)
     return nullptr;
 
-  const bool geometryLightListValid =
-      importanceSampleGeometryLights == scannedGeometryLights;
+  if (!world->pathtracerData
+      || (scanForGeometryLights
+          && !world->pathtracerData->scannedForGeometryLights)) {
+    // Create PathTracerData object
+    std::unique_ptr<PathTracerData> pathtracerData =
+        rkcommon::make_unique<PathTracerData>(
+            *world, scanForGeometryLights, *this);
 
-  if (world->pathtracerData.get() && geometryLightListValid)
-    return nullptr;
+    world->getSh()->pathtracerData = pathtracerData->getSh();
+    world->pathtracerData = std::move(pathtracerData);
+  }
 
-  // Create PathTracerData object
-  std::unique_ptr<PathTracerData> pathtracerData =
-      rkcommon::make_unique<PathTracerData>(
-          *world, importanceSampleGeometryLights, *this);
-  if (pathtracerData->getSh()->numGeoLights)
-    featureFlags.other |= FFO_LIGHT_GEOMETRY;
-
-  world->getSh()->pathtracerData = pathtracerData->getSh();
-  world->pathtracerData = std::move(pathtracerData);
-  scannedGeometryLights = importanceSampleGeometryLights;
   return nullptr;
 }
 
@@ -104,25 +100,23 @@ AsyncEvent PathTracer::renderTasks(FrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
+    if (world->pathtracerData->getSh()->numGeoLights)
+      ff.other |= FFO_LIGHT_GEOMETRY;
     ff |= featureFlags;
     ff |= fb->getFeatureFlags();
     ff |= camera->getFeatureFlags();
     cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
 
-    const sycl::nd_range<1> dispatchRange =
-        device.computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange,
-        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
-          if (taskIndex.get_global_id(0) < numTasks) {
-            ispc::FeatureFlagsHandler ffh(kh);
-            ispc::PathTracer_renderTask(&rendererSh->super,
-                fbSh,
-                cameraSh,
-                worldSh,
-                taskIDsPtr,
-                taskIndex.get_global_id(0),
-                ffh);
-          }
+    cgh.parallel_for(fb->getDispatchRange(numTasks),
+        [=](sycl::nd_item<3> taskIndex, sycl::kernel_handler kh) {
+          ispc::FeatureFlagsHandler ffh(kh);
+          ispc::PathTracer_renderTask(&rendererSh->super,
+              fbSh,
+              cameraSh,
+              worldSh,
+              taskIDsPtr,
+              taskIndex,
+              ffh);
         });
   });
 

@@ -1223,11 +1223,23 @@ array:
   float[]  sphere.radius        NULL  optional [data] array of the per-sphere
                                       radius
 
+  vec3f[]  sphere.normal        NULL  optional [data](#data) array of normals
+                                      (only for “oriented disc”)
+
   vec2f[]  sphere.texcoord      NULL  optional [data] array of texture
                                       coordinates (constant per sphere)
 
   float    radius               0.01  default radius for all spheres
                                       (if `sphere.radius` is not set)
+
+  uint     type                       `OSPSphereType` for rendering the sphere.
+                                       Supported types are:
+
+                                      `OSP_SPHERE` (default)
+
+                                      `OSP_DISC`
+
+                                      `OSP_ORIENTED_DISC`
   -------- ---------------- --------  ---------------------------------------
   : Parameters defining a spheres geometry.
 
@@ -1779,8 +1791,8 @@ Note that the [SciVis renderer] only computes illumination from the sun
 ### Emissive Objects
 
 The [path tracer] will consider illumination by [geometries] which have
-a light emitting material assigned (for example the [Luminous]
-material).
+a light emitting material assigned (for example the [Luminous] or
+[Principled] material).
 
 
 Materials
@@ -1954,6 +1966,8 @@ listed in the table below.
   float  sheenRoughness           0.2  sheen roughness in [0–1], 0 is perfectly smooth
 
   float  opacity                    1  cut-out opacity/transparency, 1 is fully opaque
+
+  vec3f  emissiveColor          black  color (and intensity) of the emitted light
   ------ ----------------- ----------  ------------------------------------------------------
   : Parameters of the Principled material.
 
@@ -2212,6 +2226,9 @@ parameter `intensityQuantity` is not needed because it is always
   ------ ------------ --------  ---------------------------------------
   : Parameters accepted by the Luminous material.
 
+The emission can be textured by passing a `map_color` [texture] handle,
+[texture transformations] are supported as well.
+
 ![Rendering of a yellow Luminous material.][imgMaterialLuminous]
 
 Texture
@@ -2230,12 +2247,16 @@ To create a new texture use
 The `texture2d` texture type implements an image-based texture, where
 its parameters are as follows
 
-  Type    Name         Description
-  ------- ------------ ----------------------------------
-  uint    format       `OSPTextureFormat` for the texture
-  uint    filter       default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
-  OSPData data         the actual texel 2D [data]
-  ------- ------------ ----------------------------------
+  Type           Name      Description
+  -------------- --------- ----------------------------------
+  uint           format    `OSPTextureFormat` for the texture
+  uint           filter    default `OSP_TEXTURE_FILTER_LINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
+  OSPData        data      the actual texel 2D [data]
+  uint / vec2ui  wrapMode  `OSPTextureWrapMode` for the texture coordinates s and t; supported wrap modes are:
+                           `OSP_TEXTURE_WRAP_REPEAT` (default)
+                           `OSP_TEXTURE_WRAP_MIRRORED_REPEAT`
+                           `OSP_TEXTURE_WRAP_CLAMP_TO_EDGE`
+  -------------- --------- ----------------------------------
   : Parameters of `texture2d` texture type.
 
 The supported texture formats for `texture2d` are:
@@ -3055,7 +3076,7 @@ additional project dependency at compile time. The module implements a
 "`denoiser`" frame operation, which denoises the entire frame before the
 frame is completed. OIDN will automatically select the fastest device,
 using a GPU when available. The device selection be overridden by the
-environment valiable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
+environment variable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
 `sycl`, `cuda`, `hip`, or a physical device ID
 
 

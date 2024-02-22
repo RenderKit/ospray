@@ -198,6 +198,17 @@ typedef enum
   OSP_TEXTURE_FILTER_NEAREST // use nearest-neighbor interpolation
 } OSPTextureFilter;
 
+// Wrap modes that can be set on 'texture2d' type OSPTexture
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
+  OSP_TEXTURE_WRAP_REPEAT,
+  OSP_TEXTURE_WRAP_MIRRORED_REPEAT,
+  OSP_TEXTURE_WRAP_CLAMP_TO_EDGE
+} OSPTextureWrapMode;
+
 // Error codes returned by various API and callback functions
 typedef enum
 #if __cplusplus >= 201103L
@@ -312,6 +323,17 @@ typedef enum
   OSP_DISJOINT,
   OSP_UNKNOWN_CURVE_TYPE = 255
 } OSPCurveType;
+
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
+  OSP_SPHERE = 50,
+  OSP_DISC = 51,
+  OSP_ORIENTED_DISC = 52,
+  OSP_UNKNOWN_SPHERE_TYPE = 255
+} OSPSphereType;
 
 typedef enum
 #if __cplusplus >= 201103L

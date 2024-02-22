@@ -314,6 +314,18 @@ void MultiDevice::setObjectParam(
       subdevices[i]->setObjectParam(o->objects[i], name, type, mem);
     }
   }
+
+  // Handle parameters for rowmajor framebuffer
+  MultiDeviceFrameBuffer *fb = dynamic_cast<MultiDeviceFrameBuffer *>(o);
+  if (fb) {
+    if (type & OSP_OBJECT) {
+      MultiDeviceObject *p = *(MultiDeviceObject **)mem;
+      hostDevice.setObjectParam(
+          (OSPObject)fb->rowmajorFb.ptr, name, type, &p->objects[0]);
+    } else {
+      hostDevice.setObjectParam((OSPObject)fb->rowmajorFb.ptr, name, type, mem);
+    }
+  }
 }
 
 void MultiDevice::removeObjectParam(OSPObject object, const char *name)
@@ -322,6 +334,11 @@ void MultiDevice::removeObjectParam(OSPObject object, const char *name)
   for (size_t i = 0; i < subdevices.size(); ++i) {
     subdevices[i]->removeObjectParam(o->objects[i], name);
   }
+
+  // Handle parameters for rowmajor framebuffer
+  MultiDeviceFrameBuffer *fb = dynamic_cast<MultiDeviceFrameBuffer *>(o);
+  if (fb)
+    hostDevice.removeObjectParam((OSPObject)fb->rowmajorFb.ptr, name);
 }
 
 void MultiDevice::commit(OSPObject object)
@@ -352,6 +369,11 @@ void MultiDevice::commit(OSPObject object)
   for (size_t i = 0; i < subdevices.size(); ++i) {
     subdevices[i]->commit(o->objects[i]);
   }
+
+  // Handle commits for rowmajor framebuffer
+  MultiDeviceFrameBuffer *fb = dynamic_cast<MultiDeviceFrameBuffer *>(o);
+  if (fb)
+    hostDevice.commit((OSPObject)fb->rowmajorFb.ptr);
 }
 
 void MultiDevice::release(OSPObject object)
@@ -416,13 +438,12 @@ OSPFrameBuffer MultiDevice::frameBufferCreate(
 
 OSPImageOperation MultiDevice::newImageOp(const char *type)
 {
-  // Same note for image ops as for framebuffers in terms of how they are
-  // treated as shared. Eventually we would have per hardware device ones though
-  // for cpu/gpus
-  auto *op = ImageOp::createInstance(type, hostDevice);
+  // In principle we don't need multiple ImageOp objects, but as long as we do
+  // not use objects reference counting in MultiDeviceObject we need them for
+  // proper memory handling
   MultiDeviceObject *o = new MultiDeviceObject();
-  for (size_t i = 0; i < subdevices.size(); ++i) {
-    o->objects.push_back((OSPImageOperation)op);
+  for (auto &d : subdevices) {
+    o->objects.push_back(d->newImageOp(type));
   }
   return (OSPImageOperation)o;
 }

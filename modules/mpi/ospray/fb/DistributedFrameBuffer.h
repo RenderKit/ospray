@@ -10,6 +10,7 @@
 #include "ISPCDevice.h"
 #include "fb/LocalFB.h"
 #include "fb/SparseFB.h"
+#include "fb/TaskError.h"
 #include "render/Renderer.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/math/vec.h"
@@ -80,7 +81,10 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   /* Get render task IDs will return the render task IDs for layer 0,
    * the tiles owned by the DFB for compositing.
    */
-  utility::ArrayView<uint32_t> getRenderTaskIDs(float errorThreshold) override;
+  utility::ArrayView<uint32_t> getRenderTaskIDs(
+      const float errorThreshold, const uint32_t spp) override;
+
+  virtual float getVariance() const override;
 
   // Task error is not valid for the DFB, as error is tracked at a per-tile
   // level. Use tileError to get rendering error
@@ -99,9 +103,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
 
   void waitUntilFinished();
 
-  void endFrame(const float errorThreshold, const Camera *camera) override;
-
-  AsyncEvent postProcess(const Camera *camera, bool wait) override;
+  AsyncEvent postProcess(bool wait) override;
 
   void setTileOperation(
       std::shared_ptr<TileOperation> tileOp, const Renderer *renderer);
@@ -121,8 +123,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   void incoming(const std::shared_ptr<mpicommon::Message> &message) override;
 
   //! process a (non-empty) write tile message at the master
-  template <typename ColorT>
-  void processMessage(MasterTileMessage_FB<ColorT> *msg);
+  void processMessage(MasterTileMessage_FB *msg);
 
   //! process a client-to-client write tile message */
   void processMessage(WriteTileMessage *msg);

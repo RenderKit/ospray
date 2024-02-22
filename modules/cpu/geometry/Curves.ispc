@@ -11,17 +11,17 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
+#endif
 
 template <typename T>
-inline T interpolate(const Curves *self,
-    const Data1D &buffer,
-    const uint32 primID,
-    const float u)
+inline T interpolate(const Curves *uniform self,
+    const uniform Data1D &buffer,
+    const varying Ray &ray)
 {
-  T result;
-  const uint32 index = get<uint32>(self->index, primID);
+  T result = {0};
+  const uint32 index = get<uint32>(self->index, ray.primID);
+  const float u = ray.u;
 
-  // Handle all curve basis
   switch (self->curveBasis) {
   case OSP_LINEAR:
   case OSP_HERMITE: {
@@ -41,7 +41,7 @@ inline T interpolate(const Curves *self,
     const float b1 = 3.0f * t1 * (t0 * t0);
     const float b2 = 3.0f * (t1 * t1) * t0;
     const float b3 = t1 * t1 * t1;
-    result = T(b0 * v0 + b1 * v1 + b2 * v2 + b3 * v3);
+    result = b0 * v0 + b1 * v1 + b2 * v2 + b3 * v3;
   } break;
 
   case OSP_BSPLINE: {
@@ -57,7 +57,7 @@ inline T interpolate(const Curves *self,
     const float n2 = (4.0f * (t * t * t) + (s * s * s))
         + (12.0f * ((t * s) * t) + 6.0f * ((s * t) * s));
     const float n3 = t * t * t;
-    result = T((1.0f / 6.0f) * (n0 * v0 + n1 * v1 + n2 * v2 + n3 * v3));
+    result = (1.0f / 6.0f) * (n0 * v0 + n1 * v1 + n2 * v2 + n3 * v3);
   } break;
 
   case OSP_CATMULL_ROM: {
@@ -71,58 +71,33 @@ inline T interpolate(const Curves *self,
     const float n1 = 2.0f + t * t * (3.0f * t - 5.0f);
     const float n2 = 2.0f + s * s * (3.0f * s - 5.0f);
     const float n3 = -s * t * t;
-    result = T(0.5f * (n0 * v0 + n1 * v1 + n2 * v2 + n3 * v3));
+    result = 0.5f * (n0 * v0 + n1 * v1 + n2 * v2 + n3 * v3);
   } break;
 
   case OSP_UNKNOWN_CURVE_BASIS:
   default:
-    result = T(0.0f);
+    break;
   }
 
-  // Return interpolated value
   return result;
 }
-#endif
 
 SYCL_EXTERNAL void Curves_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
 {
-  Curves *uniform self = (Curves * uniform) _self;
+  const Curves *uniform self = (const Curves *uniform)_self;
+
   dg.Ng = dg.Ns = ray.Ng;
   flags &= self->flagMask;
+
   if (flags & DG_COLOR) {
-#ifndef OSPRAY_TARGET_SYCL
-    rtcInterpolateV1(self->geom,
-        ray.primID,
-        ray.u,
-        ray.v,
-        RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
-        0,
-        &dg.color.x,
-        NULL,
-        NULL,
-        4);
-#else
-    dg.color = interpolate<vec4f>(self, self->color, ray.primID, ray.u);
-#endif
+    dg.color = interpolate<vec4f>(self, self->color, ray);
   }
+
   if (flags & DG_TEXCOORD) {
-#ifndef OSPRAY_TARGET_SYCL
-    rtcInterpolateV1(self->geom,
-        ray.primID,
-        ray.u,
-        ray.v,
-        RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
-        1,
-        &dg.st.x,
-        NULL,
-        NULL,
-        2);
-#else
-    dg.st = interpolate<vec2f>(self, self->texcoord, ray.primID, ray.u);
-#endif
+    dg.st = interpolate<vec2f>(self, self->texcoord, ray);
   }
 }
 

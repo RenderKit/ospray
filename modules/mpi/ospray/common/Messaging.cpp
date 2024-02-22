@@ -47,7 +47,7 @@ ObjectMessageHandler::~ObjectMessageHandler()
 }
 
 inline void ObjectMessageHandler::registerMessageListener(
-    int handleObjID, MessageHandler *listener)
+    int handleObjID, maml::MessageHandler *listener)
 {
   std::lock_guard<std::mutex> lock(objectListenersMutex);
 
@@ -119,7 +119,7 @@ void shutdown()
   handler = nullptr;
 }
 
-void registerMessageListener(int handleObjID, MessageHandler *listener)
+void registerMessageListener(int handleObjID, maml::MessageHandler *listener)
 {
   if (!handlerValid)
     throw std::runtime_error("ObjectMessageHandler was not created!");

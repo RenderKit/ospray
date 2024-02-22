@@ -41,16 +41,14 @@ set(OSPRAY_CPP_SOURCES
   fb/LocalFB.cpp
   fb/SparseFB.cpp
   fb/FrameOp.cpp
-  fb/PixelOp.cpp
   fb/TaskError.cpp
   fb/registration.cpp
 
   fb/frame_ops/Blur.cpp
+  fb/frame_ops/ColorConversion.cpp
   fb/frame_ops/Debug.cpp
-  fb/frame_ops/Depth.cpp
-  fb/frame_ops/SSAO.cpp
-
-  fb/pixel_ops/ToneMapper.cpp
+  fb/frame_ops/ToneMapper.cpp
+  fb/frame_ops/Variance.cpp
 
   pf/PixelFilter.cpp
 
@@ -128,14 +126,15 @@ set(OSPRAY_ISPC_SOURCES
 
   common/World.ispc
 
-  fb/FrameBuffer.ispc
   fb/FrameBufferDispatch.ispc
   fb/LocalFB.ispc
   fb/SparseFB.ispc
 
-  fb/frame_ops/SSAO.ispc
-
-  fb/pixel_ops/ToneMapper.ispc
+  fb/frame_ops/Blur.ispc
+  fb/frame_ops/ColorConversion.ispc
+  fb/frame_ops/Debug.ispc
+  fb/frame_ops/ToneMapper.ispc
+  fb/frame_ops/Variance.ispc
 
   pf/PixelFilterDispatch.ispc
   pf/LUTPixelFilter.ispc
@@ -247,6 +246,11 @@ endif()
 if (WIN32)
   file(READ def_header.txt OSPRAY_DEF)
   file(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
+
+  if (OSPRAY_ENABLE_VOLUMES)
+    file(READ ispc_symbols_volume.txt OSPRAY_ISPC_SYMBOLS_VOLUME)
+    list(APPEND OSPRAY_ISPC_SYMBOLS_IN ${OSPRAY_ISPC_SYMBOLS_VOLUME})
+  endif()
 
   list(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
   foreach(isa ${OSPRAY_ISPC_TARGET_LIST})
@@ -514,7 +518,7 @@ if (OSPRAY_MODULE_GPU)
     ospray_module_gpu_kernels
   )
 
-  ospray_install_library(ospray_module_gpu lib)
+  ospray_install_library(ospray_module_gpu gpu)
 endif()
 
 # -------------------------------------------------------
@@ -523,7 +527,7 @@ endif()
 
 get_subdirectories(SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
 
-foreach(dir ${SUBDIRS})
+foreach(dir . ${SUBDIRS})
   install(DIRECTORY ${dir}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/cpu
     COMPONENT devel

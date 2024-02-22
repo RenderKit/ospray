@@ -148,24 +148,18 @@ void Curves::commit()
   getSh()->super.numPrimitives = numPrimitives();
   getSh()->curveType = curveType;
   getSh()->curveBasis = curveBasis;
-#ifdef OSPRAY_TARGET_SYCL
   getSh()->index = *ispc(indexData);
-#endif
 
   if (!colorData) {
     getSh()->flagMask &= ispc::int64(~DG_COLOR);
   } else {
-#ifdef OSPRAY_TARGET_SYCL
     getSh()->color = *ispc(colorData);
-#endif
   }
 
   if (!texcoordData) {
     getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
   } else {
-#ifdef OSPRAY_TARGET_SYCL
     getSh()->texcoord = *ispc(texcoordData);
-#endif
   }
 
   postCreationInfo(vertexData->size());

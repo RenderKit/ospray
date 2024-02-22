@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GLFWDistribOSPRayWindow.h"
-#include <imgui.h>
 #include <mpi.h>
 #include <ospray/ospray_util.h>
 #include <iostream>
 #include <stdexcept>
-#include "imgui_impl_glfw_gl3.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 using namespace ospray;
 using namespace rkcommon::math;
@@ -52,7 +53,17 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
       throw std::runtime_error("Failed to initialize GLFW!");
     }
 
-    // create GLFW window
+    glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+#ifdef __APPLE_
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    const char *glslVersion = "#version 150";
+#else
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    const char *glslVersion = "#version 130";
+#endif
+
     glfwWindow = glfwCreateWindow(
         windowSize.x, windowSize.y, "OSPRay Tutorial", NULL, NULL);
 
@@ -64,18 +75,13 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
     // make the window's context current
     glfwMakeContextCurrent(glfwWindow);
 
-    ImGui_ImplGlfwGL3_Init(glfwWindow, true);
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-    // set initial OpenGL state
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_LIGHTING);
-
-    // create OpenGL frame buffer texture
-    glGenTextures(1, &framebufferTexture);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    ImGui_ImplGlfw_InitForOpenGL(glfwWindow, false);
 
     // set GLFW callbacks
     glfwSetFramebufferSizeCallback(
@@ -103,6 +109,22 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
             }
           }
         });
+
+    // will chain our callbacks above
+    ImGui_ImplGlfw_InstallCallbacks(glfwWindow);
+
+    ImGui_ImplOpenGL3_Init(glslVersion);
+
+    // set initial OpenGL state
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_LIGHTING);
+
+    // create OpenGL frame buffer texture
+    glGenTextures(1, &framebufferTexture);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   }
 
   // OSPRay setup
@@ -137,8 +159,10 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
 GLFWDistribOSPRayWindow::~GLFWDistribOSPRayWindow()
 {
   if (mpiRank == 0) {
-    ImGui_ImplGlfwGL3_Shutdown();
-    // cleanly terminate GLFW
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    glfwDestroyWindow(glfwWindow);
     glfwTerminate();
   }
 }
@@ -189,18 +213,18 @@ void GLFWDistribOSPRayWindow::mainLoop()
     startNewOSPRayFrame();
     waitOnOSPRayFrame();
 
-    // if a display callback has been registered, call it
-    if (displayCallback) {
-      displayCallback(this);
-    }
-
     if (mpiRank == 0) {
-      ImGui_ImplGlfwGL3_NewFrame();
+      glfwPollEvents();
+
+      ImGui_ImplOpenGL3_NewFrame();
+      ImGui_ImplGlfw_NewFrame();
+      ImGui::NewFrame();
+
+      if (displayCallback)
+        displayCallback(this);
 
       display();
 
-      // poll and process events
-      glfwPollEvents();
       windowState.quit = glfwWindowShouldClose(glfwWindow) || g_quitNextFrame;
     }
   }
@@ -332,8 +356,8 @@ void GLFWDistribOSPRayWindow::display()
   glEnd();
 
   ImGui::Render();
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-  // swap buffers
   glfwSwapBuffers(glfwWindow);
 }
 

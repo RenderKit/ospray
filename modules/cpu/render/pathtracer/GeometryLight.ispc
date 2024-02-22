@@ -6,6 +6,7 @@
 #include "render/pathtracer/PathTracerUtil.ih"
 
 #include "render/Material.ih"
+#include "texture/TextureParam.ih"
 
 #include "common/Instance.ih"
 #include "geometry/GeometricModel.ih"
@@ -23,15 +24,9 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
     const Ray &ray)
 {
   vec3f L = make_vec3f(0.f);
-  Material *material = (Material *)pathVertex.dg.material;
+  Material *material = pathVertex.dg.material;
 
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const Material *m = material;
-#else
   foreach_unique (m in material) {
-#endif
     if (m != NULL && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
       // therefore we can evaluate the selection PDF directly
@@ -45,6 +40,7 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
       const float lePdf = pathVertex.dg.areaPDF * sqr(ray.t) / abs(cosd);
       L = L
           + pathState.throughput * m->emission
+              * get3f(m->emissionMap, pathVertex.dg, make_vec3f(1.f))
               * misHeuristic(
                   pathState, lastVertex.pdf_w, lightSelectionPDF * lePdf);
     }
@@ -64,27 +60,26 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
   const GeometricModel *uniform model = self->model;
   const Geometry *uniform geo = model->geom;
   Light_SampleRes res;
+  res.weight = make_vec3f(0.0f);
 
   // choose primitive
   const Sample1D sample =
       Distribution1D_sample(self->numPrimitives, self->distribution, 0, s.x);
   const int32 primID = self->primIDs[sample.idx];
 
-  // XXX have to rescale s.x
-  const vec2f ns = make_vec2f(sample.frac, s.y);
+  Material *mat = GeometricModel_getMaterial(model, dg.renderer, primID);
+  if (!mat)
+    return res;
+
+  const vec2f ns = make_vec2f(sample.frac, s.y); // reproject s.x
   // sample position on primitive
   // TODO maybe should already be done wrt. solid angle
   SampleAreaRes as;
   const Instance *uniform instance = self->super.instance;
   assert(instance);
-  if (instance->motionBlur) {
-#ifdef OSPRAY_TARGET_SYCL
-    {
-      // SYCL execution in a thread is scalar
-      const float utime = time;
-#else
+  const uniform FeatureFlagsGeometry ffg = getFeatureFlagsGeometry(ffh);
+  if (instance->motionBlur && (ffg & FFG_MOTION_BLUR)) {
     foreach_unique (utime in time) {
-#endif
       const uniform affine3f xfm = Instance_getTransform(instance, utime);
       as = Geometry_dispatch_sampleArea(
           geo, primID, xfm, rcp(xfm), ns, time, ffh);
@@ -107,10 +102,15 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
   const float cosd = dot(as.normal, res.dir);
   res.pdf = self->pdf * sqr(dist) / abs(cosd);
 
-  // get radiance
-  Material *mat =
-      (Material *)GeometricModel_getMaterial(model, dg.renderer, primID);
-  const vec3f radiance = mat ? mat->emission : make_vec3f(0.f);
+  DifferentialGeometry texDg;
+  texDg.P = as.pos;
+  texDg.Ns = as.normal;
+  texDg.Ng = as.normal;
+  texDg.st = as.st;
+
+  vec3f radiance;
+  foreach_unique (m in mat)
+    radiance = m->emission * get3f(m->emissionMap, texDg, make_vec3f(1.f));
 
   res.weight = radiance * rcp(res.pdf);
 

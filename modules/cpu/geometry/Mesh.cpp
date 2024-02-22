@@ -21,7 +21,8 @@ void *Mesh_getAreas_addr();
 namespace ospray {
 
 Mesh::Mesh(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE)
+    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE),
+      device(device)
 {
   getSh()->super.getAreas =
       reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Mesh_getAreas_addr());
@@ -36,25 +37,29 @@ std::string Mesh::toString() const
 
 void Mesh::commit()
 {
-  motionVertexAddr.clear();
-  motionNormalAddr.clear();
   bool isNormalFaceVarying = true;
 
   motionVertexData =
       getParamDataT<const DataT<vec3f> *>("motion.vertex.position");
   if (motionVertexData) {
-    motionBlur = motionVertexData->size() > 1;
+    const auto mKeys = motionVertexData->size();
+    motionBlur = mKeys > 1;
+    if (!motionVertexAddr || motionVertexAddr->size() < mKeys) // reallocate?
+      motionVertexAddr =
+          make_buffer_shared_unique<vec3f *>(device.getIspcrtContext(), mKeys);
+    auto mVAddr = motionVertexAddr->begin();
     // check types and strides
     vertexData = (*motionVertexData)[0]; // use 1st key as fallback
     const int64_t stride = vertexData->ispc.byteStride;
     const size_t size = vertexData->ispc.numItems;
-    for (auto &&vtxData : *motionVertexData) {
+    for (size_t i = 0; i < mKeys; i++) {
+      auto &&vtxData = (*motionVertexData)[i];
       if (vtxData->type != OSP_VEC3F || vtxData->ispc.numItems != size
           || vtxData->ispc.byteStride != stride)
         throw std::runtime_error(
             "Mesh 'motion.vertex.position' arrays need to be"
             " of same size and stride and have type vec3f");
-      motionVertexAddr.push_back(vtxData->data());
+      mVAddr[i] = vtxData->data();
     }
     motionNormalData = getParamDataT<const DataT<vec3f> *>("motion.normal");
     if (!motionNormalData) {
@@ -63,20 +68,25 @@ void Mesh::commit()
       isNormalFaceVarying = false;
     }
     if (motionNormalData) {
-      if (motionNormalData->size() < motionVertexData->size())
+      if (motionNormalData->size() < mKeys)
         throw std::runtime_error(
             "Mesh 'motion*.normal' array has less keys than"
             " 'motion.vertex.position'");
+      if (!motionNormalAddr || motionNormalAddr->size() < mKeys) // reallocate?
+        motionNormalAddr = make_buffer_shared_unique<vec3f *>(
+            device.getIspcrtContext(), mKeys);
+      auto mNAddr = motionNormalAddr->begin();
       // check types and strides
       normalData = (*motionNormalData)[0]; // use 1st key as fallback
       const int64_t stride = normalData->ispc.byteStride;
-      for (auto &&norData : *motionNormalData) {
+      for (size_t i = 0; i < mKeys; i++) {
+        auto &&norData = (*motionNormalData)[i];
         if (norData->type != OSP_VEC3F || norData->ispc.numItems != size
             || norData->ispc.byteStride != stride)
           throw std::runtime_error(
               "Mesh 'motion*.normal' arrays need to be"
               " of same size and stride and have type vec3f");
-        motionNormalAddr.push_back(norData->data());
+        mNAddr[i] = norData->data();
       }
     } else
       normalData = nullptr;
@@ -165,8 +175,10 @@ void Mesh::commit()
   getSh()->normal = *ispc(normalData);
   getSh()->color = *ispc(colorData);
   getSh()->texcoord = *ispc(texcoordData);
-  getSh()->motionVertex = (uint8_t **)motionVertexAddr.data();
-  getSh()->motionNormal = (uint8_t **)motionNormalAddr.data();
+  getSh()->motionVertex =
+      motionVertexAddr ? (uint8_t **)motionVertexAddr->data() : nullptr;
+  getSh()->motionNormal =
+      motionNormalAddr ? (uint8_t **)motionNormalAddr->data() : nullptr;
   getSh()->motionKeys = motionBlur ? motionVertexData->size() : 0;
   getSh()->time = time;
   getSh()->has_alpha = colorData && colorData->type == OSP_VEC4F;
@@ -188,6 +200,8 @@ void Mesh::commit()
 
   postCreationInfo(vertexData->size());
   featureFlagsGeometry = isTri ? FFG_TRIANGLE : FFG_QUAD;
+  if (motionBlur)
+    featureFlagsGeometry |= FFG_MOTION_BLUR;
 }
 
 size_t Mesh::numPrimitives() const

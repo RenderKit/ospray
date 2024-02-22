@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GLFWOSPRayWindow.h"
-#include "imgui_impl_glfw_gl3.h"
 // ospray_testing
 #include "ospray_testing.h"
 #include "rkcommon/utility/random.h"
 // imgui
 #include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 // std
 #include <algorithm>
 #include <chrono>
@@ -40,6 +41,8 @@ static const std::vector<std::string> g_scenes = {"boxes_lit",
     "gravity_spheres_isosurface",
     "perlin_noise_volumes",
     "random_spheres",
+    "random_discs",
+    "random_oriented_discs",
     "streamlines",
     "subdivision_cube",
     "unstructured_volume",
@@ -60,15 +63,16 @@ static const std::vector<std::string> g_scenes = {"boxes_lit",
     "test_pt_glass",
     "test_pt_thinglass",
     "test_pt_luminous",
+    "test_pt_material_tex",
     "test_pt_metal_roughness",
     "test_pt_metallic_flakes",
+    "test_pt_mix_tex",
     "test_pt_obj",
     "test_pt_plastic",
     "test_pt_principled_metal",
     "test_pt_principled_plastic",
     "test_pt_principled_glass",
-    "test_pt_tex_material",
-    "test_pt_tex_mix",
+    "test_pt_principled_tex",
     "test_pt_velvet"};
 
 static const std::vector<std::string> g_curveVariant = {
@@ -95,47 +99,17 @@ static const std::vector<std::string> g_pixelFilterTypes = {
 static const std::vector<std::string> g_AOVs = {
     "color", "depth", "albedo", "primID", "objID", "instID"};
 
-bool sceneUI_callback(void *, int index, const char **out_text)
+const char *vec_string_getter(void *vec_, int index)
 {
-  *out_text = g_scenes[index].c_str();
-  return true;
-}
-
-bool curveVariantUI_callback(void *, int index, const char **out_text)
-{
-  *out_text = g_curveVariant[index].c_str();
-  return true;
-}
-
-bool rendererUI_callback(void *, int index, const char **out_text)
-{
-  *out_text = g_renderers[index].c_str();
-  return true;
-}
-
-bool debugTypeUI_callback(void *, int index, const char **out_text)
-{
-  *out_text = g_debugRendererTypes[index].c_str();
-  return true;
-}
-
-bool pixelFilterTypeUI_callback(void *, int index, const char **out_text)
-{
-  *out_text = g_pixelFilterTypes[index].c_str();
-  return true;
-}
-
-bool AOVUI_callback(void *, int index, const char **out_text)
-{
-  *out_text = g_AOVs[index].c_str();
-  return true;
+  auto v = (std::vector<std::string> *)vec_;
+  return v->at(index).c_str();
 }
 
 // GLFWOSPRayWindow definitions ///////////////////////////////////////////////
 
 void error_callback(int error, const char *desc)
 {
-  std::cerr << "error " << error << ": " << desc << std::endl;
+  std::cerr << "GLFW error " << error << ": " << desc << std::endl;
 }
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
@@ -150,14 +124,21 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
   activeWindow = this;
 
   glfwSetErrorCallback(error_callback);
-
-  // initialize GLFW
   if (!glfwInit()) {
     throw std::runtime_error("Failed to initialize GLFW!");
   }
 
   glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
-  // create GLFW window
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+#ifdef __APPLE_
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  const char *glslVersion = "#version 150";
+#else
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  const char *glslVersion = "#version 130";
+#endif
+
   glfwWindow = glfwCreateWindow(
       windowSize.x, windowSize.y, "OSPRay Examples", nullptr, nullptr);
 
@@ -165,21 +146,15 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
     glfwTerminate();
     throw std::runtime_error("Failed to create GLFW window!");
   }
-
-  // make the window's context current
   glfwMakeContextCurrent(glfwWindow);
 
-  ImGui_ImplGlfwGL3_Init(glfwWindow, true);
+  // Setup Dear ImGui context
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-  // set initial OpenGL state
-  glEnable(GL_TEXTURE_2D);
-  glDisable(GL_LIGHTING);
-
-  // create OpenGL frame buffer texture
-  glGenTextures(1, &framebufferTexture);
-  glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  ImGui_ImplGlfw_InitForOpenGL(glfwWindow, false);
 
   // set GLFW callbacks
   glfwSetFramebufferSizeCallback(
@@ -228,6 +203,21 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
         }
       });
 
+  // will chain our callbacks above
+  ImGui_ImplGlfw_InstallCallbacks(glfwWindow);
+
+  ImGui_ImplOpenGL3_Init(glslVersion);
+
+  // set initial OpenGL state
+  glEnable(GL_TEXTURE_2D);
+  glDisable(GL_LIGHTING);
+
+  // create OpenGL frame buffer texture
+  glGenTextures(1, &framebufferTexture);
+  glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
   // OSPRay setup //
 
   // set up backplate texture
@@ -253,8 +243,10 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
 
 GLFWOSPRayWindow::~GLFWOSPRayWindow()
 {
-  ImGui_ImplGlfwGL3_Shutdown();
-  // cleanly terminate GLFW
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+  glfwDestroyWindow(glfwWindow);
   glfwTerminate();
 }
 
@@ -269,12 +261,25 @@ void GLFWOSPRayWindow::mainLoop()
   startNewOSPRayFrame();
 
   while (!glfwWindowShouldClose(glfwWindow) && !g_quitNextFrame) {
-    ImGui_ImplGlfwGL3_NewFrame();
+    glfwPollEvents();
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    if (displayCallback)
+      displayCallback(this);
 
     display();
 
-    // poll and process events
-    glfwPollEvents();
+    if (showUi)
+      buildUI();
+
+    glDisable(GL_FRAMEBUFFER_SRGB); // Disable SRGB conversion for UI
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    glfwSwapBuffers(glfwWindow);
   }
 
   waitOnOSPRayFrame();
@@ -372,14 +377,6 @@ void GLFWOSPRayWindow::display()
 {
   static float totalRenderTime = 0.f;
   static auto displayStart = std::chrono::steady_clock::now();
-
-  if (showUi)
-    buildUI();
-
-  if (displayCallback)
-    displayCallback(this);
-
-  glEnable(GL_FRAMEBUFFER_SRGB); // Turn on sRGB conversion for OSPRay frame
 
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
@@ -479,7 +476,7 @@ void GLFWOSPRayWindow::display()
     firstFrame = false;
   }
 
-  // clear current OpenGL color buffer
+  glEnable(GL_FRAMEBUFFER_SRGB); // Turn on sRGB conversion for OSPRay frame
   glClear(GL_COLOR_BUFFER_BIT);
 
   // render textured quad with OSPRay frame buffer contents
@@ -498,16 +495,6 @@ void GLFWOSPRayWindow::display()
   glVertex2f(windowSize.x, 0.f);
 
   glEnd();
-
-  if (showUi) {
-    glDisable(GL_FRAMEBUFFER_SRGB); // Disable SRGB conversion for UI
-
-    ImGui::Render();
-    ImGui_ImplGlfwGL3_Render();
-  }
-
-  // swap buffers
-  glfwSwapBuffers(glfwWindow);
 }
 
 void GLFWOSPRayWindow::startNewOSPRayFrame()
@@ -568,8 +555,8 @@ void GLFWOSPRayWindow::buildUI()
   static int whichScene = 0;
   if (ImGui::Combo("scene##whichScene",
           &whichScene,
-          sceneUI_callback,
-          nullptr,
+          vec_string_getter,
+          (void *)&g_scenes,
           g_scenes.size())) {
     scene = g_scenes[whichScene];
     refreshScene(true);
@@ -579,8 +566,8 @@ void GLFWOSPRayWindow::buildUI()
     static int whichCurveVariant = 0;
     if (ImGui::Combo("curveVariant##whichCurveVariant",
             &whichCurveVariant,
-            curveVariantUI_callback,
-            nullptr,
+            vec_string_getter,
+            (void *)&g_curveVariant,
             g_curveVariant.size())) {
       curveVariant = g_curveVariant[whichCurveVariant];
       refreshScene(true);
@@ -596,8 +583,8 @@ void GLFWOSPRayWindow::buildUI()
   static int whichDebuggerType = 0;
   if (ImGui::Combo("renderer##whichRenderer",
           &whichRenderer,
-          rendererUI_callback,
-          nullptr,
+          vec_string_getter,
+          (void *)&g_renderers,
           g_renderers.size())) {
     rendererTypeStr = g_renderers[whichRenderer];
 
@@ -621,8 +608,8 @@ void GLFWOSPRayWindow::buildUI()
   if (rendererType == OSPRayRendererType::DEBUGGER) {
     if (ImGui::Combo("debug type##whichDebugType",
             &whichDebuggerType,
-            debugTypeUI_callback,
-            nullptr,
+            vec_string_getter,
+            (void *)&g_debugRendererTypes,
             g_debugRendererTypes.size())) {
       renderer->setParam("method", g_debugRendererTypes[whichDebuggerType]);
       addObjectToCommit(renderer->handle());
@@ -634,10 +621,10 @@ void GLFWOSPRayWindow::buildUI()
   static int whichAOV = 0;
   if (ImGui::Combo("AOV Display##whichAOV",
           &whichAOV,
-          AOVUI_callback,
-          nullptr,
+          vec_string_getter,
+          (void *)&g_AOVs,
           g_AOVs.size())) {
-    auto aovStr = g_AOVs[whichAOV];
+    const auto &aovStr = g_AOVs[whichAOV];
     showDepth = showAlbedo = showPrimID = showGeomID = showInstID = false;
     if (aovStr == "depth")
       showDepth = true;
@@ -664,8 +651,8 @@ void GLFWOSPRayWindow::buildUI()
   static int whichPixelFilter = 2;
   if (ImGui::Combo("pixelfilter##whichPixelFilter",
           &whichPixelFilter,
-          pixelFilterTypeUI_callback,
-          nullptr,
+          vec_string_getter,
+          (void *)&g_pixelFilterTypes,
           g_pixelFilterTypes.size())) {
     pixelFilterTypeStr = g_pixelFilterTypes[whichPixelFilter];
 
@@ -701,7 +688,7 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   static float varianceThreshold = 0.0f;
-  if (ImGui::SliderFloat("varianceThreshold", &varianceThreshold, 0.f, 10.f)) {
+  if (ImGui::SliderFloat("varianceThreshold", &varianceThreshold, 0.f, .5f)) {
     renderer->setParam("varianceThreshold", varianceThreshold);
     addObjectToCommit(renderer->handle());
   }
@@ -788,6 +775,12 @@ void GLFWOSPRayWindow::buildUI()
     static float minContribution = 0.001f;
     if (ImGui::SliderFloat("minContribution", &minContribution, 0.f, 1.f)) {
       renderer->setParam("minContribution", minContribution);
+      addObjectToCommit(renderer->handle());
+    }
+
+    static float maxContribution = 10000.f;
+    if (ImGui::SliderFloat("maxContribution", &maxContribution, 0.f, 10000.f)) {
+      renderer->setParam("maxContribution", maxContribution);
       addObjectToCommit(renderer->handle());
     }
 

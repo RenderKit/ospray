@@ -8,6 +8,10 @@
 
 #define __noinline __attribute__((noinline))
 
+#define in ,
+#define foreach_unique(var_in_set) FOREACH_UNIQUE(var_in_set)
+#define FOREACH_UNIQUE(var, set) for (const auto &var : {set})
+
 namespace ispc {
 using uint64 = uint64_t;
 using uint32 = uint32_t;
@@ -85,18 +89,23 @@ void PRINT3(const rkcommon::math::vec3f &x)
 #define LOG(x)
 
 #define PRINT(x) print(#x " = %\n", x)
-#define PRINT3(x) print(#x " = (%, %, %)\n", get(x, 0), get(x, 1), get(x, 2))
+#define PRINT3(v) print(#v " = (%, %, %)\n", v.x, v.y, v.z)
 // prints first unmasked element
 #define PRINTU(x)                                                              \
   print(#x "[%] = %\n",                                                        \
       count_trailing_zeros(lanemask()),                                        \
       extract(x, count_trailing_zeros(lanemask())))
-#define PRINT3U(x)                                                             \
-  print(#x "[%] = (%, %, %)\n",                                                \
+#define PRINT2U(v)                                                             \
+  print(#v "[%] = (%, %)\n",                                                   \
       count_trailing_zeros(lanemask()),                                        \
-      extract(get(x, 0), count_trailing_zeros(lanemask())),                    \
-      extract(get(x, 1), count_trailing_zeros(lanemask())),                    \
-      extract(get(x, 2), count_trailing_zeros(lanemask())))
+      extract(v.x, count_trailing_zeros(lanemask())),                          \
+      extract(v.y, count_trailing_zeros(lanemask())))
+#define PRINT3U(v)                                                             \
+  print(#v "[%] = (%, %, %)\n",                                                \
+      count_trailing_zeros(lanemask()),                                        \
+      extract(v.x, count_trailing_zeros(lanemask())),                          \
+      extract(v.y, count_trailing_zeros(lanemask())),                          \
+      extract(v.z, count_trailing_zeros(lanemask())))
 
 #define PRINT_STR(s) print(s);
 #endif

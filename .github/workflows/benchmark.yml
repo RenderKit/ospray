@@ -12,55 +12,98 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
 
 ### BUILD JOBS ###
 
-  build-centos8:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+  build-linux:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: centos:8
+      image: rockylinux:8.7
+      env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        scripts/build/linux.sh -G Ninja
-      artifact-out: build-centos8
+        module load cmake/3.25.3
+        module load mpi/mpich-x86_64
+        export CC=clang
+        export CXX=clang++
+        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON
+      artifact-out: build-linux
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 ### Benchmarks ###
 
   benchmark-x8280-1:
-    needs: build-centos8
+    needs: build-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    secrets: inherit
     with:
       runs-on: '"vis-perf-x8280-1"'
+      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh
-      artifact-in: build-centos8
+      artifact-in: build-linux
 
   benchmark-x8380-1:
-    needs: build-centos8
+    needs: build-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    secrets: inherit
     with:
       runs-on: '"vis-perf-x8380-1"'
+      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh
-      artifact-in: build-centos8
+      artifact-in: build-linux
 
   benchmark-a-1:
-    needs: build-centos8
+    needs: build-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    secrets: inherit
     with:
       runs-on: '"vis-perf-a3970x-1"'
+      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh
-      artifact-in: build-centos8
+      artifact-in: build-linux
 
   benchmark-adl-1:
-    needs: build-centos8
+    needs: build-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    secrets: inherit
     with:
       runs-on: '"vis-perf-i9-12900k-1"'
+      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh
-      artifact-in: build-centos8
+      artifact-in: build-linux
+
+  benchmark-dg2:
+    needs: build-linux
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"vis-perf-dg2-01"'
+      setup-benny: true
+      cmd: |
+        scripts/tests/run-benchmarks.sh GPU
+      artifact-in: build-linux
+
+  benchmark-pvc:
+    needs: build-linux
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"vis-perf-spr-pvc-01"'
+      setup-benny: true
+      cmd: |
+        scripts/tests/run-benchmarks.sh GPU
+      artifact-in: build-linux

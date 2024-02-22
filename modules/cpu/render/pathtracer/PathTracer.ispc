@@ -195,11 +195,15 @@ task
         World *uniform world,
         const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
-        const int taskIndex0,
+        const sycl::nd_item<3> taskIndex,
 #endif
         const uniform FeatureFlagsHandler &ffh)
 {
   PathTracer *uniform self = (PathTracer * uniform) _self;
+
+#ifdef OSPRAY_TARGET_SYCL
+  uint32 taskIndex0 = taskIndex.get_global_id(0);
+#endif
   uniform RenderTaskDesc taskDesc =
       FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0], ffh);
 
@@ -207,21 +211,21 @@ task
     return;
   }
 
+  const uniform int frameID = fb->doAccumulation ? max(fb->frameID, 0) : 0;
+
 #ifdef OSPRAY_TARGET_SYCL
-  for (uint32 y = taskDesc.region.lower.y; y < (uint32)taskDesc.region.upper.y;
-       ++y)
-    for (uint32 x = taskDesc.region.lower.x;
-         x < (uint32)taskDesc.region.upper.x;
-         ++x) {
+  {
+    int32 y = taskDesc.region.lower.y + taskIndex.get_global_id(1);
+    int32 x = taskDesc.region.lower.x + taskIndex.get_global_id(2);
 #else
   foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
 #endif
-      ScreenSample screenSample = PathTracer_renderPixel(
-          self, fb, camera, world, x, y, taskDesc.accumID, ffh);
+    ScreenSample screenSample =
+        PathTracer_renderPixel(self, fb, camera, world, x, y, frameID, ffh);
 
-      FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc, ffh);
-    }
+    FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc, ffh);
+  }
   FrameBuffer_dispatch_completeTask(fb, taskDesc, ffh);
 }
 

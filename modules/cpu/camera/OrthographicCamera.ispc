@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
-#include "common/MotionTransform.ih"
+#include "common/Embree.h"
+#include "common/FeatureFlags.ih"
+#include "common/FeatureFlagsEnum.h"
 // c++ shared
 #include "OrthographicCameraShared.h"
+
+#include "rkcommon/math/AffineSpace.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
-    const varying CameraSample &sample)
+    const varying CameraSample &sample,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const OrthographicCamera *uniform self =
       (const OrthographicCamera *uniform)_self;
@@ -20,9 +25,12 @@ SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
 
   vec3f dir;
   vec3f org;
-#ifndef OSPRAY_TARGET_SYCL
-  if (self->super.motionBlur) {
-    const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+  if (self->super.motionBlur && (ffo & FFO_CAMERA_MOTION_BLUR)) {
+    AffineSpace3f xfm;
+    rtcGetGeometryTransformFromScene(
+        self->super.scene, 0, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+
     // we cannot just transform the final org & dir, because interpolated
     // transforms can scale (even if original transforms are without scale)
     dir = normalize(xfmVector(xfm, self->dir));
@@ -34,9 +42,7 @@ SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
     const float x = (screen.x - 0.5f) * self->du_size.x;
     const float y = (screen.y - 0.5f) * self->du_size.y;
     org = org + x * du + y * dv;
-  } else
-#endif
-  {
+  } else {
     dir = self->dir;
     org = self->org + screen.x * self->du_size + screen.y * self->dv_up;
   }

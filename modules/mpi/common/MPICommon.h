@@ -69,20 +69,19 @@ struct OSPRAY_MPI_COMMON_EXPORT Group
   /*! do an MPI_Comm_dup, and return duplicated communicator */
   Group dup() const;
 
-  /*! whether the current process/thread is a member of this
-    gorup */
+  // whether the current process/thread is a member of this group
   bool containsMe{false};
 
-  /*! communictor for this group. intercommunicator if i'm a
-    member of this gorup; else it's an intracommunicator */
+  // communictor for this group. intercommunicator if i'm a member of this
+  // group; else it's an intracommunicator
   MPI_Comm comm{MPI_COMM_NULL};
 
   /*! my rank in this group if i'm a member; else set to
     MPI_ROOT */
   int rank{-1};
 
-  /*! size of this group if i'm a member, else size of remote
-    group this intracommunicaotr refers to */
+  // size of this group if i'm a member, else size of remote group this
+  // intracommunicator refers to
   int size{-1};
 };
 

@@ -3,16 +3,20 @@
 ## Copyright 2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-git log -1
-
-# environment for benchmark client
-source ~/benchmark_client.git/env.sh
-source ~/system_token.sh
-
 # benchmark configuration
 SOURCE_ROOT=`pwd`
 PROJECT_NAME="OSPRay"
-BENCHMARK_FLAGS="--benchmark_min_time=${BENCHMARK_MIN_TIME_SECONDS:-10}"
+BENCHMARK_FLAGS="--benchmark_min_time=${BENCHMARK_MIN_TIME_SECONDS:-10s}"
+
+if [ "$1" = "GPU" ] ; then
+  BENCHMARK_FLAGS="$BENCHMARK_FLAGS --benchmark_time_unit=s --benchmark_min_warmup_time=2 --osp:load-modules=gpu --osp:device=gpu"
+
+  export ONEAPI_DEVICE_SELECTOR=level_zero:*
+  export SYCL_CACHE_PERSISTENT=1
+  export OIDN_VERBOSE=2
+
+  export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE # WA for PVC
+fi
 
 export LD_LIBRARY_PATH=`pwd`/build/install/ospray/lib:${LD_LIBRARY_PATH}
 
@@ -45,7 +49,7 @@ SUBSUITE_REGEX="^boxes"
 # wait to insert contexts (which will be reused for all subsequent benchmark runs)
 # until first benchmark successfully finishes.
 benny insert code_context "${PROJECT_NAME}" ${SOURCE_ROOT} --save-json code_context.json
-benny insert run_context ${TOKEN} ./code_context.json --save-json run_context.json
+benny insert run_context ${BENNY_SYSTEM_TOKEN} ./code_context.json --save-json run_context.json
 
 benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
@@ -93,6 +97,6 @@ benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} .
 SUITE_NAME="Microbenchmarks"
 
 SUBSUITE_NAME="Setup"
-SUBSUITE_REGEX="^(ospInit_ospShutdown|setup)"
+SUBSUITE_REGEX="^setup"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json

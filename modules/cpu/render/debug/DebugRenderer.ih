@@ -11,7 +11,7 @@ SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
     Camera *uniform camera,
     World *uniform world,
     const uint32 *uniform taskIDs,
-    const int taskIndex0,
+    const sycl::nd_item<3> taskIndex,
     const uniform FeatureFlagsHandler &ffh);
 #endif
 

@@ -14,15 +14,10 @@ extern "C" uint32 *uniform getThreadNumPixelsRendered();
 extern "C" int *uniform getThreadLastFrameID();
 #endif
 
-OSPRAY_BEGIN_ISPC_NAMESPACE
+#define FRAMEBUFFER_ACCUMULATE_VALUE(value, new_value, factor)                 \
+  value = (factor >= 1.f) ? new_value : lerp(factor, value, new_value)
 
-// Run the chain of pixel ops (if any) to produce the final color to be written
-// into the framebuffer
-SYCL_EXTERNAL vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
-    const vec4f &color,
-    const float depth,
-    const vec3f &normal,
-    const vec3f &albedo);
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #ifndef OSPRAY_TARGET_SYCL
 inline void FrameBuffer_updateProgress(

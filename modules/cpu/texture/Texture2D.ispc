@@ -159,16 +159,40 @@ inline vec4f getTexel_R32F(const Texture2D *uniform self, const vec2i i)
 // Texture coordinate utilities
 //////////////////////////////////////////////////////////////////////////////
 
+inline float wrap_coord(
+    const uint32 wrapMode, const uniform float halfTexel, const float p)
+{
+  float tc = 0.f;
+
+  switch (wrapMode) {
+  case OSP_TEXTURE_WRAP_REPEAT:
+    tc = frac(p - halfTexel) + halfTexel;
+    tc = max(tc, 0.f); // filter out inf/NaN
+    break;
+
+  case OSP_TEXTURE_WRAP_MIRRORED_REPEAT: {
+    tc = 2.f * frac(p * 0.5f);
+    if (tc >= 1.f)
+      tc = 2.f - tc;
+    tc = clamp(tc, halfTexel, 1.f - halfTexel);
+    break;
+  }
+
+  case OSP_TEXTURE_WRAP_CLAMP_TO_EDGE:
+    tc = clamp(p, halfTexel, 1.f - halfTexel);
+  }
+
+  return tc;
+}
+
 inline vec2i nearest_coords(const Texture2D *uniform self, const vec2f p)
 {
-  // repeat: get remainder within [0..1] parameter space
-  vec2f tc = frac(p);
-  tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
+  vec2f tc;
 
-  // scale by texture size
+  tc.x = wrap_coord(self->wrapMode.x, 0.f, p.x);
+  tc.y = wrap_coord(self->wrapMode.y, 0.f, p.y);
+
   tc = tc * self->sizef;
-
-  // nearest
   return make_vec2i(tc);
 }
 
@@ -182,19 +206,19 @@ struct BilinCoords
 inline BilinCoords bilinear_coords(const Texture2D *uniform self, const vec2f p)
 {
   BilinCoords coords;
+  vec2f tc;
 
-  // repeat: get remainder within [0..1] parameter space
-  // lower sample shifted by half a texel
-  vec2f tc = frac(p - self->halfTexel);
-  tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
+  tc.x = wrap_coord(self->wrapMode.x, self->halfTexel.x, p.x);
+  tc.y = wrap_coord(self->wrapMode.y, self->halfTexel.y, p.y);
 
-  // scale by texture size
+  tc = tc - self->halfTexel; // lower sample shifted by half a texel
   tc = tc * self->sizef;
-  coords.frac = frac(tc);
 
+  coords.frac = frac(tc);
   coords.st0 = make_vec2i(tc);
   coords.st1 = coords.st0 + 1;
-  // handle border cases
+
+  // handle border cases as REPEAT
   if (coords.st1.x >= self->size.x)
     coords.st1.x = 0;
   if (coords.st1.y >= self->size.y)

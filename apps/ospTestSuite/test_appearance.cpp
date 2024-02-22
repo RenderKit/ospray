@@ -181,12 +181,13 @@ void Texture2D::SetUp()
   AddLight(light2);
 }
 
-static cpp::Texture createTexture2D()
+static cpp::Texture createTexture2D(uint32_t width = 32,
+    uint32_t height = 32,
+    vec2ui wrapMode = vec2ui(OSP_TEXTURE_WRAP_REPEAT),
+    OSPTextureFilter filter = OSP_TEXTURE_FILTER_LINEAR)
 {
-  // Prepare pixel data
-  constexpr uint32_t width = 32;
-  constexpr uint32_t height = 32;
-  std::array<vec3uc, width * height> dbyte;
+  // Prepare texel data
+  std::vector<vec3uc> dbyte(width * height);
   rkcommon::index_sequence_2D idx(vec2i(width, height));
   for (auto i : idx)
     dbyte[idx.flatten(i)] =
@@ -195,9 +196,55 @@ static cpp::Texture createTexture2D()
   // Create texture object
   cpp::Texture tex("texture2d");
   tex.setParam("format", OSP_TEXTURE_RGB8);
+  tex.setParam("filter", filter);
+  tex.setParam("wrapMode", wrapMode);
   tex.setParam("data", cpp::CopiedData(dbyte.data(), vec2ul(width, height)));
   tex.commit();
   return tex;
+}
+
+static cpp::Geometry createQuads(
+    const int cols, const int rows, const float gap, const bool withTC = false)
+{
+  cpp::Geometry quads("mesh");
+  {
+    // Create quads data
+    std::vector<vec3f> position(4 * cols * rows);
+    rkcommon::index_sequence_2D idx(vec2i(cols, rows));
+
+    for (auto i : idx) {
+      auto l = static_cast<vec2f>(i) * gap;
+      auto u = l + (.75f * gap);
+
+      position[4 * idx.flatten(i) + 0] = vec3f(l.x, l.y, 0.f);
+      position[4 * idx.flatten(i) + 1] = vec3f(l.x, u.y, 0.f);
+      position[4 * idx.flatten(i) + 2] = vec3f(u.x, u.y, 0.f);
+      position[4 * idx.flatten(i) + 3] = vec3f(u.x, l.y, 0.f);
+    }
+
+    // Set quads parameters
+    quads.setParam(
+        "vertex.position", cpp::CopiedData(position.data(), 4 * cols * rows));
+
+    if (withTC) {
+      std::vector<vec2f> texcoord(4 * cols * rows);
+
+      for (auto i : idx) {
+        texcoord[4 * idx.flatten(i) + 0] = vec2f(-1.f, -1.f);
+        texcoord[4 * idx.flatten(i) + 1] = vec2f(-1.f, 3.f);
+        texcoord[4 * idx.flatten(i) + 2] = vec2f(3.f, 3.f);
+        texcoord[4 * idx.flatten(i) + 3] = vec2f(3.f, -1.f);
+      }
+
+      quads.setParam(
+          "vertex.texcoord", cpp::CopiedData(texcoord.data(), 4 * cols * rows));
+    }
+
+    quads.setParam("quadSoup", true);
+    quads.commit();
+  }
+
+  return quads;
 }
 
 Texture2DTransform::Texture2DTransform()
@@ -216,27 +263,7 @@ void Texture2DTransform::SetUp()
   // Create quad geometry
   constexpr int cols = 2;
   constexpr int rows = 2;
-  cpp::Geometry quads("mesh");
-  {
-    // Create quads data
-    std::array<vec3f, 4 * cols * rows> position;
-    std::array<vec4ui, cols * rows> index;
-    rkcommon::index_sequence_2D idx(vec2i(cols, rows));
-    for (auto i : idx) {
-      auto l = static_cast<vec2f>(i) * 5.f;
-      auto u = l + (.75f * 5.f);
-      position[4 * idx.flatten(i) + 0] = vec3f(l.x, l.y, 0.f);
-      position[4 * idx.flatten(i) + 1] = vec3f(l.x, u.y, 0.f);
-      position[4 * idx.flatten(i) + 2] = vec3f(u.x, u.y, 0.f);
-      position[4 * idx.flatten(i) + 3] = vec3f(u.x, l.y, 0.f);
-      index[idx.flatten(i)] = vec4ui(0, 1, 2, 3) + 4 * idx.flatten(i);
-    }
-
-    // Set quads parameters
-    quads.setParam("vertex.position", cpp::CopiedData(position));
-    quads.setParam("index", cpp::CopiedData(index));
-    quads.commit();
-  }
+  cpp::Geometry quads = createQuads(cols, rows, 5.f);
 
   // Create materials
   std::array<cpp::Material, cols * rows> materials;
@@ -259,6 +286,48 @@ void Texture2DTransform::SetUp()
   // Set translation
   materials[3].setParam("map_kd.translation", vec2f(.5f));
   materials[3].commit();
+
+  // Create geometric model
+  cpp::GeometricModel model(quads);
+  model.setParam("material", cpp::CopiedData(materials));
+  AddModel(model);
+
+  cpp::Light ambient("ambient");
+  ambient.setParam("intensity", 0.5f);
+  AddLight(ambient);
+}
+
+Texture2DWrapMode::Texture2DWrapMode()
+{
+  rendererType = "scivis";
+  filter = GetParam();
+}
+
+void Texture2DWrapMode::SetUp()
+{
+  Base::SetUp();
+
+  camera.setParam("position", vec3f(4.f, 4.f, -8.f));
+  camera.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  camera.setParam("up", vec3f(0.f, 1.f, 0.f));
+
+  // Create quad geometry
+  constexpr int cols = 3;
+  constexpr int rows = 3;
+  cpp::Geometry quads = createQuads(cols, rows, 3.f, true);
+
+  // Create materials
+  std::array<cpp::Material, cols * rows> materials;
+
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      cpp::Texture tex = createTexture2D(4, 4, vec2ui(j, i), filter);
+      cpp::Material mat("obj");
+      mat.setParam("map_kd", tex);
+      mat.commit();
+      materials[(i * cols) + j] = mat;
+    }
+  }
 
   // Create geometric model
   cpp::GeometricModel model(quads);
@@ -444,15 +513,16 @@ INSTANTIATE_TEST_SUITE_P(TestScenesPtMaterials,
                            "test_pt_glass",
                            "test_pt_thinglass",
                            "test_pt_luminous",
+                           "test_pt_material_tex",
                            "test_pt_metal_roughness",
                            "test_pt_metallic_flakes",
+                           "test_pt_mix_tex",
                            "test_pt_obj",
                            "test_pt_plastic",
                            "test_pt_principled_metal",
                            "test_pt_principled_plastic",
                            "test_pt_principled_glass",
-                           "test_pt_tex_material",
-                           "test_pt_tex_mix",
+                           "test_pt_principled_tex",
                            "test_pt_velvet"),
         ::testing::Values("pathtracer"),
         ::testing::Values(64)));
@@ -476,6 +546,15 @@ TEST_P(Texture2DTransform, simple)
 
 INSTANTIATE_TEST_SUITE_P(
     Appearance, Texture2DTransform, ::testing::Values("scivis"));
+
+TEST_P(Texture2DWrapMode, wrap)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(Appearance,
+    Texture2DWrapMode,
+    ::testing::Values(OSP_TEXTURE_FILTER_NEAREST, OSP_TEXTURE_FILTER_LINEAR));
 
 TEST_P(PTBackgroundRefraction, backgroundRefraction)
 {

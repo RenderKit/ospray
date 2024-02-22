@@ -47,7 +47,6 @@ class DenoiserOp : public ImageOpBase, public ::testing::Test
   {
     ospLoadModule("denoiser");
 
-    frameBufferFormat = OSP_FB_RGBA32F;
     rendererType = "pathtracer";
     imageOp = "denoiser";
   }

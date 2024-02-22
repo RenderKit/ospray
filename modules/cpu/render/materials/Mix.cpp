@@ -38,12 +38,22 @@ void MixMaterial::commit()
   getSh()->mat1 = mat1 ? mat1->getSh() : nullptr;
   getSh()->mat2 = mat2 ? mat2->getSh() : nullptr;
 
+  // XXX mixing emission(Map) is not supported, below are merely some WAs
   vec3f emission = vec3f(0.f);
-  if (mat1)
+  ispc::TextureParam emissionMap;
+  if (mat1) {
     emission = (1.f - getSh()->factor) * getSh()->mat1->emission;
-  if (mat2)
+    if (getSh()->mat1->emissionMap.ptr)
+      emissionMap = getSh()->mat1->emissionMap;
+  }
+  if (mat2) {
     emission = emission + getSh()->factor * getSh()->mat2->emission;
+    // if both materials have emission texture, material2 wins
+    if (getSh()->mat2->emissionMap.ptr)
+      emissionMap = getSh()->mat2->emissionMap;
+  }
   getSh()->super.emission = emission;
+  getSh()->super.emissionMap = emissionMap;
 }
 
 } // namespace pathtracer

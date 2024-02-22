@@ -11,7 +11,7 @@ struct RenderTaskDesc
 {
   box2i region; // screen region that this corresponds to
   uint32 taskID;
-  int accumID;
   float error;
+  int count;
 };
 OSPRAY_END_ISPC_NAMESPACE

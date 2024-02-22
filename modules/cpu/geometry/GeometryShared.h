@@ -41,10 +41,11 @@ typedef void (*Geometry_GetAreasFct)(const Geometry *const uniform,
         areas // array to return area per primitive in world-space
 );
 
-struct SampleAreaRes
+struct SampleAreaRes // basically a reduced DifferentialGeometry
 {
   vec3f pos; // sampled point, in world-space
   vec3f normal; // geometry normal Ng at the sampled point
+  vec2f st; // texture coordinates
 };
 
 // sample the given primitive uniformly wrt. area

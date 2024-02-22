@@ -231,28 +231,13 @@ endmacro()
 
 ## Target creation macros ##
 
-set(OSPRAY_SIGN_FILE_ARGS -q)
-if (APPLE)
-  list(APPEND OSPRAY_SIGN_FILE_ARGS -o runtime -e ${CMAKE_SOURCE_DIR}/scripts/release/ospray.entitlements)
-endif()
-
 macro(ospray_sign_target name)
-  if (OSPRAY_SIGN_FILE)
-    if (APPLE)
-      # on OSX we strip manually before signing instead of setting CPACK_STRIP_FILES
-      add_custom_command(TARGET ${name} POST_BUILD
-        COMMAND ${CMAKE_STRIP} -x $<TARGET_FILE:${name}>
-        COMMAND ${OSPRAY_SIGN_FILE} ${OSPRAY_SIGN_FILE_ARGS} $<TARGET_FILE:${name}>
-        COMMENT "Stripping and signing target"
-        VERBATIM
-      )
-    else()
-      add_custom_command(TARGET ${name} POST_BUILD
-        COMMAND ${OSPRAY_SIGN_FILE} ${OSPRAY_SIGN_FILE_ARGS} $<TARGET_FILE:${name}>
-        COMMENT "Signing target"
-        VERBATIM
-      )
-    endif()
+  if (OSPRAY_SIGN_FILE AND NOT APPLE)
+    add_custom_command(TARGET ${name} POST_BUILD
+      COMMAND ${OSPRAY_SIGN_FILE} -q  $<TARGET_FILE:${name}>
+      COMMENT "Signing target"
+      VERBATIM
+    )
   endif()
 endmacro()
 
@@ -351,11 +336,8 @@ macro(ospray_configure_compiler)
 
   if (WIN32)
     # increase stack to 8MB (the default size of 1MB is too small for our apps)
-    if (OSPRAY_MODULE_GPU)
-      get_filename_component(SYCL_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME_WE)
-      if (SYCL_COMPILER_NAME STREQUAL "clang++")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Xlinker")
-      endif()
+    if (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Xlinker")
     endif()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
   endif()
@@ -391,8 +373,7 @@ function(ospray_verify_embree_features)
   ospray_check_embree_feature(GEOMETRY_USER ON "support user geometries")
   ospray_check_embree_feature(RAY_PACKETS ON "support ray packets")
   ospray_check_embree_feature(BACKFACE_CULLING OFF "have backface culling disabled")
-# FIXME available in Embree >v4.3
-#  ospray_check_embree_feature(GEOMETRY_INSTANCE ON "support instances")
+  ospray_check_embree_feature(GEOMETRY_INSTANCE ON "support instances")
   ospray_check_embree_feature(MAX_INSTANCE_LEVEL_COUNT 1 "only support single-level instancing" ON)
   if (OSPRAY_MODULE_GPU)
     ospray_check_embree_feature(SYCL_SUPPORT ON "support DPC++/SYCL")

@@ -16,7 +16,7 @@ SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
     const DifferentialGeometry &dg,
     const vec2f &sp,
     const float time,
-    const uniform FeatureFlagsHandler);
+    const uniform FeatureFlagsHandler &);
 
 SYCL_EXTERNAL Light_EvalRes QuadLight_eval(const Light *uniform super,
     const DifferentialGeometry &dg,

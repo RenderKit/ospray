@@ -21,8 +21,7 @@ void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args);
 namespace ospray {
 
 Isosurfaces::Isosurfaces(api::ISPCDevice &device)
-    : AddStructShared(
-        device.getIspcrtContext(), device, FFG_ISOSURFACE | FFG_USER_GEOMETRY)
+    : AddStructShared(device.getIspcrtContext(), device, FFG_ISOSURFACE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect = ispc::Isosurfaces_postIntersect_addr();

@@ -1,7 +1,7 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI Linux GPU Workflow
+name: CI Linux GPU
 
 on:
   push:
@@ -11,133 +11,85 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
 
 ### BUILD JOBS ###
 
-  ubu22-dpcpp-release-build:
+  ubu22-mpi-dpcpp-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-release.env
-      level-zero-version: public/1.12.0 # for ispcrt
-      cmd: |
-        module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON
-      artifact-out: build-ubuntu2204-dpcpp-release
-      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
-
-  ubu22-mpi-dpcpp-release-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    secrets: inherit
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-release.env
-      level-zero-version: public/1.12.0 # for ispcrt
+      env-from-files: .github/workflows/dpcpp.env
       cmd: |
         module load cmake/3.25.3
         export CC=clang
         export CXX=clang++
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
-      artifact-out: build-ubuntu2204-mpi-dpcpp-release
+      artifact-out: build-ubuntu2204-mpi-dpcpp
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  ubu22-dpcpp-nightly-build:
+
+  ubu22-mpi-icx-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
-      env-from-files: .github/workflows/dpcpp-nightly.env
-      level-zero-version: public/1.12.0 # for ispcrt
-      cmd: |
-        module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON
-      artifact-out: build-ubuntu2204-dpcpp-nightly
-      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
-
-
-  ubu22-mpi-icx-release-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    secrets: inherit
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ubuntu:22.04
-      env-from-files: .github/workflows/icx-release.env .github/workflows/gfx-ubuntu22-release.env # OIDN AOT needs ocloc
-      level-zero-version: public/1.12.0 # for ispcrt
+      env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env # OIDN AOT needs ocloc
       cmd: |
         module load cmake/3.25.3
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
-      artifact-out: build-ubuntu2204-mpi-icx-release
-      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
-
-  ubu22-icx-nightly-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    secrets: inherit
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ubuntu:22.04
-      env-from-files: .github/workflows/icx-nightly.env .github/workflows/gfx-ubuntu22-release.env # OIDN AOT needs ocloc
-      level-zero-version: public/1.12.0 # for ispcrt
-      cmd: |
-        module load cmake/3.25.3
-        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT # FIXME
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
-      artifact-out: build-ubuntu2204-icx-nightly
+      artifact-out: build-ubuntu2204-mpi-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 
-  suse-icx-release-build:
+  suse-icx-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: opensuse/leap:15.3
-      env-from-files: .github/workflows/icx-release.env
-      level-zero-version: public/1.12.0 # for ispcrt
+      env-from-files: .github/workflows/icx-linux.env
       cmd: |
         module load cmake/3.25.3
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON
 
-  rocky8-mpich-dpcpp-release-build:
+  rocky8-mpich-dpcpp-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: rockylinux:8.7
-      env-from-files: .github/workflows/dpcpp-release.env
-      level-zero-version: public/1.12.0 # for ispcrt
+      env-from-files: .github/workflows/dpcpp.env
       cmd: |
         module load cmake/3.25.3
         module load mpi/mpich-x86_64
         export CC=clang
         export CXX=clang++
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
-      artifact-out: build-rocky8-mpich-dpcpp-release
+      artifact-out: build-rocky8-mpich-dpcpp
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 
 
 ### TEST JOBS ###
 
-  dpcpp-release-dg2-ubu22-test:
-    needs: ubu22-dpcpp-release-build
+  dpcpp-dg2-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
-      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
-      artifact-in: build-ubuntu2204-dpcpp-release
-      artifact-out: test-ubuntu2204-dpcpp-release-dg2
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-dpcpp-dg2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
@@ -145,17 +97,18 @@ jobs:
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
-  dpcpp-release-pvc-ubu22-test:
-    needs: ubu22-dpcpp-release-build
+  dpcpp-pvc-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
-      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"pvc"'
-      artifact-in: build-ubuntu2204-dpcpp-release
-      artifact-out: test-ubuntu2204-dpcpp-release-pvc
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-dpcpp-pvc
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
@@ -163,93 +116,131 @@ jobs:
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
-  mpi-dpcpp-release-pvc-ubu22-test:
-    needs: ubu22-mpi-dpcpp-release-build
+  mpi-dpcpp-pvc-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
+      timeout-minutes: 100
       image: ubuntu:22.04
-      env-from-files: .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"pvc"'
-      artifact-in: build-ubuntu2204-mpi-dpcpp-release
-      artifact-out: test-ubuntu2204-mpi-dpcpp-release-pvc
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-mpi-dpcpp-pvc
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
         module load cmake/3.25.3
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI TEST_MULTIDEVICE
+        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" SKIP_GPU TEST_MPI
 
-  dpcpp-nightly-dg2-ubu22-test:
-    needs: ubu22-dpcpp-nightly-build
+  multidev-dpcpp-pvc-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
-      env-from-files: .github/workflows/gfx-ubuntu22-release.env
-      options: --device=/dev/dri:/dev/dri
-      runs-on: '"dg2"'
-      artifact-in: build-ubuntu2204-dpcpp-nightly
-      artifact-out: test-ubuntu2204-dpcpp-nightly-dg2
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
-      cmd: |
-        module load cmake/3.25.3
-        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
-
-  mpi-icx-release-dg2-ubu22-test:
-    needs: ubu22-mpi-icx-release-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    secrets: inherit
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ubuntu:22.04
-      env-from-files: .github/workflows/icx-release.env .github/workflows/gfx-ubuntu22-release.env
-      options: --device=/dev/dri:/dev/dri
-      runs-on: '"dg2"'
-      artifact-in: build-ubuntu2204-mpi-icx-release
-      artifact-out: test-ubuntu2204-mpi-icx-release-dg2
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
-      cmd: |
-        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI
-
-  mpi-icx-release-pvc-ubu22-test:
-    needs: ubu22-mpi-icx-release-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    secrets: inherit
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ubuntu:22.04
-      env-from-files: .github/workflows/icx-release.env .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"pvc"'
-      artifact-in: build-ubuntu2204-mpi-icx-release
-      artifact-out: test-ubuntu2204-mpi-icx-release-pvc
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-multidev-dpcpp-pvc
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
+        module load cmake/3.25.3
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI TEST_MULTIDEVICE
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" SKIP_GPU TEST_MULTIDEVICE
 
-  icx-nightly-dg2-ubu22-test:
-    needs: ubu22-icx-nightly-build
+  icx-dg2-ubu22-test:
+    needs: ubu22-mpi-icx-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      timeout-minutes: 100
       image: ubuntu:22.04
-      env-from-files: .github/workflows/icx-nightly.env .github/workflows/gfx-ubuntu22-release.env
+      env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
-      artifact-in: build-ubuntu2204-icx-nightly
-      artifact-out: test-ubuntu2204-icx-nightly-dg2
+      artifact-in: build-ubuntu2204-mpi-icx
+      artifact-out: test-ubuntu2204-icx-dg2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
+  mpi-icx-dg2-ubu22-test:
+    needs: ubu22-mpi-icx-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"dg2"'
+      artifact-in: build-ubuntu2204-mpi-icx
+      artifact-out: test-ubuntu2204-mpi-icx-dg2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" SKIP_GPU TEST_MPI
+
+  icx-pvc-ubu22-test:
+    needs: ubu22-mpi-icx-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"pvc"'
+      artifact-in: build-ubuntu2204-mpi-icx
+      artifact-out: test-ubuntu2204-icx-pvc
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
+  mpi-icx-pvc-ubu22-test:
+    needs: ubu22-mpi-icx-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"pvc"'
+      artifact-in: build-ubuntu2204-mpi-icx
+      artifact-out: test-ubuntu2204-mpi-icx-pvc
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" SKIP_GPU TEST_MPI
+
+  multidev-icx-pvc-ubu22-test:
+    needs: ubu22-mpi-icx-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"pvc"'
+      artifact-in: build-ubuntu2204-mpi-icx
+      artifact-out: test-ubuntu2204-multidev-icx-pvc
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" SKIP_GPU TEST_MULTIDEVICE
 

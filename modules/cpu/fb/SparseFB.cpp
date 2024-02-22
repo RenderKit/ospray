@@ -3,8 +3,7 @@
 
 #include "SparseFB.h"
 #include "OSPConfig.h"
-#include "PixelOp.h"
-#include "fb/FrameBufferView.h"
+#include "fb/ImageOp.h"
 #include "render/util.h"
 #include "rkcommon/common.h"
 #include "rkcommon/tasking/parallel_for.h"
@@ -31,8 +30,7 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels,
-    const std::vector<uint32_t> &_tileIDs,
-    const bool overrideUseTaskAccumIDs)
+    const std::vector<uint32_t> &_tileIDs)
     : AddStructShared(device.getIspcrtContext(),
         device,
         _size,
@@ -40,7 +38,6 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
         channels,
         FFO_FB_SPARSE),
       device(device),
-      useTaskAccumIDs((channels & OSP_FB_ACCUM) || overrideUseTaskAccumIDs),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE)))
 {
   if (size.x <= 0 || size.y <= 0) {
@@ -55,8 +52,7 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
 SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
-    const uint32 channels,
-    const bool overrideUseTaskAccumIDs)
+    const uint32 channels)
     : AddStructShared(device.getIspcrtContext(),
         device,
         _size,
@@ -64,33 +60,12 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
         channels,
         FFO_FB_SPARSE),
       device(device),
-      useTaskAccumIDs((channels & OSP_FB_ACCUM) || overrideUseTaskAccumIDs),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE)))
 {
   if (size.x <= 0 || size.y <= 0) {
     throw std::runtime_error(
         "local framebuffer has invalid size. Dimensions must be greater than "
         "0");
-  }
-}
-
-void SparseFrameBuffer::commit()
-{
-  FrameBuffer::commit();
-
-  if (imageOpData) {
-    FrameBufferView fbv(this,
-        getColorBufferFormat(),
-        getNumPixels(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr);
-
-    // Sparse framebuffer cannot execute frame operations because it doesn't
-    // have the full framebuffer. This is handled by the parent object managing
-    // the set of sparse framebuffer's, so here we just ignore them
-    prepareLiveOpsForFBV(fbv, false, true);
   }
 }
 
@@ -105,7 +80,7 @@ uint32_t SparseFrameBuffer::getTotalRenderTasks() const
 }
 
 utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs(
-    float errorThreshold)
+    const float errorThreshold, const uint32_t)
 {
   if (!renderTaskIDs)
     return utility::ArrayView<uint32_t>(nullptr, 0);
@@ -211,15 +186,6 @@ void SparseFrameBuffer::clear()
 {
   FrameBuffer::clear();
 
-  // We only need to reset the accumID, SparseFB_accumulateWriteSample will
-  // handle overwriting the image when accumID == 0
-  if (taskAccumID) {
-    std::fill(taskAccumID->begin(), taskAccumID->end(), 0);
-    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
-    tq.copyToDevice(*taskAccumID);
-    tq.sync();
-  }
-
   // also clear the task error buffer if present
   if (taskErrorBuffer) {
     std::fill(taskErrorBuffer->begin(), taskErrorBuffer->end(), inf);
@@ -275,8 +241,7 @@ uint32_t SparseFrameBuffer::getTileIndexForTask(uint32_t taskID) const
   return taskID / getNumTasksPerTile();
 }
 
-void SparseFrameBuffer::setTiles(
-    const std::vector<uint32_t> &_tileIDs, const int initialTaskAccumID)
+void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
 {
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::beginEvent("SparseFB::setTiles", "ospray");
@@ -353,22 +318,6 @@ void SparseFrameBuffer::setTiles(
     varianceBuffer = nullptr;
   }
 
-  if (hasAccumBuffer && !tileIDs.empty()) {
-    accumulationBuffer = make_buffer_device_unique<vec4f>(
-        getISPCDevice().getIspcrtDevice(), numPixels);
-  } else {
-    accumulationBuffer = nullptr;
-  }
-
-  if ((hasAccumBuffer || useTaskAccumIDs) && !tileIDs.empty()) {
-    taskAccumID = make_buffer_device_shadowed_unique<int>(
-        getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
-    std::fill(taskAccumID->begin(), taskAccumID->end(), initialTaskAccumID);
-    tq.copyToDevice(*taskAccumID);
-  } else {
-    taskAccumID = nullptr;
-  }
-
   // TODO: Should find a better way for allowing sparse task id sets
   // here we have this array b/c the tasks will be filtered down based on
   // variance termination
@@ -413,11 +362,6 @@ void SparseFrameBuffer::setTiles(
   }
   tq.sync();
 
-  // We don't call SparseFB::clear here because we've populated
-  // taskAccumID with the initial accumID to use. We just want
-  // to reset the frameID
-  FrameBuffer::clear();
-
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.accumulateSample =
       reinterpret_cast<ispc::FrameBuffer_accumulateSampleFct>(
@@ -436,9 +380,6 @@ void SparseFrameBuffer::setTiles(
   getSh()->tiles = tiles ? tiles->devicePtr() : nullptr;
   getSh()->numTiles = tiles ? tiles->size() : 0;
 
-  getSh()->taskAccumID = taskAccumID ? taskAccumID->devicePtr() : nullptr;
-  getSh()->accumulationBuffer =
-      accumulationBuffer ? accumulationBuffer->devicePtr() : nullptr;
   getSh()->varianceBuffer =
       varianceBuffer ? varianceBuffer->devicePtr() : nullptr;
   getSh()->taskRegionError =

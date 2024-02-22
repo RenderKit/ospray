@@ -3,31 +3,12 @@
 
 #pragma once
 
-#include "rkcommon/math/AffineSpace.ih"
-// c++ shared
-#include "FrameBufferShared.h"
+#ifdef __cplusplus
+namespace ispc {
+#endif // __cplusplus
 
-OSPRAY_BEGIN_ISPC_NAMESPACE
+#include "fb/FrameBufferViewDef.h"
 
-struct FrameBufferView
-{
-  // The total dimensions of the global framebuffer
-  vec2i fbDims;
-  // The dimensions of this view of the framebuffer
-  vec2i viewDims;
-  // The additional halo region pixels included in the view, if requested
-  vec2i haloDims;
-
-  OSPFrameBufferFormat colorBufferFormat;
-
-  // Color buffer of the image, exact pixel format depends
-  // on `colorBufferFormat`
-  void *colorBuffer;
-  // One float per pixel, may be NULL
-  float *depthBuffer;
-  // accumulated world-space normal per pixel
-  vec3f *normalBuffer;
-  // accumulated albedo, one RGBF32 per pixel
-  vec3f *albedoBuffer;
-};
-OSPRAY_END_ISPC_NAMESPACE
+#ifdef __cplusplus
+}
+#endif // __cplusplus

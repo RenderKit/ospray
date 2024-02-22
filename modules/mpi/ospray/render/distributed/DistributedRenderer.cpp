@@ -66,16 +66,14 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
     ff |= fb->getFeatureFlags();
     ff |= camera->getFeatureFlags();
     // Disable features we don't need for the region visibility computation
-    ff.geometry = FFG_BOX | FFG_USER_GEOMETRY;
+    ff.geometry = FFG_BOX;
 #ifdef OSPRAY_ENABLE_VOLUMES
     ff.volume = VKL_FEATURE_FLAGS_NONE;
 #endif
     cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);
 
-    const sycl::nd_range<1> dispatchRange =
-        device.computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange,
-        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
+    cgh.parallel_for(fb->getDispatchRange(numTasks),
+        [=](sycl::nd_item<3> taskIndex, sycl::kernel_handler kh) {
           if (taskIndex.get_global_id(0) < numTasks) {
             ispc::FeatureFlagsHandler ffh(kh);
             ispc::DR_default_computeRegionVisibility(rendererSh,

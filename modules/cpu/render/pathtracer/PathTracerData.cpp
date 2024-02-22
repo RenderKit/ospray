@@ -29,15 +29,15 @@ int GeometricModel_gatherEmissivePrimIDs(void *_model,
 
 namespace ospray {
 
-PathTracerData::PathTracerData(const World &world,
-    bool importanceSampleGeometryLights,
-    const Renderer &renderer)
+PathTracerData::PathTracerData(
+    const World &world, bool scanForGeometryLights, const Renderer &renderer)
     : AddStructShared(world.getISPCDevice().getIspcrtContext())
 {
   size_t geometryLights{0};
 
-  if (importanceSampleGeometryLights) {
+  if (scanForGeometryLights) {
     generateGeometryLights(world, renderer);
+    scannedForGeometryLights = true;
     geometryLights = lightViews.size();
   }
 

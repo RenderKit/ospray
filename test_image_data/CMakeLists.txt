@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-project(ospray_test_data)
+project(ospray_test_data NONE)
 
 # Baseline images for tests and benchmarks
 include(ExternalData)
@@ -14,11 +14,14 @@ set_property(CACHE OSPRAY_TEST_ISA PROPERTY STRINGS AVX2 AVX512SKX)
 
 set(ExternalData_URL_TEMPLATES
   "https://www.ospray.org/ospray-test-data/%(algo)/%(hash)"
+  "https://www.ospray.org/ospray-test-data/%(algo)/%(hash)" # retry on error
 )
+
+file(TO_CMAKE_PATH "$ENV{STORAGE_PATH}" STORAGE_PATH)
 
 set(ExternalData_OBJECT_STORES
   "${CMAKE_BINARY_DIR}/regression_test_baseline"
-  "${PROJECT_STORE_ROOT}/OSPRay/test-data"
+  "${STORAGE_PATH}/projects/OSPRay/test-data"
 )
 
 set(ExternalData_BINARY_ROOT ${CMAKE_BINARY_DIR}/regression_test_baseline)
