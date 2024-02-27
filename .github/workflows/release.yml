@@ -65,7 +65,7 @@ jobs:
       runs-on: '[ "Linux", "ARM64" ]'
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        scripts/release/linux.sh -DBUILD_GLFW=OFF -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        scripts/release/linux.sh -DBUILD_GLFW=OFF -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
         cp build_release/*.gz $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-linux-arm
@@ -138,7 +138,7 @@ jobs:
       prebuild: >
         module load impi/latest &&
         echo "Configure dependencies" &&
-        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF &&
+        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF &&
         echo "Build dependencies" &&
         cmake --build build_deps &&
         INSTALL_DIR=$(pwd)/build_deps/install &&

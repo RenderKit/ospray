@@ -42,7 +42,7 @@ jobs:
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env # OIDN AOT needs ocloc
       cmd: |
         module load cmake/3.25.3
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-mpi-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -56,7 +56,7 @@ jobs:
       env-from-files: .github/workflows/icx-linux.env
       cmd: |
         module load cmake/3.25.3
-        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON
 
   rocky8-mpich-dpcpp-build:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
