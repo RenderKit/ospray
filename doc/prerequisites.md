@@ -26,7 +26,7 @@ before you can build OSPRay you need the following prerequisites:
     page](https://ispc.github.io/downloads.html).
     If ISPC is not found by CMake its location can be hinted with the
     variable `ispcrt_DIR`.
--   OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
+-   OSPRay builds on top of the [Intel Rendering Toolkit (Render Kit) common
     library (rkcommon)](https://www.github.com/ospray/rkcommon). The
     library provides abstractions for tasking, aligned memory
     allocation, vector math types, among others. For users who also need

@@ -86,16 +86,17 @@ before you can build OSPRay you need the following prerequisites:
   page](https://ispc.github.io/downloads.html). If ISPC is not found by
   CMake its location can be hinted with the variable `ispcrt_DIR`.
 
-- OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
-  library (rkcommon)](https://www.github.com/ospray/rkcommon). The
-  library provides abstractions for tasking, aligned memory allocation,
-  vector math types, among others. For users who also need to build
-  rkcommon, we recommend the default the Intel [Threading Building
-  Blocks (TBB)](https://www.threadingbuildingblocks.org/) as tasking
-  system for performance and flexibility reasons. TBB must be built from
-  source when targeting ARM CPUs, or can be built from source as part of
-  the [superbuild](#cmake-superbuild). Alternatively you can set CMake
-  variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or `Internal`.
+- OSPRay builds on top of the [Intel Rendering Toolkit (Render Kit)
+  common library (rkcommon)](https://www.github.com/ospray/rkcommon).
+  The library provides abstractions for tasking, aligned memory
+  allocation, vector math types, among others. For users who also need
+  to build rkcommon, we recommend the default the Intel [Threading
+  Building Blocks (TBB)](https://www.threadingbuildingblocks.org/) as
+  tasking system for performance and flexibility reasons. TBB must be
+  built from source when targeting ARM CPUs, or can be built from source
+  as part of the [superbuild](#cmake-superbuild). Alternatively you can
+  set CMake variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or
+  `Internal`.
 
 - OSPRay also heavily uses Intel [Embree](https://www.embree.org/),
   installing version 4.3.1 or newer is required. If Embree is not found
