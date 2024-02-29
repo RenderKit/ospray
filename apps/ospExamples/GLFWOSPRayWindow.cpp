@@ -76,7 +76,7 @@ static const std::vector<std::string> g_scenes = {"boxes_lit",
     "test_pt_velvet"};
 
 static const std::vector<std::string> g_curveVariant = {
-    "bspline", "hermite", "catmull-rom", "linear", "cones"};
+    "bspline", "bezier", "hermite", "catmull-rom", "linear", "cones"};
 
 static const std::vector<std::string> g_renderers = {
     "scivis", "pathtracer", "ao", "debug"};

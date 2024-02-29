@@ -215,7 +215,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "catmull-rom",
                            "linear_deprecated",
                            "linear",
-                           "cones"),
+                           "cones",
+                           "bezier"),
         ::testing::Values("scivis", "pathtracer", "ao")));
 
 INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
