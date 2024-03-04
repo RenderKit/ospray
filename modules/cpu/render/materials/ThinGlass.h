@@ -15,6 +15,9 @@ struct ThinGlass : public AddStructShared<Material, ispc::ThinGlass>
   virtual std::string toString() const override;
 
   virtual void commit() override;
+
+ private:
+  MaterialParam3f attenuationColor;
 };
 
 } // namespace pathtracer

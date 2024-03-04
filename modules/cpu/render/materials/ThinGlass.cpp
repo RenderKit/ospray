@@ -30,8 +30,7 @@ std::string ThinGlass::toString() const
 void ThinGlass::commit()
 {
   const float eta = getParam<float>("eta", 1.5f);
-  MaterialParam3f attenuationColor =
-      getMaterialParam3f("attenuationColor", vec3f(1.f));
+  attenuationColor = getMaterialParam3f("attenuationColor", vec3f(1.f));
   const float attenuationDistance = getParam<float>("attenuationDistance", 1.f);
   const float thickness = getParam<float>("thickness", 1.f);
 

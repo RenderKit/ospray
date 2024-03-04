@@ -19,6 +19,9 @@ struct MixMaterial : public AddStructShared<Material, ispc::Mix>
  protected:
   Ref<Material> mat1;
   Ref<Material> mat2;
+
+ private:
+  MaterialParam1f factor;
 };
 
 } // namespace pathtracer

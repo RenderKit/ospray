@@ -15,6 +15,9 @@ struct Luminous : public AddStructShared<Material, ispc::Luminous>
   virtual std::string toString() const override;
 
   virtual void commit() override;
+
+ private:
+  MaterialParam3f emissiveColor;
 };
 
 } // namespace pathtracer

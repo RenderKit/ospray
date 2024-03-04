@@ -29,7 +29,7 @@ std::string MixMaterial::toString() const
 
 void MixMaterial::commit()
 {
-  MaterialParam1f factor = getMaterialParam1f("factor", .5f);
+  factor = getMaterialParam1f("factor", .5f);
   mat1 = getParamObject<Material>("material1");
   mat2 = getParamObject<Material>("material2");
 

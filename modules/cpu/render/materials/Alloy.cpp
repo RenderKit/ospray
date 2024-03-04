@@ -27,9 +27,9 @@ std::string Alloy::toString() const
 //! \brief commit the material's parameters
 void Alloy::commit()
 {
-  MaterialParam3f color = getMaterialParam3f("color", vec3f(0.9f));
-  MaterialParam3f edgeColor = getMaterialParam3f("edgeColor", vec3f(1.f));
-  MaterialParam1f roughness = getMaterialParam1f("roughness", 0.1f);
+  color = getMaterialParam3f("color", vec3f(0.9f));
+  edgeColor = getMaterialParam3f("edgeColor", vec3f(1.f));
+  roughness = getMaterialParam1f("roughness", 0.1f);
 
   getSh()->color = color.factor;
   getSh()->colorMap = color.tex;

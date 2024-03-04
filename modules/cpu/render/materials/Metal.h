@@ -16,6 +16,9 @@ struct Metal : public AddStructShared<Material, ispc::Metal>
   virtual std::string toString() const override;
 
   virtual void commit() override;
+
+ private:
+  MaterialParam1f roughness;
 };
 
 } // namespace pathtracer

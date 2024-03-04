@@ -62,11 +62,10 @@ std::string Material::toString() const
 
 void Material::commit() {}
 
-ispc::TextureParam Material::getTextureParam(const char *texture_name)
+ispc::TextureParam Material::getTextureParam(
+    const char *texture_name, const Ref<Texture> &ref_tex)
 {
-  // Get texture pointer
-  Texture *ptr = getParamObject<Texture>(texture_name);
-  if (ptr)
+  if (ref_tex)
     featureFlags |= FFO_TEXTURE_IN_MATERIAL;
 
   // Get 2D transformation if exists
@@ -89,7 +88,7 @@ ispc::TextureParam Material::getTextureParam(const char *texture_name)
 
   // Initialize ISPC structure
   ispc::TextureParam param;
-  param.ptr = ptr ? ptr->getSh() : nullptr;
+  param.ptr = ref_tex ? ref_tex->getSh() : nullptr;
   param.transformFlags = (ispc::TransformFlags)transformFlags;
   param.xform2f = xfm2f;
   param.xform3f = xfm3f;
@@ -103,7 +102,8 @@ MaterialParam1f Material::getMaterialParam1f(
 {
   const std::string mapName = "map_" + std::string(name);
   MaterialParam1f param;
-  param.tex = getTextureParam(mapName.c_str());
+  param.ref_tex = getParamObject<Texture>(mapName.c_str());
+  param.tex = getTextureParam(mapName.c_str(), param.ref_tex);
   param.rot = ((linear2f *)(&param.tex.xform2f.l))->orthogonal().transposed();
   param.factor = getParam<float>(name, param.tex.ptr ? 1.f : valIfNotFound);
   return param;
@@ -114,7 +114,8 @@ MaterialParam3f Material::getMaterialParam3f(
 {
   const std::string mapName = "map_" + std::string(name);
   MaterialParam3f param;
-  param.tex = getTextureParam(mapName.c_str());
+  param.ref_tex = getParamObject<Texture>(mapName.c_str());
+  param.tex = getTextureParam(mapName.c_str(), param.ref_tex);
   param.rot = ((linear2f *)(&param.tex.xform2f.l))->orthogonal().transposed();
   param.factor =
       getParam<vec3f>(name, param.tex.ptr ? vec3f(1.f) : valIfNotFound);
