@@ -467,6 +467,7 @@ if (OSPRAY_MODULE_GPU)
   target_compile_definitions(ospray_module_gpu_kernels
   PUBLIC
     OSPRAY_TARGET_SYCL
+    __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__ # WA to allow printf of float, see https://github.com/intel/llvm/issues/12880
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}
     _ALLOW_KEYWORD_MACROS # avoid error when redefining reserved keywords like "export"
