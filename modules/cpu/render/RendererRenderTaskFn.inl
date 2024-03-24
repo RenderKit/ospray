@@ -80,10 +80,10 @@ task
 
       screenSample.sampleID.z = startSampleID + s;
 
-      cameraSample.screen.x =
-          (screenSample.sampleID.x + pfSample.x) * fb->rcpSize.x;
-      cameraSample.screen.y =
-          (screenSample.sampleID.y + pfSample.y) * fb->rcpSize.y;
+      cameraSample.pixel_center.x = screenSample.sampleID.x * fb->rcpSize.x;
+      cameraSample.pixel_center.y = screenSample.sampleID.y * fb->rcpSize.y;
+
+      cameraSample.screen = cameraSample.pixel_center + pfSample * fb->rcpSize;
       screenSample.pos = cameraSample.screen;
 
       // no DoF or MB per default

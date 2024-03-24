@@ -26,9 +26,11 @@ SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
+  float pixel_center = sbs ? sample.pixel_center.x : sample.pixel_center.y;
+
   if (sbs || self->stereoMode == OSP_STEREO_TOP_BOTTOM) {
     *split *= 2.f;
-    if (*split < 1.f) {
+    if (pixel_center < 0.5f) {
       org = org - self->ipd_offset;
     } else {
       org = org + self->ipd_offset;
