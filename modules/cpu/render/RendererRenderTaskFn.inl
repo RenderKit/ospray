@@ -71,18 +71,13 @@ task
           1.f / 6.f); // rotate to sample center (0.5) of pixel for sampleID=0
       const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
-      vec2f pfSample = pixelSample;
       const PixelFilter *uniform pf = self->pixelFilter;
-      if (pf) {
-        pfSample =
-            PixelFilter_dispatch_sample(pf, pixelSample) + make_vec2f(0.5f);
-      }
+      const vec2f pfSample = pf ? PixelFilter_dispatch_sample(pf, pixelSample)
+                                : pixelSample - make_vec2f(0.5f);
 
       screenSample.sampleID.z = startSampleID + s;
 
-      cameraSample.pixel_center.x = screenSample.sampleID.x * fb->rcpSize.x;
-      cameraSample.pixel_center.y = screenSample.sampleID.y * fb->rcpSize.y;
-
+      cameraSample.pixel_center = (make_vec2f(x, y) + 0.5f) * fb->rcpSize;
       cameraSample.screen = cameraSample.pixel_center + pfSample * fb->rcpSize;
       screenSample.pos = cameraSample.screen;
 

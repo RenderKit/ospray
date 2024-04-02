@@ -132,17 +132,13 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     RandomSampler_init(randomSampler, fb->size.x * iy + ix, sampleID);
 
     CameraSample cameraSample;
+    cameraSample.pixel_center = (make_vec2f(ix, iy) + 0.5f) * fb->rcpSize;
+
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
 
-    vec2f pfSample = pixelSample;
     const PixelFilter *uniform pf = self->super.pixelFilter;
-    if (pf) {
-      pfSample =
-          PixelFilter_dispatch_sample(pf, pixelSample) + make_vec2f(0.5f);
-    }
-
-    cameraSample.pixel_center.x = screenSample.sampleID.x * fb->rcpSize.x;
-    cameraSample.pixel_center.y = screenSample.sampleID.y * fb->rcpSize.y;
+    const vec2f pfSample = pf ? PixelFilter_dispatch_sample(pf, pixelSample)
+                              : pixelSample - make_vec2f(0.5f);
 
     cameraSample.screen = cameraSample.pixel_center + pfSample * fb->rcpSize;
 
