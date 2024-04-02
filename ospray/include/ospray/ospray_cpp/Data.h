@@ -4,7 +4,6 @@
 #pragma once
 
 #include "ManagedObject.h"
-#include "Traits.h"
 // stl
 #include <array>
 #include <vector>

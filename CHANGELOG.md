@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v3.2.0:
+
+-   Clarify the size of `OSP_BOOL` to be 1 byte
+-   Fix artifacts occassionally appearing with `gpu` device
+
 ### Changes in v3.1.0:
 
 -   Principled and Luminous materials support emissive textures

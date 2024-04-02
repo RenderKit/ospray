@@ -453,6 +453,8 @@ below.
 
   OSP_FRAMEBUFFER            framebuffer object reference
 
+  OSP_FUTURE                 future object reference
+
   OSP_LIGHT                  light object reference
 
   OSP_MATERIAL               material object reference
@@ -463,15 +465,25 @@ below.
 
   OSP_WORLD                  world object reference
 
+  OSP_GROUP                  group object reference
+
+  OSP_INSTANCE               instance object reference
+
   OSP_GEOMETRY               geometry object reference
 
+  OSP_GEOMETRIC_MODEL        geometric model object reference
+
   OSP_VOLUME                 volume object reference
+
+  OSP_VOLUMETRIC_MODEL       volumetric model object reference
 
   OSP_TRANSFER_FUNCTION      transfer function object reference
 
   OSP_IMAGE_OPERATION        image operation object reference
 
   OSP_STRING                 C-style zero-terminated character string
+
+  OSP_BOOL                   8\ bit boolean
 
   OSP_CHAR, OSP_VEC[234]C    8\ bit signed character scalar and [234]-element vector
 

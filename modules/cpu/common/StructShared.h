@@ -24,6 +24,10 @@ using uint8 = uint8_t;
 using int32 = int32_t;
 using uint32 = uint32_t;
 using int64 = int64_t;
+
+static_assert(sizeof(bool) == 1,
+    "Sharing structs with ISPC not possible, because different sizes of 'bool'.");
+
 } // namespace ispc
 
 namespace ospray {

@@ -19,6 +19,9 @@ using ospray::api::currentDevice;
 using ospray::api::Device;
 using ospray::api::deviceIsSet;
 
+static_assert(sizeof(bool) == 1,
+    "OSPRay's implementation assumes the size of 'bool' to be 1 byte.");
+
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
 

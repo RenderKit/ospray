@@ -6,6 +6,9 @@
 // ospray
 #include "ospray/ospray.h"
 
+static_assert(
+    sizeof(bool) == 1, "OSPRay assumes the size of 'bool' to be 1 byte.");
+
 namespace ospray {
 
 // Infer (compile time) OSP_DATA_TYPE from input type /////////////////////////
