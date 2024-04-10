@@ -23,6 +23,8 @@ Principled::Principled(api::ISPCDevice &device)
   getSh()->super.selectNextMedium =
       reinterpret_cast<ispc::Material_SelectNextMediumFunc>(
           ispc::Principled_selectNextMedium_addr());
+  getSh()->super.getEmission = reinterpret_cast<ispc::Material_GetEmissionFunc>(
+      ispc::Principled_getEmission_addr());
 #endif
 }
 
@@ -75,8 +77,8 @@ void Principled::commit()
   emissiveColor = getMaterialParam3f("emissiveColor", vec3f(0.f));
   // intensity is an additional constant factor to emission
   emissiveColor.factor *= getParam<float>("intensity", 1.f);
-  getSh()->super.emission = emissiveColor.factor;
-  getSh()->super.emissionMap = emissiveColor.tex;
+  getSh()->emission = emissiveColor.factor;
+  getSh()->emissionMap = emissiveColor.tex;
 
   getSh()->baseColor = baseColor.factor;
   getSh()->baseColorMap = baseColor.tex;
@@ -141,6 +143,7 @@ void Principled::commit()
       log(outsideTransmissionColor.y),
       log(outsideTransmissionColor.z));
   getSh()->outsideMedium.attenuation = otc / outsideTransmissionDepth;
+  getSh()->super.isEmissive = isEmissive();
 }
 
 } // namespace pathtracer

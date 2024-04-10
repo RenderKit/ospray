@@ -27,6 +27,8 @@ Material::Material(api::ISPCDevice &device, const FeatureFlagsOther ffo)
   getSh()->selectNextMedium =
       reinterpret_cast<ispc::Material_SelectNextMediumFunc>(
           ispc::Material_selectNextMedium_addr());
+  getSh()->getEmission = reinterpret_cast<ispc::Material_GetEmissionFunc>(
+      ispc::Material_getEmission_addr());
 #endif
 
   if (!microfacetAlbedoTables) {

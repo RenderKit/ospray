@@ -2234,7 +2234,7 @@ parameter `intensityQuantity` is not needed because it is always
   ------ ------------ --------  ---------------------------------------
   vec3f  color           white  color of the emitted light (linear RGB)
   float  intensity           1  intensity of the light (a factor)
-  float  transparency        1  material transparency
+  float  transparency        0  material transparency
   ------ ------------ --------  ---------------------------------------
   : Parameters accepted by the Luminous material.
 

@@ -5,6 +5,7 @@
 #include "GeometricModel.ih"
 #include "math/Distribution1D.ih"
 #include "render/Material.ih"
+#include "render/MaterialDispatch.ih"
 // c++ shared
 #include "common/InstanceShared.h"
 
@@ -24,6 +25,7 @@ export uniform int GeometricModel_gatherEmissivePrimIDs(void *uniform _model,
 
   // create the list of emissive primitive IDs
   uniform int32 numEmissivePrims = 0;
+
 #ifdef OSPRAY_TARGET_SYCL
   // SYCL execution in a thread is scalar
   for (int primID = 0; primID < geo->numPrimitives; ++primID) {
@@ -32,8 +34,7 @@ export uniform int GeometricModel_gatherEmissivePrimIDs(void *uniform _model,
 #endif
     Material *mat =
         (Material *)GeometricModel_getMaterial(model, renderer, primID);
-    const vec3f emission = mat->emission;
-    if (reduce_max(emission) > 0.f) {
+    if (mat->isEmissive) {
       int offset = exclusive_scan_add(1);
 
       primIDs[numEmissivePrims + offset] = primID;

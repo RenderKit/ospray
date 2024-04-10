@@ -16,6 +16,8 @@ struct Principled : public AddStructShared<Material, ispc::Principled>
 
   virtual void commit() override;
 
+  virtual bool isEmissive() const override;
+
  private:
   MaterialParam3f baseColor;
   MaterialParam3f edgeColor;
@@ -46,6 +48,11 @@ struct Principled : public AddStructShared<Material, ispc::Principled>
   MaterialParam1f thickness;
   MaterialParam3f emissiveColor;
 };
+
+inline bool Principled::isEmissive() const
+{
+  return reduce_max(getSh()->emission) > 0.f;
+}
 
 } // namespace pathtracer
 } // namespace ospray

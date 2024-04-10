@@ -47,7 +47,7 @@ struct OSPRAY_SDK_INTERFACE Material
   MaterialParam1f getMaterialParam1f(const char *name, float valIfNotFound);
   MaterialParam3f getMaterialParam3f(const char *name, vec3f valIfNotFound);
 
-  bool isEmissive() const;
+  virtual bool isEmissive() const;
 
  private:
   /*! \brief helper function to combine multiple texture transformation
@@ -91,6 +91,7 @@ inline FeatureFlags Material::getFeatureFlags() const
 
 inline bool Material::isEmissive() const
 {
-  return reduce_max(getSh()->emission) > 0.f;
+  return false;
 }
+
 } // namespace ospray

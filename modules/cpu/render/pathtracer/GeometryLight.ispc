@@ -6,6 +6,7 @@
 #include "render/pathtracer/PathTracerUtil.ih"
 
 #include "render/Material.ih"
+#include "render/MaterialDispatch.ih"
 #include "texture/TextureParam.ih"
 
 #include "common/Instance.ih"
@@ -21,13 +22,15 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
-    const Ray &ray)
+    const Ray &ray,
+    const uniform FeatureFlagsHandler &ffh)
 {
   vec3f L = make_vec3f(0.f);
   Material *material = pathVertex.dg.material;
 
   foreach_unique (m in material) {
-    if (m != NULL && reduce_max(m->emission) > 0.f) {
+    vec3f emission = Material_dispatch_getEmission(m, pathVertex.dg, ffh);
+    if (m != NULL && reduce_max(emission) > 0.f) {
       // at the moment we only support uniform light selection
       // therefore we can evaluate the selection PDF directly
       float lightSelectionPDF = 0.0f;
@@ -39,8 +42,7 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
       const float cosd = dot(pathVertex.dg.Ng, ray.dir);
       const float lePdf = pathVertex.dg.areaPDF * sqr(ray.t) / abs(cosd);
       L = L
-          + pathState.throughput * m->emission
-              * get3f(m->emissionMap, pathVertex.dg, make_vec3f(1.f))
+          + pathState.throughput * emission
               * misHeuristic(
                   pathState, lastVertex.pdf_w, lightSelectionPDF * lePdf);
     }
@@ -110,7 +112,7 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
 
   vec3f radiance;
   foreach_unique (m in mat)
-    radiance = m->emission * get3f(m->emissionMap, texDg, make_vec3f(1.f));
+    radiance = Material_dispatch_getEmission(m, texDg, ffh);
 
   res.weight = radiance * rcp(res.pdf);
 

@@ -16,9 +16,16 @@ struct Luminous : public AddStructShared<Material, ispc::Luminous>
 
   virtual void commit() override;
 
+  virtual bool isEmissive() const override;
+
  private:
   MaterialParam3f emissiveColor;
 };
+
+inline bool Luminous::isEmissive() const
+{
+  return reduce_max(getSh()->radiance) > 0.f;
+}
 
 } // namespace pathtracer
 } // namespace ospray

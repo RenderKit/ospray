@@ -34,4 +34,8 @@ SYCL_EXTERNAL BSDF_SampleRes Luminous_BSDF_sample(
     const vec2f &s,
     float ss);
 
+SYCL_EXTERNAL vec3f Luminous_getEmission(const Material *uniform super,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh);
+
 OSPRAY_END_ISPC_NAMESPACE

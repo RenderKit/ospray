@@ -35,4 +35,9 @@ SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
     Medium &currentMedium,
     const uniform FeatureFlagsHandler &ffh);
 
+SYCL_EXTERNAL __noinline vec3f Material_dispatch_getEmission(
+    const Material *uniform self,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh);
+
 OSPRAY_END_ISPC_NAMESPACE

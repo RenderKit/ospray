@@ -171,8 +171,9 @@ SYCL_EXTERNAL const varying BSDF *uniform Principled_getBSDF(
             clamp(self->diffuse * get1f(self->diffuseMap, dg, 1.f));
         const vec3f diffuseColor = baseColor * diffuse;
         const float backlight = self->thin
-            ? clamp(
-                self->backlight * get1f(self->backlightMap, dg, 1.f), 0.f, 2.f)
+            ? clamp(self->backlight * get1f(self->backlightMap, dg, 1.f),
+                  0.f,
+                  2.f)
             : 0.f;
         const float diffuseTransmission = backlight * 0.5f;
         const float diffuseReflection = 1.f - diffuseTransmission;
@@ -1042,6 +1043,15 @@ SYCL_EXTERNAL BSDF_SampleRes Principled_BSDF_sample(
   return MULTIBSDF_SAMPLE_GET();
 }
 
+SYCL_EXTERNAL vec3f Principled_getEmission(const Material *uniform _self,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh)
+{
+  const Principled *uniform self = (Principled * uniform) _self;
+
+  return self->emission * get3f(self->emissionMap, dg, make_vec3f(1.f));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
@@ -1058,6 +1068,11 @@ export void *uniform Principled_getTransparency_addr()
 export void *uniform Principled_selectNextMedium_addr()
 {
   return (void *uniform)Principled_selectNextMedium;
+}
+
+export void *uniform Principled_getEmission_addr()
+{
+  return (void *uniform)Principled_getEmission;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

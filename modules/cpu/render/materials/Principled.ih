@@ -42,4 +42,8 @@ SYCL_EXTERNAL BSDF_SampleRes Principled_BSDF_sample(
     const vec2f &s,
     float ss);
 
+SYCL_EXTERNAL vec3f Principled_getEmission(const Material *uniform super,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh);
+
 OSPRAY_END_ISPC_NAMESPACE

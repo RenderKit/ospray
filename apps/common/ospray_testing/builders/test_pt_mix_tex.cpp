@@ -18,7 +18,7 @@ struct PtMixTex : public PtTex
 // Inlined definitions ////////////////////////////////////////////////////
 
 std::vector<cpp::Material> PtMixTex::buildMaterials(
-    const cpp::Texture &texR, const cpp::Texture &) const
+    const cpp::Texture &texR, const cpp::Texture &texRGBA) const
 {
   std::vector<cpp::Material> materials;
 
@@ -76,6 +76,23 @@ std::vector<cpp::Material> PtMixTex::buildMaterials(
     cpp::Material mix("mix");
     mix.setParam("material1", carPaint);
     mix.setParam("material2", principled);
+    materials.push_back(mix);
+    setTexture<float>(materials.back(), "factor", texR);
+  }
+
+  // emission: principled & luminous
+  {
+    cpp::Material principled("principled");
+    setTexture<vec3f>(principled, "emissiveColor", texRGBA, vec3f(4.6f, 0.1f, 0.1f));
+    principled.setParam("map_emissiveColor.scale", vec2f(0.7f, 0.3f));
+    principled.commit();
+    cpp::Material luminous("luminous");
+    luminous.setParam("color", vec3f(0.1f, 0.6f, 0.1f));
+    luminous.setParam("intensity", 5.0f);
+    luminous.commit();
+    cpp::Material mix("mix");
+    mix.setParam("material1", principled);
+    mix.setParam("material2", luminous);
     materials.push_back(mix);
     setTexture<float>(materials.back(), "factor", texR);
   }

@@ -19,6 +19,8 @@ Luminous::Luminous(api::ISPCDevice &device)
   getSh()->super.getTransparency =
       reinterpret_cast<ispc::Material_GetTransparencyFunc>(
           ispc::Luminous_getTransparency_addr());
+  getSh()->super.getEmission = reinterpret_cast<ispc::Material_GetEmissionFunc>(
+      ispc::Luminous_getEmission_addr());
 #endif
 }
 
@@ -34,9 +36,10 @@ void Luminous::commit()
       emissiveColor.factor * getParam<float>("intensity", 1.f);
   const float transparency = getParam<float>("transparency", 0.f);
 
-  getSh()->super.emission = radiance;
-  getSh()->super.emissionMap = emissiveColor.tex;
+  getSh()->radiance = radiance;
+  getSh()->emissionMap = emissiveColor.tex;
   getSh()->transparency = transparency;
+  getSh()->super.isEmissive = isEmissive();
 }
 
 } // namespace pathtracer

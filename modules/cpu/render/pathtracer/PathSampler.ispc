@@ -235,7 +235,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       {
         pathState.contribution = pathState.contribution
             + evaluateGeometryLights(
-                pathContext, pathState, lastVertex, pathVertex, ray);
+                pathContext, pathState, lastVertex, pathVertex, ray, ffh);
       }
 
     // record IDs of primary rays

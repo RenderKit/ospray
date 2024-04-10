@@ -19,6 +19,13 @@ SYCL_EXTERNAL void Material_selectNextMedium(
 { /* do nothing by default */
 }
 
+SYCL_EXTERNAL vec3f Material_getEmission(const Material *uniform,
+    const varying DifferentialGeometry &,
+    const uniform FeatureFlagsHandler &)
+{
+  return make_vec3f(0.0f);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
@@ -30,6 +37,11 @@ export void *uniform Material_getTransparency_addr()
 export void *uniform Material_selectNextMedium_addr()
 {
   return (void *uniform)Material_selectNextMedium;
+}
+
+export void *uniform Material_getEmission_addr()
+{
+  return (void *uniform)Material_getEmission;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

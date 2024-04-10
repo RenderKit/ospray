@@ -5,6 +5,7 @@
 
 #include "common/FeatureFlags.ih"
 #include "render/Material.ih"
+#include "render/MaterialDispatch.ih"
 #include "render/bsdfs/MultiBSDF.ih"
 #include "texture/TextureParam.ih"
 
@@ -50,13 +51,15 @@ SYCL_EXTERNAL const varying BSDF *uniform Mix_getBSDF(
   if (self->mat1) {
     bsdf->bsdf1 =
         self->mat1->getBSDF(self->mat1, ctx, dg, ray, currentMedium, ffh);
-    MultiBSDF_add(mbsdf, 0, bsdf->bsdf1, 1.0f - factor, 1.0f - factor);
+    if (bsdf->bsdf1)
+      MultiBSDF_add(mbsdf, 0, bsdf->bsdf1, 1.0f - factor, 1.0f - factor);
   }
 
   if (self->mat2) {
     bsdf->bsdf2 =
         self->mat2->getBSDF(self->mat2, ctx, dg, ray, currentMedium, ffh);
-    MultiBSDF_add(mbsdf, 1, bsdf->bsdf2, factor, factor);
+    if (bsdf->bsdf2)
+      MultiBSDF_add(mbsdf, 1, bsdf->bsdf2, factor, factor);
   }
 
   return &bsdf->super;
@@ -77,6 +80,24 @@ SYCL_EXTERNAL vec3f Mix_getTransparency(const uniform Material *uniform super,
   vec3f t2 = make_vec3f(0.f);
   if (self->mat2)
     t2 = self->mat2->getTransparency(self->mat2, dg, ray, currentMedium, ffh);
+
+  float factor = self->factor * clamp(get1f(self->factorMap, dg, 1.f));
+  return lerp(factor, t1, t2);
+}
+
+SYCL_EXTERNAL vec3f Mix_getEmission(const Material *uniform super,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh)
+{
+  const Mix *uniform self = (const Mix *uniform)super;
+
+  vec3f t1 = make_vec3f(0.f);
+  if (self->mat1)
+    t1 = self->mat1->getEmission(self->mat1, dg, ffh);
+
+  vec3f t2 = make_vec3f(0.f);
+  if (self->mat2)
+    t2 = self->mat2->getEmission(self->mat2, dg, ffh);
 
   float factor = self->factor * clamp(get1f(self->factorMap, dg, 1.f));
   return lerp(factor, t1, t2);
@@ -136,6 +157,11 @@ export void *uniform Mix_getBSDF_addr()
 export void *uniform Mix_getTransparency_addr()
 {
   return (void *uniform)Mix_getTransparency;
+}
+
+export void *uniform Mix_getEmission_addr()
+{
+  return (void *uniform)Mix_getEmission;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

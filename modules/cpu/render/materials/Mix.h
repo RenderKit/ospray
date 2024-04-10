@@ -16,6 +16,8 @@ struct MixMaterial : public AddStructShared<Material, ispc::Mix>
 
   virtual void commit() override;
 
+  virtual bool isEmissive() const override;
+
  protected:
   Ref<Material> mat1;
   Ref<Material> mat2;
@@ -23,6 +25,11 @@ struct MixMaterial : public AddStructShared<Material, ispc::Mix>
  private:
   MaterialParam1f factor;
 };
+
+inline bool MixMaterial::isEmissive() const
+{
+  return mat1->isEmissive() || mat2->isEmissive();
+}
 
 } // namespace pathtracer
 } // namespace ospray

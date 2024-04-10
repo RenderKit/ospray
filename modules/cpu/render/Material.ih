@@ -101,4 +101,8 @@ SYCL_EXTERNAL void Material_selectNextMedium(
     const DifferentialGeometry &dg,
     Medium &currentMedium);
 
+SYCL_EXTERNAL vec3f Material_getEmission(const Material *uniform self,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh);
+
 OSPRAY_END_ISPC_NAMESPACE
