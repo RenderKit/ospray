@@ -32,7 +32,6 @@ static void AORenderer_renderSample(Renderer *uniform _self,
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
-      self->super.mathConstants,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 

@@ -127,8 +127,7 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     // init RNG
     const uint32 sampleID = accumID * spp + s;
     screenSample.sampleID.z = sampleID;
-    LDSampler_init(
-        ldSampler, self->super.mathConstants, fb->size.x * iy + ix, sampleID);
+    LDSampler_init(ldSampler, fb->size.x * iy + ix, sampleID);
     RandomSampler_init(randomSampler, fb->size.x * iy + ix, sampleID);
 
     CameraSample cameraSample;

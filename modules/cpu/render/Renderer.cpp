@@ -12,12 +12,7 @@
 #include "geometry/GeometricModel.h"
 #include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
-#ifdef OSPRAY_TARGET_SYCL
-namespace ispc {
-void precomputeZOrder();
-}
-#else
-// ispc exports
+#ifndef OSPRAY_TARGET_SYCL
 #include "render/Renderer_ispc.h"
 #include "render/util_ispc.h"
 #endif
@@ -31,8 +26,6 @@ Renderer::Renderer(api::ISPCDevice &device)
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
-  mathConstants = rkcommon::make_unique<MathConstants>(device);
-  getSh()->mathConstants = mathConstants->getSh();
 }
 
 std::string Renderer::toString() const
@@ -92,8 +85,6 @@ void Renderer::commit()
 
   setupPixelFilter();
   getSh()->pixelFilter = pixelFilter ? pixelFilter->getSh() : nullptr;
-
-  ispc::precomputeZOrder();
 }
 
 OSPPickResult Renderer::pick(

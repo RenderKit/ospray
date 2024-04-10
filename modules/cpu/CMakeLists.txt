@@ -81,9 +81,6 @@ set(OSPRAY_CPP_SOURCES
   lights/registration.cpp
 
   math/spectrum.h
-  math/halton.cpp
-  math/sobol.cpp
-  math/MathConstants.cpp
   math/Distribution2D.cpp
 
   render/LoadBalancer.cpp
@@ -346,6 +343,7 @@ if (OSPRAY_MODULE_CPU)
       ${OSPRAY_ISPC_SOURCES}
       ${OSPRAY_VOLUMES_ISPC_SOURCES}
       ${OSPRAY_ISPC_DEF}
+      math/halton.c math/sobol.c # constants exported for ISPC only
       geometry/Subdivision.cpp
       geometry/Subdivision.ispc)
 
@@ -380,6 +378,7 @@ if (OSPRAY_MODULE_CPU)
     TILE_SIZE=${OSPRAY_TILE_SIZE}
     MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
     SYCL_EXTERNAL=
+    OSPRAY_GLOBAL=
   )
 
   if (OSPRAY_ENABLE_VOLUMES)
@@ -471,6 +470,7 @@ if (OSPRAY_MODULE_GPU)
     __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__ # WA to allow printf of float, see https://github.com/intel/llvm/issues/12880
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}
+    OSPRAY_GLOBAL=static
     _ALLOW_KEYWORD_MACROS # avoid error when redefining reserved keywords like "export"
     uniform=
     varying=

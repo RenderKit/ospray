@@ -121,6 +121,14 @@ ispc_target_add_sources(ospray_module_mpi_distributed_cpu
     ${OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES}
 )
 
+# XXX ISPC cannot DLL-import constants, need to directly link again
+if (WIN32)
+  ispc_target_add_sources(ospray_module_mpi_distributed_cpu
+    ../../cpu/math/halton.c
+    ../../cpu/math/sobol.c
+  )
+endif()
+
 target_link_libraries(ospray_module_mpi_distributed_cpu
   PRIVATE
     Snappy::snappy

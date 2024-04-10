@@ -67,7 +67,7 @@ task
     for (uniform int32 s = 0; s < spp; s++) {
       const float pixel_du = Halton_sample2(startSampleID + s);
       const float pixel_dv = CranleyPattersonRotation(
-          Halton_sample3(self->mathConstants, startSampleID + s),
+          Halton_sample3(startSampleID + s),
           1.f / 6.f); // rotate to sample center (0.5) of pixel for sampleID=0
       const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 

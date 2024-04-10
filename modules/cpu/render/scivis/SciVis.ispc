@@ -33,7 +33,6 @@ static void SciVis_renderSample(Renderer *uniform _self,
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
-      self->super.mathConstants,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -243,9 +242,8 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
 
   for (uniform int i = 0; i < sampleCnt; i++) {
     // Use base-5 and base-7 Halton to avoid correlation with sample position
-    const vec2f halton =
-        make_vec2f(PermHalton_sample5(self->super.mathConstants, accumID + i),
-            PermHalton_sample7(self->super.mathConstants, accumID + i));
+    const vec2f halton = make_vec2f(
+        PermHalton_sample5(accumID + i), PermHalton_sample7(accumID + i));
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;

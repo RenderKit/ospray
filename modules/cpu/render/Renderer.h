@@ -5,7 +5,6 @@
 
 #include "ISPCDeviceObject.h"
 #include "common/FeatureFlagsEnum.h"
-#include "math/MathConstants.h"
 #include "pf/PixelFilter.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "texture/Texture2D.h"
@@ -69,10 +68,6 @@ struct OSPRAY_SDK_INTERFACE Renderer
   Ref<Texture2D> backplate;
 
   Ref<PixelFilter> pixelFilter;
-  // TODO: This could be shared among multiple renderers but we need to be
-  // careful about making sure it's released before the ISPCDevice so that we
-  // can still release the USM allocations
-  std::unique_ptr<MathConstants> mathConstants;
 
   Ref<const DataT<Material *>> materialData;
   std::unique_ptr<BufferShared<ispc::Material *>> materialArray;

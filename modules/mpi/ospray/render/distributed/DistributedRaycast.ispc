@@ -165,8 +165,7 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton =
-        HaltonSequence_get2D(self->super.mathConstants, accumID + i);
+    const vec2f halton = HaltonSequence_get2D(accumID + i);
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -363,7 +362,7 @@ inline void DRR_renderRegionSample(Renderer *uniform _self,
       int iy = sample.sampleID.y % 4;
 
       int patternID = ix + 4 * iy;
-      jitter += Halton_sample3(self->super.mathConstants, patternID);
+      jitter += Halton_sample3(patternID);
       if (jitter > 1.f) {
         jitter -= 1.f;
       }
