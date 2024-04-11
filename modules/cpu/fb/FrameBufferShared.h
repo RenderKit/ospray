@@ -75,6 +75,8 @@ struct FrameBuffer
   // Rendered frame index
   int32 frameID;
 
+  int32 targetFrames;
+
   // The channels stored in the framebuffer
   uint32 channels;
 
@@ -103,6 +105,7 @@ struct FrameBuffer
         rcpSize(0.f),
         renderTaskSize(4),
         frameID(-1),
+        targetFrames(0),
         channels(0),
         cancelRender(0),
         numPixelsRendered(0),

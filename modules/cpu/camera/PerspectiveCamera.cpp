@@ -56,6 +56,7 @@ void PerspectiveCamera::commit()
     getSh()->scaledAperture = apertureRadius
         ? apertureRadius / (imgPlaneSize.x * focusDistance)
         : 0.0f;
+    getSh()->super.needLensSample = getSh()->scaledAperture;
     getSh()->aspect = aspect;
     getSh()->stereoMode = stereoMode;
     getSh()->dir_00 = normalize(dir);

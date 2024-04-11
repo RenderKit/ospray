@@ -25,10 +25,11 @@ inline bool isSmooth(const PathVertex &pathVertex)
   return false;
 }
 
-inline float misHeuristic(const PathState &pathState, float pdf1, float pdf2)
+inline float misHeuristic(
+    const PathContext &pathContext, float pdf1, float pdf2)
 {
 #ifdef OSPRAY_PATHTRACER_DEBUG
-  if (pathState.disableNEE || pathState.disableFWD)
+  if (pathContext.disableNEE || pathContext.disableFWD)
     return 1.f;
 #endif
 

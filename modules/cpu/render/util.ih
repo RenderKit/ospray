@@ -29,6 +29,15 @@ inline uniform uint32 partitionZOrder(uniform uint32 n)
   return n;
 }
 
+inline uint32 partitionZOrder8(uint32 n)
+{
+  n &= 0x000000FF;
+  n = (n | (n << 4)) & 0x0F0F0F0F;
+  n = (n | (n << 2)) & 0x33333333;
+  n = (n | (n << 1)) & 0x55555555;
+  return n;
+}
+
 // TODO should use PEXT
 inline uniform uint32 unpartitionZOrder(uniform uint32 n)
 {
@@ -43,6 +52,11 @@ inline uniform uint32 unpartitionZOrder(uniform uint32 n)
 inline uniform uint32 interleaveZOrder(uniform uint32 x, uniform uint32 y)
 {
   return partitionZOrder(x) | (partitionZOrder(y) << 1);
+}
+
+inline uint32 interleaveZOrder16(uint32 x, uint32 y)
+{
+  return partitionZOrder8(x) | (partitionZOrder8(y) << 1);
 }
 
 inline void deinterleaveZOrder(

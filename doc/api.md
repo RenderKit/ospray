@@ -2745,7 +2745,8 @@ General parameters of all renderers are
   -------------- ------------------ -----------------------  -----------------------------------------
   Type           Name                               Default  Description
   -------------- ------------------ -----------------------  -----------------------------------------
-  int            pixelSamples                             1  samples per pixel
+  int            pixelSamples                             1  samples per pixel, best results when a
+                                                             power of 2
 
   int            maxPathLength                           20  maximum ray recursion depth
 
@@ -2757,8 +2758,8 @@ General parameters of all renderers are
   float /        backgroundColor                     black,  background color and alpha (linear
   vec3f / vec4f                                 transparent  A/RGB/RGBA), if no `map_backplate` is set
 
-  OSPTexture     map_backplate                               optional [texture] image used as background
-                                                             (use texture type `texture2d`)
+  OSPTexture     map_backplate                               optional [texture] image used as
+                                                             background (use texture type `texture2d`)
 
   OSPTexture     map_maxDepth                                optional screen-sized float [texture]
                                                              with maximum far distance per pixel
@@ -2895,13 +2896,15 @@ supports the following special parameters:
   Type       Name                     Default  Description
   ---------- ----------------------- --------  ------------------------------------
   int        lightSamples                 all  number of random light samples
-                                               per path vertex, per default
+                                               per path vertex, best results
+                                               when a power of 2; per default
                                                all light sources are sampled
 
   int        firstBounceLightSamples           number of random light samples at
                                                the first non-specular (i.e.,
-                                               diffuse and glossy) path vertex, per
-                                               default same as `lightSamples`
+                                               diffuse and glossy) path vertex,
+                                               best results when a power of 2;
+                                               per default same as `lightSamples`
 
   int        roulettePathLength             5  ray recursion depth at which to
                                                start Russian roulette termination
@@ -3031,9 +3034,14 @@ they are in the array.
   Type                 Name            Description
   -------------------- --------------- ---------------------------------------
   OSPImageOperation[]  imageOperation  ordered sequence of image operations
+  int                  targetFrames    anticipated number of frames that will be accumulated for progressive refinement, used renderers to generate a blue noise sampling pattern; should be a power of 2, is always 1 without `OSP_FB_ACCUM`; default disabled
   -------------------- --------------- ---------------------------------------
   : Parameters accepted by the framebuffer.
 
+If the total number of frames to be accumulated is known, then
+`targetFrames` should be set, because then renderers can generate more
+pleasing blue noise patterns. Accumulation stops when `targetFrames` is
+reached.
 
 ### Image Operation
 
@@ -3113,7 +3121,8 @@ combining a framebuffer, renderer, camera, and world.
 What to render and how to render it depends on the renderer's
 parameters. If the framebuffer supports accumulation (i.e., it was
 created with `OSP_FB_ACCUM`) then successive calls to `ospRenderFrame`
-will progressively refine the rendered image.
+will progressively refine the rendered image (until `targetFrames` is
+reached).
 
 To start an render task, use
 

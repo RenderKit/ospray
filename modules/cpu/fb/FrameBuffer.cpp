@@ -58,6 +58,7 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->channels = channels;
   getSh()->doAccumulation = doAccum;
   getSh()->accumulateVariance = false;
+  getSh()->targetFrames = !doAccum;
 
 #if OSPRAY_RENDER_TASK_SIZE == -1
 #ifdef OSPRAY_TARGET_SYCL
@@ -82,8 +83,8 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
 
 void FrameBuffer::commit()
 {
-  // Read image operations array set by user
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
+  getSh()->targetFrames = max(0, getParam<int>("targetFrames", !doAccum));
 }
 
 void FrameBuffer::clear()

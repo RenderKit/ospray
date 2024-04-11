@@ -31,9 +31,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
 
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
-  LDSampler ldSamplerObj;
-  varying LDSampler *uniform ldSampler = &ldSamplerObj;
-  LDSampler_init(ldSampler,
+  RandomSampler randomSampler;
+  RandomSampler_init(&randomSampler,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -87,13 +86,13 @@ static void SciVis_renderSample(Renderer *uniform _self,
         rc.fb = fb;
         rc.world = world;
         rc.sample = sample;
-        rc.ldSampler = ldSampler;
+        rc.randomSampler = &randomSampler;
         volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
         vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
             volumeIntervals,
             rayIntervals,
             volumeRay,
-            ldSampler,
+            randomSampler,
             self->volumeSamplingRate,
             ffh);
 
@@ -148,7 +147,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // Shade geometry
       SSI surfaceShading;
       surfaceShading = SciVis_computeShading(
-          self, world, dg, sample, ldSampler, ray.dir, ffh);
+          self, world, dg, sample, randomSampler, ray.dir, ffh);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully
@@ -222,7 +221,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
 
 SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const World *uniform world,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,
     const uniform float aoRadius,
@@ -259,8 +258,13 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
 
     hits = hits
         + (1.f
-            - lightAlpha(
-                self, ao_ray, world, ldSampler, make_vec3f(1.f), 0.1f, ffh));
+            - lightAlpha(self,
+                ao_ray,
+                world,
+                randomSampler,
+                make_vec3f(1.f),
+                0.1f,
+                ffh));
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)

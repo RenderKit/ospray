@@ -32,8 +32,8 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     return false;
 
   // TODO use MIS as well
-  // consider real (flagged) geometries with material and move into
-  // light loop (will also handle MIS)
+  // consider real (flagged) geometries with material and move into light loop
+  // (will also handle MIS)
   if (pathState.shadowCatcherDist <= ray.t
       && pathState.shadowCatcherDist > ray.t0) {
     // "postIntersect" of shadowCatcher plane
@@ -53,10 +53,12 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     const World *uniform world = pathContext.world;
     const uniform PathTracerData &pathtracerData =
         *((const uniform PathTracerData *)world->pathtracerData);
+    // TODO use lightsSamples
     for (uniform uint32 i = 0; i < pathContext.numLights; i++) {
       const Light *uniform light = pathtracerData.lights[i];
-      const vec2f s = LDSampler_getFloat2(
-          pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);
+      float dummy;
+      const vec2f s =
+          LDSampler_get3LightSamples(pathState.ldSampler, i, true, dummy);
       Light_SampleRes ls =
           Light_dispatch_sample(light, pathVertex.dg, s, pathState.time, ffh);
 
@@ -81,7 +83,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
       traceClippingRay(pathContext.world, shadowRay, rayIntervals, ffh);
 
       const vec3f unshadedLightContrib = pathState.throughput * ls.weight
-          * brdf; // * misHeuristic(pathState, ls.pdf, brdf);
+          * brdf; // * misHeuristic(pathContext, ls.pdf, brdf);
       unshaded = unshaded + unshadedLightContrib;
       shaded = shaded
           + transparentShadow(pathContext.context,

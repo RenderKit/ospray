@@ -244,9 +244,8 @@ static void DebugRenderer_volume(Renderer *uniform self,
     return;
   }
 
-  LDSampler ldSamplerObj;
-  varying LDSampler *uniform ldSampler = &ldSamplerObj;
-  LDSampler_init(ldSampler,
+  RandomSampler randomSampler;
+  RandomSampler_init(&randomSampler,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -271,7 +270,7 @@ static void DebugRenderer_volume(Renderer *uniform self,
   ray.t0 = vInterval.interval.lower;
   ray.t = vInterval.interval.upper;
 
-  const float jitter = LDSampler_getFloat(ldSampler, 0);
+  const float jitter = RandomSampler_getFloat(&randomSampler);
 
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   foreach_unique (m in model) {

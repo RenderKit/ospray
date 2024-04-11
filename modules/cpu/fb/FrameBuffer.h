@@ -136,6 +136,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   FeatureFlagsOther featureFlags{FFO_NONE};
 
   int32_t minimumAdaptiveFrames(const uint32_t spp) const;
+  bool accumulationFinished() const;
 
  private:
   // for consistent reproducability of variance accumulation
@@ -225,6 +226,11 @@ inline sycl::nd_range<3> FrameBuffer::getDispatchRange(
 inline int32_t FrameBuffer::minimumAdaptiveFrames(const uint32_t spp) const
 {
   return std::max(2u, 16 / spp);
+}
+
+inline bool FrameBuffer::accumulationFinished() const
+{
+  return getSh()->targetFrames && getFrameID() >= getSh()->targetFrames;
 }
 
 } // namespace ospray

@@ -95,6 +95,8 @@ class GLFWOSPRayWindow
   cpp::Future currentFrame;
   cpp::Texture backplateTex{"texture2d"};
 
+  int targetFrames{8};
+
   vec3f bgColor{0.f};
   vec3f sunDirection{-0.25f, -1.0f, 0.0f};
   float turbidity{3.f};

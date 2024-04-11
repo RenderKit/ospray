@@ -35,15 +35,20 @@ extern const uniform unsigned int halton_perm5[125];
 extern const uniform unsigned int halton_perm7[343];
 #endif
 
-inline float Halton_sample2(unsigned int index)
+inline uint32 reverseBits(uint32 index)
 {
   index = (index << 16) | (index >> 16);
   index = ((index & 0x00ff00ff) << 8) | ((index & 0xff00ff00) >> 8);
   index = ((index & 0x0f0f0f0f) << 4) | ((index & 0xf0f0f0f0) >> 4);
   index = ((index & 0x33333333) << 2) | ((index & 0xcccccccc) >> 2);
   index = ((index & 0x55555555) << 1) | ((index & 0xaaaaaaaa) >> 1);
-  unsigned int result = 0x3f800000u | (index >> 9);
-  return floatbits(result) - 1.f;
+
+  return index;
+}
+
+inline float Halton_sample2(uint32 index)
+{
+  return to_float_unorm(reverseBits(index));
 }
 
 inline float Halton_sample3(const unsigned int index)

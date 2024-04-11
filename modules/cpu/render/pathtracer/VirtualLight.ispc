@@ -36,7 +36,7 @@ inline box1f getMinMaxDistForVirtualLights(
 }
 
 SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
-    const PathState &pathState,
+    PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
     Ray &ray,
@@ -92,15 +92,18 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
           T = volumeTransmittance(pathContext.world,
               shadowRay,
               rayIntervals,
-              pathContext.randomSampler,
+              &pathState.randomSampler,
               ffh);
         }
 #endif
+        const uint32 numLightSamples = pathState.firstBounceLight
+            ? pathContext.numFirstBounceLightSamples
+            : pathContext.numIndirectBounceLightSamples;
         L = L
             + pathState.throughput * le.radiance
-                * misHeuristic(pathState,
+                * misHeuristic(pathContext,
                     lastVertex.pdf_w * T,
-                    selectionPDF * pathState.numLightSamples * le.pdf);
+                    selectionPDF * numLightSamples * le.pdf);
       }
     }
   }

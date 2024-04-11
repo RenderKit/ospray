@@ -11,12 +11,12 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-struct LDSampler;
+struct RandomSampler;
 
 SYCL_EXTERNAL vec4f integrateVolumeIntervals(const VolumeIntervals &intervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const uniform float samplingRate,
     const uniform FeatureFlagsHandler &ffh);
 

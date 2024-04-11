@@ -85,8 +85,8 @@ uint32_t SparseFrameBuffer::getTotalRenderTasks() const
 utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs(
     const float errorThreshold, const uint32_t)
 {
-  if (!renderTaskIDs)
-    return utility::ArrayView<uint32_t>(nullptr, 0);
+  if (!renderTaskIDs || accumulationFinished())
+    return utility::ArrayView<uint32_t>();
 
   if (errorThreshold > 0.0f && hasVarianceBuffer) {
     RKCOMMON_IF_TRACING_ENABLED(

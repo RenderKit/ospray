@@ -678,6 +678,11 @@ void GLFWOSPRayWindow::buildUI()
 
   ImGui::Separator();
 
+  if (ImGui::SliderInt("targetFrames", &targetFrames, 0, 64)) {
+    framebuffer.setParam("targetFrames", targetFrames);
+    addObjectToCommit(framebuffer.handle());
+  }
+
   static int spp = 1;
   if (ImGui::SliderInt("pixelSamples", &spp, 1, 64)) {
     rendererPT.setParam("pixelSamples", spp);
@@ -950,6 +955,7 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 
 void GLFWOSPRayWindow::refreshFrameOperations()
 {
+  framebuffer.setParam("targetFrames", targetFrames);
   if (denoiserEnabled) {
     cpp::ImageOperation d("denoiser");
     framebuffer.setParam("imageOperation", cpp::CopiedData(d));

@@ -19,7 +19,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
     const World *uniform world,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     vec3f weight,
     uniform float quality,
     const uniform FeatureFlagsHandler &ffh)
@@ -69,7 +69,7 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
         vec4f volumeColor = integrateVolumeIntervals(volumeIntervals,
             rayIntervals,
             volumeRay,
-            ldSampler,
+            randomSampler,
             self->volumeSamplingRate * quality,
             ffh);
 
@@ -77,7 +77,7 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
       }
     }
 #else
-    (void)ldSampler;
+    (void)randomSampler;
     (void)quality;
 #endif
 

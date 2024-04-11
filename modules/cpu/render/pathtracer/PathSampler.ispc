@@ -30,7 +30,6 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline void postIntersect(const PathContext &pathContext,
-    const PathState &,
     PathVertex &pathVertex,
     Ray &ray,
     const uniform FeatureFlagsHandler &ffh)
@@ -67,22 +66,18 @@ inline void postIntersect(const PathContext &pathContext,
 #endif
 }
 
-inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
-    const PathState &pathState,
+inline Scattering_SampleRes sampleDirection(const vec2f &s,
+    const float ss,
     PathVertex &pathVertex,
     const uniform FeatureFlagsHandler &ffh)
 {
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
-  const vec2f ss =
-      LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim);
-  const float s =
-      LDSampler_getFloat(pathContext.ldSampler, pathState.sampleDim + 2);
   Scattering_SampleRes fs;
   if (ff.geometry && pathVertex.type == SURFACE) {
     foreach_unique (f in pathVertex.bsdf) {
       if (f != NULL) {
-        fs = BSDF_dispatch_sample(f, pathVertex.wo, ss, s, ffh);
+        fs = BSDF_dispatch_sample(f, pathVertex.wo, s, ss, ffh);
         pathVertex.wi = fs.wi;
         pathVertex.pdf_w = fs.pdf;
       }
@@ -92,7 +87,7 @@ inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
   if ((ff.other & FFO_VOLUME_IN_SCENE) && pathVertex.type == VOLUME) {
     foreach_unique (v in pathVertex.volume) {
       if (v != NULL) {
-        fs = HenyeyGreenstein_sample(v->anisotropy, pathVertex.wo, ss, s);
+        fs = HenyeyGreenstein_sample(v->anisotropy, pathVertex.wo, s, ss);
         pathVertex.wi = fs.wi;
         pathVertex.pdf_w = fs.pdf;
       }
@@ -150,11 +145,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #ifdef OSPRAY_ENABLE_VOLUMES
     pathVertex.volume = NULL;
 #endif
-    if (noHit(ray) || !ff.geometry) {
-      pathVertex.type = ENVIRONMENT;
-    } else {
-      pathVertex.type = SURFACE;
-    }
+    pathVertex.type = noHit(ray) || !ff.geometry ? ENVIRONMENT : SURFACE;
 
     if (shadowCatcher(pathContext, pathState, pathVertex, ray, sample, ffh)) {
       pathVertex.type = ENVIRONMENT;
@@ -168,7 +159,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       float freePath = volumeSampleFreePath(pathContext.world,
           ray,
           rayIntervals,
-          pathContext.randomSampler,
+          &pathState.randomSampler,
           &pathVertex.volume,
           extinctionCoefficient,
           pathVertex.albedo,
@@ -190,7 +181,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
                 ? pathState.specularTransmissionPath
                 : pathState.straightPath)) {
       vec4f bg = Renderer_getBackground(
-          &pathContext.context->super, *pathContext.pixel, ffh);
+          &pathContext.context->super, pathContext.screen, ffh);
       pathState.contribution =
           pathState.contribution + pathState.throughput * make_vec3f(bg);
       sample.alpha = 1.0f - luminance(pathState.throughput);
@@ -198,7 +189,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     }
 
 #ifdef OSPRAY_PATHTRACER_DEBUG
-    if (!pathState.disableFWD || pathState.depth == 0)
+    if (!pathContext.disableFWD || pathState.depth == 0)
 #endif
 #ifdef OSPRAY_ENABLE_VOLUMES
       if (pathVertex.type != VOLUME)
@@ -224,10 +215,10 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       break;
     }
 
-    postIntersect(pathContext, pathState, pathVertex, ray, ffh);
+    postIntersect(pathContext, pathVertex, ray, ffh);
 
 #ifdef OSPRAY_PATHTRACER_DEBUG
-    if (!pathState.disableFWD)
+    if (!pathContext.disableFWD || pathState.depth == 0)
 #endif
 #ifdef OSPRAY_ENABLE_VOLUMES
       if (pathVertex.type != VOLUME)
@@ -272,18 +263,22 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       }
     }
 
+    // unconditionally advance sampler state to stay in lockstep across paths
+    LDSampler_nextGroup(pathState.ldSampler);
     // next event estimation
 #ifdef OSPRAY_PATHTRACER_DEBUG
-    if (!pathState.disableNEE)
+    if (!pathContext.disableNEE)
 #endif
       if (isSmooth(pathVertex)) {
         pathState.contribution = pathState.contribution
             + nextEventEstimation(pathContext, pathState, pathVertex, ffh);
-        pathState.numLightSamples = pathContext.numIndirectBounceLightSamples;
+        pathState.firstBounceLight = false;
       }
 
-    Scattering_SampleRes fs =
-        sampleDirection(pathContext, pathState, pathVertex, ffh);
+    float ss;
+    uint32 uu3;
+    const vec2f s = LDSampler_getNext4Samples(pathState.ldSampler, ss, uu3);
+    Scattering_SampleRes fs = sampleDirection(s, ss, pathVertex, ffh);
 
     if (pathState.auxFree && (fs.type & SCATTERING_SMOOTH)) {
       updateAuxilliaryData(pathState, pathVertex, sample);
@@ -299,7 +294,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #if ROULETTE == 1
     // Russian roulette
     if (pathState.depth >= pathContext.context->rouletteDepth) {
-      const float rr = RandomSampler_getFloat(pathContext.randomSampler);
+      const float rr = LDSampler_finalizeDim3(pathState.ldSampler, uu3);
       const float contProb =
           min(luminance(pathState.throughput), MAX_ROULETTE_CONT_PROB);
       if (rr > contProb) {
@@ -346,7 +341,6 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     setRay(ray, ray_org, fs.wi, pathState.time);
     pathState.depth++;
-    pathState.sampleDim += pathContext.numBounceSampleDims;
     if (fs.type & SCATTERING_SMOOTH)
       pathState.scatteringEvents++;
   } while (reduce_max(pathState.throughput)

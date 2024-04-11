@@ -31,14 +31,11 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-#define MAX_LIGHTS 1000u
+#define MAX_LIGHTS 1024u
 
-static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
-    const World *uniform world,
-    const vec2f &pixel, // normalized, i.e. in [0..1]
+static ScreenSample PathTraceIntegrator_Li(PathContext &pathContext,
+    PathState &pathState,
     Ray &ray,
-    varying LDSampler *uniform ldSampler,
-    varying RandomSampler *uniform randomSampler,
     const uniform FeatureFlagsHandler &ffh)
 {
   ScreenSample sample;
@@ -50,39 +47,6 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   sample.geomID = RTC_INVALID_GEOMETRY_ID;
   sample.instID = RTC_INVALID_GEOMETRY_ID;
 
-  uniform PathTracerData &pathtracerData =
-      *((uniform PathTracerData *)world->pathtracerData);
-  const uniform uint32 numLights =
-      pathtracerData.lights ? min(MAX_LIGHTS, pathtracerData.numLights) : 0;
-
-  const uniform uint32 numIndirectBounceLightSamples =
-      self->numLightSamples >= 0 && numLights > 0 ? self->numLightSamples
-                                                  : numLights;
-  const uniform uint32 numFirstBounceLightSamples =
-      self->numFirstBounceLightSamples >= 0 && numLights > 0
-      ? self->numFirstBounceLightSamples
-      : numLights;
-
-  PathContext pathContext;
-  pathContext.context = self;
-  pathContext.world = world;
-  pathContext.pixel = &pixel;
-  pathContext.ldSampler = ldSampler;
-  pathContext.randomSampler = randomSampler;
-  pathContext.numLights = numLights;
-  pathContext.numIndirectBounceLightSamples = numIndirectBounceLightSamples;
-  pathContext.lightsCDF = pathtracerData.lightsCDF;
-
-  // BSDF sample (3D), light samples * (3D, light selection and sampling)
-  pathContext.numBounceSampleDims =
-      3 + max(numFirstBounceLightSamples, numIndirectBounceLightSamples) * 3;
-
-  PathState pathState;
-#ifdef OSPRAY_PATHTRACER_DEBUG
-  pathState.disableNEE =
-      numFirstBounceLightSamples == 0 && numIndirectBounceLightSamples == 0;
-  pathState.disableFWD = false;
-#endif
   pathState.straightPath = true; // path from camera did not change direction,
                                  // for alpha and backplate
   pathState.specularTransmissionPath =
@@ -90,9 +54,8 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
             // backplate
   pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;
-  pathState.sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
   pathState.scatteringEvents = 0;
-  pathState.numLightSamples = numFirstBounceLightSamples;
+  pathState.firstBounceLight = true;
   pathState.throughput = make_vec3f(1.f);
   pathState.contribution = make_vec3f(0.f);
   pathState.time = ray.time;
@@ -104,13 +67,22 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   return sample;
 }
 
+static inline uniform uint32 clz(uniform uint32 x)
+{
+#ifdef OSPRAY_TARGET_SYCL
+  return sycl::clz(x);
+#else
+  return count_leading_zeros(x);
+#endif
+}
+
 static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
     const uint32 ix,
     const uint32 iy,
-    const uint32 accumID,
+    const uniform uint32 accumID,
     const uniform FeatureFlagsHandler &ffh)
 {
   ScreenSample screenSample;
@@ -127,23 +99,87 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
   screenSample.instID = RTC_INVALID_GEOMETRY_ID;
 
-  LDSampler ldSamplerObj;
-  RandomSampler randomSamplerObj;
-  varying LDSampler *uniform ldSampler = &ldSamplerObj;
-  varying RandomSampler *uniform randomSampler = &randomSamplerObj;
-  const int spp = max(1, self->super.spp);
+  PathContext pathContext;
+  pathContext.context = self;
+  pathContext.world = world;
+
+  uniform PathTracerData *uniform ptData = world->pathtracerData;
+  const uniform uint32 numLights =
+      ptData->lights ? min(MAX_LIGHTS, ptData->numLights) : 0;
+
+  const uniform uint32 numIndirectBounceLightSamples =
+      self->numLightSamples >= 0 && numLights > 0 ? self->numLightSamples
+                                                  : numLights;
+  const uniform uint32 numFirstBounceLightSamples =
+      self->numFirstBounceLightSamples >= 0 && numLights > 0
+      ? self->numFirstBounceLightSamples
+      : numLights;
+
+  pathContext.numLights = numLights;
+  pathContext.numFirstBounceLightSamples = numFirstBounceLightSamples;
+  pathContext.numIndirectBounceLightSamples = numIndirectBounceLightSamples;
+  pathContext.lightsCDF = ptData->lightsCDF;
+#ifdef OSPRAY_PATHTRACER_DEBUG
+  pathContext.disableNEE =
+      numFirstBounceLightSamples == 0 && numIndirectBounceLightSamples == 0;
+  pathContext.disableFWD = false;
+  pathContext.debug = false;
+#endif
+
+  PathState pathState;
+
+  const uniform int spp = self->super.spp;
+  uint32 sampleOffs;
+  uint32 sampleOffsFirstLight;
+  uint32 sampleOffsLight;
+  uniform uint32 sampleBits;
+  uniform uint32 sampleBitsFirstLight;
+  uniform uint32 sampleBitsLight;
+  uint32 seed = 0x49c5f37e; // fixed seed with random bits
+
+  if (fb->targetFrames) {
+    // blue noise: negatively correlate pixels by
+    // - using a single sequence (identical seed for all pixels)
+    // - split across the frame (2D-shuffled space-filling curve to select
+    //   adjacent sub-sequences for neighboring pixels)
+    const uniform uint32 targetSpp = fb->targetFrames * spp;
+    // limit to 256x256 tiles, to have 16bits for 64k samples without overflow
+    sampleOffs = OwenScramble4(interleaveZOrder16(ix, iy), seed) * targetSpp;
+    // NEE splitting: further space sequence by max light samples
+    sampleOffsFirstLight = sampleOffs * numFirstBounceLightSamples;
+    sampleOffsLight = sampleOffs * numIndirectBounceLightSamples;
+    sampleBits = 16 + 32 - clz(targetSpp - 1);
+    sampleBitsFirstLight = 48 - clz(targetSpp * numFirstBounceLightSamples - 1);
+    sampleBitsLight = 48 - clz(targetSpp * numIndirectBounceLightSamples - 1);
+  } else {
+    // decorrelate pixels via different seed, whole sequence used for each pixel
+    seed ^= fb->size.x * iy + ix; // avoid a zero for initializing the scramble
+    sampleOffs = 0;
+    sampleOffsFirstLight = 0;
+    sampleOffsLight = 0;
+    sampleBits = 16;
+    sampleBitsFirstLight = 16;
+    sampleBitsLight = 16;
+  }
 
   for (uniform int s = 0; s < spp; s++) {
-    // init RNG
     const uint32 sampleID = accumID * spp + s;
-    screenSample.sampleID.z = sampleID;
-    LDSampler_init(ldSampler, fb->size.x * iy + ix, sampleID);
-    RandomSampler_init(randomSampler, fb->size.x * iy + ix, sampleID);
+    LDSampler_init(pathState.ldSampler,
+        seed,
+        sampleOffs + sampleID,
+        sampleOffsFirstLight + sampleID * numFirstBounceLightSamples,
+        sampleOffsLight + sampleID * numIndirectBounceLightSamples,
+        sampleBits,
+        sampleBitsFirstLight,
+        sampleBitsLight);
+    RandomSampler_init(&pathState.randomSampler, seed, sampleOffs + sampleID);
 
     CameraSample cameraSample;
     cameraSample.pixel_center = (make_vec2f(ix, iy) + 0.5f) * fb->rcpSize;
 
-    const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
+    vec3ui ss234;
+    const vec2f pixelSample =
+        LDSampler_getNext5Samples(pathState.ldSampler, ss234);
 
     const PixelFilter *uniform pf = self->super.pixelFilter;
     const vec2f pfSample = pf ? PixelFilter_dispatch_sample(pf, pixelSample)
@@ -151,8 +187,15 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
 
     cameraSample.screen = cameraSample.pixel_center + pfSample * fb->rcpSize;
 
-    cameraSample.lens = LDSampler_getFloat2(ldSampler, 2);
-    cameraSample.time = LDSampler_getFloat(ldSampler, 4);
+    if (camera->needLensSample)
+      cameraSample.lens = LDSampler_finalizeDim23(pathState.ldSampler, ss234);
+    else
+      cameraSample.lens = make_vec2f(0.5f);
+
+    if (camera->needTimeSample)
+      cameraSample.time = LDSampler_finalizeDim4(pathState.ldSampler, ss234);
+    else
+      cameraSample.time = 0.5f;
 
     Camera_dispatch_initRay(camera, screenSample.ray, cameraSample, ffh);
     const float tMax =
@@ -160,13 +203,9 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
 
     screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-    ScreenSample sample = PathTraceIntegrator_Li(self,
-        world,
-        cameraSample.screen,
-        screenSample.ray,
-        ldSampler,
-        randomSampler,
-        ffh);
+    pathContext.screen = cameraSample.screen;
+    ScreenSample sample =
+        PathTraceIntegrator_Li(pathContext, pathState, screenSample.ray, ffh);
 
     screenSample.rgb =
         screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));

@@ -30,9 +30,8 @@ static void AORenderer_renderSample(Renderer *uniform _self,
 
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
-  LDSampler ldSamplerObj;
-  varying LDSampler *uniform ldSampler = &ldSamplerObj;
-  LDSampler_init(ldSampler,
+  RandomSampler randomSampler;
+  RandomSampler_init(&randomSampler,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -82,7 +81,7 @@ static void AORenderer_renderSample(Renderer *uniform _self,
         vec4f volumeColor = integrateVolumeIntervals(volumeIntervals,
             rayIntervals,
             volumeRay,
-            ldSampler,
+            randomSampler,
             self->volumeSamplingRate,
             ffh);
         outputColor = outputColor + (1.f - outputColor.w) * volumeColor;

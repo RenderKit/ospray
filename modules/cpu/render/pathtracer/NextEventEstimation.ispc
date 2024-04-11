@@ -23,7 +23,7 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
-    const PathState &pathState,
+    PathState &pathState,
     PathVertex &pathVertex,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -35,21 +35,25 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
   const World *uniform world = pathContext.world;
   const uniform PathTracerData &pathtracerData =
       *((const uniform PathTracerData *)world->pathtracerData);
-  for (uniform uint32 i = 0; i < pathState.numLightSamples; i++) {
+
+  const uint32 numLightSamples = pathState.firstBounceLight
+      ? pathContext.numFirstBounceLightSamples
+      : pathContext.numIndirectBounceLightSamples;
+
+  for (uniform uint32 i = 0; i < numLightSamples; i++) {
     // select a random light source from the list
-    const float s1 = LDSampler_getFloat(
-        pathContext.ldSampler, pathState.sampleDim + 3 + i * 3);
+    float ss;
+    const vec2f s = LDSampler_get3LightSamples(
+        pathState.ldSampler, i, pathState.firstBounceLight, ss);
     const Sample1D lSelectSample = Distribution1D_sample(
-        pathContext.numLights, pathContext.lightsCDF, 0, s1);
-    const float lightSelectionProb =
-        lSelectSample.prob * pathState.numLightSamples;
+        pathContext.numLights, pathContext.lightsCDF, 0, ss);
+
+    const float lightSelectionProb = lSelectSample.prob * numLightSamples;
     const Light *light = pathtracerData.lights[lSelectSample.idx];
     // sample the contribution from the random light source
-    const vec2f s2 = LDSampler_getFloat2(
-        pathContext.ldSampler, pathState.sampleDim + 3 + i * 3 + 1);
     Light_SampleRes ls;
     foreach_unique (l in light)
-      ls = Light_dispatch_sample(l, pathVertex.dg, s2, pathState.time, ffh);
+      ls = Light_dispatch_sample(l, pathVertex.dg, s, pathState.time, ffh);
 
     // adjust the contibution with the probabiltiy of selecting the light source
     ls.weight = ls.weight / lightSelectionProb;
@@ -117,33 +121,34 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         const float T = volumeTransmittance(pathContext.world,
             shadowRay,
             rayIntervals,
-            pathContext.randomSampler,
+            &pathState.randomSampler,
             ffh);
         if (reduce_max(T) > 0) {
           // we have to use an independent transmittance estimate for MIS to get
           // a correct result
           const float T_mis =
 #ifdef OSPRAY_PATHTRACER_DEBUG
-              pathState.disableFWD || pathState.disableNEE
+              pathContext.disableFWD || pathContext.disableNEE
               ? 1.f
               :
 #endif
               volumeTransmittance(pathContext.world,
                   shadowRay,
                   rayIntervals,
-                  pathContext.randomSampler,
+                  &pathState.randomSampler,
                   ffh);
           L = L
               + T * lightContrib
-                  * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);
+                  * misHeuristic(pathContext, ls.pdf, fe.pdf * T_mis);
         }
       } else
 #endif
       {
-        L = L + lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf);
+        L = L + lightContrib * misHeuristic(pathContext, ls.pdf, fe.pdf);
       }
     }
   }
+
   return L;
 }
 

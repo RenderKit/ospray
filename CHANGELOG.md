@@ -8,14 +8,21 @@ Version History
     `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
     float textures `OSP_TEXTURE_RA32F`
 -   New parameter `firstBounceLightSamples` for the `pathtracer` which
-    is the number of random light samples at the first non-specular
-    (i.e., diffuse and glossy) bounce
--   Fix artifacts occassionally appearing with `gpu` device
+    limits the number of non-specular (i.e., diffuse and glossy) bounces
+-   Sampling improvements:
+      - Better performance (lower rendering time and faster convergence)
+      - More pleasing blue noise enabled when the total number of frames
+        to be accumulated is known in advance and set as the
+        `targetFrames` parameter at the framebuffer
+      - Note a maximum of 64k samples is supported
 -   Removed Intel ISPCRT dependency (ISPC compiler is still needed):
     -   oneAPI Level Zero Loader is no longer necessary
     -   `zeContext` and `zeDevice`device parameters are no longer supported
     -   `ispcrtContext` and `ispcrtDevice`device parameters are no longer
         supported
+-   Superbuild uses binary packages of Open VKL
+-   Avoid color bleeding across eye-subimages when stereo rendering
+-   Fix artifacts occassionally appearing with `gpu` device
 
 ### Changes in v3.1.0:
 
@@ -55,9 +62,11 @@ Version History
     -   Clipping
     -   Motion blur
     -   Subdivision surfaces
-    -   Progress reporting via `ospGetProgress` or canceling the frame via `ospCancel`
+    -   Progress reporting via `ospGetProgress` or canceling the frame
+        via `ospCancel`
     -   Picking via `ospPick`
-    -   Adaptive accumulation via `OSP_FB_VARIANCE` and `varianceThreshold`
+    -   Adaptive accumulation via `OSP_FB_VARIANCE` and
+        `varianceThreshold`
     -   Framebuffer channels `OSP_FB_ID_*` (id buffers)
     -   Experimental support for shared device-only data, works only for
         `structuredRegular` volume
@@ -104,10 +113,14 @@ Version History
         -   error callback signatures without user pointer
         -   first argument of `ospNewMaterial`
         -   module name `ispc`; use `cpu`
-        -   `volume` texture and `isosurface` geometry: `volumetricModel`; use `OSPVolume volume`
+        -   `volume` texture and `isosurface` geometry:
+            `volumetricModel`; use `OSPVolume volume`
         -   Transfer function `vec2f valueRange`; use `box1f value`
-        -   `hdri` and `sun-sky` lights: `intensityQuantity` `OSP_INTENSITY_QUANTITY_RADIANCE`
-        -   `spot` light with `intensityDistribution`: `intensityQuantity` other than `OSP_INTENSITY_QUANTITY_SCALE`
+        -   `hdri` and `sun-sky` lights: `intensityQuantity`
+            `OSP_INTENSITY_QUANTITY_RADIANCE`
+        -   `spot` light with `intensityDistribution`:
+            `intensityQuantity` other than
+            `OSP_INTENSITY_QUANTITY_SCALE`
 
 
 ### Changes in v2.12.0:

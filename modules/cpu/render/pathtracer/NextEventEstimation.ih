@@ -13,7 +13,7 @@ struct PathState;
 struct PathVertex;
 
 SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
-    const PathState &pathState,
+    PathState &pathState,
     PathVertex &pathVertex,
     const uniform FeatureFlagsHandler &ffh);
 

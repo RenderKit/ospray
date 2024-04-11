@@ -104,6 +104,10 @@ void Camera::commit()
   getSh()->rollingShutterHorizontal = (shutterType == OSP_SHUTTER_ROLLING_RIGHT
       || shutterType == OSP_SHUTTER_ROLLING_LEFT);
   getSh()->rollingShutterDuration = rollingShutterDuration;
+  getSh()->needTimeSample = shutterType == OSP_SHUTTER_GLOBAL
+      ? shutter.size()
+      : rollingShutterDuration;
+  getSh()->needLensSample = false;
 
   if (motionTransform.motionBlur)
     featureFlags |= FFO_CAMERA_MOTION_BLUR;

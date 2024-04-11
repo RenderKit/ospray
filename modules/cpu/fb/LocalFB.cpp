@@ -230,6 +230,9 @@ uint32_t LocalFrameBuffer::getTotalRenderTasks() const
 utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
     const float errorThreshold_, const uint32_t spp)
 {
+  if (accumulationFinished())
+    return utility::ArrayView<uint32_t>();
+
   errorThreshold = errorThreshold_; // remember
   if (errorThreshold > 0.0f && varianceFrameOp
       && (getFrameID() >= minimumAdaptiveFrames(spp))) {
