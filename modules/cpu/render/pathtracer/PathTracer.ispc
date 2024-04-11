@@ -70,8 +70,10 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathContext.numBounceSampleDims = 3 + numLightSamples * 3;
 
   PathState pathState;
+#ifdef OSPRAY_PATHTRACER_DEBUG
   pathState.disableNEE = numLightSamples == 0;
   pathState.disableFWD = false;
+#endif
   pathState.straightPath = true; // path from camera did not change direction,
                                  // for alpha and backplate
   pathState.specularTransmissionPath =
@@ -86,8 +88,6 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathState.time = ray.time;
   pathState.currentMedium = make_Medium_vacuum();
   pathState.shadowCatcherDist = -(float)inf;
-
-  pathState.debug = false;
 
   samplePath(pathContext, pathState, ray, sample, ffh);
 

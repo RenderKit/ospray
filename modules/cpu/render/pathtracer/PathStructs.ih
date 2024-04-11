@@ -76,9 +76,10 @@ struct PathState
   uniform uint32 sampleDim; // skip: pixel (2D), lens (2D), time (1D)
   uint32 scatteringEvents; // counting diffuse and glossy bounces
   uniform uint32 depth;
+#ifdef OSPRAY_PATHTRACER_DEBUG
   uniform bool disableNEE; // turn off NEE contribution for debugging purposes
   uniform bool disableFWD; // turn off FWD contribution for debugging purposes
-  uniform bool debug;
+#endif
 };
 
 OSPRAY_END_ISPC_NAMESPACE

@@ -13,8 +13,8 @@
 
 #include "common/World.ih"
 #include "math/Distribution1D.ih"
-#include "math/sampling.ih"
 #include "math/random.ih"
+#include "math/sampling.ih"
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "lights/LightDispatch.ih"
@@ -122,9 +122,13 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         if (reduce_max(T) > 0) {
           // we have to use an independent transmittance estimate for MIS to get
           // a correct result
-          const float T_mis = pathState.disableFWD || pathState.disableNEE
+          const float T_mis =
+#ifdef OSPRAY_PATHTRACER_DEBUG
+              pathState.disableFWD || pathState.disableNEE
               ? 1.f
-              : volumeTransmittance(pathContext.world,
+              :
+#endif
+              volumeTransmittance(pathContext.world,
                   shadowRay,
                   rayIntervals,
                   pathContext.randomSampler,

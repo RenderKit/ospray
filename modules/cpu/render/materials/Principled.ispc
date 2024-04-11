@@ -415,8 +415,8 @@ SYCL_EXTERNAL const varying BSDF *uniform Principled_getBSDF(
   }
 
   // cut-out transparency
-  const float transparency = 1.f - opacity;
-  if (transparency > EPS) {
+  if (1.f - self->opacity > EPS) {
+    const float transparency = 1.f - opacity;
     Transmission_Constructor(
         &bsdf->transmission, frame, make_vec3f(transparency));
     MultiBSDF_add(multiRoot, 0, &bsdf->transmission, 1.f, transparency);

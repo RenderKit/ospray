@@ -27,8 +27,10 @@ inline bool isSmooth(const PathVertex &pathVertex)
 
 inline float misHeuristic(const PathState &pathState, float pdf1, float pdf2)
 {
+#ifdef OSPRAY_PATHTRACER_DEBUG
   if (pathState.disableNEE || pathState.disableFWD)
     return 1.f;
+#endif
 
   // power heuristic with beta=2
   const float p = sqr(pdf1) * rcp(sqr(pdf1) + sqr(pdf2));

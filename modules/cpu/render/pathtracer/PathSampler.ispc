@@ -197,12 +197,18 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       sample.alpha += (1.f - sample.alpha) * bg.w;
     }
 
-    if ((!pathState.disableFWD || pathState.depth == 0)
-        && pathVertex.type != VOLUME) {
-      pathState.contribution = pathState.contribution
-          + evaluateVirtualLights(
-              pathContext, pathState, lastVertex, pathVertex, ray, ffh);
-    }
+#ifdef OSPRAY_PATHTRACER_DEBUG
+    if (!pathState.disableFWD || pathState.depth == 0)
+#endif
+#ifdef OSPRAY_ENABLE_VOLUMES
+      if (pathVertex.type != VOLUME)
+#endif
+      {
+        pathState.contribution = pathState.contribution
+            + evaluateVirtualLights(
+                pathContext, pathState, lastVertex, pathVertex, ray, ffh);
+      }
+
     if (pathVertex.type == ENVIRONMENT) {
       break;
     }
@@ -220,12 +226,17 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     postIntersect(pathContext, pathState, pathVertex, ray, ffh);
 
-    if (!pathState.disableFWD && (pathVertex.type != VOLUME)
-        && (ff.other & FFO_LIGHT_GEOMETRY)) {
-      pathState.contribution = pathState.contribution
-          + evaluateGeometryLights(
-              pathContext, pathState, lastVertex, pathVertex, ray);
-    }
+#ifdef OSPRAY_PATHTRACER_DEBUG
+    if (!pathState.disableFWD)
+#endif
+#ifdef OSPRAY_ENABLE_VOLUMES
+      if (pathVertex.type != VOLUME)
+#endif
+      {
+        pathState.contribution = pathState.contribution
+            + evaluateGeometryLights(
+                pathContext, pathState, lastVertex, pathVertex, ray);
+      }
 
     // record IDs of primary rays
     if (pathState.depth == 0) {
@@ -262,10 +273,13 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     }
 
     // next event estimation
-    if (!pathState.disableNEE && isSmooth(pathVertex)) {
-      pathState.contribution = pathState.contribution
-          + nextEventEstimation(pathContext, pathState, pathVertex, ffh);
-    }
+#ifdef OSPRAY_PATHTRACER_DEBUG
+    if (!pathState.disableNEE)
+#endif
+      if (isSmooth(pathVertex)) {
+        pathState.contribution = pathState.contribution
+            + nextEventEstimation(pathContext, pathState, pathVertex, ffh);
+      }
 
     Scattering_SampleRes fs =
         sampleDirection(pathContext, pathState, pathVertex, ffh);
