@@ -205,6 +205,7 @@ set(OSPRAY_ISPC_SOURCES
 
   texture/TextureDispatch.ispc
   texture/Texture2D.ispc
+  texture/TextureParam.ispc
 )
 
 if (OSPRAY_ENABLE_VOLUMES)

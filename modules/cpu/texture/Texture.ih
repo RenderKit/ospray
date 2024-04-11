@@ -4,9 +4,10 @@
 #pragma once
 
 #include "../common/DifferentialGeometry.ih"
-
-#include "TextureShared.h"
+#include "rkcommon/math/vec.ih"
 #include "texture/TextureDispatch.ih"
+// c++ shared
+#include "TextureShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

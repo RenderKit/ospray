@@ -5,6 +5,7 @@
 
 #include "common/DifferentialGeometry.ih"
 #include "common/FeatureFlags.ih"
+#include "rkcommon/math/AffineSpace.ih"
 #include "texture/TextureParam.ih"
 // c++ shared
 #include "MaterialShared.h"

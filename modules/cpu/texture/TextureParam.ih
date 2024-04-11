@@ -4,11 +4,27 @@
 #pragma once
 
 #include "Texture.ih"
+#include "common/OSPCommon.ih"
 #include "rkcommon/math/AffineSpace.ih"
+#include "rkcommon/math/vec.ih"
 // c++ shared
 #include "TextureParamShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
+
+struct DifferentialGeometry;
+
+SYCL_EXTERNAL __noinline float get1f(const uniform TextureParam uniform &tp,
+    const varying DifferentialGeometry &dg);
+
+SYCL_EXTERNAL __noinline vec3f get3f(const uniform TextureParam uniform &tp,
+    const varying DifferentialGeometry &dg);
+
+SYCL_EXTERNAL __noinline vec4f get4f(const uniform TextureParam uniform &tp,
+    const varying DifferentialGeometry &dg);
+
+SYCL_EXTERNAL __noinline vec3f getNormal(const uniform TextureParam uniform &tp,
+    const varying DifferentialGeometry &dg);
 
 inline uniform bool valid(const uniform TextureParam uniform &tex)
 {
@@ -20,23 +36,6 @@ inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
   return hasAlpha(tex.ptr);
 }
 
-#define TEXTURE_TRANSFORM(fn)                                                  \
-  if (!tp.transformFlags)                                                      \
-    return fn(tp.ptr, dg);                                                     \
-                                                                               \
-  DifferentialGeometry xfmDg = dg;                                             \
-  if (tp.transformFlags & TRANSFORM_FLAG_2D)                                   \
-    xfmDg.st = xfmPoint(tp.xform2f, dg.st);                                    \
-  if (tp.transformFlags & TRANSFORM_FLAG_3D)                                   \
-    xfmDg.lP = xfmPoint(tp.xform3f, dg.lP);                                    \
-  return fn(tp.ptr, xfmDg)
-
-inline float get1f(const uniform TextureParam uniform &tp,
-    const varying DifferentialGeometry &dg)
-{
-  TEXTURE_TRANSFORM(get1f);
-}
-
 inline float get1f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg,
     const varying float defaultValue)
@@ -44,13 +43,7 @@ inline float get1f(const uniform TextureParam uniform &tp,
   if (!valid(tp))
     return defaultValue;
 
-  TEXTURE_TRANSFORM(get1f);
-}
-
-inline vec3f get3f(const uniform TextureParam uniform &tp,
-    const varying DifferentialGeometry &dg)
-{
-  TEXTURE_TRANSFORM(get3f);
+  return get1f(tp, dg);
 }
 
 inline vec3f get3f(const uniform TextureParam uniform &tp,
@@ -60,13 +53,7 @@ inline vec3f get3f(const uniform TextureParam uniform &tp,
   if (!valid(tp))
     return defaultValue;
 
-  TEXTURE_TRANSFORM(get3f);
-}
-
-inline vec4f get4f(const uniform TextureParam uniform &tp,
-    const varying DifferentialGeometry &dg)
-{
-  TEXTURE_TRANSFORM(get4f);
+  return get3f(tp, dg);
 }
 
 inline vec4f get4f(const uniform TextureParam uniform &tp,
@@ -76,12 +63,7 @@ inline vec4f get4f(const uniform TextureParam uniform &tp,
   if (!valid(tp))
     return defaultValue;
 
-  TEXTURE_TRANSFORM(get4f);
+  return get4f(tp, dg);
 }
 
-inline vec3f getNormal(const uniform TextureParam uniform &tp,
-    const varying DifferentialGeometry &dg)
-{
-  TEXTURE_TRANSFORM(getNormal);
-}
 OSPRAY_END_ISPC_NAMESPACE
