@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common/FeatureFlags.ih"
+#include "common/OSPCommon.ih"
 #include "render/materials/Medium.ih"
 #include "rkcommon/math/vec.ih"
 
@@ -14,7 +15,8 @@ struct World;
 struct Ray;
 struct RayIntervals;
 
-SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
+SYCL_EXTERNAL __noinline vec3f transparentShadow(
+    const uniform PathTracer *uniform self,
     const World *uniform world,
     vec3f lightContrib,
     Ray &shadowRay,

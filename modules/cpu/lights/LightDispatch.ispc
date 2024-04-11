@@ -18,7 +18,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL Light_SampleRes Light_dispatch_sample(const Light *uniform self,
+SYCL_EXTERNAL __noinline Light_SampleRes Light_dispatch_sample(
+    const Light *uniform self,
     const DifferentialGeometry &dg,
     const vec2f &s,
     const float time,
@@ -78,7 +79,8 @@ SYCL_EXTERNAL Light_SampleRes Light_dispatch_sample(const Light *uniform self,
 #endif
 }
 
-SYCL_EXTERNAL Light_EvalRes Light_dispatch_eval(const Light *uniform self,
+SYCL_EXTERNAL __noinline Light_EvalRes Light_dispatch_eval(
+    const Light *uniform self,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,

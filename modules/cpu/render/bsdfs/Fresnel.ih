@@ -155,35 +155,6 @@ inline Fresnel *uniform FresnelConductorRGBUniform_create(
   return &self->super;
 }
 
-struct FresnelConductorRGBVarying
-{
-  uniform Fresnel super;
-  varying vec3f eta;
-  varying vec3f k;
-};
-
-inline vec3f FresnelConductorRGBVarying_eval(
-    const Fresnel *uniform super, float cosI)
-{
-  const FresnelConductorRGBVarying *uniform self =
-      (const FresnelConductorRGBVarying *uniform)super;
-
-  return fresnelConductor(cosI, self->eta, self->k);
-}
-
-inline Fresnel *uniform FresnelConductorRGBVarying_create(
-    ShadingContext *uniform ctx, const vec3f &eta, const vec3f &k)
-{
-  FresnelConductorRGBVarying *uniform self =
-      (FresnelConductorRGBVarying * uniform)
-          ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBVarying));
-  Fresnel_Constructor(&self->super, FRESNEL_TYPE_CONDUCTOR_RGB_VARYING);
-  self->eta = eta;
-  self->k = k;
-
-  return &self->super;
-}
-
 struct FresnelSchlick
 {
   uniform Fresnel super;
@@ -321,8 +292,6 @@ inline vec3f Fresnel_dispatch_eval(const Fresnel *uniform self, float cosI)
   switch (self->type) {
   case FRESNEL_TYPE_CONDUCTOR_RGB_UNIFORM:
     return FresnelConductorRGBUniform_eval(self, cosI);
-  case FRESNEL_TYPE_CONDUCTOR_RGB_VARYING:
-    return FresnelConductorRGBVarying_eval(self, cosI);
   case FRESNEL_TYPE_SCHLICK:
     return FresnelSchlick_eval(self, cosI);
   case FRESNEL_TYPE_CONDUCTOR_SPECTRAL:

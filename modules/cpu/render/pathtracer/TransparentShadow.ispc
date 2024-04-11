@@ -15,7 +15,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
+SYCL_EXTERNAL __noinline vec3f transparentShadow(
+    const uniform PathTracer *uniform self,
     const World *uniform world,
     vec3f lightContrib,
     Ray &shadowRay,
