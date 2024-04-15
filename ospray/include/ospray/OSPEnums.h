@@ -184,6 +184,11 @@ typedef enum
   OSP_TEXTURE_RGB16,
   OSP_TEXTURE_RA16,
   OSP_TEXTURE_R16,
+  OSP_TEXTURE_RA32F,
+  OSP_TEXTURE_RGBA16F,
+  OSP_TEXTURE_RGB16F,
+  OSP_TEXTURE_RA16F,
+  OSP_TEXTURE_R16F,
   // Denotes an unknown texture format, so we can properly initialize parameters
   OSP_TEXTURE_FORMAT_INVALID = 255,
 } OSPTextureFormat;

@@ -4,6 +4,9 @@ Version History
 ### Changes in v3.2.0:
 
 -   Clarify the size of `OSP_BOOL` to be 1 byte
+-   Support half-precision (16\ bit float) texture formats
+    `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
+    float textures `OSP_TEXTURE_RA32F`
 -   Fix artifacts occassionally appearing with `gpu` device
 
 ### Changes in v3.1.0:

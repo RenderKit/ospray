@@ -2278,14 +2278,19 @@ The supported texture formats for `texture2d` are:
   OSP_TEXTURE_RGBA8   8\ bit [0–255] linear components red, green, blue, alpha
   OSP_TEXTURE_SRGBA   8\ bit sRGB gamma encoded color components, and linear alpha
   OSP_TEXTURE_RGBA32F 32\ bit float components red, green, blue, alpha
+  OSP_TEXTURE_RGBA16F 16\ bit float components red, green, blue, alpha
   OSP_TEXTURE_RGB8    8\ bit [0–255] linear components red, green, blue
   OSP_TEXTURE_SRGB    8\ bit sRGB gamma encoded components red, green, blue
   OSP_TEXTURE_RGB32F  32\ bit float components red, green, blue
+  OSP_TEXTURE_RGB16F  16\ bit float components red, green, blue
   OSP_TEXTURE_R8      8\ bit [0–255] linear single component red
   OSP_TEXTURE_RA8     8\ bit [0–255] linear two components red, alpha
   OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance (replicated into red, green, blue)
   OSP_TEXTURE_LA8     8\ bit [0–255] gamma encoded luminance, and linear alpha
+  OSP_TEXTURE_RA32F   32\ bit float two component red, alpha
   OSP_TEXTURE_R32F    32\ bit float single component red
+  OSP_TEXTURE_RA16F   16\ bit float two component red, alpha
+  OSP_TEXTURE_R16F    16\ bit float single component red
   OSP_TEXTURE_RGBA16  16\ bit [0–65535] linear components red, green, blue, alpha
   OSP_TEXTURE_RGB16   16\ bit [0–65535] linear components red, green, blue
   OSP_TEXTURE_RA16    16\ bit [0–65535] linear two components red, alpha

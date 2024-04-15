@@ -25,7 +25,7 @@ void Texture2D::SetUp()
 
   // create (4*2) x 4 grid
   constexpr int cols = 8;
-  constexpr int rows = 4;
+  constexpr int rows = 5;
   std::vector<vec3f> vertex;
   std::vector<vec2f> texcoord;
   std::vector<vec4ui> index;
@@ -34,10 +34,10 @@ void Texture2D::SetUp()
   // texcoords when we're testing w/ texture coordinates on
   for (auto i : iidx) {
     const int idx_start = vertex.size();
-    vertex.push_back(vec3f(i.x, i.y * 1.5f, 5.3f));
-    vertex.push_back(vec3f(i.x + 1.f, i.y * 1.5f, 5.3f));
-    vertex.push_back(vec3f(i.x + 1.f, (i.y + 1.f) * 1.5f, 5.3f));
-    vertex.push_back(vec3f(i.x, (i.y + 1.f) * 1.5f, 5.3f));
+    vertex.push_back(vec3f(i.x, i.y * 1.2f, 5.3f));
+    vertex.push_back(vec3f(i.x + 1.f, i.y * 1.2f, 5.3f));
+    vertex.push_back(vec3f(i.x + 1.f, (i.y + 1.f) * 1.2f, 5.3f));
+    vertex.push_back(vec3f(i.x, (i.y + 1.f) * 1.2f, 5.3f));
 
     texcoord.push_back(vec2f(0.f, 0.f));
     texcoord.push_back(vec2f(1.f, 0.f));
@@ -55,8 +55,9 @@ void Texture2D::SetUp()
   mesh.setParam("index", cpp::CopiedData(index));
   mesh.commit();
 
-  // create textures: columns=#channels, rows=type=[byte, byte, float, short]
-  std::array<OSPTextureFormat, 4 * 4> format = {OSP_TEXTURE_R8,
+  // create textures:
+  // columns=#channels, rows=type=[byte, byte, float, short, half]
+  std::array<OSPTextureFormat, 4 *rows> format = {OSP_TEXTURE_R8,
       OSP_TEXTURE_RA8,
       OSP_TEXTURE_RGB8,
       OSP_TEXTURE_RGBA8,
@@ -67,16 +68,21 @@ void Texture2D::SetUp()
       OSP_TEXTURE_SRGBA,
 
       OSP_TEXTURE_R32F,
-      OSP_TEXTURE_R32F,
+      OSP_TEXTURE_RA32F,
       OSP_TEXTURE_RGB32F,
       OSP_TEXTURE_RGBA32F,
 
       OSP_TEXTURE_R16,
       OSP_TEXTURE_RA16,
       OSP_TEXTURE_RGB16,
-      OSP_TEXTURE_RGBA16};
+      OSP_TEXTURE_RGBA16,
 
-  std::array<OSPDataType, 4 * 4> eltype = {OSP_UCHAR,
+      OSP_TEXTURE_R16F,
+      OSP_TEXTURE_RA16F,
+      OSP_TEXTURE_RGB16F,
+      OSP_TEXTURE_RGBA16F};
+
+  std::array<OSPDataType, 4 *rows> eltype = {OSP_UCHAR,
       OSP_VEC2UC,
       OSP_VEC3UC,
       OSP_VEC4UC,
@@ -87,9 +93,14 @@ void Texture2D::SetUp()
       OSP_VEC4UC,
 
       OSP_FLOAT,
-      OSP_FLOAT,
+      OSP_VEC2F,
       OSP_VEC3F,
       OSP_VEC4F,
+
+      OSP_USHORT,
+      OSP_VEC2US,
+      OSP_VEC3US,
+      OSP_VEC4US,
 
       OSP_USHORT,
       OSP_VEC2US,
@@ -99,22 +110,28 @@ void Texture2D::SetUp()
   std::array<vec4uc, 15> dbyte;
   std::array<vec4us, 15> dshort;
   std::array<vec4f, 15> dfloat;
+  std::array<vec4us, 15> dhalf;
   rkcommon::index_sequence_2D didx(vec2i(3, 5));
   for (auto idx : didx) {
     auto i = didx.flatten(idx);
     // the center texel should be 127 / 32767 / 0.5, to test normal maps
-    dbyte[i] = vec4uc(idx.x * 85 + 42, idx.y * 50 + 27, 155, i * 17 + 8);
+    dbyte[i] = vec4uc(idx.x * 80 + 47, idx.y * 56 + 15, 204, i * 15 + 40);
     dshort[i] = vec4us(
-        idx.x * 22768 + 9999, idx.y * 13000 + 6767, 33000, i * 4400 + 2200);
+        idx.x * 20480 + 12287, idx.y * 14336 + 4095, 52428, i * 3932 + 9830);
     dfloat[i] = vec4f(idx.x * 0.3125f + 0.1875f,
         idx.y * 0.21875f + 0.0625f,
         0.8f,
         i * 0.06f + 0.15f);
   }
+  // float to half conversion
+  uint32_t *pf = (uint32_t *)dfloat.data();
+  uint16_t *ph = (uint16_t *)dhalf.data();
+  for (int i = 0; i < 4 * 15; i++, pf++, ph++)
+    *ph = (((*pf >> 23) - 112) << 10) | ((*pf >> 13) & 0x3ff);
 
-  std::array<void *, 4> addr = {
-      dbyte.data(), dbyte.data(), dfloat.data(), dshort.data()};
-  std::array<int, 4> stride = {4, 4, 16, 8};
+  std::array<void *, rows> addr = {
+      dbyte.data(), dbyte.data(), dfloat.data(), dshort.data(), dhalf.data()};
+  std::array<int, rows> stride = {4, 4, 16, 8, 8};
 
   cpp::GeometricModel model(mesh);
   std::array<cpp::Material, cols * rows> material;

@@ -649,6 +649,8 @@ std::string stringFor(OSPTextureFormat format)
     return "la8";
   case OSP_TEXTURE_R32F:
     return "r32f";
+  case OSP_TEXTURE_RA32F:
+    return "ra32f";
   case OSP_TEXTURE_RGBA16:
     return "rgba16";
   case OSP_TEXTURE_RGB16:
@@ -657,6 +659,14 @@ std::string stringFor(OSPTextureFormat format)
     return "ra16";
   case OSP_TEXTURE_R16:
     return "r16";
+  case OSP_TEXTURE_RGBA16F:
+    return "rgba16f";
+  case OSP_TEXTURE_RGB16F:
+    return "rgb16f";
+  case OSP_TEXTURE_RA16F:
+    return "ra16f";
+  case OSP_TEXTURE_R16F:
+    return "r16f";
   case OSP_TEXTURE_FORMAT_INVALID:
     return "invalid";
   }
@@ -680,6 +690,8 @@ size_t sizeOf(OSPTextureFormat format)
     return sizeof(vec3uc);
   case OSP_TEXTURE_RGB32F:
     return sizeof(vec3f);
+  case OSP_TEXTURE_RA32F:
+    return sizeof(vec2f);
   case OSP_TEXTURE_R8:
   case OSP_TEXTURE_L8:
     return sizeof(uint8);
@@ -689,12 +701,16 @@ size_t sizeOf(OSPTextureFormat format)
   case OSP_TEXTURE_R32F:
     return sizeof(float);
   case OSP_TEXTURE_RGBA16:
+  case OSP_TEXTURE_RGBA16F:
     return sizeof(vec4us);
   case OSP_TEXTURE_RGB16:
+  case OSP_TEXTURE_RGB16F:
     return sizeof(vec3us);
   case OSP_TEXTURE_RA16:
+  case OSP_TEXTURE_RA16F:
     return sizeof(vec2us);
   case OSP_TEXTURE_R16:
+  case OSP_TEXTURE_R16F:
     return sizeof(uint16);
   case OSP_TEXTURE_FORMAT_INVALID:
     return 0;

@@ -148,12 +148,77 @@ inline vec4f getTexel_RGB32F(const Texture2D *uniform self, const vec2i i)
   return make_vec4f(v, 1.f);
 }
 
+inline vec4f getTexel_RA32F(const Texture2D *uniform self, const vec2i i)
+{
+  assert(self);
+  vec2f v =
+      ((const uniform vec2f *uniform)self->data)[i.y * self->size.x + i.x];
+  return make_vec4f(v.x, 0.0f, 0.0f, v.y);
+}
+
 inline vec4f getTexel_R32F(const Texture2D *uniform self, const vec2i i)
 {
   assert(self);
   float v =
       ((const uniform float *uniform)self->data)[i.y * self->size.x + i.x];
   return make_vec4f(v, 0.f, 0.f, 1.f);
+}
+
+#ifdef OSPRAY_TARGET_SYCL
+using half = sycl::half;
+inline float half_to_float(half x)
+{
+  return x;
+}
+inline float half_to_float(int16 x)
+{
+  return *reinterpret_cast<half *>(&x);
+}
+#else
+typedef int16 half;
+#endif
+
+inline vec4f getTexel_RGBA16F(const Texture2D *uniform self, const vec2i i)
+{
+  assert(self);
+  const uint32 texelOfs = (i.y * self->size.x + i.x) * 2; // fetch as 2x 32bit
+  uint32 c = ((const uint32 *uniform)self->data)[texelOfs];
+  const int16 r = c & 0xffff;
+  const int16 g = c >> 16;
+  c = ((const uniform uint32 *uniform)self->data)[texelOfs + 1];
+  const int16 b = c & 0xffff;
+  const int16 a = c >> 16;
+  return make_vec4f(
+      half_to_float(r), half_to_float(g), half_to_float(b), half_to_float(a));
+}
+
+inline vec4f getTexel_RGB16F(const Texture2D *uniform self, const vec2i i)
+{
+  assert(self);
+  const half *uniform texel = (const half *uniform)self->data;
+  const uint32 texelOfs = 3 * (i.y * self->size.x + i.x);
+  const half r = texel[texelOfs];
+  const half g = texel[texelOfs + 1];
+  const half b = texel[texelOfs + 2];
+  return make_vec4f(half_to_float(r), half_to_float(g), half_to_float(b), 1.f);
+}
+
+inline vec4f getTexel_RA16F(const Texture2D *uniform self, const vec2i i)
+{
+  assert(self);
+  const uint32 *uniform texel = (const uint32 *uniform)self->data;
+  const uint32 t = texel[i.y * self->size.x + i.x];
+  const int16 c = t & 0xffff;
+  const int16 a = t >> 16;
+  return make_vec4f(half_to_float(c), 0.0f, 0.0f, half_to_float(a));
+}
+
+inline vec4f getTexel_R16F(const Texture2D *uniform self, const vec2i i)
+{
+  assert(self);
+  const half c =
+      ((const uniform half *uniform)self->data)[i.y * self->size.x + i.x];
+  return make_vec4f(half_to_float(c), 0.f, 0.f, 1.f);
 }
 
 // Texture coordinate utilities
@@ -287,13 +352,18 @@ inline vec4f bilerp(const vec2f frac,
   FCT(LA8);                                                                    \
   FCT(RA8);                                                                    \
   FCT(RGB32F);                                                                 \
+  FCT(RA32F);                                                                  \
   FCT(R8);                                                                     \
   FCT(L8);                                                                     \
   FCT(R32F);                                                                   \
   FCT(RGBA16);                                                                 \
   FCT(RGB16);                                                                  \
   FCT(RA16);                                                                   \
-  FCT(R16)
+  FCT(R16);                                                                    \
+  FCT(RGBA16F);                                                                \
+  FCT(RGB16F);                                                                 \
+  FCT(RA16F);                                                                  \
+  FCT(R16F)
 
 __foreach_fetcher(__define_tex_get);
 
@@ -345,6 +415,8 @@ __define_tex_getN(RGB8, (255.f / 127.f));
 __define_tex_getN(RGBA8, (255.f / 127.f));
 __define_tex_getN(RGB32F, 2.f);
 __define_tex_getN(RGBA32F, 2.f);
+__define_tex_getN(RGB16F, 2.f);
+__define_tex_getN(RGBA16F, 2.f);
 __define_tex_getN(RGB16, (65535.f / 32767.f));
 __define_tex_getN(RGBA16, (65535.f / 32767.f));
 
@@ -358,6 +430,8 @@ export void *uniform Texture2D_getN_addr(
     __define_tex_getN_case(RGB8);
     __define_tex_getN_case(RGBA32F);
     __define_tex_getN_case(RGB32F);
+    __define_tex_getN_case(RGBA16F);
+    __define_tex_getN_case(RGB16F);
     __define_tex_getN_case(RGBA16);
     __define_tex_getN_case(RGB16);
   default:
@@ -379,6 +453,8 @@ SYCL_EXTERNAL vec3f Texture2D_getNormal(
     __define_tex_callN_tex_case(RGB8);
     __define_tex_callN_tex_case(RGBA32F);
     __define_tex_callN_tex_case(RGB32F);
+    __define_tex_callN_tex_case(RGBA16F);
+    __define_tex_callN_tex_case(RGB16F);
     __define_tex_callN_tex_case(RGBA16);
     __define_tex_callN_tex_case(RGB16);
   default:
