@@ -20,12 +20,11 @@ struct DebugRenderer : public AddStructShared<Renderer, ispc::DebugRenderer>
 
   void commit() override;
 
-  virtual AsyncEvent renderTasks(FrameBuffer *fb,
+  virtual devicert::AsyncEvent renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs,
-      bool wait) const override;
+      const utility::ArrayView<uint32_t> &taskIDs) const override;
 };
 
 } // namespace ospray

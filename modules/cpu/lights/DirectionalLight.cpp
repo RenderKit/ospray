@@ -60,14 +60,13 @@ void DirectionalLight::set(bool isVisible,
 
 namespace ospray {
 
-ISPCRTMemoryView DirectionalLight::createSh(
+ispc::Light *DirectionalLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>(
-      getISPCDevice().getIspcrtContext().handle());
-  ispc::DirectionalLight *sh = (ispc::DirectionalLight *)ispcrtSharedPtr(view);
+  ispc::DirectionalLight *sh = StructSharedCreate<ispc::DirectionalLight>(
+      getISPCDevice().getDRTDevice());
   sh->set(visible, instance, direction, irradiance, cosAngle);
-  return view;
+  return &sh->super;
 }
 
 std::string DirectionalLight::toString() const

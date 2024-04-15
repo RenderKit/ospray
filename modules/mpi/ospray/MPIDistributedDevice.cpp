@@ -261,11 +261,6 @@ void MPIDistributedDevice::commit()
   void *appSyclDevice = getParam<void *>("syclDevice", nullptr);
   internalDevice->setParam<void *>("syclDevice", appSyclDevice);
 
-  void *appZeCtx = getParam<void *>("zeContext", nullptr);
-  internalDevice->setParam<void *>("zeContext", appZeCtx);
-  void *appZeDevice = getParam<void *>("zeDevice", nullptr);
-  internalDevice->setParam<void *>("zeDevice", appZeDevice);
-
   internalDevice->commit();
 }
 
@@ -520,12 +515,6 @@ float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
 {
   auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
   return internalDevice->getVariance((OSPFrameBuffer)fb);
-}
-
-void *MPIDistributedDevice::getPostProcessingCommandQueuePtr()
-{
-  // Run post-processing on internal device only
-  return internalDevice->getPostProcessingCommandQueuePtr();
 }
 
 void MPIDistributedDevice::setObjectParam(

@@ -2,23 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ToneMapper.h"
-#include "ISPCDevice.h"
 #include "fb/FrameBufferView.h"
 
-#ifndef OSPRAY_TARGET_SYCL
-extern "C" {
-#endif
-namespace ispc {
-void ToneMapper_kernelLauncher(const FrameBufferView *, void *, void *);
-}
-#ifndef OSPRAY_TARGET_SYCL
-}
-#endif
+DECLARE_FRAMEOP_KERNEL_LAUNCHER(ToneMapper_kernelLauncher);
 
 namespace ospray {
 
-ToneMapperFrameOp::ToneMapperFrameOp(api::Device &device)
-    : FrameOp(static_cast<api::ISPCDevice &>(device))
+ToneMapperFrameOp::ToneMapperFrameOp(devicert::Device &device) : FrameOp(device)
 {}
 
 void ToneMapperFrameOp::commit()
@@ -72,7 +62,7 @@ std::string ToneMapperFrameOp::toString() const
   return "ospray::ToneMapperFrameOp";
 }
 
-LiveToneMapperFrameOp::LiveToneMapperFrameOp(api::ISPCDevice &device,
+LiveToneMapperFrameOp::LiveToneMapperFrameOp(devicert::Device &device,
     FrameBufferView &fbView,
     float exposure,
     float a,
@@ -80,7 +70,7 @@ LiveToneMapperFrameOp::LiveToneMapperFrameOp(api::ISPCDevice &device,
     float c,
     float d,
     bool acesColor)
-    : AddStructShared(device.getIspcrtContext(), device, fbView)
+    : AddStructShared(device, device, fbView)
 {
   // Pass tone mapping parameters
   getSh()->exposure = exposure;
@@ -91,13 +81,11 @@ LiveToneMapperFrameOp::LiveToneMapperFrameOp(api::ISPCDevice &device,
   getSh()->acesColor = acesColor;
 }
 
-void LiveToneMapperFrameOp::process(void *waitEvent)
+devicert::AsyncEvent LiveToneMapperFrameOp::process()
 {
-  void *cmdQueue = nullptr;
-#ifdef OSPRAY_TARGET_SYCL
-  cmdQueue = &device.getSyclQueue();
-#endif
-  ispc::ToneMapper_kernelLauncher(&getSh()->super, cmdQueue, waitEvent);
+  const vec2ui &itemDims = getSh()->super.viewDims;
+  return device.launchFrameOpKernel(
+      itemDims, ispc::ToneMapper_kernelLauncher, &getSh()->super);
 }
 
 } // namespace ospray

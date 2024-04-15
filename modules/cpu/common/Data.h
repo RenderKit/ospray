@@ -7,7 +7,6 @@
 #include <memory>
 #include "ISPCDeviceObject.h"
 #include "StructShared.h"
-#include "ispcrt.hpp"
 
 // including "Data_ispc.h" breaks app code using SDK headers
 #ifndef __ISPC_STRUCT_Data1D__
@@ -71,7 +70,7 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
 
  protected:
   // The actual buffer storing the data
-  std::unique_ptr<BufferShared<char>> view;
+  BufferSharedUq<char> view;
   char *addr{nullptr};
   // We need to track the appSharedPtr separately for the GPU backend, if we
   // were passed a shared ptr to memory that was not in USM we made a copy that

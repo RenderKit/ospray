@@ -34,7 +34,7 @@ using DFB = DistributedFrameBuffer;
 
 DistributedTileError::DistributedTileError(
     api::ISPCDevice &device, const vec2i &numTiles, mpicommon::Group group)
-    : TaskError(device.getIspcrtContext(), numTiles), group(group)
+    : TaskError(device.getDRTDevice(), numTiles), group(group)
 {}
 
 void DistributedTileError::sync()
@@ -911,9 +911,9 @@ float DFB::tileError(const uint32_t tileID)
   return tileErrorRegion[tileID];
 }
 
-AsyncEvent DFB::postProcess(bool wait)
+devicert::AsyncEvent DFB::postProcess()
 {
-  AsyncEvent event;
+  devicert::AsyncEvent event;
   if (localFBonMaster) {
     // FrameOps are run on the device, but the DFB receives the final image
     // data over MPI into host-memory, and returns host-memory pointers
@@ -921,21 +921,19 @@ AsyncEvent DFB::postProcess(bool wait)
     // ops. If we can receive with MPI directly into device
     // memory we can drop this first copy step. When running on the CPU device,
     // these copies will become no-ops.
-    ispcrt::TaskQueue &tq = getISPCDevice().getIspcrtQueue();
     if (localFBonMaster->colorBuffer) {
-      tq.copyToDevice(*localFBonMaster->colorBuffer);
+      localFBonMaster->colorBuffer->copyToDevice();
     }
     if (localFBonMaster->depthBuffer) {
-      tq.copyToDevice(*localFBonMaster->depthBuffer);
+      localFBonMaster->depthBuffer->copyToDevice();
     }
     if (localFBonMaster->normalBuffer) {
-      tq.copyToDevice(*localFBonMaster->normalBuffer);
+      localFBonMaster->normalBuffer->copyToDevice();
     }
     if (localFBonMaster->albedoBuffer) {
-      tq.copyToDevice(*localFBonMaster->albedoBuffer);
+      localFBonMaster->albedoBuffer->copyToDevice();
     }
-    tq.sync();
-    event = localFBonMaster->postProcess(wait);
+    event = localFBonMaster->postProcess();
   }
   return event;
 }

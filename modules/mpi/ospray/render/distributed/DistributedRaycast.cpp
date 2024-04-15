@@ -45,7 +45,7 @@ static bool DETAILED_LOGGING = false;
 // DistributedRaycastRenderer definitions /////////////////////////////////
 
 DistributedRaycastRenderer::DistributedRaycastRenderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device),
+    : AddStructShared(device.getDRTDevice(), device),
       mpiGroup(mpicommon::worker.dup())
 {
   DETAILED_LOGGING =
@@ -115,7 +115,9 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   const size_t numTasks = taskIDs.size();
 
-  auto event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
+  sycl::queue *queue =
+      static_cast<sycl::queue *>(device.getDRTDevice().getSyclQueuePtr());
+  auto event = queue->submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
     ff |= featureFlags;
     ff |= fb->getFeatureFlags();

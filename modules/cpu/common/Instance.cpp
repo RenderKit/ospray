@@ -7,7 +7,7 @@
 namespace ospray {
 
 Instance::Instance(api::ISPCDevice &device, Group *_group)
-    : AddStructShared(device.getIspcrtContext(), device), groupAPI(_group)
+    : AddStructShared(device.getDRTDevice(), device), groupAPI(_group)
 {
   managedObjectType = OSP_INSTANCE;
 }

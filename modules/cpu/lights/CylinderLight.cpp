@@ -20,12 +20,11 @@ void *CylinderLight_eval_instanced_addr();
 
 namespace ospray {
 
-ISPCRTMemoryView CylinderLight::createSh(
+ispc::Light *CylinderLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::CylinderLight>(
-      getISPCDevice().getIspcrtContext().handle());
-  ispc::CylinderLight *sh = (ispc::CylinderLight *)ispcrtSharedPtr(view);
+  ispc::CylinderLight *sh =
+      StructSharedCreate<ispc::CylinderLight>(getISPCDevice().getDRTDevice());
 
 #ifndef OSPRAY_TARGET_SYCL
   sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
@@ -39,7 +38,7 @@ ISPCRTMemoryView CylinderLight::createSh(
   const float zMax = length(position1 - position0);
   if (zMax <= 0.f || radius <= 0.f) {
     sh->radiance = 0.f;
-    return view;
+    return &sh->super;
   }
 
   sh->radiance = radiance;
@@ -60,7 +59,7 @@ ISPCRTMemoryView CylinderLight::createSh(
       ispc::CylinderLight_Transform(sh, instance->xfm, &sh->pre);
   }
 
-  return view;
+  return &sh->super;
 }
 
 std::string CylinderLight::toString() const

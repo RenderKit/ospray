@@ -5,8 +5,8 @@
 
 // ospray
 #include "Device.h"
-// ispcrt
-#include "ispcrt.hpp"
+// device run-time
+#include "DeviceRT.h"
 // embree
 #include "common/Embree.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -29,19 +29,12 @@ namespace ospray {
 
 struct LocalTiledLoadBalancer;
 
-#ifdef OSPRAY_TARGET_SYCL
-using AsyncEvent = sycl::event;
-#else
-struct AsyncEvent
-{
-};
-#endif
-
 namespace api {
 
 struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 {
   ISPCDevice();
+  ISPCDevice(std::unique_ptr<devicert::Device> device);
   virtual ~ISPCDevice() override;
 
   /////////////////////////////////////////////////////////////////////////
@@ -161,36 +154,12 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   }
 #endif
 
-  ispcrt::Device &getIspcrtDevice()
+  inline devicert::Device &getDRTDevice()
   {
-    return ispcrtDevice;
-  }
-
-  ispcrt::Context &getIspcrtContext()
-  {
-    return ispcrtContext;
-  }
-
-  ispcrt::TaskQueue &getIspcrtQueue()
-  {
-    return ispcrtQueue;
-  }
-
-  void *getPostProcessingCommandQueuePtr() override
-  {
-#ifdef OSPRAY_TARGET_SYCL
-    return &syclQueue;
-#else
-    return nullptr;
-#endif
+    return *drtDevice;
   }
 
 #ifdef OSPRAY_TARGET_SYCL
-  sycl::queue &getSyclQueue()
-  {
-    return syclQueue;
-  }
-
   /* Compute the rounded dispatch global size for the given work group size.
    * SYCL requires that globalSize % workgroupSize == 0, ths function will
    * round up globalSize and return nd_range(roundedSize, workgroupSize).
@@ -202,23 +171,16 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 #endif
 
  private:
-  ispcrt::Context ispcrtContext;
-  ispcrt::Device ispcrtDevice;
-  ispcrt::TaskQueue ispcrtQueue;
+  std::unique_ptr<devicert::Device> drtDevice;
 
   RTCDevice embreeDevice = nullptr;
 #ifdef OSPRAY_ENABLE_VOLUMES
   VKLDevice vklDevice = nullptr;
 #endif
 
-#ifdef OSPRAY_TARGET_SYCL
-  sycl::platform syclPlatform;
-  sycl::device syclDevice;
-  sycl::context syclContext;
-  sycl::queue syclQueue;
-#endif
-
-  bool userContext{false}; // app can set context only once
+  // External SYCL context and device
+  void *appSyclCtx{nullptr};
+  void *appSyclDevice{nullptr};
 };
 
 } // namespace api

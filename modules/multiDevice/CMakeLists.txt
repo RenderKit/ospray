@@ -68,11 +68,6 @@ target_compile_definitions(ospray_module_multidevice_cpu PRIVATE
 ospray_install_library(ospray_module_multidevice_cpu lib)
 
 if (OSPRAY_MODULE_GPU)
-  include(${ISPCRT_DIR}/interop.cmake)
-  if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "${DPCPP_COMPILER}")
-    message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
-  endif()
-
   add_library(ospray_module_multidevice_gpu SHARED
     ${OSPRAY_MULTIDEVICE_CPP_SOURCES})
 

@@ -17,7 +17,7 @@ struct OSPRAY_SDK_INTERFACE Distribution2D
 {
   Distribution2D(const vec2i &size, api::ISPCDevice &device);
 
-  std::unique_ptr<BufferShared<float>> cdf_x;
-  std::unique_ptr<BufferShared<float>> cdf_y;
+  BufferSharedUq<float> cdf_x;
+  BufferSharedUq<float> cdf_y;
 };
 } // namespace ospray

@@ -66,7 +66,7 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>,
 // Curves definitions ///////////////////////////////////////////////////////
 
 Curves::Curves(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE)
+    : AddStructShared(device.getDRTDevice(), device, FFG_NONE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =

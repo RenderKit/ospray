@@ -1,7 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/FrameOpKernelLaunch.ih"
+#include "common/DeviceRT.ih"
 #include "rkcommon/math/LinearSpace.ih"
 #include "rkcommon/math/vec.ih"
 // c++ shared
@@ -10,7 +10,7 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline void ToneMapper_kernel(
-    const FrameBufferView *uniform fbvSelf, const vec2ui id)
+    const vec2ui itemIndex, const FrameBufferView *uniform fbvSelf)
 {
   // ACES input transform matrix = RRT_SAT_MAT * XYZ_2_AP1_MAT * D65_2_D60_CAT *
   // REC709_2_XYZ_PRI_MAT
@@ -27,8 +27,8 @@ inline void ToneMapper_kernel(
       {-0.0736720338f, -0.0060518756f, 1.0760219533f}};
 
   const LiveToneMapper *uniform self = (const LiveToneMapper *uniform)fbvSelf;
-  uniform const vec2ui &dims = fbvSelf->viewDims;
-  const uint32 i = id.y * dims.x + id.x;
+  uniform const vec2ui &itemDims = fbvSelf->viewDims;
+  const uint32 i = itemIndex.y * itemDims.x + itemIndex.x;
   vec4f col = fbvSelf->colorBufferInput[i];
   vec3f x = make_vec3f(col) * self->exposure;
   if (self->acesColor)
@@ -40,6 +40,6 @@ inline void ToneMapper_kernel(
   fbvSelf->colorBufferOutput[i] = make_vec4f(x, col.w);
 }
 
-DEFINE_KERNEL_LAUNCHER(ToneMapper_kernel);
+DEFINE_FRAMEOP_KERNEL_LAUNCHER(ToneMapper_kernel);
 
 OSPRAY_END_ISPC_NAMESPACE

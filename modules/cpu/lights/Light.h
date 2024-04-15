@@ -6,7 +6,6 @@
 #include "ISPCDeviceObject.h"
 #include "common/FeatureFlagsEnum.h"
 #include "common/ObjectFactory.h"
-#include "ispcrt.h"
 
 namespace ispc {
 struct Light;
@@ -24,7 +23,7 @@ struct OSPRAY_SDK_INTERFACE Light
   virtual ~Light() override = default;
 
   virtual uint32_t getShCount() const;
-  virtual ISPCRTMemoryView createSh(
+  virtual ispc::Light *createSh(
       uint32_t index, const ispc::Instance *instance = nullptr) const = 0;
   virtual void commit() override;
   virtual std::string toString() const override;

@@ -19,12 +19,11 @@ void *PointLight_eval_instanced_addr();
 
 namespace ospray {
 
-ISPCRTMemoryView PointLight::createSh(
+ispc::Light *PointLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::PointLight>(
-      getISPCDevice().getIspcrtContext().handle());
-  ispc::PointLight *sh = (ispc::PointLight *)ispcrtSharedPtr(view);
+  ispc::PointLight *sh =
+      StructSharedCreate<ispc::PointLight>(getISPCDevice().getDRTDevice());
 
   sh->super.isVisible = visible;
   sh->super.instance = instance;
@@ -59,7 +58,7 @@ ISPCRTMemoryView PointLight::createSh(
     sh->pre.c0 = cross(sh->pre.direction, sh->pre.c90);
   }
 
-  return view;
+  return &sh->super;
 }
 
 std::string PointLight::toString() const

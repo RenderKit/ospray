@@ -115,8 +115,6 @@ struct MPIOffloadDevice : public api::Device
 
   float getTaskDuration(OSPFuture) override;
 
-  void *getPostProcessingCommandQueuePtr() override;
-
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
 

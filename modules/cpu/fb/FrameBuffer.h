@@ -72,7 +72,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual void beginFrame();
 
   // Invoke post-processing by calling all FrameOps
-  virtual AsyncEvent postProcess(bool wait) = 0;
+  virtual devicert::AsyncEvent postProcess() = 0;
 
   // common function to help printf-debugging, every derived class should
   // override this

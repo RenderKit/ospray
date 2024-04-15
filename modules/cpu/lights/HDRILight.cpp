@@ -59,19 +59,17 @@ void HDRILight::set(bool isVisible,
 
 namespace ospray {
 
-ISPCRTMemoryView HDRILight::createSh(
-    uint32_t, const ispc::Instance *instance) const
+ispc::Light *HDRILight::createSh(uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>(
-      getISPCDevice().getIspcrtContext().handle());
-  ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
+  ispc::HDRILight *sh =
+      StructSharedCreate<ispc::HDRILight>(getISPCDevice().getDRTDevice());
   sh->set(visible,
       instance,
       coloredIntensity,
       frame,
       map->getSh(),
       distribution->getSh());
-  return view;
+  return &sh->super;
 }
 
 std::string HDRILight::toString() const

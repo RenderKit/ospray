@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 ThinGlass::ThinGlass(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_THINGLASS)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_THINGLASS)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(

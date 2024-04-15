@@ -16,12 +16,11 @@ void *AmbientLight_eval_addr();
 
 namespace ospray {
 
-ISPCRTMemoryView AmbientLight::createSh(
+ispc::Light *AmbientLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::AmbientLight>(
-      getISPCDevice().getIspcrtContext().handle());
-  ispc::AmbientLight *sh = (ispc::AmbientLight *)ispcrtSharedPtr(view);
+  ispc::AmbientLight *sh =
+      StructSharedCreate<ispc::AmbientLight>(getISPCDevice().getDRTDevice());
 #ifndef OSPRAY_TARGET_SYCL
   sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
       ispc::AmbientLight_sample_addr());
@@ -31,7 +30,7 @@ ISPCRTMemoryView AmbientLight::createSh(
   sh->super.isVisible = visible;
   sh->super.instance = instance;
   sh->radiance = radiance;
-  return view;
+  return &sh->super;
 }
 
 std::string AmbientLight::toString() const

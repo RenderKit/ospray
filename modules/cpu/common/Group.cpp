@@ -41,7 +41,7 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 // Group definitions ////////////////////////////////////////////////////////
 
 Group::Group(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device)
+    : AddStructShared(device.getDRTDevice(), device)
 {
   managedObjectType = OSP_GROUP;
 }
@@ -133,9 +133,10 @@ void Group::commit()
         sceneFlags,
         buildQuality);
 
-    geometricModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
-        getISPCDevice().getIspcrtContext(),
-        createArrayOfSh<ispc::GeometricModel>(*geometricModels));
+    geometricModelsArray =
+        devicert::make_buffer_shared_unique<ispc::GeometricModel *>(
+            getISPCDevice().getDRTDevice(),
+            createArrayOfSh<ispc::GeometricModel>(*geometricModels));
     getSh()->geometricModels = geometricModelsArray->sharedPtr();
 
     rtcCommitScene(sceneGeometries);
@@ -150,9 +151,10 @@ void Group::commit()
         sceneFlags,
         buildQuality);
 
-    volumetricModelsArray = make_buffer_shared_unique<ispc::VolumetricModel *>(
-        getISPCDevice().getIspcrtContext(),
-        createArrayOfSh<ispc::VolumetricModel>(*volumetricModels));
+    volumetricModelsArray =
+        devicert::make_buffer_shared_unique<ispc::VolumetricModel *>(
+            getISPCDevice().getDRTDevice(),
+            createArrayOfSh<ispc::VolumetricModel>(*volumetricModels));
     getSh()->volumetricModels = volumetricModelsArray->sharedPtr();
 
     rtcCommitScene(sceneVolumes);
@@ -168,9 +170,10 @@ void Group::commit()
             | RTC_SCENE_FLAG_ROBUST,
         buildQuality);
 
-    clipModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
-        getISPCDevice().getIspcrtContext(),
-        createArrayOfSh<ispc::GeometricModel>(*clipModels));
+    clipModelsArray =
+        devicert::make_buffer_shared_unique<ispc::GeometricModel *>(
+            getISPCDevice().getDRTDevice(),
+            createArrayOfSh<ispc::GeometricModel>(*clipModels));
     getSh()->clipModels = clipModelsArray->sharedPtr();
 
     numInvertedClippers = 0;

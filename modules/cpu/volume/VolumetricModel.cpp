@@ -10,7 +10,7 @@
 namespace ospray {
 
 VolumetricModel::VolumetricModel(api::ISPCDevice &device, Volume *_volume)
-    : AddStructShared(device.getIspcrtContext(), device), volumeAPI(_volume)
+    : AddStructShared(device.getDRTDevice(), device), volumeAPI(_volume)
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
 }

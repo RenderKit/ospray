@@ -48,12 +48,11 @@ struct OSPRAY_SDK_INTERFACE Renderer
   virtual void *beginFrame(FrameBuffer *fb, World *world);
 
   // called by the load balancer to render one "sample" for each task
-  virtual AsyncEvent renderTasks(FrameBuffer *,
+  virtual devicert::AsyncEvent renderTasks(FrameBuffer *,
       Camera *,
       World *,
       void *,
-      const utility::ArrayView<uint32_t> &,
-      bool wait = true) const = 0;
+      const utility::ArrayView<uint32_t> &) const = 0;
 
   virtual OSPPickResult pick(
       FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos);
@@ -70,11 +69,12 @@ struct OSPRAY_SDK_INTERFACE Renderer
   Ref<PixelFilter> pixelFilter;
 
   Ref<const DataT<Material *>> materialData;
-  std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
+  BufferSharedUq<ispc::Material *> materialArray;
 
  protected:
   FeatureFlags featureFlags;
   api::ISPCDevice &device;
+  devicert::Device &drtDevice;
 
  private:
   void setupPixelFilter();

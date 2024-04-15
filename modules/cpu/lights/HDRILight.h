@@ -12,7 +12,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE HDRILight : public Light
 {
   HDRILight(api::ISPCDevice &device) : Light(device, FFO_LIGHT_HDRI) {}
-  virtual ISPCRTMemoryView createSh(
+  virtual ispc::Light *createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;

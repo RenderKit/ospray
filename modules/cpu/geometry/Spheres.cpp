@@ -22,7 +22,7 @@ static std::map<OSPSphereType, FeatureFlagsGeometry> sphereFeatureFlags = {
     {OSP_ORIENTED_DISC, FFG_ORIENTED_DISC_POINT}};
 
 Spheres::Spheres(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE)
+    : AddStructShared(device.getDRTDevice(), device, FFG_NONE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =

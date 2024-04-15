@@ -1,0 +1,117 @@
+// Copyright 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "common/FeatureFlags.ih"
+
+#define ROUND_RANGE(global, group) ((global - 1) / group + 1) * group
+
+#ifdef ISPC
+
+#define DEFINE_RENDERER_KERNEL_LAUNCHER(kernel_name)                           \
+  task static void kernel_name##Task(Renderer *uniform renderer,               \
+      FrameBuffer *uniform fb,                                                 \
+      Camera *uniform camera,                                                  \
+      World *uniform world,                                                    \
+      const uint32 *uniform taskIDs,                                           \
+      const uniform FeatureFlagsHandler &ffh)                                  \
+  {                                                                            \
+    const uniform vec3ui itemIndex = make_vec3ui(0, 0, taskIndex2);            \
+    kernel_name(itemIndex, renderer, fb, camera, world, taskIDs, ffh);         \
+  }                                                                            \
+                                                                               \
+  export void kernel_name##Launcher(void *uniform,                             \
+      void *uniform,                                                           \
+      const uniform vec3ui &itemDims,                                          \
+      Renderer *uniform renderer,                                              \
+      FrameBuffer *uniform fb,                                                 \
+      Camera *uniform camera,                                                  \
+      World *uniform world,                                                    \
+      const uint32 *uniform taskIDs,                                           \
+      const uniform FeatureFlags &ff)                                          \
+  {                                                                            \
+    uniform FeatureFlagsHandler ffh;                                           \
+    launch[1, 1, itemDims.z] kernel_name##Task(                                \
+        renderer, fb, camera, world, taskIDs, ffh);                            \
+  }
+
+#define DEFINE_FRAMEOP_KERNEL_LAUNCHER(kernel_name)                            \
+  task static void kernel_name##Task(                                          \
+      const uniform vec2ui &itemDims, const FrameBufferView *uniform fbv)      \
+  {                                                                            \
+    const vec2ui itemIndex =                                                   \
+        make_vec2ui(taskIndex0 * programCount + programIndex, taskIndex1);     \
+    if (itemIndex.x < itemDims.x)                                              \
+      kernel_name(itemIndex, fbv);                                             \
+  }                                                                            \
+                                                                               \
+  export void kernel_name##Launcher(void *uniform,                             \
+      void *uniform,                                                           \
+      const uniform vec2ui &itemDims,                                          \
+      const FrameBufferView *uniform fbv)                                      \
+  {                                                                            \
+    launch[ROUND_RANGE(itemDims.x, programCount),                              \
+        itemDims.y] kernel_name##Task(itemDims, fbv);                          \
+  }
+
+#else
+
+#define DEFINE_RENDERER_KERNEL_LAUNCHER(kernel_name)                           \
+  extern "C" void kernel_name##Launcher(void *queue,                           \
+      void *event,                                                             \
+      const vec3ui &itemDims,                                                  \
+      Renderer *renderer,                                                      \
+      FrameBuffer *fb,                                                         \
+      Camera *camera,                                                          \
+      World *world,                                                            \
+      const uint32_t *taskIDs,                                                 \
+      const FeatureFlags &ff)                                                  \
+  {                                                                            \
+    sycl::queue *syclQueue = static_cast<sycl::queue *>(queue);                \
+    sycl::event *syclEvent = static_cast<sycl::event *>(event);                \
+    /* Submit kernel to device */                                              \
+    sycl::nd_range<3> dispatchRange(                                           \
+        {itemDims.x, itemDims.y, itemDims.z}, {itemDims.x, itemDims.y, 1});    \
+    *syclEvent = syclQueue->submit([&](sycl::handler &cgh) {                   \
+      cgh.set_specialization_constant<ispc::specFeatureFlags>(ff);             \
+      cgh.parallel_for(dispatchRange,                                          \
+          [=](sycl::nd_item<3> itemIndex, sycl::kernel_handler kh) {           \
+            ispc::FeatureFlagsHandler ffh(kh);                                 \
+            kernel_name(vec3ui(itemIndex.get_global_id(0),                     \
+                            itemIndex.get_global_id(1),                        \
+                            itemIndex.get_global_id(2)),                       \
+                renderer,                                                      \
+                fb,                                                            \
+                camera,                                                        \
+                world,                                                         \
+                taskIDs,                                                       \
+                ffh);                                                          \
+          });                                                                  \
+    });                                                                        \
+  }
+
+#define DEFINE_FRAMEOP_KERNEL_LAUNCHER(kernel_name)                            \
+  extern "C" void kernel_name##Launcher(void *queue,                           \
+      void *event,                                                             \
+      const vec2ui &itemDims,                                                  \
+      const FrameBufferView *fbv)                                              \
+  {                                                                            \
+    sycl::queue *syclQueue = static_cast<sycl::queue *>(queue);                \
+    sycl::event *syclEvent = static_cast<sycl::event *>(event);                \
+    /* Submit kernel to device */                                              \
+    const vec2ui workgroupSize = vec2ui(16, 1);                                \
+    const vec2ui roundedSize = ROUND_RANGE(itemDims, workgroupSize);           \
+    sycl::nd_range<2> dispatchRange(                                           \
+        {roundedSize.x, roundedSize.y}, {workgroupSize.x, workgroupSize.y});   \
+    *syclEvent = syclQueue->submit([&](sycl::handler &cgh) {                   \
+      cgh.parallel_for(dispatchRange, [=](sycl::nd_item<2> itemIndex) {        \
+        if (itemIndex.get_global_id(0) < itemDims.x)                           \
+          kernel_name(                                                         \
+              vec2ui(itemIndex.get_global_id(0), itemIndex.get_global_id(1)),  \
+              fbv);                                                            \
+      });                                                                      \
+    });                                                                        \
+  }
+
+#endif

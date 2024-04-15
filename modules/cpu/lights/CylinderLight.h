@@ -13,7 +13,7 @@ struct OSPRAY_SDK_INTERFACE CylinderLight : public Light
 {
   CylinderLight(api::ISPCDevice &device) : Light(device, FFO_LIGHT_CYLINDER) {}
   virtual ~CylinderLight() override = default;
-  virtual ISPCRTMemoryView createSh(
+  virtual ispc::Light *createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;

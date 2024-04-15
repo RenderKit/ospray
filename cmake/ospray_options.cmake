@@ -83,8 +83,6 @@ ospray_find_embree(${EMBREE_VERSION_REQUIRED} FALSE)
 ospray_verify_embree_features()
 
 # ISPC
-set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ON)
-find_package(ispcrt ${ISPC_VERSION_REQUIRED} REQUIRED)
 set(ISPC_FAST_MATH ON)
 
 # Open VKL

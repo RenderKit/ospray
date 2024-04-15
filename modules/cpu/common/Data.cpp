@@ -3,7 +3,6 @@
 
 // ospray
 #include "Data.h"
-#include "common/ISPCRTBuffers.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/getEnvVar.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
@@ -48,9 +47,8 @@ Data::Data(api::ISPCDevice &device, OSPDataType type, const vec3ul &numItems)
       byteStride(0)
 {
   // TODO: is this pad out by 16 still needed?
-  view = make_buffer_shared_unique<char>(device.getIspcrtContext(),
-      size() * sizeOf(type) + 16,
-      ispcrt::SharedMemoryUsageHint::HostWriteDeviceRead);
+  view = devicert::make_buffer_shared_unique<char>(
+      device.getDRTDevice(), size() * sizeOf(type) + 16);
   addr = view->data();
 
   init();
@@ -92,25 +90,22 @@ void Data::init()
   // Check if the shared data the app gave is actually in USM, if not we still
   // need to make a copy of it internally so it's accessible on the GPU
   if (shared) {
-    ispcrt::Context &ispcrtContext = getISPCDevice().getIspcrtContext();
-    ispcrt::Device &ispcrtDevice = getISPCDevice().getIspcrtDevice();
+    devicert::Device &device = getISPCDevice().getDRTDevice();
     const size_t sizeBytes = byteStride.z * numItems.z;
-    auto memType = ispcrtDevice.getMemoryAllocType(addr);
+    auto memType = device.getPointerType(addr);
     switch (memType) {
-    case ISPCRT_ALLOC_TYPE_HOST:
+    case devicert::Alloc::Host:
     default:
       // std::cerr << "HOST..COPYING" << std::endl;
       shared = false;
-      view = make_buffer_shared_unique<char>(ispcrtContext,
-          sizeBytes, // TODO: is a padding of +16 still needed?
-          ispcrt::SharedMemoryUsageHint::HostWriteDeviceRead);
+      view = devicert::make_buffer_shared_unique<char>(device, sizeBytes);
       addr = view->data();
       std::memcpy(addr, appSharedPtr, sizeBytes);
       break;
-    case ISPCRT_ALLOC_TYPE_SHARED:
+    case devicert::Alloc::Shared:
       // std::cerr << "SHARED..USE IN PLACE" << std::endl;
       break;
-    case ISPCRT_ALLOC_TYPE_DEVICE:
+    case devicert::Alloc::Device:
       static bool useDeviceMemory =
           (rkcommon::utility::getEnvVar<int>("OSPRAY_ALLOW_DEVICE_MEMORY")
                   .value_or(0)
@@ -121,23 +116,12 @@ void Data::init()
       } else {
         // std::cerr << "DEVICE..COPYING" << std::endl;
         shared = false;
-        // make a handle for the app's memory
-        ISPCRTNewMemoryViewFlags memFlags = {
-            ISPCRT_ALLOC_TYPE_DEVICE, ISPCRT_SM_APPLICATION_MANAGED_DEVICE};
-        ISPCRTMemoryView handleOnAppsMemory = ispcrtNewMemoryView(
-            ispcrtDevice.handle(), appSharedPtr, sizeBytes, &memFlags);
+
         // make ospray's shared buffer
-        view = make_buffer_shared_unique<char>(ispcrtContext,
-            sizeBytes,
-            ispcrt::SharedMemoryUsageHint::HostWriteDeviceRead);
+        view = devicert::make_buffer_shared_unique<char>(device, sizeBytes);
+
         // copy to it
-        ispcrt::TaskQueue &ispcrtTaskQueue = getISPCDevice().getIspcrtQueue();
-        ispcrtCopyMemoryView(ispcrtTaskQueue.handle(),
-            view->handle(),
-            handleOnAppsMemory,
-            sizeBytes);
-        ispcrtTaskQueue.sync();
-        ispcrtRelease(handleOnAppsMemory);
+        device.memcpy(view->sharedPtr(), appSharedPtr, sizeBytes);
         addr = view->data();
       }
       break;

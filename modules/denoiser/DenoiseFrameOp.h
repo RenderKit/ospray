@@ -13,7 +13,7 @@ namespace ospray {
 
 struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOpInterface
 {
-  DenoiseFrameOp(api::Device &device);
+  DenoiseFrameOp(devicert::Device &device);
 
   std::unique_ptr<LiveFrameOpInterface> attach(
       FrameBufferView &fbView) override;
@@ -21,6 +21,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOpInterface
   std::string toString() const override;
 
  private:
+  devicert::Device &drtDevice;
   oidn::DeviceRef oidnDevice;
   bool sharedMem{false};
 };

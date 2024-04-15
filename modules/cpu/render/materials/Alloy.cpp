@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 Alloy::Alloy(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_ALLOY)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_ALLOY)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =

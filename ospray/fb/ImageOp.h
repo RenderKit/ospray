@@ -10,9 +10,10 @@
 
 namespace ospray {
 
-namespace api {
+namespace devicert {
+struct AsyncEvent;
 struct Device;
-}
+} // namespace devicert
 
 struct FrameBufferView;
 
@@ -29,9 +30,9 @@ struct OSPRAY_CORE_INTERFACE LiveImageOp
 // sending tiles to a display wall, etc.
 struct OSPRAY_CORE_INTERFACE ImageOp
     : public ManagedObject,
-      public ObjectFactory<ImageOp, api::Device &>
+      public ObjectFactory<ImageOp, devicert::Device &>
 {
-  static ImageOp *createImageOp(const char *type, api::Device &device);
+  static ImageOp *createImageOp(const char *type, devicert::Device &device);
 
   ImageOp();
   ~ImageOp() override = default;
@@ -47,7 +48,7 @@ struct OSPRAY_CORE_INTERFACE LiveFrameOpInterface : public LiveImageOp
   ~LiveFrameOpInterface() override = default;
 
   // Execute FrameOp kernel
-  virtual void process(void *waitEvent) = 0;
+  virtual devicert::AsyncEvent process() = 0;
 };
 
 struct OSPRAY_CORE_INTERFACE FrameOpInterface : public ImageOp

@@ -25,7 +25,6 @@ set(OSPRAY_CPP_SOURCES
 
   ModuleInit.cpp
   ispc_tasksys.cpp
-  ispc_tasksys.h
 
   ISPCDevice.h
   ISPCDevice.cpp
@@ -205,6 +204,14 @@ set(OSPRAY_ISPC_SOURCES
   texture/TextureParam.ispc
 )
 
+set(OSPRAY_BCKND_ISPC_SOURCES
+  common/DeviceRTImpl_ispc.cpp
+)
+
+set(OSPRAY_BCKND_SYCL_SOURCES
+  common/DeviceRTImpl_sycl.cpp
+)
+
 if (OSPRAY_ENABLE_VOLUMES)
   set(OSPRAY_VOLUMES_CPP_SOURCES
     geometry/Isosurfaces.cpp
@@ -344,6 +351,7 @@ if (OSPRAY_MODULE_CPU)
       ${OSPRAY_VOLUMES_ISPC_SOURCES}
       ${OSPRAY_ISPC_DEF}
       math/halton.c math/sobol.c # constants exported for ISPC only
+      ${OSPRAY_BCKND_ISPC_SOURCES}
       geometry/Subdivision.cpp
       geometry/Subdivision.ispc)
 
@@ -353,7 +361,6 @@ if (OSPRAY_MODULE_CPU)
   PUBLIC
     ospray
     rkcommon::rkcommon
-    $<BUILD_INTERFACE:ispcrt::ispcrt>
     $<BUILD_INTERFACE:embree>
   )
 
@@ -366,7 +373,6 @@ if (OSPRAY_MODULE_CPU)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
       $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
       # NOTE(jda) - the following includes are missing despite PUBLIC linking
-      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
       $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
       #######################################################################
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
@@ -408,9 +414,6 @@ if (OSPRAY_MODULE_GPU)
     cmake_minimum_required(VERSION 3.20.5)
   endif()
 
-
-  include(${ISPCRT_DIR}/interop.cmake)
-
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
   set_source_files_properties(${OSPRAY_ISPC_SOURCES} ${OSPRAY_VOLUMES_ISPC_SOURCES}
     PROPERTIES
@@ -427,7 +430,6 @@ if (OSPRAY_MODULE_GPU)
   PUBLIC
     ospray
     rkcommon::rkcommon
-    $<BUILD_INTERFACE:ispcrt::ispcrt>
     $<BUILD_INTERFACE:embree>
   )
 
@@ -440,7 +442,6 @@ if (OSPRAY_MODULE_GPU)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
     # NOTE(jda) - the following includes are missing despite PUBLIC linking
-    $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
     #######################################################################
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
@@ -513,6 +514,7 @@ if (OSPRAY_MODULE_GPU)
   add_library(ospray_module_gpu SHARED
     ${OSPRAY_CPP_SOURCES}
     ${OSPRAY_VOLUMES_CPP_SOURCES}
+    ${OSPRAY_BCKND_SYCL_SOURCES}
   )
 
   target_link_libraries(ospray_module_gpu

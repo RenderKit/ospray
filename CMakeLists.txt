@@ -1,7 +1,7 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 ##############################################################
 # Language setup
@@ -38,6 +38,7 @@ list(APPEND CMAKE_MODULE_PATH
   ${PROJECT_SOURCE_DIR}/cmake/compiler
 )
 
+include(ispc)
 include(ospray_macros)
 include(ospray_options)
 include(package)

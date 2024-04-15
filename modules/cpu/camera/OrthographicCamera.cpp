@@ -10,8 +10,7 @@
 namespace ospray {
 
 OrthographicCamera::OrthographicCamera(api::ISPCDevice &device)
-    : AddStructShared(
-        device.getIspcrtContext(), device, FFO_CAMERA_ORTHOGRAPHIC)
+    : AddStructShared(device.getDRTDevice(), device, FFO_CAMERA_ORTHOGRAPHIC)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.initRay = reinterpret_cast<ispc::Camera_initRay>(

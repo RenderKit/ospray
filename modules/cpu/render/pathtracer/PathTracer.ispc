@@ -6,6 +6,7 @@
 #include "PathTracerDefines.ih"
 #include "PathTracerUtil.ih"
 
+#include "common/DeviceRT.ih"
 #include "common/FeatureFlagsEnum.h"
 #include "render/Renderer.ih"
 #include "render/bsdfs/BSDF.ih"
@@ -180,27 +181,18 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   return screenSample;
 }
 
-#ifndef OSPRAY_TARGET_SYCL
-task
-#endif
-    SYCL_EXTERNAL void
-    PathTracer_renderTask(Renderer *uniform _self,
-        FrameBuffer *uniform fb,
-        Camera *uniform camera,
-        World *uniform world,
-        const uint32 *uniform taskIDs,
-#ifdef OSPRAY_TARGET_SYCL
-        const sycl::nd_item<3> taskIndex,
-#endif
-        const uniform FeatureFlagsHandler &ffh)
+inline void PathTracer_renderTask(const uniform vec3ui itemIndex,
+    Renderer *uniform _self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    const uint32 *uniform taskIDs,
+    const uniform FeatureFlagsHandler &ffh)
 {
   PathTracer *uniform self = (PathTracer * uniform) _self;
 
-#ifdef OSPRAY_TARGET_SYCL
-  uint32 taskIndex0 = taskIndex.get_global_id(0);
-#endif
   uniform RenderTaskDesc taskDesc =
-      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0], ffh);
+      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[itemIndex.z], ffh);
 
   if (fb->cancelRender || isEmpty(taskDesc.region)) {
     return;
@@ -208,10 +200,10 @@ task
 
   const uniform int frameID = fb->doAccumulation ? max(fb->frameID, 0) : 0;
 
-#ifdef OSPRAY_TARGET_SYCL
+#ifndef ISPC
   {
-    int32 y = taskDesc.region.lower.y + taskIndex.get_global_id(1);
-    int32 x = taskDesc.region.lower.x + taskIndex.get_global_id(2);
+    int32 y = taskDesc.region.lower.y + itemIndex.y;
+    int32 x = taskDesc.region.lower.x + itemIndex.x;
 #else
   foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
@@ -226,22 +218,6 @@ task
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
-#ifndef OSPRAY_TARGET_SYCL
-export void PathTracer_renderTasks(void *uniform _self,
-    void *uniform _fb,
-    void *uniform _camera,
-    void *uniform _world,
-    void *uniform _taskIDs,
-    uniform uint32 numTasks)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
-  Camera *uniform camera = (Camera * uniform) _camera;
-  World *uniform world = (World * uniform) _world;
-  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
-  uniform FeatureFlagsHandler ffh;
-  launch[numTasks] PathTracer_renderTask(self, fb, camera, world, taskIDs, ffh);
-}
-#endif
+DEFINE_RENDERER_KERNEL_LAUNCHER(PathTracer_renderTask);
 
 OSPRAY_END_ISPC_NAMESPACE

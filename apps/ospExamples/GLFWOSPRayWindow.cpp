@@ -944,7 +944,7 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
     // init camera
     camera.setParam("position", vec3f(0.0f, 0.0f, 1.0f));
     updateCamera();
-    camera.commit();
+    addObjectToCommit(camera.handle());
   }
 }
 

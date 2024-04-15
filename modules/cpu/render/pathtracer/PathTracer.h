@@ -20,12 +20,11 @@ struct PathTracer : public AddStructShared<Renderer, ispc::PathTracer>
   virtual void commit() override;
   virtual void *beginFrame(FrameBuffer *, World *) override;
 
-  virtual AsyncEvent renderTasks(FrameBuffer *fb,
+  virtual devicert::AsyncEvent renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs,
-      bool wait) const override;
+      const utility::ArrayView<uint32_t> &taskIDs) const override;
 
  private:
   bool scanForGeometryLights{true}; // if geometry lights are importance

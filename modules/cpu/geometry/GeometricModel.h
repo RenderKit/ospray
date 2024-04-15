@@ -42,8 +42,8 @@ struct OSPRAY_SDK_INTERFACE GeometricModel
   Ref<const Data> materialData;
   Ref<const DataT<vec4f>> colorData;
   Ref<const DataT<uint8_t>> indexData;
-  std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
-  std::unique_ptr<BufferShared<uint32_t>> materialIDArray;
+  BufferSharedUq<ispc::Material *> materialArray;
+  BufferSharedUq<uint32_t> materialIDArray;
 
   FeatureFlagsOther featureFlagsOther{FFO_NONE};
 };

@@ -1,7 +1,7 @@
 // Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/FrameOpKernelLaunch.ih"
+#include "common/DeviceRT.ih"
 #include "rkcommon/math/vec.ih"
 // c++ shared
 #include "ColorConversionShared.h"
@@ -9,11 +9,11 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline void ColorConversion_kernel(
-    const FrameBufferView *uniform fbvSelf, const vec2ui id)
+    const vec2ui itemIndex, const FrameBufferView *uniform fbvSelf)
 {
   const LiveColorConversion *uniform self =
       (const LiveColorConversion *uniform)fbvSelf;
-  const uint32 i = id.y * fbvSelf->viewDims.x + id.x;
+  const uint32 i = itemIndex.y * fbvSelf->viewDims.x + itemIndex.x;
   vec4f v = fbvSelf->colorBufferInput[i];
   switch (self->targetColorFormat) {
   case OSP_FB_RGBA8: {
@@ -33,6 +33,6 @@ inline void ColorConversion_kernel(
   }
 }
 
-DEFINE_KERNEL_LAUNCHER(ColorConversion_kernel);
+DEFINE_FRAMEOP_KERNEL_LAUNCHER(ColorConversion_kernel);
 
 OSPRAY_END_ISPC_NAMESPACE

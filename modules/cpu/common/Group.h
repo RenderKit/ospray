@@ -54,11 +54,11 @@ struct OSPRAY_SDK_INTERFACE Group
  private:
   FeatureFlags featureFlags;
 
-  std::unique_ptr<BufferShared<ispc::GeometricModel *>> geometricModelsArray;
+  BufferSharedUq<ispc::GeometricModel *> geometricModelsArray;
 #ifdef OSPRAY_ENABLE_VOLUMES
-  std::unique_ptr<BufferShared<ispc::VolumetricModel *>> volumetricModelsArray;
+  BufferSharedUq<ispc::VolumetricModel *> volumetricModelsArray;
 #endif
-  std::unique_ptr<BufferShared<ispc::GeometricModel *>> clipModelsArray;
+  BufferSharedUq<ispc::GeometricModel *> clipModelsArray;
 };
 
 OSPTYPEFOR_SPECIALIZATION(Group *, OSP_GROUP);

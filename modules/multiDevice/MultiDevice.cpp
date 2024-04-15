@@ -6,21 +6,22 @@
 #include "MultiDeviceFrameBuffer.h"
 #include "MultiDeviceRenderTask.h"
 #include "camera/registration.h"
+#include "common/DeviceRTImpl.h"
 #include "fb/LocalFB.h"
 #include "fb/SparseFB.h"
 #include "fb/registration.h"
 #include "geometry/registration.h"
 #include "lights/registration.h"
 #include "render/LoadBalancer.h"
-#include "render/RenderTask.h"
 #include "render/registration.h"
+#include "texture/registration.h"
+#include "volume/transferFunction/registration.h"
+
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/CodeTimer.h"
 #include "rkcommon/utility/getEnvVar.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
-#include "texture/registration.h"
-#include "volume/transferFunction/registration.h"
 
 namespace ospray {
 namespace api {
@@ -32,40 +33,20 @@ void MultiDevice::commit()
 {
   Device::commit();
 
-  // Needed for proper ISPCRT device construction
   hostDevice.commit();
-
-  ispcrt::Context ispcrtContext;
-  ispcrt::Device ispcrtDevice;
-  int numPhyDevices = 1;
-#ifdef OSPRAY_TARGET_SYCL
-  numPhyDevices = ispcrtGetDeviceCount(ISPCRT_DEVICE_TYPE_GPU);
-  ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU);
-#else
-  numPhyDevices = ispcrtGetDeviceCount(ISPCRT_DEVICE_TYPE_CPU);
-#endif
 
   if (subdevices.empty()) {
     auto OSPRAY_NUM_SUBDEVICES =
         utility::getEnvVar<int>("OSPRAY_NUM_SUBDEVICES");
     int numSubdevices =
         OSPRAY_NUM_SUBDEVICES.value_or(getParam("numSubdevices", 1));
-    std::vector<int> deviceIndex(numSubdevices, 0);
-    for (int i = 0; i < numSubdevices; i++)
-      deviceIndex[i] = i % numPhyDevices;
-
     postStatusMsg(OSP_LOG_DEBUG) << "# of subdevices =" << numSubdevices;
 
     std::vector<std::shared_ptr<TiledLoadBalancer>> subdeviceLoadBalancers;
     for (int i = 0; i < numSubdevices; ++i) {
-      auto d = make_unique<ISPCDevice>();
-#ifdef OSPRAY_TARGET_SYCL
-      if (ispcrtContext) {
-        ispcrtDevice = ispcrt::Device(ispcrtContext, deviceIndex[i]);
-        d->setParam<void *>("ispcrtContext", &ispcrtContext);
-        d->setParam<void *>("ispcrtDevice", &ispcrtDevice);
-      }
-#endif
+      std::unique_ptr<devicert::Device> drtDevice =
+          devicert::make_device_unique(i, debugMode);
+      auto d = rkcommon::make_unique<ISPCDevice>(std::move(drtDevice));
       d->commit();
       subdevices.emplace_back(std::move(d));
       subdeviceLoadBalancers.push_back(subdevices.back()->loadBalancer);
@@ -443,7 +424,7 @@ OSPImageOperation MultiDevice::newImageOp(const char *type)
   // proper memory handling
   MultiDeviceObject *o = new MultiDeviceObject();
   for (auto &d : subdevices) {
-    o->objects.push_back(d->newImageOp(type));
+    o->objects.push_back(hostDevice.newImageOp(type));
   }
   return (OSPImageOperation)o;
 }
@@ -554,15 +535,6 @@ float MultiDevice::getTaskDuration(OSPFuture _task)
 {
   auto *task = (Future *)_task;
   return task->getTaskDuration();
-}
-
-void *MultiDevice::getPostProcessingCommandQueuePtr()
-{
-  // TODO: Return appropriate command queue for post-processing here.
-  // Either one device will be statically selected for post-processing or
-  // dynamically load balancer will assign device based on current load
-  // distribution
-  return nullptr;
 }
 
 OSPPickResult MultiDevice::pick(OSPFrameBuffer _fb,

@@ -25,7 +25,7 @@ before you can build OSPRay you need the following prerequisites:
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
     If ISPC is not found by CMake its location can be hinted with the
-    variable `ispcrt_DIR`.
+    variable `ISPC_EXECUTABLE`.
 -   OSPRay builds on top of the [Intel Rendering Toolkit (Render Kit) common
     library (rkcommon)](https://www.github.com/ospray/rkcommon). The
     library provides abstractions for tasking, aligned memory
@@ -92,13 +92,3 @@ To build OSPRay's GPU module you need
     or the latest [Intel oneAPI DPC++/C++
     Compiler](https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#dpcpp-cpp)
 -   a recent [CMake](http://www.cmake.org), version 3.25.3 or higher
--   the [oneAPI Level Zero Loader
-    v1.12.0](https://github.com/oneapi-src/level-zero/releases/tag/v1.12.0)
-    development packages
-    -   On Linux Ubuntu 22.04 there are prebuilt packages available for
-        this: `level-zero-devel` and `level-zero`
-    -   Other Linux distributions require building these packages from source
-    -   On Windows, you can use the single package
-        `level-zero_<version>_win-sdk`; note you will need to set the
-        environment variable `LEVEL_ZERO_ROOT` to the location of the
-        SDK

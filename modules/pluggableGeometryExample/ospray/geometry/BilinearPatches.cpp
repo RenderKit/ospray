@@ -19,7 +19,7 @@ namespace ospray {
 namespace blp {
 
 BilinearPatches::BilinearPatches(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE)
+    : AddStructShared(device.getDRTDevice(), device, FFG_NONE)
 {
   getSh()->super.postIntersect = ispc::BilinearPatches_postIntersect_addr();
   getSh()->super.intersect = ispc::BilinearPatches_intersect_addr();

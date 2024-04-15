@@ -1,23 +1,14 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// This is shared between ISPC and SYCL, in ISPC it's compiled
-// as a function in Renderer.ispc but in SYCL it's a template function in the
-// RendererShared header.
-
-#ifndef OSPRAY_TARGET_SYCL
-task
-#endif
-    static void
-    Renderer_default_renderTask(Renderer *uniform self,
-        FrameBuffer *uniform fb,
-        Camera *uniform camera,
-        World *uniform world,
-        const uint32 *uniform taskIDs,
-#ifdef OSPRAY_TARGET_SYCL
-        const sycl::nd_item<3> taskIndex,
-#endif
-        const uniform FeatureFlagsHandler &ffh)
+// Renderer common infrastructure shared among other renderers
+static void Renderer_default_renderTask(const uniform vec3ui itemIndex,
+    Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    const uint32 *uniform taskIDs,
+    const uniform FeatureFlagsHandler &ffh)
 {
   const uniform int32 spp = self->spp;
 
@@ -27,11 +18,8 @@ task
 
   CameraSample cameraSample;
 
-#ifdef OSPRAY_TARGET_SYCL
-  uint32 taskIndex0 = taskIndex.get_global_id(0);
-#endif
   uniform RenderTaskDesc taskDesc =
-      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0], ffh);
+      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[itemIndex.z], ffh);
 
   const uniform int startSampleID =
       (fb->doAccumulation ? max(fb->frameID, 0) * spp : 0)
@@ -41,10 +29,10 @@ task
     return;
   }
 
-#ifdef OSPRAY_TARGET_SYCL
+#ifndef ISPC
   {
-    int32 y = taskDesc.region.lower.y + taskIndex.get_global_id(1);
-    int32 x = taskDesc.region.lower.x + taskIndex.get_global_id(2);
+    int32 y = taskDesc.region.lower.y + itemIndex.y;
+    int32 x = taskDesc.region.lower.x + itemIndex.x;
 #else
   foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {

@@ -161,8 +161,6 @@ ospray_install_library(ospray_module_mpi_distributed_cpu mpi)
 ## Build the MPI Distributed GPU module ##
 
 if (OSPRAY_MODULE_GPU)
-  include(${ISPCRT_DIR}/interop.cmake)
-
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
   set_source_files_properties(${OSPRAY_MPI_DISTRIBUTED_ISPC_SOURCES} PROPERTIES
       LANGUAGE CXX)

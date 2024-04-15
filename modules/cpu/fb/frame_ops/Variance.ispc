@@ -1,7 +1,7 @@
 // Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/FrameOpKernelLaunch.ih"
+#include "common/DeviceRT.ih"
 #include "rkcommon/math/vec.ih"
 // c++ shared
 #include "VarianceShared.h"
@@ -9,7 +9,7 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline void Variance_kernel(
-    const FrameBufferView *uniform fbvSelf, const vec2ui id)
+    const vec2ui itemIndex, const FrameBufferView *uniform fbvSelf)
 {
   uniform const vec2ui &rtDims = fbvSelf->viewDims;
   uniform const vec2ui &fbDims = fbvSelf->fbDims;
@@ -18,7 +18,7 @@ inline void Variance_kernel(
   const LiveVariance *uniform self = (const LiveVariance *uniform)fbvSelf;
   uniform const vec2ui rtSize = self->rtSize;
   const vec4f *uniform varianceBuffer = self->varianceBuffer;
-  const vec2ui rtLower = id * rtSize;
+  const vec2ui rtLower = itemIndex * rtSize;
 
   // Iterate over all pixels within single render task and calculate maximum
   // variance over collected samples
@@ -53,11 +53,11 @@ inline void Variance_kernel(
   if (cnt)
     v *= rcp((float)cnt); // avg
 
-  const uint32 lId = id.y * rtDims.x + id.x;
+  const uint32 lId = itemIndex.y * rtDims.x + itemIndex.x;
   // scale to be backwards compatible with the old default tile size of 64x64
   self->taskVarianceBuffer[lId] = v * 64.f;
 }
 
-DEFINE_KERNEL_LAUNCHER(Variance_kernel);
+DEFINE_FRAMEOP_KERNEL_LAUNCHER(Variance_kernel);
 
 OSPRAY_END_ISPC_NAMESPACE

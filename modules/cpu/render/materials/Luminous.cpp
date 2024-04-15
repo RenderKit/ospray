@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 Luminous::Luminous(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_LUMINOUS)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_LUMINOUS)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(

@@ -37,7 +37,7 @@ struct OSPRAY_SDK_INTERFACE World
   Ref<const DataT<Instance *>> instances;
   Ref<const DataT<Light *>> lights;
 
-  std::unique_ptr<BufferShared<ispc::Instance *>> instanceArray;
+  BufferSharedUq<ispc::Instance *> instanceArray;
 
   std::unique_ptr<SciVisData> scivisData;
   std::unique_ptr<PathTracerData> pathtracerData;

@@ -3,6 +3,7 @@
 
 #include "camera/Camera.ih"
 #include "camera/CameraDispatch.ih"
+#include "common/DeviceRT.ih"
 #include "common/FeatureFlagsEnum.h"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
@@ -146,35 +147,17 @@ static void AORenderer_renderSample(Renderer *uniform _self,
 #include "render/RendererRenderTaskFn.inl"
 #undef renderSampleFn
 
-#ifdef OSPRAY_TARGET_SYCL
-SYCL_EXTERNAL void AORenderer_renderTask(Renderer *uniform self,
+inline void AORenderer_renderTask(const uniform vec3ui itemIndex,
+    Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
     const uint32 *uniform taskIDs,
-    const sycl::nd_item<3> taskIndex,
     const uniform FeatureFlagsHandler &ffh)
 {
-  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex, ffh);
+  Renderer_default_renderTask(itemIndex, self, fb, camera, world, taskIDs, ffh);
 }
-#else
-export void AORenderer_renderTasks(void *uniform _self,
-    void *uniform _fb,
-    void *uniform _camera,
-    void *uniform _world,
-    void *uniform _taskIDs,
-    uniform uint32 numTasks)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
-  Camera *uniform camera = (Camera * uniform) _camera;
-  World *uniform world = (World * uniform) _world;
-  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
-  uniform FeatureFlagsHandler ffh;
-  launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, taskIDs, ffh);
-  sync;
-}
-#endif
+
+DEFINE_RENDERER_KERNEL_LAUNCHER(AORenderer_renderTask);
 
 OSPRAY_END_ISPC_NAMESPACE

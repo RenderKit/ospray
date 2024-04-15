@@ -2,39 +2,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ColorConversion.h"
-#include "ISPCDevice.h"
 #include "fb/FrameBufferView.h"
 
-#ifndef OSPRAY_TARGET_SYCL
-extern "C" {
-#endif
-namespace ispc {
-void ColorConversion_kernelLauncher(const FrameBufferView *, void *, void *);
-}
-#ifndef OSPRAY_TARGET_SYCL
-}
-#endif
+DECLARE_FRAMEOP_KERNEL_LAUNCHER(ColorConversion_kernelLauncher);
 
 namespace ospray {
 
-LiveColorConversionFrameOp::LiveColorConversionFrameOp(api::ISPCDevice &device,
+LiveColorConversionFrameOp::LiveColorConversionFrameOp(devicert::Device &device,
     FrameBufferView &fbView,
     OSPFrameBufferFormat targetColorFormat)
-    : AddStructShared(device.getIspcrtContext(), device, fbView),
-      convBuffer(device.getIspcrtDevice(),
-          fbView.viewDims.long_product() * sizeOf(targetColorFormat))
+    : AddStructShared(device, device, fbView),
+      convBuffer(
+          device, fbView.viewDims.long_product() * sizeOf(targetColorFormat))
 {
   getSh()->targetColorFormat = targetColorFormat;
   getSh()->convBuffer = convBuffer.devicePtr();
 }
 
-void LiveColorConversionFrameOp::process(void *waitEvent)
+devicert::AsyncEvent LiveColorConversionFrameOp::process()
 {
-  void *cmdQueue = nullptr;
-#ifdef OSPRAY_TARGET_SYCL
-  cmdQueue = &device.getSyclQueue();
-#endif
-  ispc::ColorConversion_kernelLauncher(&getSh()->super, cmdQueue, waitEvent);
+  const vec2ui &itemDims = getSh()->super.viewDims;
+  return device.launchFrameOpKernel(
+      itemDims, ispc::ColorConversion_kernelLauncher, &getSh()->super);
 }
 
 } // namespace ospray

@@ -8,6 +8,11 @@ Version History
     `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
     float textures `OSP_TEXTURE_RA32F`
 -   Fix artifacts occassionally appearing with `gpu` device
+-   Removed Intel ISPCRT dependency (ISPC compiler is still needed):
+    -   oneAPI Level Zero Loader is no longer necessary
+    -   `zeContext` and `zeDevice`device parameters are no longer supported
+    -   `ispcrtContext` and `ispcrtDevice`device parameters are no longer
+        supported
 
 ### Changes in v3.1.0:
 

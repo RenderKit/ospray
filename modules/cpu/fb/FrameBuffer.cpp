@@ -33,7 +33,7 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels,
     const FeatureFlagsOther ffo)
-    : AddStructShared(device.getIspcrtContext(), device),
+    : AddStructShared(device.getDRTDevice(), device),
       size(_size),
       colorBufferFormat(_colorBufferFormat),
       hasColorBuffer(channels & OSP_FB_COLOR),

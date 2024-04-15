@@ -52,21 +52,15 @@ inline MultiDeviceRenderTask::~MultiDeviceRenderTask()
   }
 }
 
-inline bool MultiDeviceRenderTask::isFinished(OSPSyncEvent event)
+inline bool MultiDeviceRenderTask::isFinished(OSPSyncEvent)
 {
-  return finished == true || fb->rowmajorFb->getLatestCompleteEvent() >= event;
+  return finished == true;
 }
 
-inline void MultiDeviceRenderTask::wait(OSPSyncEvent event)
+inline void MultiDeviceRenderTask::wait(OSPSyncEvent)
 {
-  if (event == OSP_TASK_FINISHED) {
-    while (!finished) {
-      std::this_thread::yield();
-    }
-  } else {
-    // the rowmajorFb tracks the same events as the subdevices, so we can wait
-    // on it
-    fb->rowmajorFb->waitForEvent(event);
+  if (thread.joinable()) {
+    thread.join();
   }
 }
 

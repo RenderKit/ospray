@@ -4,7 +4,6 @@
 #pragma once
 
 // ospray
-#include "common/ISPCRTBuffers.h"
 #include "fb/FrameBuffer.h"
 // rkcommon
 #include "rkcommon/containers/AlignedVector.h"
@@ -27,7 +26,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
       ColorBufferFormat colorBufferFormat,
       const uint32 channels);
 
-  virtual ~LocalFrameBuffer() override;
+  ~LocalFrameBuffer() override;
 
   virtual void commit() override;
 
@@ -46,7 +45,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   // override this!
   virtual std::string toString() const override;
 
-  AsyncEvent postProcess(bool wait) override;
+  devicert::AsyncEvent postProcess() override;
 
   const void *mapBuffer(OSPFrameBufferChannel channel) override;
 
@@ -74,22 +73,22 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   //       flag was passed on construction
 
   // one RGBA per pixel
-  std::unique_ptr<BufferDeviceShadowed<vec4f>> colorBuffer;
+  BufferDeviceShadowedUq<vec4f> colorBuffer;
   // one RGBA per pixel, post-processing output
-  std::unique_ptr<BufferDeviceShadowed<vec4f>> ppColorBuffer;
+  BufferDeviceShadowedUq<vec4f> ppColorBuffer;
   // one RGBA per pixel, does not accumulate all samples, for variance
   // estimation
-  std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
+  BufferDeviceUq<vec4f> varianceBuffer;
   // one float per pixel
-  std::unique_ptr<BufferDeviceShadowed<float>> depthBuffer;
+  BufferDeviceShadowedUq<float> depthBuffer;
   // accumulated world-space normal per pixel
-  std::unique_ptr<BufferDeviceShadowed<vec3f>> normalBuffer;
+  BufferDeviceShadowedUq<vec3f> normalBuffer;
   // accumulated, one RGB per pixel
-  std::unique_ptr<BufferDeviceShadowed<vec3f>> albedoBuffer;
+  BufferDeviceShadowedUq<vec3f> albedoBuffer;
   // primitive ID, object ID, and instance ID
-  std::unique_ptr<BufferDeviceShadowed<uint32_t>> primitiveIDBuffer;
-  std::unique_ptr<BufferDeviceShadowed<uint32_t>> objectIDBuffer;
-  std::unique_ptr<BufferDeviceShadowed<uint32_t>> instanceIDBuffer;
+  BufferDeviceShadowedUq<uint32_t> primitiveIDBuffer;
+  BufferDeviceShadowedUq<uint32_t> objectIDBuffer;
+  BufferDeviceShadowedUq<uint32_t> instanceIDBuffer;
 
  protected:
   vec2i getTaskStartPos(const uint32_t taskID) const;
@@ -100,8 +99,8 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   vec2i numRenderTasks;
 
-  std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
-  std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
+  BufferDeviceShadowedUq<uint32_t> renderTaskIDs;
+  BufferDeviceShadowedUq<uint32_t> activeTaskIDs;
 
   // Array of frame operations
   std::vector<std::unique_ptr<LiveFrameOpInterface>> frameOps;

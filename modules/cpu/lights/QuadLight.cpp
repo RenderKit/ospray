@@ -15,12 +15,10 @@ void QuadLight_Transform(const void *self, const void *xfm, void *dyn);
 
 namespace ospray {
 
-ISPCRTMemoryView QuadLight::createSh(
-    uint32_t, const ispc::Instance *instance) const
+ispc::Light *QuadLight::createSh(uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::QuadLight>(
-      getISPCDevice().getIspcrtContext().handle());
-  ispc::QuadLight *sh = (ispc::QuadLight *)ispcrtSharedPtr(view);
+  ispc::QuadLight *sh =
+      StructSharedCreate<ispc::QuadLight>(getISPCDevice().getDRTDevice());
 #ifndef OSPRAY_TARGET_SYCL
   sh->super.sample =
       reinterpret_cast<ispc::Light_SampleFunc>(ispc::QuadLight_sample_addr());
@@ -59,7 +57,7 @@ ISPCRTMemoryView QuadLight::createSh(
     sh->pre.c0 = cross(sh->pre.c90, sh->pre.nnormal);
   }
 
-  return view;
+  return &sh->super;
 }
 
 std::string QuadLight::toString() const

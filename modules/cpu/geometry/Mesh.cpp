@@ -21,8 +21,7 @@ void *Mesh_getAreas_addr();
 namespace ospray {
 
 Mesh::Mesh(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE),
-      device(device)
+    : AddStructShared(device.getDRTDevice(), device, FFG_NONE)
 {
   getSh()->super.getAreas =
       reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Mesh_getAreas_addr());
@@ -45,8 +44,8 @@ void Mesh::commit()
     const auto mKeys = motionVertexData->size();
     motionBlur = mKeys > 1;
     if (!motionVertexAddr || motionVertexAddr->size() < mKeys) // reallocate?
-      motionVertexAddr =
-          make_buffer_shared_unique<vec3f *>(device.getIspcrtContext(), mKeys);
+      motionVertexAddr = devicert::make_buffer_shared_unique<vec3f *>(
+          getISPCDevice().getDRTDevice(), mKeys);
     auto mVAddr = motionVertexAddr->begin();
     // check types and strides
     vertexData = (*motionVertexData)[0]; // use 1st key as fallback
@@ -73,8 +72,8 @@ void Mesh::commit()
             "Mesh 'motion*.normal' array has less keys than"
             " 'motion.vertex.position'");
       if (!motionNormalAddr || motionNormalAddr->size() < mKeys) // reallocate?
-        motionNormalAddr = make_buffer_shared_unique<vec3f *>(
-            device.getIspcrtContext(), mKeys);
+        motionNormalAddr = devicert::make_buffer_shared_unique<vec3f *>(
+            getISPCDevice().getDRTDevice(), mKeys);
       auto mNAddr = motionNormalAddr->begin();
       // check types and strides
       normalData = (*motionNormalData)[0]; // use 1st key as fallback
