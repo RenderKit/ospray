@@ -4,6 +4,11 @@
 #pragma once
 
 #include "rkcommon/math/vec.ih"
+
+#define STRING(x) #x
+#define TOSTRING(x) STRING(x)
+#define CODE_LOCATION __FILE__ " (" TOSTRING(__LINE__) ")"
+
 #ifdef OSPRAY_TARGET_SYCL
 #include <sycl/sycl.hpp>
 
@@ -24,7 +29,8 @@ using int16 = int16_t;
 using int8 = int8_t;
 } // namespace ispc
 
-#define LOG(x)
+#define PING                                                                   \
+  sycl::ext::oneapi::experimental::printf(CODE_LOCATION ": " __FUNCTION__ "\n")
 
 #undef PRINT
 #undef PRINTV
@@ -109,9 +115,12 @@ void print_(const CONSTANT char *name, const CONSTANT char *s)
 #define PRINTV(x) PRINT(x);
 
 #endif
-#else
-#define CONSTANT
-#define __noinline
+
+#else // ISPC
+
+#define PING print(CODE_LOCATION "\n")
+
+#define __noinline noinline
 
 inline void printv_(const int &x)
 {
