@@ -114,6 +114,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
   lastVertex.dg.epsilon = calcEpsilon(ray.org, 0.f);
   lastVertex.dg.Ns = ray.dir;
   lastVertex.dg.Ng = ray.dir;
+  lastVertex.numLightSamples = 0;
 
   uniform ShadingContext ctx;
   ShadingContext_Constructor(&ctx);
@@ -207,11 +208,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     // terminate after evaluation of lights and before next shading to always
     // have both samples for MIS except if we have geometry lights (which we
     // still need to evaluate for MIS)
-    const World *uniform w = pathContext.world;
-    const uniform PathTracerData &pathtracerData =
-        *((const uniform PathTracerData *)w->pathtracerData);
     if (pathState.depth >= pathContext.context->super.maxDepth
-        && pathtracerData.numGeoLights == 0) {
+        && pathContext.numGeoLights == 0) {
       break;
     }
 

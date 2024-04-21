@@ -16,6 +16,7 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct World;
+struct Light;
 
 enum PathVertexType
 {
@@ -44,6 +45,7 @@ struct PathVertex
 
   float pdf_w; // the pdf of sampling wo in solid angle measure
   PathVertexType type;
+  uint32 numLightSamples;
 };
 
 // constant, typically uniform
@@ -53,9 +55,11 @@ struct PathContext
   const PathTracer *uniform context;
   const World *uniform world;
   uniform uint32 numLights;
+  uniform uint32 numGeoLights;
   uniform uint32 numFirstBounceLightSamples;
   uniform uint32 numIndirectBounceLightSamples;
-  uniform float *uniform lightsCDF;
+  Light **uniform lights;
+  float *uniform lightsCDF;
 #ifdef OSPRAY_PATHTRACER_DEBUG
   uniform bool disableNEE; // turn off NEE contribution for debugging purposes
   uniform bool disableFWD; // turn off FWD contribution for debugging purposes

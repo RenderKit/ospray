@@ -16,7 +16,6 @@
 #include "math/random.ih"
 #include "math/sampling.ih"
 // c++ shared
-#include "PathTracerDataShared.h"
 #include "lights/LightDispatch.ih"
 #include "lights/LightShared.h"
 
@@ -32,13 +31,12 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
 
-  const World *uniform world = pathContext.world;
-  const uniform PathTracerData &pathtracerData =
-      *((const uniform PathTracerData *)world->pathtracerData);
-
   const uint32 numLightSamples = pathState.firstBounceLight
       ? pathContext.numFirstBounceLightSamples
       : pathContext.numIndirectBounceLightSamples;
+
+  // remember for MIS
+  pathVertex.numLightSamples = numLightSamples;
 
   for (uniform uint32 i = 0; i < numLightSamples; i++) {
     // select a random light source from the list
@@ -49,7 +47,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         pathContext.numLights, pathContext.lightsCDF, 0, ss);
 
     const float lightSelectionProb = lSelectSample.prob * numLightSamples;
-    const Light *light = pathtracerData.lights[lSelectSample.idx];
+    const Light *light = pathContext.lights[lSelectSample.idx];
     // sample the contribution from the random light source
     Light_SampleRes ls;
     foreach_unique (l in light)
@@ -57,7 +55,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
 
     // adjust the contibution with the probabiltiy of selecting the light source
     ls.weight = ls.weight / lightSelectionProb;
-    ls.pdf = ls.pdf * lightSelectionProb;
+    ls.pdf *= lightSelectionProb;
 
     // skip when zero contribution from light
     if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)

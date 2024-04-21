@@ -31,7 +31,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-#define MAX_LIGHTS 1024u
+#define MAX_LIGHT_SAMPLES 1024u
 
 static ScreenSample PathTraceIntegrator_Li(PathContext &pathContext,
     PathState &pathState,
@@ -104,20 +104,22 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   pathContext.world = world;
 
   uniform PathTracerData *uniform ptData = world->pathtracerData;
-  const uniform uint32 numLights =
-      ptData->lights ? min(MAX_LIGHTS, ptData->numLights) : 0;
+  const uniform uint32 numLights = ptData->lights ? ptData->numLights : 0;
 
   const uniform uint32 numIndirectBounceLightSamples =
-      self->numLightSamples >= 0 && numLights > 0 ? self->numLightSamples
-                                                  : numLights;
+      self->numLightSamples >= 0 && numLights > 0
+      ? self->numLightSamples
+      : min(MAX_LIGHT_SAMPLES, numLights);
   const uniform uint32 numFirstBounceLightSamples =
       self->numFirstBounceLightSamples >= 0 && numLights > 0
       ? self->numFirstBounceLightSamples
-      : numLights;
+      : min(MAX_LIGHT_SAMPLES, numLights);
 
   pathContext.numLights = numLights;
+  pathContext.numGeoLights = ptData->numGeoLights;
   pathContext.numFirstBounceLightSamples = numFirstBounceLightSamples;
   pathContext.numIndirectBounceLightSamples = numIndirectBounceLightSamples;
+  pathContext.lights = ptData->lights;
   pathContext.lightsCDF = ptData->lightsCDF;
 #ifdef OSPRAY_PATHTRACER_DEBUG
   pathContext.disableNEE =
