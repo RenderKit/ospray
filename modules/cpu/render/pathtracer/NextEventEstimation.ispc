@@ -96,15 +96,6 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
 
     const vec3f throughput = pathState.throughput * fe.value;
 
-#if ROULETTE == 1
-    // Russian roulette adjustment
-    if (pathState.depth >= pathContext.context->rouletteDepth) {
-      const float contProb =
-          min(luminance(throughput * rcp(fe.pdf)), MAX_ROULETTE_CONT_PROB);
-      fe.pdf *= contProb;
-    }
-#endif
-
     const vec3f unshadedLightContrib = throughput * ls.weight;
     const vec3f lightContrib = transparentShadow(pathContext.context,
         pathContext.world,

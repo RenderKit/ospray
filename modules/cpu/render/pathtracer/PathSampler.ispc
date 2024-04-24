@@ -289,19 +289,16 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     pathState.throughput = pathState.throughput * fs.weight;
 
-#if ROULETTE == 1
     // Russian roulette
     if (pathState.depth >= pathContext.context->rouletteDepth) {
       const float rr = LDSampler_finalizeDim3(pathState.ldSampler, uu3);
       const float contProb =
-          min(luminance(pathState.throughput), MAX_ROULETTE_CONT_PROB);
+          min(reduce_max(pathState.throughput), MAX_ROULETTE_CONT_PROB);
       if (rr > contProb) {
         break;
       }
       pathState.throughput = pathState.throughput * rcp(contProb);
-      fs.pdf *= contProb;
     }
-#endif
 
     // compute attenuation with Beer's law
     if (reduce_min(pathState.currentMedium.attenuation) < 0.f)

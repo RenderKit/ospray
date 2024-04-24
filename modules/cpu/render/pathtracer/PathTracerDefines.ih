@@ -3,6 +3,5 @@
 
 #pragma once
 
-#define ROULETTE 1
 #define MAX_ROULETTE_CONT_PROB 0.95f
 #define PDF_CULLING 0.0f
