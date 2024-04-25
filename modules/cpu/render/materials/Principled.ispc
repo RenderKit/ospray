@@ -415,7 +415,8 @@ SYCL_EXTERNAL const varying BSDF *uniform Principled_getBSDF(
   }
 
   // cut-out transparency
-  if (1.f - self->opacity > EPS) {
+  if (1.f - self->opacity > EPS || valid(self->opacityMap)
+      || hasAlpha(self->baseColorMap)) {
     const float transparency = 1.f - opacity;
     Transmission_Constructor(
         &bsdf->transmission, frame, make_vec3f(transparency));

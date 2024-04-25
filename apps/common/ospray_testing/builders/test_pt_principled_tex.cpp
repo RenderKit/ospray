@@ -141,9 +141,22 @@ std::vector<cpp::Material> PtPrincipledTex::buildMaterials(
     setTexture<float>(materials.back(), "backlight", texR, 2.f);
   }
 
-  materials.push_back(cpp::Material("principled"));
-  materials.back().setParam("baseColor", vec3f(1.f, 0.8f, 0.7f));
-  setTexture<vec3f>(materials.back(), "emissiveColor", texRGBA);
+  {
+    // emissive
+    materials.push_back(cpp::Material("principled"));
+    materials.back().setParam("baseColor", vec3f(1.f, 0.8f, 0.7f));
+    setTexture<vec3f>(materials.back(), "emissiveColor", texRGBA);
+
+    // transparency
+    materials.push_back(cpp::Material("principled"));
+    materials.back().setParam("baseColor", vec3f(0.860f, 0.0258f, 0.0536f));
+    setTexture<vec3f>(materials.back(), "baseColor", texRGBA);
+
+    // opacity
+    materials.push_back(cpp::Material("principled"));
+    materials.back().setParam("baseColor", vec3f(0.860f, 0.0258f, 0.0536f));
+    setTexture<float>(materials.back(), "opacity", texR);
+  }
 
   return materials;
 }
