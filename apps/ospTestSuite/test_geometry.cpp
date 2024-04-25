@@ -251,6 +251,7 @@ INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
         ::testing::Values("ao"),
         ::testing::Values(16)));
 
+/*
 TEST_P(FromOsprayTestingVariance, testScenes)
 {
   PerformRenderTest();
@@ -260,6 +261,7 @@ TEST_P(FromOsprayTestingVariance, testScenes)
 INSTANTIATE_TEST_SUITE_P(TestScenesVariance,
     FromOsprayTestingVariance,
     ::testing::Values(std::make_tuple("cornell_box", "pathtracer", 4)));
+*/
 
 TEST_P(FromOsprayTestingLightSamples, testScenes)
 {

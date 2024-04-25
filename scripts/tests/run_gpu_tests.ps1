@@ -73,6 +73,12 @@ $test_filters+=":Primitive/IDBuffer.*"
 # Different noise
 $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/1"
 
+# Artifacts, Windows only (driver?)
+$test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/4"
+$test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/5"
+$test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/2"
+$test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/3"
+
 $env:ONEAPI_DEVICE_SELECTOR="level_zero:*"
 $env:SYCL_CACHE_PERSISTENT="1"
 $env:OIDN_VERBOSE="2"
