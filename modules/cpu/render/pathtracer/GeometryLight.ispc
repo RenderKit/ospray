@@ -98,11 +98,12 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
 
   // normalized light vector
   res.dir = dir / dist;
-  res.dist = dist - calcEpsilon(as.pos, dist);
 
   // convert to pdf wrt. solid angle
-  const float cosd = dot(as.normal, res.dir);
-  res.pdf = self->pdf * sqr(dist) / abs(cosd);
+  const float rcosd = rcp(abs(dot(as.normal, res.dir)));
+  res.pdf = self->pdf * sqr(dist) * rcosd;
+
+  res.dist = dist - max(as.epsilon, calcEpsilon(as.pos, dist)) * rcosd;
 
   DifferentialGeometry texDg;
   texDg.P = as.pos;

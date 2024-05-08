@@ -27,6 +27,17 @@ __define_quad_interpolate(vec2f);
 __define_quad_interpolate(vec3f);
 __define_quad_interpolate(vec4f);
 
+inline float calcEpsilon(const vec3f &a, const vec3f &b, const vec3f &c)
+{
+  return reduce_max(max(max(abs(a), abs(b)), abs(c))) * ulpEpsilon;
+}
+
+inline float calcEpsilon(
+    const vec3f &a, const vec3f &b, const vec3f &c, const vec3f &d)
+{
+  return reduce_max(max(max(abs(a), abs(b)), max(abs(c), abs(d)))) * ulpEpsilon;
+}
+
 inline float Mesh_calcKey(const Mesh *uniform self, float time, int &idx)
 {
   // should only get hits within time interval, just to be sure...
@@ -130,7 +141,7 @@ SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
     vc = get_vec3f(self->vertex, index.z);
     vd = get_vec3f(self->vertex, index.w);
   }
-  dg.epsilon = reduce_max(max(max(va, vb), max(vc, vd))) * ulpEpsilon;
+  dg.epsilon = calcEpsilon(va, vb, vc, vd);
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
@@ -224,7 +235,7 @@ SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
     vb = get_vec3f(self->vertex, index.y);
     vc = get_vec3f(self->vertex, index.z);
   }
-  dg.epsilon = reduce_max(max(max(va, vb), vc)) * ulpEpsilon;
+  dg.epsilon = calcEpsilon(va, vb, vc);
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
@@ -288,13 +299,19 @@ SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
     d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
     if (quad)
       c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+    else
+      c = d;
   } else {
     a = get_vec3f(self->vertex, index.x);
     b = get_vec3f(self->vertex, index.y);
     d = get_vec3f(self->vertex, index.w);
     if (quad)
       c = get_vec3f(self->vertex, index.z);
+    else
+      c = d;
   }
+  res.epsilon = calcEpsilon(a, b, c, d);
+  res.epsilon *= max(abs(xfm.l.vx.x), max(abs(xfm.l.vy.y), abs(xfm.l.vz.z)));
   const vec3f e1 = xfmVector(xfm, a - d);
   const vec3f e2 = xfmVector(xfm, b - d);
   const vec3f m1 = cross(e1, e2);
