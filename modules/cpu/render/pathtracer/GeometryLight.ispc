@@ -39,7 +39,10 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
             lastVertex.numLightSamples / (float)pathContext.numLights;
         // convert pdf wrt. area to pdf wrt. solid angle
         const float cosd = dot(pathVertex.dg.Ng, ray.dir);
-        const float lePdf = pathVertex.dg.areaPDF * sqr(ray.t) / abs(cosd);
+        // lastVertex.dg.P can be different from ray.org (previously sampled a
+        // Dirac transmission), thus we cannot just use ray.t as distance
+        const vec3f vdis = lastVertex.dg.P - pathVertex.dg.P;
+        const float lePdf = pathVertex.dg.areaPDF * dot(vdis, vdis) / abs(cosd);
         misWeight = misHeuristic(
             pathContext, lastVertex.pdf_w, lightSelectionPDF * lePdf);
       }

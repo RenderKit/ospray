@@ -91,6 +91,7 @@ PathTracerData::~PathTracerData()
 
 ispc::Light *PathTracerData::createGeometryLight(const Instance *instance,
     const GeometricModel *model,
+    const int32 numPrimIDs,
     const std::vector<int> &primIDs,
     const std::vector<float> &distribution,
     float pdf)
@@ -106,7 +107,7 @@ ispc::Light *PathTracerData::createGeometryLight(const Instance *instance,
   sh->super.eval = nullptr; // geometry lights are hit and explicitly handled
 
   sh->model = model->getSh();
-  sh->numPrimitives = primIDs.size();
+  sh->numPrimitives = numPrimIDs;
   sh->pdf = pdf;
 
   geoLightPrimIDArray.emplace_back(device, primIDs);
@@ -135,7 +136,7 @@ void PathTracerData::generateGeometryLights(const World &world,
           std::vector<int> primIDs(model->geometry().numPrimitives());
           std::vector<float> distribution(model->geometry().numPrimitives());
           float pdf = 0.f;
-          unsigned int numPrimIDs =
+          int32 numPrimIDs =
               ispc::GeometricModel_gatherEmissivePrimIDs(model->getSh(),
                   renderer.getSh(),
                   instance->getSh(),
@@ -146,7 +147,7 @@ void PathTracerData::generateGeometryLights(const World &world,
           // check whether the geometry has any emissive primitives
           if (numPrimIDs) {
             lightShs.push_back(createGeometryLight(
-                instance, model, primIDs, distribution, pdf));
+                instance, model, numPrimIDs, primIDs, distribution, pdf));
           }
         } else {
           postStatusMsg(OSP_LOG_WARNING)

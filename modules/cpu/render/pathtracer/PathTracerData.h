@@ -28,6 +28,7 @@ struct PathTracerData
  private:
   ispc::Light *createGeometryLight(const Instance *instance,
       const GeometricModel *model,
+      const int32 numPrimIDs,
       const std::vector<int> &primIDs,
       const std::vector<float> &distribution,
       float pdf);
