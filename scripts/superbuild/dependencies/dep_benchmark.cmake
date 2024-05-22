@@ -10,8 +10,8 @@ else()
 endif()
 
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/benchmark/archive/refs/tags/v1.8.3.zip"
-  URL_HASH "SHA256=abfc22e33e3594d0edf8eaddaf4d84a2ffc491ad74b6a7edc6e7a608f690e691"
+  URL "https://github.com/google/benchmark/archive/refs/tags/v1.8.4.tar.gz"
+  URL_HASH "SHA256=3e7059b6b11fb1bbe28e33e02519398ca94c1818874ebed18e504dc6f709be45"
 
   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""

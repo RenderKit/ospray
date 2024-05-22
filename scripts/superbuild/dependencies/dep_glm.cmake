@@ -15,8 +15,8 @@ ExternalProject_Add(${COMPONENT_NAME}
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
   LIST_SEPARATOR | # Use the alternate list separator
-  URL "https://github.com/g-truc/glm/archive/refs/tags/1.0.0.zip"
-  URL_HASH "SHA256=66b3604366466c1674736cfec7c334d2d0b79b6c23096d1377637f4b71579c59"
+  URL "https://github.com/g-truc/glm/archive/refs/tags/1.0.1.tar.gz"
+  URL_HASH "SHA256=9f3174561fd26904b23f0db5e560971cbf9b3cbda0b280f04d5c379d03bf234c"
   CMAKE_ARGS
     -DBUILD_TESTING=OFF
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
