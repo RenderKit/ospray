@@ -18,7 +18,7 @@ struct Luminous
   TextureParam emissionMap;
 
 #ifdef __cplusplus
-  Luminous() : super(), transparency(0.f)
+  Luminous() : super(), transparency(0.f), radiance(1.f)
   {
     super.type = ispc::MATERIAL_TYPE_LUMINOUS;
   }

@@ -19,10 +19,9 @@ jobs:
 ### BUILD JOBS ###
 
   build-linux:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: rockylinux:8.7
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
@@ -82,7 +81,7 @@ jobs:
 
   benchmark-dg2:
     needs: build-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       image: ubuntu:22.04
@@ -96,7 +95,7 @@ jobs:
 
   benchmark-pvc:
     needs: build-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       image: ubuntu:22.04
