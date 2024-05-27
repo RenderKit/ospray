@@ -14,8 +14,8 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/glfw/glfw/archive/refs/tags/3.4.tar.gz"
-  URL_HASH "SHA256=c038d34200234d071fae9345bc455e4a8f2f544ab60150765d7704e08f3dac01"
+  URL "https://github.com/glfw/glfw/archive/refs/tags/3.3.10.zip"
+  URL_HASH "SHA256=5e4ae02dc7c9b084232824c2511679a7e0b0b09f2bae70191ad9703691368b58"
   # `patch` is not available on all systems, so use `git apply` instead. Note
   # that we initialize a Git repo in the GLFW download directory to allow the
   # Git patching approach to work. Also note that we don't want to actually
@@ -36,7 +36,6 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DGLFW_BUILD_DOCS=OFF
     -DGLFW_BUILD_EXAMPLES=OFF
     -DGLFW_BUILD_TESTS=OFF
-    -DGLFW_BUILD_WAYLAND=OFF
     -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
     -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
