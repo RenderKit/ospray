@@ -20,41 +20,38 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
 
   // Calculate accumulation scale
   const uniform int accumID = fb->super.frameID;
-  const uniform bool accCond = (accumID && fb->super.doAccumulation);
   const uniform float accScale = rcpf(accumID + 1);
 
   // Accumulate color
   const vec4f colorSample = make_vec4f(screenSample.rgb, screenSample.alpha);
   if (fb->colorBuffer)
     FRAMEBUFFER_ACCUMULATE_VALUE(
-        fb->colorBuffer[pixelID], colorSample, accScale, accCond);
+        fb->colorBuffer[pixelID], colorSample, accScale);
 
   // Accumulate color in variance buffer
   if (fb->super.accumulateVariance) {
     const uniform float accVarScale = rcpf(accumID / 2 + 1);
     FRAMEBUFFER_ACCUMULATE_VALUE(
-        fb->varianceBuffer[pixelID], colorSample, accVarScale, accCond);
+        fb->varianceBuffer[pixelID], colorSample, accVarScale);
   }
 
   // Accumulate depth buffer
   if (fb->depthBuffer) {
-    if (fb->super.doAccumulation) {
-      float acc = accumID > 0 ? fb->depthBuffer[pixelID] : inf;
-      fb->depthBuffer[pixelID] = min(acc, screenSample.z);
-    } else {
-      fb->depthBuffer[pixelID] = screenSample.z;
-    }
+    float depth = screenSample.z;
+    if (accumID > 0)
+      depth = min(fb->depthBuffer[pixelID], screenSample.z);
+    fb->depthBuffer[pixelID] = depth;
   }
 
   // Accumulate normal buffer
   if (fb->normalBuffer)
     FRAMEBUFFER_ACCUMULATE_VALUE(
-        fb->normalBuffer[pixelID], screenSample.normal, accScale, accCond);
+        fb->normalBuffer[pixelID], screenSample.normal, accScale);
 
   // Accumulate albedo buffer
   if (fb->albedoBuffer)
     FRAMEBUFFER_ACCUMULATE_VALUE(
-        fb->albedoBuffer[pixelID], screenSample.albedo, accScale, accCond);
+        fb->albedoBuffer[pixelID], screenSample.albedo, accScale);
 
   if (fb->primitiveIDBuffer) {
     if (accumID == 0)

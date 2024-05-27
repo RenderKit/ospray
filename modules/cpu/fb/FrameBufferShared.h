@@ -89,9 +89,6 @@ struct FrameBuffer
   // Not used on GPU to avoid USM thrashing
   uint32 numPixelsRendered;
 
-  // Accumulate frames if true
-  bool doAccumulation;
-
   // Variance accumulation
   bool accumulateVariance; // do frame accumulation in this frame
 
@@ -109,7 +106,6 @@ struct FrameBuffer
         channels(0),
         cancelRender(0),
         numPixelsRendered(0),
-        doAccumulation(false),
         accumulateVariance(false)
   {}
 };

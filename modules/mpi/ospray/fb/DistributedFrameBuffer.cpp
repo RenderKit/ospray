@@ -237,6 +237,8 @@ void DistributedFrameBuffer::setSparseFBLayerCount(size_t numLayers)
           getISPCDevice(), size, getColorBufferFormat(), channelFlags);
     }
   }
+  for (auto &l : layers)
+    l->getSh()->super.targetFrames = getSh()->targetFrames;
 }
 
 size_t DistributedFrameBuffer::getSparseLayerCount() const

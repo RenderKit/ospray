@@ -26,6 +26,9 @@ struct SparseFB
   vec4f *varianceBuffer;
   // holds error per task region, for adaptive accumulation
   float *taskRegionError;
+  // the dynamic loadbalancer accumulates not in the rendertask, but the owning
+  // rank accumulates the arriving tiles
+  bool accumulate;
 
 #ifdef __cplusplus
   SparseFB()
@@ -34,7 +37,8 @@ struct SparseFB
         numTiles(0),
         tiles(nullptr),
         varianceBuffer(nullptr),
-        taskRegionError(nullptr)
+        taskRegionError(nullptr),
+        accumulate(false)
   {
     super.type = FRAMEBUFFER_TYPE_SPARSE;
   }

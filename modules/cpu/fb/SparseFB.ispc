@@ -45,8 +45,7 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   const vec4f sampleValue = make_vec4f(screenSample.rgb, screenSample.alpha);
   uniform Tile *uniform tile = fb->tiles + tileIdx;
 
-  const uniform int accumID = fb->super.frameID;
-  const uniform bool accCond = (accumID && fb->super.doAccumulation);
+  const uniform int accumID = fb->accumulate ? fb->super.frameID : 0;
   const uniform float accScale = rcpf(accumID + 1);
 
   // Accumulate color
@@ -54,7 +53,7 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
       tile->g[tilePixelIdx],
       tile->b[tilePixelIdx],
       tile->a[tilePixelIdx]);
-  FRAMEBUFFER_ACCUMULATE_VALUE(color, sampleValue, accScale, accCond);
+  FRAMEBUFFER_ACCUMULATE_VALUE(color, sampleValue, accScale);
   tile->r[tilePixelIdx] = color.x;
   tile->g[tilePixelIdx] = color.y;
   tile->b[tilePixelIdx] = color.z;
@@ -62,14 +61,14 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
 
   // Accumulate depth
   float depth = screenSample.z;
-  if (fb->super.doAccumulation)
+  if (accumID > 0)
     depth = min(tile->z[tilePixelIdx], screenSample.z);
   tile->z[tilePixelIdx] = depth;
 
   // Accumulate normal
   vec3f normal = make_vec3f(
       tile->nx[tilePixelIdx], tile->ny[tilePixelIdx], tile->nz[tilePixelIdx]);
-  FRAMEBUFFER_ACCUMULATE_VALUE(normal, screenSample.normal, accScale, accCond);
+  FRAMEBUFFER_ACCUMULATE_VALUE(normal, screenSample.normal, accScale);
   tile->nx[tilePixelIdx] = normal.x;
   tile->ny[tilePixelIdx] = normal.y;
   tile->nz[tilePixelIdx] = normal.z;
@@ -77,7 +76,7 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   // Accumulate albedo
   vec3f albedo = make_vec3f(
       tile->ar[tilePixelIdx], tile->ag[tilePixelIdx], tile->ab[tilePixelIdx]);
-  FRAMEBUFFER_ACCUMULATE_VALUE(albedo, screenSample.albedo, accScale, accCond);
+  FRAMEBUFFER_ACCUMULATE_VALUE(albedo, screenSample.albedo, accScale);
   tile->ar[tilePixelIdx] = albedo.x;
   tile->ag[tilePixelIdx] = albedo.y;
   tile->ab[tilePixelIdx] = albedo.z;
@@ -92,7 +91,7 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
     const uint32 varianceAccumIndex = tileIdx * TILE_SIZE * TILE_SIZE
         + sampleTilePos.x + TILE_SIZE * sampleTilePos.y;
     FRAMEBUFFER_ACCUMULATE_VALUE(
-        variance[varianceAccumIndex], sampleValue, accVarScale, accCond);
+        variance[varianceAccumIndex], sampleValue, accVarScale);
 
     // Calculate error
     float err = 0.f;

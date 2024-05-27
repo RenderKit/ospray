@@ -22,8 +22,7 @@ static void Renderer_default_renderTask(const uniform vec3ui itemIndex,
       FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[itemIndex.z], ffh);
 
   const uniform int startSampleID =
-      (fb->doAccumulation ? max(fb->frameID, 0) * spp : 0)
-      + 1; // Halton Sequence starts with 1
+      fb->frameID * spp + 1; // Halton Sequence starts with 1
 
   if (fb->cancelRender || isEmpty(taskDesc.region)) {
     return;

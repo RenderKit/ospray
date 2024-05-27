@@ -248,8 +248,6 @@ inline void PathTracer_renderTask(const uniform vec3ui itemIndex,
     return;
   }
 
-  const uniform int frameID = fb->doAccumulation ? max(fb->frameID, 0) : 0;
-
 #ifndef ISPC
   {
     int32 y = taskDesc.region.lower.y + itemIndex.y;
@@ -259,7 +257,7 @@ inline void PathTracer_renderTask(const uniform vec3ui itemIndex,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
 #endif
     ScreenSample screenSample =
-        PathTracer_renderPixel(self, fb, camera, world, x, y, frameID, ffh);
+        PathTracer_renderPixel(self, fb, camera, world, x, y, fb->frameID, ffh);
 
     FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc, ffh);
   }

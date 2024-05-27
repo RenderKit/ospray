@@ -29,8 +29,7 @@ task
       &fb->super, taskIDs[taskIndex0], ffh);
 
   const uniform int startSampleID =
-      (fb->super.doAccumulation ? max(fb->super.frameID, 0) * spp : 0)
-      + 1; // Halton Sequence starts with 1
+      fb->super.frameID * spp + 1; // Halton Sequence starts with 1
 
 #ifdef OSPRAY_TARGET_SYCL
 #if 0

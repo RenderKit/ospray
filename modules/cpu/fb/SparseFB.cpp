@@ -85,7 +85,8 @@ uint32_t SparseFrameBuffer::getTotalRenderTasks() const
 utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs(
     const float errorThreshold, const uint32_t)
 {
-  if (!renderTaskIDs || accumulationFinished())
+  if (!renderTaskIDs) // XXX  || accumulationFinished() as in local rendering,
+                      // but this leads to a corrupted FB for MPI
     return utility::ArrayView<uint32_t>();
 
   if (errorThreshold > 0.0f && hasVarianceBuffer) {

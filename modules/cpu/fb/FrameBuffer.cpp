@@ -56,7 +56,6 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->size = _size;
   getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
   getSh()->channels = channels;
-  getSh()->doAccumulation = doAccum;
   getSh()->accumulateVariance = false;
   getSh()->targetFrames = !doAccum;
 
@@ -84,7 +83,8 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
 void FrameBuffer::commit()
 {
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
-  getSh()->targetFrames = max(0, getParam<int>("targetFrames", !doAccum));
+  getSh()->targetFrames =
+      doAccum ? max(0, getParam<int>("targetFrames", 0)) : 1;
 }
 
 void FrameBuffer::clear()
@@ -110,7 +110,7 @@ float FrameBuffer::getVariance() const
 void FrameBuffer::beginFrame()
 {
   cancelRender = false;
-  getSh()->frameID++;
+  getSh()->frameID = doAccum ? getSh()->frameID + 1 : 0;
 #ifndef OSPRAY_TARGET_SYCL
   // TODO: Cancellation isn't supported on the GPU
   getSh()->cancelRender = 0;

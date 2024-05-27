@@ -470,6 +470,10 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       dfb->getColorBufferFormat(),
       sparseFbChannelFlags);
 
+  sparseFb->setFrameID(dfb->getFrameID());
+  sparseFb->getSh()->super.targetFrames = dfb->getSh()->targetFrames;
+  sparseFb->getSh()->accumulate = false; // accumulation happens later
+
   while (0 < totalActiveTiles) {
     Work currentWorkItem;
     if (0 < dynamicLB->getWorkSize()) {
@@ -501,7 +505,6 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
         // Set the tiles and fill the right accumID for them
         sparseFb->setTiles(taskTileIDs);
         sparseFb->beginFrame();
-        sparseFb->setFrameID(dfb->getFrameID());
 
         RKCOMMON_IF_TRACING_ENABLED({
           rkcommon::tracing::endEvent();
@@ -581,6 +584,10 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     void *perFrameData)
 {
   SparseFrameBuffer *ownedTilesFb = dfb->getSparseFBLayer(0);
+  ownedTilesFb->setFrameID(dfb->getFrameID());
+  ownedTilesFb->getSh()->super.targetFrames = dfb->getSh()->targetFrames;
+  // frame 0 is not accumulated
+  ownedTilesFb->getSh()->accumulate = dfb->getFrameID();
 
   // Note: these views are already in USM
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
