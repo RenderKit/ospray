@@ -158,8 +158,10 @@ inline vec3f sampleVisible(
   float r = sqrt(s.x);
   float phi = (s.y < a) ? s.y / a * (float)pi
                         : (float)pi + (s.y - a) / (1.f - a) * (float)pi;
-  float P1 = r * cos(phi);
-  float P2 = r * sin(phi) * ((s.y < a) ? 1.f : V.z);
+  float sinPhi, cosPhi;
+  sincos(phi, &sinPhi, &cosPhi);
+  float P1 = r * cosPhi;
+  float P2 = r * sinPhi * ((s.y < a) ? 1.f : V.z);
 
   // Compute normal
   vec3f wh = P1 * T1 + P2 * T2 + sqrt(max(0.f, 1.f - P1 * P1 - P2 * P2)) * V;

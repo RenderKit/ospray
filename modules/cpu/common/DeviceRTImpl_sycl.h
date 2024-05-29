@@ -109,7 +109,7 @@ struct BufferDeviceShadowedImpl : public BufferDeviceShadowed<T>
   BufferDeviceShadowedImpl(Device &device, std::size_t count);
   BufferDeviceShadowedImpl(Device &device, const std::vector<T> &v);
   BufferDeviceShadowedImpl(Device &device, T *data, std::size_t count);
-  ~BufferDeviceShadowedImpl();
+  ~BufferDeviceShadowedImpl() override;
 
  protected:
   // Copy between device and shadow buffers

@@ -66,7 +66,7 @@ task
       vec3f albedo = make_vec3f(0.f);
 
       // TODO: same note on spp > 1 issues
-      for (uniform uint32 s = 0; s < spp; s++) {
+      for (uniform int32 s = 0; s < spp; s++) {
         const float pixel_du = Halton_sample2(startSampleID + s);
         const float pixel_dv = CranleyPattersonRotation(
             Halton_sample3(startSampleID + s), 1.f / 6.f);

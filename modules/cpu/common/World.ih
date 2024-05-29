@@ -44,7 +44,7 @@ inline void traceGeometryRay(const World *uniform world,
   intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Geometry_dispatch_intersect;
   intersectArgs.feature_mask = (uniform RTCFeatureFlags)(
-      ff.geometry & ~FFG_OSPRAY_MASK | RTC_FEATURE_FLAG_INSTANCE);
+      (ff.geometry & ~FFG_OSPRAY_MASK) | RTC_FEATURE_FLAG_INSTANCE);
 
   rtcIntersectV(world->embreeSceneHandleGeometries,
       (varying RTCRayHit * uniform) & ray,
@@ -325,7 +325,7 @@ inline bool isOccludedNoClipping(const World *uniform world,
   occludedArgs.context = &context.ectx;
   occludedArgs.occluded = (RTCOccludedFunctionN)Geometry_dispatch_occluded;
   occludedArgs.feature_mask = (uniform RTCFeatureFlags)(
-      ff.geometry & ~FFG_OSPRAY_MASK | RTC_FEATURE_FLAG_INSTANCE);
+      (ff.geometry & ~FFG_OSPRAY_MASK) | RTC_FEATURE_FLAG_INSTANCE);
 
   rtcOccludedV(world->embreeSceneHandleGeometries,
       (varying RTCRay * uniform) & ray,

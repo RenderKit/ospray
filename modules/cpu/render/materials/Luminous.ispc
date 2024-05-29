@@ -56,7 +56,7 @@ SYCL_EXTERNAL BSDF_SampleRes Luminous_BSDF_sample(
 
 SYCL_EXTERNAL vec3f Luminous_getEmission(const Material *uniform _self,
     const varying DifferentialGeometry &dg,
-    const uniform FeatureFlagsHandler &ffh)
+    const uniform FeatureFlagsHandler &)
 {
   const Luminous *uniform self = (Luminous * uniform) _self;
 

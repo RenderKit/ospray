@@ -182,7 +182,7 @@ __foreach_fetcher(__define_tex_get);
         self, dg, mipLevel, frac, avg, nextLevel, filter_nearest)
 
 export void *uniform Texture2D_get_addr(
-    const uniform uint32 type, const uniform bool filter_nearest)
+    const uniform uint32 type)
 {
   switch (type) {
     __foreach_fetcher(__define_tex_get_case);
@@ -245,7 +245,7 @@ __define_tex_getN(RGB16, (65535.f / 32767.f));
 __define_tex_getN(RGBA16, (65535.f / 32767.f));
 
 export void *uniform Texture2D_getN_addr(
-    const uniform uint32 type, const uniform bool filter_nearest)
+    const uniform uint32 type)
 {
   switch (type) {
   case OSP_TEXTURE_SRGBA: /* fallthrough, sRGB ignored for normals */

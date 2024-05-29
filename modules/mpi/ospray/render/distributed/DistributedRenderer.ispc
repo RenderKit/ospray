@@ -79,7 +79,7 @@ task
         Camera *uniform camera,
         DistributedWorld *uniform world,
         uint8 *uniform regionVisible,
-        void *uniform perFrameData,
+        void *uniform /*perFrameData*/,
         const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
         const int taskIndex0,
@@ -137,8 +137,8 @@ task
       // texture
       vec2f center =
           make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
-      const float tMax = inf;
-      // Renderer_getMaxDepth(&self->super, center * fb->super.rcpSize);
+      const float tMax =
+          Renderer_getMaxDepth(self, center * fb->super.rcpSize, ffh);
 
       for (uniform uint32 s = 0; s < nVisibilitySamples; s++) {
         screenSample.sampleID.z = s;

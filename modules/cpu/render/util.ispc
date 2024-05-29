@@ -9,7 +9,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL float computeAO(const Renderer *uniform renderer,
+SYCL_EXTERNAL float computeAO(const Renderer *uniform,
     const World *uniform world,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,

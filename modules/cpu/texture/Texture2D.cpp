@@ -36,9 +36,9 @@ void Texture2D::set(const rkcommon::math::vec2i &aSize,
       || aFormat == OSP_TEXTURE_RA32F || aFormat == OSP_TEXTURE_RGBA16F;
 #ifndef OSPRAY_TARGET_SYCL
   super.get = reinterpret_cast<ispc::Texture_get>(
-      ispc::Texture2D_get_addr(aFormat, aFilter & OSP_TEXTURE_FILTER_NEAREST));
+      ispc::Texture2D_get_addr(aFormat));
   super.getNormal = reinterpret_cast<ispc::Texture_getN>(
-      ispc::Texture2D_getN_addr(aFormat, aFilter & OSP_TEXTURE_FILTER_NEAREST));
+      ispc::Texture2D_getN_addr(aFormat));
 #endif
 }
 

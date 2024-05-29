@@ -44,7 +44,7 @@ inline T interpolate(const Curves *uniform self,
     const float s3 = s2 * s;
     const float t3 = t2 * t;
 
-    float b0, b1, b2, b3;
+    float b0 = 0.0f, b1 = 0.0f, b2 = 0.0f, b3 = 0.0f;
     float c = 0.0f;
 
     if ((self->curveBasis == OSP_BEZIER) && (ffg & FFG_BEZIER_CURVE)) {

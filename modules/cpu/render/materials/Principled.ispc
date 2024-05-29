@@ -1045,7 +1045,7 @@ SYCL_EXTERNAL BSDF_SampleRes Principled_BSDF_sample(
 
 SYCL_EXTERNAL vec3f Principled_getEmission(const Material *uniform _self,
     const varying DifferentialGeometry &dg,
-    const uniform FeatureFlagsHandler &ffh)
+    const uniform FeatureFlagsHandler &)
 {
   const Principled *uniform self = (Principled * uniform) _self;
 

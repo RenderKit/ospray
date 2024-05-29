@@ -31,6 +31,8 @@ inline float misHeuristic(
 #ifdef OSPRAY_PATHTRACER_DEBUG
   if (pathContext.disableNEE || pathContext.disableFWD)
     return 1.f;
+#else
+  (void)pathContext;
 #endif
 
   // power heuristic with beta=2

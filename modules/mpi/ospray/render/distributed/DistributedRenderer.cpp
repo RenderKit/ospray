@@ -122,6 +122,11 @@ OSPPickResult DistributedRenderer::pick(
       primID,
       depth,
       res.hasHit);
+#else
+  // Silence unused parameter warning
+  (void)fb;
+  (void)camera;
+  (void)screenPos;
 #endif
 
   // Find the closest picked object globally, only the rank

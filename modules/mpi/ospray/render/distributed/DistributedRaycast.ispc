@@ -40,8 +40,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
 // inside the region, not after.
-inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
-    const VolumeInterval &interval,
+inline vec4f DRR_integrateVolumeInterval(const VolumeInterval &interval,
     Ray &ray,
     uniform float samplingRate,
     const uniform FeatureFlagsHandler &ffh)
@@ -64,7 +63,6 @@ inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
   float alpha = 0.f;
   foreach_unique (vm in volModel) {
     Volume *uniform volume = vm->volume;
-    TransferFunction *uniform tf = vm->transferFunction;
 
     float time = 0.5f;
 
@@ -270,9 +268,9 @@ inline vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 inline void DRR_renderRegionSample(Renderer *uniform _self,
     SparseFB *uniform fb,
     DistributedWorld *uniform world,
-    const box3f *uniform region,
+    const box3f *uniform /*region*/,
     const vec2f &regionInterval,
-    void *uniform perFrameData,
+    void *uniform /*perFrameData*/,
     varying ScreenSample &sample,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -380,7 +378,7 @@ inline void DRR_renderRegionSample(Renderer *uniform _self,
           volumeInterval.interval.lower,
           volumeInterval.interval.upper);
       volumeColor = DRR_integrateVolumeInterval(
-          sample, volumeInterval, volumeRay, self->volumeSamplingRate, ffh);
+          volumeInterval, volumeRay, self->volumeSamplingRate, ffh);
     }
 #endif
 

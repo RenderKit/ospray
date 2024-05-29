@@ -43,7 +43,7 @@ SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample(
 
 SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample_instanced(
     const Light *uniform super,
-    const DifferentialGeometry &dg,
+    const DifferentialGeometry &,
     const vec2f &s,
     const float time,
     const uniform FeatureFlagsHandler &)
@@ -82,7 +82,7 @@ inline Light_EvalRes Eval(const DirectionalLight *uniform self,
 SYCL_EXTERNAL Light_EvalRes DirectionalLight_eval(const Light *uniform super,
     const DifferentialGeometry &,
     const vec3f &dir,
-    const float,
+    const float /*minDist*/,
     const float maxDist,
     const float)
 {
@@ -93,9 +93,9 @@ SYCL_EXTERNAL Light_EvalRes DirectionalLight_eval(const Light *uniform super,
 
 SYCL_EXTERNAL Light_EvalRes DirectionalLight_eval_instanced(
     const Light *uniform super,
-    const DifferentialGeometry &dg,
+    const DifferentialGeometry &,
     const vec3f &dir,
-    const float minDist,
+    const float /*minDist*/,
     const float maxDist,
     const float time)
 {
