@@ -4,6 +4,7 @@
 ## Global settings ##
 
 cmake_minimum_required(VERSION 3.7)
+set(CMAKE_INSTALL_MESSAGE LAZY)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
 
@@ -70,6 +71,19 @@ else()
 endif()
 
 option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
+
+option(INSTALL_IN_SEPARATE_DIRECTORIES
+  "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
+  ON
+)
+
+option(INSTALL_DEPENDENCIES "Install OSPRay dependencies" ON)
+
+if (APPLE)
+  set(BUILD_GPU_SUPPORT OFF)
+else()
+  option(BUILD_GPU_SUPPORT "Enable beta GPU support and building module_gpu" OFF)
+endif()
 
 option(DOWNLOAD_ISPC "Download ISPC or use the one found in the system environment?" ON)
 if (DOWNLOAD_ISPC)
@@ -151,10 +165,18 @@ option(BUILD_OPENVKL "Build Open VKL as a part of the superbuild." ON)
 if (BUILD_OPENVKL)
   set(OPENVKL_VERSION "2.0.1" CACHE STRING "Which version of OpenVKL to build?")
   mark_as_advanced(CLEAR OPENVKL_VERSION)
-  option(BUILD_OPENVKL_FROM_SOURCE "Build OpenVKL or use pre-built version?" OFF)
+  # XXX need to build VKL from source when installing in single directory,
+  # otherwise its packaged, stale Embree will overwrite the already installed
+  # new Embree
+  cmake_dependent_option(
+    BUILD_OPENVKL_FROM_SOURCE "Build OpenVKL or use pre-built version?"
+    OFF
+    "INSTALL_IN_SEPARATE_DIRECTORIES OR NOT INSTALL_DEPENDENCIES"
+    ON
+  )
   mark_as_advanced(CLEAR BUILD_OPENVKL_FROM_SOURCE)
   if (OPENVKL_VERSION STREQUAL "2.0.1")
-    if (BUILD_OPENVKL_FROM_SOURCE) 
+    if (BUILD_OPENVKL_FROM_SOURCE)
       set(OPENVKL_HASH "6676f2171f9d61844ef2a417df79275226026bc4210a4afc61da2160ecaaf5ed")
     else()
       if (APPLE)
@@ -207,9 +229,6 @@ option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 option(BUILD_OSPRAY_APPS "Enable building OSPRay apps" ON)
 option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
 option(BUILD_OSPRAY_MODULE_MULTIDEVICE "Enable building module_multidevice" OFF)
-if (NOT APPLE)
-  option(BUILD_GPU_SUPPORT "Enable beta GPU support and building module_gpu" OFF)
-endif()
 
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
   set(ISA_X86 OFF)
@@ -242,13 +261,6 @@ if (BUILD_ISA_NEON AND BUILD_ISA_NEON2X)
   message(FATAL_ERROR "Only one Neon ISA may be enabled; choose either NEON or NEON2X")
 endif()
 
-
-option(INSTALL_IN_SEPARATE_DIRECTORIES
-  "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
-  ON
-)
-
-option(INSTALL_DEPENDENCIES "Install OSPRay dependencies" ON)
 
 ## Setup top-level variables ##
 

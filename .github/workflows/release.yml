@@ -91,7 +91,7 @@ jobs:
     with:
       runs-on: '["arm", "build"]'
       cmd: |
-        scripts/release/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON
+        scripts/release/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON
         cp build_release/*.zip $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-osx-arm
