@@ -42,7 +42,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     // select a random light source from the list
     float ss;
     const vec2f s = LDSampler_get3LightSamples(
-        pathState.ldSampler, i, pathState.firstBounceLight, ss);
+        pathState.ldSampler, i, numLightSamples > 1, ss);
     const Sample1D lSelectSample = Distribution1D_sample(
         pathContext.numLights, pathContext.lightsCDF, 0, ss);
 

@@ -14,10 +14,8 @@ struct LDSampler
 inline void LDSampler_init(varying LDSampler &self,
     const uint32 seed,
     const uint32 sampleIndex,
-    const uint32 sampleOffsetFirstLight = 0,
     const uint32 sampleOffsetLight = 0,
     const uniform uint32 bits = 16,
-    const uniform uint32 bitsFirstLight = 16,
     const uniform uint32 bitsLight = 16)
 {
   RandomSampler_init(&self.rng, seed, sampleIndex);
@@ -78,8 +76,7 @@ struct LDSampler
 {
   uint32 index; // sample index
   uint32 scramble; // seed for scrambling the samples
-  uint32 baseIndexFirstLight; // when sequence is split (blue noise)
-  uint32 baseIndexLight;
+  uint32 baseIndexLight; // when sequence is split (blue noise)
   float s0;
   float s1;
   float s2;
@@ -87,26 +84,20 @@ struct LDSampler
   float s4;
   // valid bits TODO should move to global PT Context
   uniform uint32 idxMask;
-  uniform uint32 idxMaskFirstLight;
   uniform uint32 idxMaskLight;
 };
 
 inline void LDSampler_init(varying LDSampler &self,
     const uint32 seed,
     const uint32 sampleIndex,
-    const uint32 sampleOffsetFirstLight = 0,
     const uint32 sampleOffsetLight = 0,
     const uniform uint32 bits = 16,
-    const uniform uint32 bitsFirstLight = 16,
     const uniform uint32 bitsLight = 16)
 {
   self.index = sampleIndex;
   self.scramble = seed; // avoid zero!
-  self.baseIndexFirstLight = sampleOffsetFirstLight;
   self.baseIndexLight = sampleOffsetLight;
   self.idxMask = bits > 31 ? -1u : (1u << bits) - 1;
-  self.idxMaskFirstLight =
-      bitsFirstLight > 31 ? -1u : (1u << bitsFirstLight) - 1;
   self.idxMaskLight = bitsLight > 31 ? -1u : (1u << bitsLight) - 1;
 }
 
@@ -116,11 +107,19 @@ inline void LDSampler_nextGroup(LDSampler &self)
   self.scramble = tripleHash(self.scramble);
 }
 
-inline void LDSampler_sampleGroup(LDSampler &self)
+inline uint32 LDSampler_shuffleIndex(
+    const uint32 index, const uint32 scramble, const uint32 mask)
 {
-  const uint32 index =
-      OwenScramble2(self.index, self.scramble) & self.idxMask; // shuffle
+  return OwenScramble2(index, scramble) & mask;
+}
 
+inline uint32 LDSampler_shuffleIndex(const LDSampler &self)
+{
+  return LDSampler_shuffleIndex(self.index, self.scramble, self.idxMask);
+}
+
+inline void LDSampler_sampleGroup(LDSampler &self, const uint32 index)
+{
   // sample
   const uint32 r0 = Sobol_sample(index, 0);
   const uint32 r1 = Sobol_sample(index, 1);
@@ -138,15 +137,18 @@ inline void LDSampler_sampleGroup(LDSampler &self)
 
 inline vec2f LDSampler_get3LightSamples(const LDSampler &self,
     const uniform uint32 idx,
-    const bool first,
+    const bool split,
     float &ss)
 {
   LDSampler lds;
   lds.scramble = self.scramble;
-  lds.index = (first ? self.baseIndexFirstLight : self.baseIndexLight) + idx;
-  // XXX should be: = first ? self.idxMaskFirstLight : self.idxMaskLight;
-  lds.idxMask = self.idxMaskFirstLight;
-  LDSampler_sampleGroup(lds);
+
+  const uint32 index = split
+      ? LDSampler_shuffleIndex(
+          self.baseIndexLight + idx, self.scramble, self.idxMaskLight)
+      : LDSampler_shuffleIndex(self);
+
+  LDSampler_sampleGroup(lds, index);
 
   ss = lds.s2;
   return make_vec2f(lds.s0, lds.s1);
@@ -155,7 +157,7 @@ inline vec2f LDSampler_get3LightSamples(const LDSampler &self,
 inline vec2f LDSampler_getNext4Samples(LDSampler &self, float &ss, uint32 &)
 {
   LDSampler_nextGroup(self);
-  LDSampler_sampleGroup(self);
+  LDSampler_sampleGroup(self, LDSampler_shuffleIndex(self));
   ss = self.s2;
   return make_vec2f(self.s0, self.s1);
 }
@@ -168,7 +170,7 @@ inline float LDSampler_finalizeDim3(const LDSampler &self, const uint32)
 inline vec2f LDSampler_getNext5Samples(LDSampler &self, vec3ui &)
 {
   LDSampler_nextGroup(self);
-  LDSampler_sampleGroup(self);
+  LDSampler_sampleGroup(self, LDSampler_shuffleIndex(self));
   return make_vec2f(self.s0, self.s1);
 }
 

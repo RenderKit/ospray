@@ -7,8 +7,9 @@ Version History
 -   Support half-precision (16\ bit float) texture formats
     `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
     float textures `OSP_TEXTURE_RA32F`
--   New parameter `firstBounceLightSamples` for the `pathtracer` which
-    limits the number of non-specular (i.e., diffuse and glossy) bounces
+-   New parameter `limitIndirectLightSamples` for the `pathtracer` which
+    limits the number of light samples after the first non-specular
+    (i.e., diffuse and glossy) bounce to at most one
 -   Sampling improvements:
       - Better performance (lower rendering time and faster convergence)
       - More pleasing blue noise enabled when the total number of frames

@@ -284,29 +284,23 @@ struct LDSampler
 {
   uint32 revIndex; // bit-reversed sample index
   uint32 scramble; // seed for scrambling the samples
-  uint32 baseIndexFirstLight; // when sequence is split (blue noise)
-  uint32 baseIndexLight;
+  uint32 baseIndexLight; // when sequence is split (blue noise)
   // valid bits TODO should move to global PT Context
   uniform uint32 idxMask;
-  uniform uint32 idxMaskFirstLight;
   uniform uint32 idxMaskLight;
 };
 
 inline void LDSampler_init(varying LDSampler &self,
     const uint32 seed,
     const uint32 sampleIndex,
-    const uint32 sampleOffsetFirstLight = 0,
     const uint32 sampleOffsetLight = 0,
     const uniform uint32 bits = 16,
-    const uniform uint32 bitsFirstLight = 16,
     const uniform uint32 bitsLight = 16)
 {
   self.revIndex = reverseBits(sampleIndex);
   self.scramble = seed; // avoid zero!
-  self.baseIndexFirstLight = sampleOffsetFirstLight;
   self.baseIndexLight = sampleOffsetLight;
   self.idxMask = bits > 31 ? -1u : ~(-1u >> bits);
-  self.idxMaskFirstLight = bitsFirstLight > 31 ? -1u : ~(-1u >> bitsFirstLight);
   self.idxMaskLight = bitsLight > 31 ? -1u : ~(-1u >> bitsLight);
 }
 
@@ -323,13 +317,13 @@ inline float LDSamplerScramble(const uint32 sample, const uint32 scramble)
 
 inline vec2f LDSampler_get3LightSamples(const LDSampler &self,
     const uniform uint32 idx,
-    const bool first,
+    const bool split,
     float &ss)
 {
-  const uint32 index =
-      (first ? self.baseIndexFirstLight : self.baseIndexLight) + idx;
-  uint32 revIndex = OwenHash2(reverseBits(index), self.scramble); // shuffle
-  revIndex &= first ? self.idxMaskFirstLight : self.idxMaskLight;
+  uint32 revIndex =
+      split ? reverseBits(self.baseIndexLight + idx) : self.revIndex;
+  revIndex = OwenHash2(revIndex, self.scramble); // shuffle
+  revIndex &= split ? self.idxMaskLight : self.idxMask;
   // sample
   const uint32 r0 = reverseBits(revIndex);
   const vec2ui r12 = Sobol_revSample2(revIndex);

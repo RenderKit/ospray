@@ -106,14 +106,14 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   uniform PathTracerData *uniform ptData = world->pathtracerData;
   const uniform uint32 numLights = ptData->lights ? ptData->numLights : 0;
 
-  const uniform uint32 numIndirectBounceLightSamples =
+  const uniform uint32 numFirstBounceLightSamples =
       self->numLightSamples >= 0 && numLights > 0
       ? self->numLightSamples
       : min(MAX_LIGHT_SAMPLES, numLights);
-  const uniform uint32 numFirstBounceLightSamples =
-      self->numFirstBounceLightSamples >= 0 && numLights > 0
-      ? self->numFirstBounceLightSamples
-      : min(MAX_LIGHT_SAMPLES, numLights);
+  const uniform uint32 numIndirectBounceLightSamples =
+      self->limitIndirectLightSamples && numFirstBounceLightSamples >= 1
+      ? 1
+      : numFirstBounceLightSamples;
 
   pathContext.numLights = numLights;
   pathContext.numGeoLights = ptData->numGeoLights;
@@ -132,10 +132,8 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
 
   const uniform int spp = self->super.spp;
   uint32 sampleOffs;
-  uint32 sampleOffsFirstLight;
   uint32 sampleOffsLight;
   uniform uint32 sampleBits;
-  uniform uint32 sampleBitsFirstLight;
   uniform uint32 sampleBitsLight;
   uint32 seed = 0x49c5f37e; // fixed seed with random bits
 
@@ -148,19 +146,15 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     // limit to 256x256 tiles, to have 16bits for 64k samples without overflow
     sampleOffs = OwenScramble4(interleaveZOrder16(ix, iy), seed) * targetSpp;
     // NEE splitting: further space sequence by max light samples
-    sampleOffsFirstLight = sampleOffs * numFirstBounceLightSamples;
-    sampleOffsLight = sampleOffs * numIndirectBounceLightSamples;
+    sampleOffsLight = sampleOffs * numFirstBounceLightSamples;
     sampleBits = 16 + 32 - clz(targetSpp - 1);
-    sampleBitsFirstLight = 48 - clz(targetSpp * numFirstBounceLightSamples - 1);
-    sampleBitsLight = 48 - clz(targetSpp * numIndirectBounceLightSamples - 1);
+    sampleBitsLight = 48 - clz(targetSpp * numFirstBounceLightSamples - 1);
   } else {
     // decorrelate pixels via different seed, whole sequence used for each pixel
     seed ^= fb->size.x * iy + ix; // avoid a zero for initializing the scramble
     sampleOffs = 0;
-    sampleOffsFirstLight = 0;
     sampleOffsLight = 0;
     sampleBits = 16;
-    sampleBitsFirstLight = 16;
     sampleBitsLight = 16;
   }
 
@@ -169,10 +163,8 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     LDSampler_init(pathState.ldSampler,
         seed,
         sampleOffs + sampleID,
-        sampleOffsFirstLight + sampleID * numFirstBounceLightSamples,
-        sampleOffsLight + sampleID * numIndirectBounceLightSamples,
+        sampleOffsLight + sampleID * numFirstBounceLightSamples,
         sampleBits,
-        sampleBitsFirstLight,
         sampleBitsLight);
     RandomSampler_init(&pathState.randomSampler, seed, sampleOffs + sampleID);
 

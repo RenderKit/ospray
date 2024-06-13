@@ -39,6 +39,7 @@ void SpherePrecision::SetUp()
     renderer.setParam("aoIntensity", 1.f);
   } else if (rendererType == "pathtracer") {
     renderer.setParam("maxPathLength", 2);
+    renderer.setParam("limitIndirectLightSamples", false);
   }
 
   cpp::Geometry sphere("sphere");

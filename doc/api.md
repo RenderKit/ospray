@@ -2892,34 +2892,34 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-  ---------- ----------------------- --------  ------------------------------------
-  Type       Name                     Default  Description
-  ---------- ----------------------- --------  ------------------------------------
-  int        lightSamples                 all  number of random light samples
-                                               per path vertex, best results
-                                               when a power of 2; per default
-                                               all light sources are sampled
+  ------ -------------------------- --------  ----------------------------------
+  Type   Name                        Default  Description
+  ------ -------------------------- --------  ----------------------------------
+  int    lightSamples                    all  number of random light samples
+                                              per path vertex, best results
+                                              when a power of 2; per default
+                                              all light sources are sampled
 
-  int        firstBounceLightSamples           number of random light samples at
-                                               the first non-specular (i.e.,
-                                               diffuse and glossy) path vertex,
-                                               best results when a power of 2;
-                                               per default same as `lightSamples`
+  bool   limitIndirectLightSamples      true  after the first non-specular
+                                              (i.e., diffuse and glossy) path
+                                              vertex take (at most) a single
+                                              light sample (instead of
+                                              `lightSamples` many)
 
-  int        roulettePathLength             5  ray recursion depth at which to
-                                               start Russian roulette termination
+  int    roulettePathLength                5  ray recursion depth at which to
+                                              start Russian roulette termination
 
-  int        maxScatteringEvents           20  maximum number of non-specular
-                                               (i.e., diffuse and glossy) bounces
+  int    maxScatteringEvents              20  maximum number of non-specular
+                                              (i.e., diffuse and glossy) bounces
 
-  float      maxContribution                ∞  samples are clamped to this value
-                                               before they are accumulated into
-                                               the framebuffer
+  float  maxContribution                   ∞  samples are clamped to this value
+                                              before they are accumulated into
+                                              the framebuffer
 
-  bool       backgroundRefraction       false  allow for alpha blending even if
-                                               background is seen through
-                                               refractive objects like glass
-  ---------- ----------------------- --------  ------------------------------------
+  bool   backgroundRefraction          false  allow for alpha blending even if
+                                              background is seen through
+                                              refractive objects like glass
+  ------ -------------------------- --------  ----------------------------------
   : Special parameters understood by the path tracer.
 
 The path tracer requires that [materials] are assigned to [geometries],

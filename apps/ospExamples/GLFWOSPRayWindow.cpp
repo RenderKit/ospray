@@ -765,6 +765,12 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer->handle());
     }
 
+    static bool limitIndirectLightSamples = true;
+    if (ImGui::Checkbox("limitIndirectLightSamples", &limitIndirectLightSamples)) {
+      renderer->setParam("limitIndirectLightSamples", limitIndirectLightSamples);
+      addObjectToCommit(renderer->handle());
+    }
+
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
       renderer->setParam("maxPathLength", maxDepth);

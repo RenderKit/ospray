@@ -34,8 +34,8 @@ void PathTracer::commit()
   getSh()->maxScatteringEvents = getParam<int>("maxScatteringEvents", 20);
   getSh()->maxRadiance = getParam<float>("maxContribution", inf);
   getSh()->numLightSamples = getParam<int>("lightSamples", -1);
-  getSh()->numFirstBounceLightSamples =
-      getParam<int>("firstBounceLightSamples", getSh()->numLightSamples);
+  getSh()->limitIndirectLightSamples =
+      getParam<bool>("limitIndirectLightSamples", true);
 
   // Set shadow catcher plane
   const vec4f shadowCatcherPlane =
