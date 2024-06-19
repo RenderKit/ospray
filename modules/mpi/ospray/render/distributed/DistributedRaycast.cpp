@@ -40,32 +40,16 @@ namespace mpi {
 using namespace std::chrono;
 using namespace mpicommon;
 
-static bool DETAILED_LOGGING = false;
-
 // DistributedRaycastRenderer definitions /////////////////////////////////
 
 DistributedRaycastRenderer::DistributedRaycastRenderer(api::ISPCDevice &device)
     : AddStructShared(device.getDRTDevice(), device),
       mpiGroup(mpicommon::worker.dup())
-{
-  DETAILED_LOGGING =
-      utility::getEnvVar<int>("OSPRAY_DP_API_TRACING").value_or(0);
-
-  if (DETAILED_LOGGING) {
-    auto job_name =
-        utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
-    std::string statsLogFile = job_name + std::string("-rank")
-        + std::to_string(mpiGroup.rank) + ".txt";
-    statsLog = rkcommon::make_unique<std::ofstream>(statsLogFile.c_str());
-  }
-}
+{}
 
 DistributedRaycastRenderer::~DistributedRaycastRenderer()
 {
   MPI_Comm_free(&mpiGroup.comm);
-  if (DETAILED_LOGGING) {
-    *statsLog << "\n" << std::flush;
-  }
 }
 
 void DistributedRaycastRenderer::commit()
