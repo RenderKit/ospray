@@ -33,7 +33,8 @@ void Texture2D::set(const vec2i &aSize,
   super.hasAlpha = aFormat == OSP_TEXTURE_RGBA8 || aFormat == OSP_TEXTURE_SRGBA
       || aFormat == OSP_TEXTURE_RA8 || aFormat == OSP_TEXTURE_LA8
       || aFormat == OSP_TEXTURE_RGBA32F || aFormat == OSP_TEXTURE_RGBA16
-      || aFormat == OSP_TEXTURE_RA16;
+      || aFormat == OSP_TEXTURE_RA16 || aFormat == OSP_TEXTURE_RA16F
+      || aFormat == OSP_TEXTURE_RA32F || aFormat == OSP_TEXTURE_RGBA16F;
 #ifndef OSPRAY_TARGET_SYCL
   super.get = reinterpret_cast<ispc::Texture_get>(
       ispc::Texture2D_get_addr(aFormat, aFilter & OSP_TEXTURE_FILTER_NEAREST));
