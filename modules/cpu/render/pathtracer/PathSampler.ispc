@@ -82,6 +82,11 @@ inline Scattering_SampleRes sampleDirection(const vec2f &s,
         pathVertex.pdf_w = fs.pdf;
       }
     }
+    // check consistent side of surface to prevent light leaks
+    const bool sameSide = dot(fs.wi, pathVertex.dg.Ng) >= 0.f;
+    const bool reflection = fs.type & SCATTERING_REFLECTION;
+    if (sameSide != reflection)
+      fs.weight = make_vec3f(0.0f);
   }
 #ifdef OSPRAY_ENABLE_VOLUMES
   if ((ff.other & FFO_VOLUME_IN_SCENE) && pathVertex.type == VOLUME) {

@@ -10,7 +10,7 @@ namespace OSPRayTestScenes {
 Texture2D::Texture2D()
 {
   rendererType = "pathtracer";
-  samplesPerPixel = 64;
+  samplesPerPixel = 8;
 }
 
 void Texture2D::SetUp()
@@ -185,6 +185,7 @@ void Texture2D::SetUp()
     light1.setParam("intensity", 3.f);
     // highlighting normal direction
     light2.setParam("direction", vec3f(0.7f, 0.2f, 0.f));
+    light2.setParam("intensity", 5.f);
     light2.setParam("color", vec3f(0.f, 0.f, 0.5f));
   } else {
     // perpendicular bright lights, testing center normal
