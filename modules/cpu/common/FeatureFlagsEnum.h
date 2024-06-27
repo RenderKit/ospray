@@ -140,6 +140,8 @@ enum FeatureFlagsOther
 
   FFO_CAMERA_MOTION_BLUR = 1 << 29,
 
+  FFO_RENDERER_SHADOWCATCHER = 1 << 30,
+
   FFO_ALL = 0xffffffff
 };
 
@@ -367,6 +369,9 @@ inline void printFfo(uint32_t flags)
 
   if (flags & FFO_CAMERA_MOTION_BLUR)
     std::cout << "FFO_CAMERA_MOTION_BLUR" << std::endl;
+
+  if (flags & FFO_RENDERER_SHADOWCATCHER)
+    std::cout << "FFO_RENDERER_SHADOWCATCHER" << std::endl;
 }
 #endif
 

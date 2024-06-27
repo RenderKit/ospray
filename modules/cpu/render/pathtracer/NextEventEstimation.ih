@@ -16,6 +16,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     PathState &pathState,
     PathVertex &pathVertex,
     float rayConeWidth,
+    vec3f &unshaded,
     const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

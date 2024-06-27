@@ -12,6 +12,7 @@
 [group]: documentation.html#groups
 [instance]: documentation.html#instances
 [world]: documentation.html#world
+[plane]: documentation.html#planes
 [data]: documentation.html#data
 [GeometricModel]: documentation.html#geometricmodels
 [VolumetricModel]: documentation.html#volumetricmodels
@@ -22,6 +23,7 @@
 [material]: documentation.html#materials
 [OBJ material]: documentation.html#obj-material
 [point light]: documentation.html#point-light-sphere-light
+[HDRI light]: documentation.html#hdri-light
 
 [example applications]: tutorials.html#tutorials
 [tutorial]: tutorials.html#osptutorial

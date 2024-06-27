@@ -22,6 +22,8 @@ inline bool isSmooth(const PathVertex &pathVertex)
       && isSmoothVolumeVertex(pathVertex))
     return true;
 #endif
+  if (pathVertex.type == SHADOWCATCHER)
+    return true;
   return false;
 }
 
@@ -47,14 +49,14 @@ inline void updateAuxilliaryData(
     PathState &pathState, const PathVertex &pathVertex, ScreenSample &sample)
 {
   sample.albedo = pathState.throughput * pathVertex.albedo;
+  vec3f Ns = pathVertex.dg.Ns;
   if (pathVertex.type == SURFACE) {
-    vec3f Ns = pathVertex.dg.Ns;
     foreach_unique (f in pathVertex.bsdf) {
       if (f != NULL && f->frame != NULL)
         Ns = getN(f);
     }
-    sample.normal = pathState.throughput * Ns;
   }
+  sample.normal = pathState.throughput * Ns;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

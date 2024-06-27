@@ -2076,6 +2076,7 @@ table below.
 | float | metallic          |         0 | mix between dielectric (diffuse and/or specular) and metallic (specular only with complex IOR) in \[0–1\]               |
 | float | diffuse           |         1 | diffuse reflection weight in \[0–1\]                                                                                    |
 | float | specular          |         1 | specular reflection/transmission weight in \[0–1\]                                                                      |
+| bool  | specularMetallic  |      true | whether specular influences metallic                                                                                    |
 | float | ior               |         1 | dielectric index of refraction                                                                                          |
 | float | transmission      |         0 | specular transmission weight in \[0–1\]                                                                                 |
 | vec3f | transmissionColor |     white | attenuated color due to transmission (Beer’s law, linear RGB)                                                           |
@@ -2870,8 +2871,8 @@ variance below the `varianceThreshold`. This feature requires a
 Per default the background of the rendered image will be transparent
 black, i.e., the alpha channel holds the opacity of the rendered
 objects. This eases transparency-aware blending of the image with an
-arbitrary background image by the application (via
-$ospray.rgb + appBackground.rgb⋅(1-ospray.alpha)$). The parameter
+arbitrary background image by the application (via the “over” operator,
+i.e., $ospray.rgb + appBackground.rgb⋅(1-ospray.alpha)$). The parameter
 `backgroundColor` or `map_backplate` can be used to already blend with a
 constant background color or backplate texture, respectively, (and
 alpha) during rendering.
@@ -2960,14 +2961,15 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-| Type  | Name                      | Default | Description                                                                                                                               |
-|:------|:--------------------------|--------:|:------------------------------------------------------------------------------------------------------------------------------------------|
-| int   | lightSamples              |     all | number of random light samples per path vertex, best results when a power of 2; per default all light sources are sampled                 |
-| bool  | limitIndirectLightSamples |    true | after the first non-specular (i.e., diffuse and glossy) path vertex take (at most) a single light sample (instead of `lightSamples` many) |
-| int   | roulettePathLength        |       5 | ray recursion depth at which to start Russian roulette termination                                                                        |
-| int   | maxScatteringEvents       |      20 | maximum number of non-specular (i.e., diffuse and glossy) bounces                                                                         |
-| float | maxContribution           |       ∞ | samples are clamped to this value before they are accumulated into the framebuffer                                                        |
-| bool  | backgroundRefraction      |   false | allow for alpha blending even if background is seen through refractive objects like glass                                                 |
+| Type  | Name                      |  Default | Description                                                                                                                               |
+|:------|:--------------------------|---------:|:------------------------------------------------------------------------------------------------------------------------------------------|
+| int   | lightSamples              |      all | number of random light samples per path vertex, best results when a power of 2; per default all light sources are sampled                 |
+| bool  | limitIndirectLightSamples |     true | after the first non-specular (i.e., diffuse and glossy) path vertex take (at most) a single light sample (instead of `lightSamples` many) |
+| int   | roulettePathLength        |        5 | ray recursion depth at which to start Russian roulette termination                                                                        |
+| int   | maxScatteringEvents       |       20 | maximum number of non-specular (i.e., diffuse and glossy) bounces                                                                         |
+| float | maxContribution           |        ∞ | samples are clamped to this value before they are accumulated into the framebuffer                                                        |
+| bool  | backgroundRefraction      |    false | allow for alpha blending even if background is seen through refractive objects like glass                                                 |
+| vec4f | shadowCatcherPlane        | disabled | components of an invisible [plane](#planes) that captures shadow attentuations, which are blended with the background                     |
 
 Special parameters understood by the path tracer.
 
@@ -2979,6 +2981,57 @@ The path tracer supports [volumes](#volumes) with multiple scattering.
 The scattering albedo can be specified using the [transfer
 function](#transfer-function). Extinction is assumed to be spectrally
 constant.
+
+Rendering an object with an [HDRI light](#hdri-light) results in
+realistic illumination, but the object looks detached and floats in
+space. As remedy a so-called Shadow Catcher can be used by setting the
+coefficients of a [plane](#planes) via `shadowCatcherPlane`, which will
+ground the object by computing matching (contact) shadows. The accuracy
+of the shadow estimation depends on the number of light samples per
+frame (via `lightSamples` and/or `pixelSamples`), in particular when
+using a high-contrast HDRI or multiple (colored) light sources. With
+just a single light sample the intensity, gradient and color of the
+shadows will potentially be quite off.
+
+<figure>
+<img src="https://ospray.github.io/images/shadowcatcher_envonly.jpg"
+style="width:80.0%"
+alt="Chair rendered in an interior HDRI environment." />
+<figcaption aria-hidden="true">Chair rendered in an interior HDRI
+environment.</figcaption>
+</figure>
+
+
+
+<figure>
+<img src="https://ospray.github.io/images/shadowcatcher.jpg"
+style="width:80.0%"
+alt="Same scene with enabled Shadow Catcher plane." />
+<figcaption aria-hidden="true">Same scene with enabled Shadow Catcher
+plane.</figcaption>
+</figure>
+
+
+
+Applications can also perform their own compositing of the captured
+shadow, because the shadow is also baked into the alpha channel (which
+however means loosing the color tint of the shadow). To do so, the
+`backgroundColor` must be transparent (alpha=0) and should be black
+(otherwise the background color will bleed into the shadow); likewise,
+light sources should be set to `visible=false` to avoid them being
+visible in the background. When using the [denoiser](#denoiser) best
+enable `denoiseAlpha` as well.
+
+<figure>
+<img src="https://ospray.github.io/images/shadowcatcher_alpha.png"
+style="width:80.0%"
+alt="The Shadow Catcher also bakes the (monochrome) shadow into the alpha channel, which can be used for further compositing." />
+<figcaption aria-hidden="true">The Shadow Catcher also bakes the
+(monochrome) shadow into the alpha channel, which can be used for
+further compositing.</figcaption>
+</figure>
+
+
 
 Framebuffer
 -----------

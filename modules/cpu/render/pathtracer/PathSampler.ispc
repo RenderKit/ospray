@@ -7,7 +7,6 @@
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerDefines.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
-#include "render/pathtracer/ShadowCatcher.ih"
 #include "render/pathtracer/TransparentShadow.ih"
 #include "render/pathtracer/VirtualLight.ih"
 
@@ -38,7 +37,8 @@ inline void postIntersect(const PathContext &pathContext,
 {
   const PathTracer *uniform pt = pathContext.context;
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
-  if (ff.geometry && pathVertex.type == SURFACE) {
+  if (pathVertex.type == SHADOWCATCHER
+      || (ff.geometry && pathVertex.type == SURFACE)) {
     postIntersect(pathContext.world,
         &pt->super,
         pathVertex.dg,
@@ -132,16 +132,35 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
   sample.alpha = 1.0f;
 
-  if (pathContext.context->shadowCatcher) {
+  // TODO consider real (flagged) geometries with material
+  if ((ff.other & FFO_RENDERER_SHADOWCATCHER)
+      && pathContext.context->shadowCatcher) {
     const Hit hit = intersectPlane(
         ray.org, ray.dir, pathContext.context->shadowCatcherPlane);
     if (hit.hit)
       pathState.shadowCatcherDist = hit.t;
   }
   do {
-    if (pathState.shadowCatcherDist
-        > ray.t0) // valid hit can hide other geometry
-      ray.t = min(pathState.shadowCatcherDist, ray.t);
+    PathVertex pathVertex;
+    pathVertex.bsdf = NULL;
+    pathVertex.pdf_w = inf;
+    pathVertex.type = ENVIRONMENT;
+#ifdef OSPRAY_ENABLE_VOLUMES
+    pathVertex.volume = NULL;
+#endif
+
+    if ((ff.other & FFO_RENDERER_SHADOWCATCHER)
+        && pathState.shadowCatcherDist > ray.t0
+        && pathState.shadowCatcherDist <= ray.t
+        && (pathContext.context->backgroundRefraction
+                ? pathState.specularTransmissionPath
+                : pathState.straightPath)) {
+      pathVertex.type = SHADOWCATCHER;
+      pathVertex.albedo = make_vec3f(0.8f);
+      ray.t = pathState.shadowCatcherDist;
+      ray.Ng = make_vec3f(pathContext.context->shadowCatcherPlane);
+      ray.instID = RTC_INVALID_GEOMETRY_ID; // to safely call postIntersect
+    }
 
     // Trace ray in clipping geometries scene, fill array with ray intervals
     RayIntervals rayIntervals;
@@ -150,18 +169,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     if (ff.geometry) {
       // Trace ray intervals in geometry
       traceGeometryRayIntervals(pathContext.world, ray, rayIntervals, ffh);
-    }
-
-    PathVertex pathVertex;
-    pathVertex.bsdf = NULL;
-    pathVertex.pdf_w = inf;
-#ifdef OSPRAY_ENABLE_VOLUMES
-    pathVertex.volume = NULL;
-#endif
-    pathVertex.type = noHit(ray) || !ff.geometry ? ENVIRONMENT : SURFACE;
-
-    if (shadowCatcher(pathContext, pathState, pathVertex, ray, rayCone, ffh)) {
-      pathVertex.type = ENVIRONMENT;
+      if (hadHit(ray))
+        pathVertex.type = SURFACE;
     }
 
     pathVertex.wo = neg(ray.dir);
@@ -191,16 +200,18 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
           : ray.t;
 
     // background handling
-    if (pathVertex.type == ENVIRONMENT
+    if ((pathVertex.type == ENVIRONMENT || pathVertex.type == SHADOWCATCHER)
         && (pathContext.context->backgroundRefraction
                 ? pathState.specularTransmissionPath
                 : pathState.straightPath)) {
-      vec4f bg = Renderer_getBackground(
+      const vec4f bg = Renderer_getBackground(
           &pathContext.context->super, pathContext.screen, ffh);
-      pathState.contribution =
-          pathState.contribution + pathState.throughput * make_vec3f(bg);
-      sample.alpha = 1.0f - luminance(pathState.throughput);
-      sample.alpha += (1.f - sample.alpha) * bg.w;
+      sample.alpha -= luminance(pathState.throughput) * (1.0f - bg.w);
+      const vec3f bg3 = pathState.throughput * make_vec3f(bg);
+      if ((ff.other & FFO_RENDERER_SHADOWCATCHER)
+          && pathVertex.type == SHADOWCATCHER)
+        sample.shadow = make_vec4f(bg3);
+      pathState.contribution = pathState.contribution + bg3;
     }
 
 #ifdef OSPRAY_PATHTRACER_DEBUG
@@ -213,6 +224,22 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
         pathState.contribution = pathState.contribution
             + evaluateVirtualLights(
                 pathContext, pathState, lastVertex, pathVertex, ray, ffh);
+        if ((ff.other & FFO_RENDERER_SHADOWCATCHER)
+            && pathVertex.type == SHADOWCATCHER) {
+          // gather background light from environment behind the shadow catcher
+          pathVertex.type = ENVIRONMENT;
+          const vec3f ray_org = ray.org;
+          ray.org = ray.org + ray.t * ray.dir;
+          // FIXME: to avoid two calls (two almost identical loops), the
+          // Light::eval interface needs to change
+          const vec3f bg = evaluateVirtualLights(
+              pathContext, pathState, lastVertex, pathVertex, ray, ffh);
+          sample.shadow = sample.shadow + make_vec4f(bg);
+          pathState.contribution = pathState.contribution + bg;
+          // restore
+          pathVertex.type = SHADOWCATCHER;
+          ray.org = ray_org;
+        }
       }
 
     if (pathVertex.type == ENVIRONMENT) {
@@ -288,12 +315,29 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       if (!pathContext.disableNEE)
 #endif
       {
-        pathState.contribution = pathState.contribution
-            + nextEventEstimation(
-                pathContext, pathState, pathVertex, sample.rayCone.width, ffh);
+        vec3f unshaded; // illumination without occlusion
+        const vec3f shaded = nextEventEstimation(pathContext,
+            pathState,
+            pathVertex,
+            sample.rayCone.width,
+            unshaded,
+            ffh);
+        if ((ff.other & FFO_RENDERER_SHADOWCATCHER)
+            && pathVertex.type == SHADOWCATCHER) {
+          sample.cnt++;
+          sample.unshaded = make_vec4f(unshaded, luminance(unshaded));
+          const vec3f shadow = unshaded - shaded;
+          sample.shadow = // multiply already gathered background
+              make_vec4f(make_vec3f(sample.shadow) * shadow, luminance(shadow));
+        } else
+          pathState.contribution = pathState.contribution + shaded;
         pathState.firstBounceLight = false;
       }
     }
+
+    if ((ff.other & FFO_RENDERER_SHADOWCATCHER)
+        && pathVertex.type == SHADOWCATCHER)
+      break;
 
     float ss;
     uint32 uu3;
@@ -351,6 +395,9 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       pathState.straightPath = false;
     if (!(fs.type & SCATTERING_SPECULAR_TRANSMISSION))
       pathState.specularTransmissionPath = false;
+    // update dist for potential next intersection (if transparent)
+    if (ff.other & FFO_RENDERER_SHADOWCATCHER)
+      pathState.shadowCatcherDist -= ray.t;
 
     setRay(ray, ray_org, fs.wi, pathState.time);
     pathState.depth++;

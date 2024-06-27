@@ -80,6 +80,8 @@ devicert::AsyncEvent PathTracer::renderTasks(FrameBuffer *fb,
   FeatureFlags ff = world->getFeatureFlags();
   if (world->pathtracerData->getSh()->numGeoLights)
     ff.other |= FFO_LIGHT_GEOMETRY;
+  if (getSh()->shadowCatcher)
+    ff.other |= FFO_RENDERER_SHADOWCATCHER;
   ff |= featureFlags;
   ff |= fb->getFeatureFlags();
   ff |= camera->getFeatureFlags();

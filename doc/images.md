@@ -29,4 +29,7 @@
 [imgColoredWindow]: ColoredWindow.jpg { width=60% }
 [imgStructuredSphericalCoords]: structured_spherical_coords.svg { width=60% }
 [imgVdbStructure]: vdb_structure.svg { width=80% }
+[imgShadowCatcher]: shadowcatcher.jpg { width=80% }
+[imgNoShadowCatcher]: shadowcatcher_envonly.jpg { width=80% }
+[imgShadowCatcherAlpha]: shadowcatcher_alpha.png { width=80% }
 

@@ -875,6 +875,13 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer->handle());
     }
 
+    static vec4f shadowCatcherPlane{0.0f};
+    if (ImGui::DragFloat4(
+            "shadowCatcherPlane", &shadowCatcherPlane[0], 0.05f, -1.f, 1.0f)) {
+      renderer->setParam("shadowCatcherPlane", shadowCatcherPlane);
+      addObjectToCommit(renderer->handle());
+    }
+
     if (ImGui::SliderFloat("camera motion blur", &cameraMotionBlur, 0.f, 1.f)) {
       updateCamera();
     }

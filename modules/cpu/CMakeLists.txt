@@ -181,7 +181,6 @@ set(OSPRAY_KERNEL_SOURCES
   render/pathtracer/GeometryLight.ispc
   render/pathtracer/VirtualLight.ispc
   render/pathtracer/TransparentShadow.ispc
-  render/pathtracer/ShadowCatcher.ispc
   render/pathtracer/NextEventEstimation.ispc
 
   render/bsdfs/BSDF.ispc

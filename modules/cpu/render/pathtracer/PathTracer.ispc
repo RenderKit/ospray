@@ -54,7 +54,9 @@ static ScreenSample PathTraceIntegrator_Li(PathContext &pathContext,
   pathState.contribution = make_vec3f(0.f);
   pathState.time = ray.time;
   pathState.currentMedium = make_Medium_vacuum();
-  pathState.shadowCatcherDist = -(float)inf;
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  if (ff.other & FFO_RENDERER_SHADOWCATCHER)
+    pathState.shadowCatcherDist = -(float)inf;
 
   samplePath(pathContext, pathState, ray, rayCone, sample, ffh);
 
@@ -197,7 +199,18 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     ScreenSample_accumulate(screenSample, sample);
   }
 
-  ScreenSample_normalize(screenSample, spp);
+  const uniform float rspp = rcpf(spp);
+  ScreenSample_normalize(screenSample, rspp);
+
+  const uniform FeatureFlags ff = getFeatureFlags(ffh);
+  if ((ff.other & FFO_RENDERER_SHADOWCATCHER) && screenSample.cnt > 0) {
+    const float coverage = rspp * screenSample.cnt;
+    // filter 0/0=NaN: define unlit areas as unshadowed 0.0f
+    const vec4f ratio =
+        max(screenSample.shadow * rcp(screenSample.unshaded), make_vec4f(0.f));
+    screenSample.rgb = screenSample.rgb - coverage * make_vec3f(ratio);
+    screenSample.alpha += (1.0f - screenSample.alpha) * ratio.w;
+  }
 
   return screenSample;
 }

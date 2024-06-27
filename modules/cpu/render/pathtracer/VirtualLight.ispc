@@ -23,13 +23,13 @@ inline box1f getMinMaxDistForVirtualLights(
   // transmission)
   interval.lower = distance(lastVertex.dg.P, ray.org);
 
-  // virtual lights are occluded by hit geometry
-  // because lastVertex.dg.P can be different from ray.org (when previously
-  // sampled a Dirac transmission) we cannot just use ray.t as maximum distance
-  interval.upper = distance(lastVertex.dg.P, ray.org + ray.t * ray.dir);
-
   if (pathVertex.type == ENVIRONMENT)
     interval.upper = inf;
+  else
+    // virtual lights are occluded by hit geometry because lastVertex.dg.P can
+    // be different from ray.org (when previously sampled a Dirac transmission)
+    // we cannot just use ray.t as maximum distance
+    interval.upper = distance(lastVertex.dg.P, ray.org + ray.t * ray.dir);
 
   return interval;
 }

@@ -26,12 +26,14 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     PathState &pathState,
     PathVertex &pathVertex,
     float rayConeWidth,
+    vec3f &unshaded,
     const uniform FeatureFlagsHandler &ffh)
 {
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
+  unshaded = make_vec3f(0.f); // illumination without occluders
 
   const uint32 numLightSamples = pathState.firstBounceLight
       ? pathContext.numFirstBounceLightSamples
@@ -66,10 +68,16 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
 
     // evaluate BSDF
     Scattering_EvalRes fe;
+    fe.value = make_vec3f(0.f);
     if (ff.geometry && pathVertex.type == SURFACE) {
       foreach_unique (f in pathVertex.bsdf)
         if (f != NULL)
           fe = BSDF_dispatch_eval(f, pathVertex.wo, ls.dir, ffh);
+    } else if (pathVertex.type == SHADOWCATCHER) {
+      // evaluate a white diffuse BRDF
+      const float cosThetaI = max(dot(ls.dir, pathVertex.dg.Ns), 0.f);
+      fe.value = make_vec3f(cosThetaI); // * one_over_pi cancels anyway
+      fe.pdf = 0.0f; // shadow catcher does not sample FWD
     } else {
 #ifdef OSPRAY_ENABLE_VOLUMES
       if (ff.other & FFO_VOLUME_IN_SCENE) {
@@ -104,6 +112,8 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const vec3f throughput = pathState.throughput * fe.value;
 
     const vec3f unshadedLightContrib = throughput * ls.weight;
+    unshaded = unshaded
+        + unshadedLightContrib * misHeuristic(pathContext, ls.pdf, fe.pdf);
     const vec3f lightContrib = transparentShadow(pathContext.context,
         pathContext.world,
         unshadedLightContrib,

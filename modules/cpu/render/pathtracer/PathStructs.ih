@@ -12,7 +12,6 @@
 #endif
 // c++ shared
 #include "PathTracerShared.h"
-
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct World;
@@ -24,7 +23,8 @@ enum PathVertexType
   VOLUME,
   CAMERA,
   LIGHT,
-  ENVIRONMENT
+  ENVIRONMENT,
+  SHADOWCATCHER
 };
 
 struct PathVertex

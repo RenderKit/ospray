@@ -15,6 +15,8 @@ Version History
 -   New parameter `specularMetallic` for the Principled material to
     optionally disable the incluence of `specular` to metallicness,
     improving compatibility with glTF `KHR_materials_specular`
+-   Improvements to and documentation of the pathtracer's Shadow Catcher
+    feature (enabled via parameter `shadowCatcherPlane`)
 
 ### Changes in v3.2.0:
 

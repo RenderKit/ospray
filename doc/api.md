@@ -2845,8 +2845,8 @@ refinement of image regions that have an estimated variance below the
 Per default the background of the rendered image will be transparent
 black, i.e., the alpha channel holds the opacity of the rendered
 objects. This eases transparency-aware blending of the image with an
-arbitrary background image by the application (via $ospray.rgb +
-appBackground.rgb⋅(1-ospray.alpha)$). The parameter
+arbitrary background image by the application (via the "over" operator,
+i.e., $ospray.rgb + appBackground.rgb⋅(1-ospray.alpha)$). The parameter
 `backgroundColor` or `map_backplate` can be used to already blend with a
 constant background color or backplate texture, respectively, (and
 alpha) during rendering.
@@ -2988,6 +2988,11 @@ supports the following special parameters:
   bool   backgroundRefraction          false  allow for alpha blending even if
                                               background is seen through
                                               refractive objects like glass
+
+  vec4f  shadowCatcherPlane         disabled  components of an invisible [plane]
+                                              that captures shadow
+                                              attentuations, which are blended
+                                              with the background
   ------ -------------------------- --------  ----------------------------------
   : Special parameters understood by the path tracer.
 
@@ -2997,6 +3002,35 @@ otherwise surfaces are treated as completely black.
 The path tracer supports [volumes](#volumes) with multiple scattering.
 The scattering albedo can be specified using the [transfer function].
 Extinction is assumed to be spectrally constant.
+
+Rendering an object with an [HDRI light] results in realistic
+illumination, but the object looks detached and floats in space. As
+remedy a so-called Shadow Catcher can be used by setting the
+coefficients of a [plane] via `shadowCatcherPlane`, which will ground
+the object by computing matching (contact) shadows. The accuracy of the
+shadow estimation depends on the number of light samples per frame
+(via `lightSamples` and/or `pixelSamples`), in particular when using a
+high-contrast HDRI or multiple (colored) light sources. With just a
+single light sample the intensity, gradient and color of the shadows
+will potentially be quite off.
+
+![Chair rendered in an interior HDRI environment.][imgNoShadowCatcher]
+
+![Same scene with enabled Shadow Catcher plane.][imgShadowCatcher]
+
+Applications can also perform their own compositing of the captured
+shadow, because the shadow is also baked into the alpha channel (which
+however means loosing the color tint of the shadow). To do so, the
+`backgroundColor` must be transparent (alpha=0) and should be black
+(otherwise the background color will bleed into the shadow); likewise, light
+sources should be set to `visible=false` to avoid them being visible in
+the background. When using the [denoiser] best enable `denoiseAlpha` as
+well.
+
+![The Shadow Catcher also bakes the (monochrome) shadow into the alpha
+channel, which can be used for further
+compositing.][imgShadowCatcherAlpha]
+
 
 Framebuffer
 -----------

@@ -45,6 +45,7 @@ add_executable(ospTestSuite
   test_framebuffer.cpp
   test_interpolation.cpp
   test_imageop.cpp
+  test_shadowcatcher.cpp
   ospTestSuite.cpp
 )
 

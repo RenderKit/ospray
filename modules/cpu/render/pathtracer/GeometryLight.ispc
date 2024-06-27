@@ -30,8 +30,10 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
   Material *material = pathVertex.dg.material;
 
   foreach_unique (m in material) {
+    if (m == NULL)
+      continue;
     vec3f emission = Material_dispatch_getEmission(m, pathVertex.dg, ffh);
-    if (m != NULL && reduce_max(emission) > 0.f) {
+    if (reduce_max(emission) > 0.f) {
       float misWeight = 1.0f;
       if (pathContext.numGeoLights > 0 && lastVertex.numLightSamples > 0) {
         // at the moment we only support uniform light selection

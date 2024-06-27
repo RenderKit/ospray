@@ -55,11 +55,19 @@ export CMAKE_BUILD_PARALLEL_LEVEL=32
 cmake --build . --target ospray_test_data
 let exitCode+=$?
 
+### Excluded tests
+##################
+# due to IEEE 754 uncompliant NaN handling on ARM NEON,
+# see https://github.com/ispc/ispc/issues/3048
+if [[ `uname -m` =~ arm|aarch ]] ; then
+  test_filters="TestShadowCatcher/ShadowCatcher.multipleLights/0"
+fi
+
 export OIDN_VERBOSE=2
 
 if [ $TEST_CPU ]; then
   mkdir failed
-  ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
+  ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed --gtest_filter="-$test_filters" 
   let exitCode+=$?
 fi
 
@@ -71,7 +79,7 @@ fi
 
 if [ $TEST_MPI ]; then
   mkdir failed-mpi
-  test_filters="TestScenesVariance/*"
+  test_filters+=":TestScenesVariance/*"
   mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi --gtest_filter="-$test_filters" --osp:load-modules=mpi_offload --osp:device=mpiOffload : $MPI_WORKER_CONFIG ospray_mpi_worker
   let exitCode+=$?
 
