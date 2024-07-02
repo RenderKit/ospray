@@ -7,14 +7,20 @@
 
 namespace ospray {
 
-void checkError(oidn::DeviceRef oidnDevice)
+// error callback
+void checkError(void * /*userPtr*/, oidn::Error error, const char *errorMessage)
 {
-  const char *errorMessage = nullptr;
-  auto error = oidnDevice.getError(errorMessage);
   if (error != oidn::Error::None && error != oidn::Error::Cancelled) {
     throw std::runtime_error(
         "Error running OIDN: " + std::string(errorMessage));
   }
+}
+
+void checkError(oidn::DeviceRef oidnDevice)
+{
+  const char *errorMessage = nullptr;
+  auto error = oidnDevice.getError(errorMessage);
+  checkError(nullptr, error, errorMessage);
 }
 
 struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp
@@ -95,14 +101,12 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpShared
 
       // Using SYCL call without SYCL, that's supported in C99 API only
       oidnExecuteSYCLFilterAsync(filter.getHandle(), nullptr, 0, syclEvent);
-      checkError(oidnDevice);
     } else {
       event = drtDevice.launchHostTask([this]() {
         buffer.write(0,
             fbView.viewDims.long_product() * sizeof(vec4f),
             fbView.colorBufferInput);
         filter.execute();
-        checkError(oidnDevice);
       });
     }
     return event;
@@ -146,8 +150,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
         fbView.fbDims.x,
         fbView.fbDims.y,
         0,
-        sizeof(float) * 4,
-        0);
+        sizeof(float) * 4);
     if (fbView.normalBuffer)
       filter.setImage("normal",
           buffer,
@@ -190,7 +193,6 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpCopy
 
       // Wait for the async commands to finish
       oidnDevice.sync();
-      checkError(oidnDevice);
     });
     return event;
   }
@@ -212,11 +214,13 @@ DenoiseFrameOp::DenoiseFrameOp(devicert::Device &device) : drtDevice(device)
   } else {
     oidnDevice = oidn::newDevice();
   }
+  checkError(oidnDevice);
+  oidnDevice.setErrorFunction(checkError);
+
   if (device.isDebug())
     oidnDevice.set("verbose", 2);
 
   oidnDevice.commit();
-  checkError(oidnDevice);
 
   sharedMem = syclQueuePtr || oidnDevice.get<bool>("systemMemorySupported");
 }
