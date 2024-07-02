@@ -16,7 +16,8 @@ class ImageOpBase : public Base
   void SetUp() override;
 
  protected:
-  std::string imageOp;
+  std::string imageOpType;
+  cpp::ImageOperation imageOp;
 };
 
 void ImageOpBase::SetUp()
@@ -25,7 +26,7 @@ void ImageOpBase::SetUp()
 
   instances.clear();
 
-  auto builder = ospray::testing::newBuilder("cornell_box");
+  auto builder = ospray::testing::newBuilder("random_discs");
   ospray::testing::setParam(builder, "rendererType", rendererType);
   ospray::testing::commit(builder);
 
@@ -34,13 +35,14 @@ void ImageOpBase::SetUp()
 
   camera.setParam("position", vec3f(0.f, 0.f, -2.5f));
 
-  cpp::ImageOperation imgOp(imageOp);
-  framebuffer.setParam("imageOperation", cpp::CopiedData(imgOp));
+  imageOp = cpp::ImageOperation(imageOpType);
+  framebuffer.setParam("imageOperation", cpp::CopiedData(imageOp));
   framebuffer.commit();
 }
 
 #ifdef OSPRAY_MODULE_DENOISER
-class DenoiserOp : public ImageOpBase, public ::testing::Test
+class DenoiserOp : public ImageOpBase,
+                   public ::testing::TestWithParam<bool /*denoiseAlpha*/>
 {
  public:
   DenoiserOp()
@@ -48,11 +50,13 @@ class DenoiserOp : public ImageOpBase, public ::testing::Test
     ospLoadModule("denoiser");
 
     rendererType = "pathtracer";
-    imageOp = "denoiser";
+    imageOpType = "denoiser";
   }
   void SetUp() override
   {
     ImageOpBase::SetUp();
+    imageOp.setParam("denoiseAlpha", GetParam());
+    imageOp.commit();
   }
 };
 #endif
@@ -66,7 +70,7 @@ class ImageOp
   ImageOp()
   {
     auto params = GetParam();
-    imageOp = std::get<0>(params);
+    imageOpType = std::get<0>(params);
     rendererType = std::get<1>(params);
   }
   void SetUp() override
@@ -78,10 +82,11 @@ class ImageOp
 // Test Instantiations //////////////////////////////////////////////////////
 
 #ifdef OSPRAY_MODULE_DENOISER
-TEST_F(DenoiserOp, DenoiserOp)
+TEST_P(DenoiserOp, DenoiserOp)
 {
   PerformRenderTest();
 }
+INSTANTIATE_TEST_SUITE_P(DenoiserOp, DenoiserOp, ::testing::Bool());
 #endif
 
 TEST_P(ImageOp, ImageOp)

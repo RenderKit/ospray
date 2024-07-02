@@ -3126,6 +3126,11 @@ using a GPU when available. The device selection be overridden by the
 environment variable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
 `sycl`, `cuda`, `hip`, or a physical device ID
 
+  Type  Name           Default  Description
+  ----- ------------- --------  ------------------------------------------------
+  bool  denoiseAlpha     false  whether to denoise the alpha channel as well
+  ----- ------------- --------  ------------------------------------------------
+  : Parameters accepted by the denoiser.
 
 Rendering
 ---------
