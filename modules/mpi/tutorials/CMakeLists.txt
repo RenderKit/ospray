@@ -33,7 +33,7 @@ if (OSPRAY_ENABLE_APPS_TUTORIALS)
   )
 
   target_compile_definitions(ospMPIDistribTutorialCpp PRIVATE
-    -DOSPRAY_CPP_RKCOMMON_TYPES)
+    OSPRAY_CPP_RKCOMMON_TYPES)
 
   install(TARGETS ospMPIDistribTutorialCpp
       DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -92,7 +92,8 @@ if (OSPRAY_ENABLE_APPS_EXAMPLES)
     MPI::MPI_CXX
   )
 
-  target_compile_definitions(mpi_tutorial_common PUBLIC -DOSPRAY_CPP_RKCOMMON_TYPES)
+  target_compile_definitions(mpi_tutorial_common PUBLIC
+    OSPRAY_CPP_RKCOMMON_TYPES)
 
   ospray_create_mpi_tutorial(ospMPIDistribTutorialSpheres
     ospMPIDistribTutorialSpheres.cpp

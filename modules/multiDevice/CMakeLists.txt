@@ -40,9 +40,7 @@ add_definitions_ispc(
 )
 
 
-add_library(ospray_module_multidevice_cpu SHARED)
-
-ispc_target_add_sources(ospray_module_multidevice_cpu
+add_library(ospray_module_multidevice_cpu SHARED
   ${OSPRAY_MULTIDEVICE_HOST_SOURCES}
 )
 

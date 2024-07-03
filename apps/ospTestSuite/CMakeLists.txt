@@ -34,7 +34,7 @@ if (OSPRAY_ENABLE_VOLUMES)
   # we can enable/disable the VKL-dependent tests for enum values
   target_compile_definitions(ospray_gtest_utils
     PUBLIC
-    -DOSPRAY_ENABLE_VOLUMES
+    OSPRAY_ENABLE_VOLUMES
   )
 endif()
 
@@ -74,7 +74,7 @@ if (OSPRAY_MODULE_DENOISER)
   # Enable OIDN tests
   target_compile_definitions(ospTestSuite
     PUBLIC
-    -DOSPRAY_MODULE_DENOISER
+    OSPRAY_MODULE_DENOISER
   )
 endif()
 

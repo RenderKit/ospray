@@ -5,8 +5,6 @@
 ## Generic ISPC macros/options ################################################
 ###############################################################################
 
-option(BUILD_GPU "Build GPU code paths?" ON)
-
 set(ISPC_INCLUDE_DIR "")
 macro (include_directories_ispc)
   list(APPEND ISPC_INCLUDE_DIR ${ARGN})
@@ -46,9 +44,6 @@ else()
 endif()
 
 ## ISPC config options ##
-
-option(ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
-mark_as_advanced(ISPC_FAST_MATH)
 
 set(ISPC_ADDRESSING 32 CACHE STRING "32 vs 64 bit addressing in ispc")
 set_property(CACHE ISPC_ADDRESSING PROPERTY STRINGS 32 64)
@@ -123,6 +118,11 @@ macro (ispc_compile)
   cmake_parse_arguments(ISPC_COMPILE "" "TARGET" "" ${ARGN})
 
   set(ISPC_ADDITIONAL_ARGS "")
+  if (OSPRAY_STRICT_BUILD)
+    list(APPEND ISPC_ADDITIONAL_ARGS --wno-perf)
+  else()
+    list(APPEND ISPC_ADDITIONAL_ARGS --woff)
+  endif()
   # Check if CPU target is passed externally
   if (NOT ISPC_TARGET_CPU)
     set(ISPC_TARGETS ${ISPC_TARGET_LIST})
@@ -143,7 +143,8 @@ macro (ispc_compile)
     set(ISPC_ARCHITECTURE "x86")
   endif()
 
-  set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
+  file(RELATIVE_PATH ISPC_TARGET_DIR_RELATIVE ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+  set(ISPC_TARGET_DIR ${CMAKE_BINARY_DIR}/${ISPC_TARGET_DIR_RELATIVE})
   include_directories(${ISPC_TARGET_DIR})
 
   if(ISPC_INCLUDE_DIR)
@@ -182,10 +183,6 @@ macro (ispc_compile)
     list(APPEND ISPC_ADDITIONAL_ARGS --opt=disable-assertions)
   endif()
 
-  if (ISPC_FAST_MATH)
-    list(APPEND ISPC_ADDITIONAL_ARGS --opt=fast-math)
-  endif()
-
   # Also set the target-local include directories and defines if
   # we were given a target name
   set(ISPC_INCLUDE_DIRS_EXPR "")
@@ -211,6 +208,7 @@ macro (ispc_compile)
     string(REPLACE "../" "_/" src_relpath "${src_relpath}")
 
     set(outdir "${ISPC_TARGET_DIR}/${src_relpath}")
+    set(outdir_relative "${ISPC_TARGET_DIR_RELATIVE}/${src_relpath}")
     set(input ${CMAKE_CURRENT_SOURCE_DIR}/${src})
 
     set(ISPC_DEPENDENCIES_FILE ${outdir}/${fname}.dev.idep)
@@ -227,6 +225,11 @@ macro (ispc_compile)
       endforeach()
     endif()
 
+    # use relative path for genereated header file, because the path is
+    # included as commment and the header will be distributed
+    set(headerfile "${outdir}/${fname}_ispc.h")
+    file(RELATIVE_PATH headerfile ${CMAKE_CURRENT_BINARY_DIR} ${headerfile})
+
     add_custom_command(
       OUTPUT ${results} ${outdir}/${fname}_ispc.h
       COMMAND ${CMAKE_COMMAND} -E make_directory ${outdir}
@@ -240,19 +243,25 @@ macro (ispc_compile)
         --addressing=${ISPC_ADDRESSING}
         ${ISPC_OPT_FLAGS}
         --target=${ISPC_TARGET_ARGS}
-        --woff
+        --opt=fast-math
         ${ISPC_ADDITIONAL_ARGS}
-        -h ${outdir}/${fname}_ispc.h
+        -h ${headerfile}
         -MMM ${ISPC_DEPENDENCIES_FILE}
         -o ${outdir}/${fname}.dev${ISPC_TARGET_EXT}
         ${input}
       DEPENDS ${input} ${ISPC_DEPENDENCIES}
-      COMMENT "Building ISPC object ${outdir}/${fname}.dev${ISPC_TARGET_EXT}"
+      COMMENT "Building ISPC object ${outdir_relative}/${fname}.dev${ISPC_TARGET_EXT}"
       COMMAND_EXPAND_LISTS
       VERBATIM
     )
+    list(APPEND ISPC_OBJECTS ${results})
 
-    set(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
+    # avoid race conditions if multiple targets compile the same ispc source file
+    string(REPLACE "/" "_" dep_target "compile__${src}")
+    if (NOT TARGET ${dep_target})
+      add_custom_target(${dep_target} DEPENDS ${results})
+    endif()
+    list(APPEND ISPC_DEPENDENCY_TARGETS ${dep_target})
   endforeach()
 endmacro()
 
@@ -265,36 +274,23 @@ function(ispc_target_add_sources name)
   ## Split-out C/C++ from ISPC files ##
 
   set(ISPC_SOURCES "")
-  set(OTHER_SOURCES "")
+  get_property(TARGET_SOURCES TARGET ${name} PROPERTY SOURCES)
 
   foreach(src ${ARGN})
     get_filename_component(ext ${src} EXT)
     if (ext STREQUAL ".ispc")
-      set(ISPC_SOURCES ${ISPC_SOURCES} ${src})
+      list(APPEND ISPC_SOURCES ${src})
     else()
-      set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
+      list(APPEND TARGET_SOURCES ${src})
     endif()
   endforeach()
 
-  ## Get existing target definitions and include dirs ##
+  if (ISPC_SOURCES)
+    ispc_compile(${ISPC_SOURCES})
+    list(APPEND TARGET_SOURCES ${ISPC_OBJECTS})
+    add_dependencies(${name} ${ISPC_DEPENDENCY_TARGETS})
+  endif()
 
-  # NOTE(jda) - This needs work: BUILD_INTERFACE vs. INSTALL_INTERFACE isn't
-  #             handled automatically.
-
-  #get_property(TARGET_DEFINITIONS TARGET ${name} PROPERTY COMPILE_DEFINITIONS)
-  #get_property(TARGET_INCLUDES TARGET ${name} PROPERTY INCLUDE_DIRECTORIES)
-
-  #set(ISPC_DEFINITIONS ${TARGET_DEFINITIONS})
-  #set(ISPC_INCLUDE_DIR ${TARGET_INCLUDES})
-
-  ## Compile ISPC files ##
-
-  ispc_compile(${ISPC_SOURCES})
-
-  ## Set final sources on target ##
-
-  get_property(TARGET_SOURCES TARGET ${name} PROPERTY SOURCES)
-  list(APPEND TARGET_SOURCES ${ISPC_OBJECTS} ${OTHER_SOURCES})
   set_target_properties(${name} PROPERTIES SOURCES "${TARGET_SOURCES}")
 endfunction()
 

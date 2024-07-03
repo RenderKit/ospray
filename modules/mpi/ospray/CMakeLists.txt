@@ -114,18 +114,20 @@ if (OSPRAY_ENABLE_VOLUMES)
   )
 endif()
 
-add_library(ospray_module_mpi_distributed_cpu SHARED)
+add_library(ospray_module_mpi_distributed_cpu SHARED
+    ${OSPRAY_MPI_DISTRIBUTED_HOST_SOURCES}
+)
 
 ispc_target_add_sources(ospray_module_mpi_distributed_cpu
-    ${OSPRAY_MPI_DISTRIBUTED_HOST_SOURCES}
     ${OSPRAY_MPI_DISTRIBUTED_KERNEL_SOURCES}
 )
 
 # XXX ISPC cannot DLL-import constants, need to directly link again
 if (WIN32)
-  ispc_target_add_sources(ospray_module_mpi_distributed_cpu
-    ../../cpu/math/halton.c
-    ../../cpu/math/sobol.c
+  target_sources(ospray_module_mpi_distributed_cpu
+    PRIVATE
+      ../../cpu/math/halton.c
+      ../../cpu/math/sobol.c
   )
 endif()
 
@@ -197,12 +199,10 @@ if (OSPRAY_MODULE_GPU)
   # Install and export without DESTINATION to turn it into INTERFACE library
   install(TARGETS ospray_module_mpi_distributed_gpu_kernels EXPORT ospray_Exports)
 
-  add_library(ospray_module_mpi_distributed_gpu SHARED)
-
-  ispc_target_add_sources(ospray_module_mpi_distributed_gpu 
+  add_library(ospray_module_mpi_distributed_gpu SHARED
     ${OSPRAY_MPI_DISTRIBUTED_HOST_SOURCES}
   )
- 
+
   # Note: GPU hybrid code defines are brought in for us by linking the CPU module
   target_compile_definitions(ospray_module_mpi_distributed_gpu PRIVATE
     OSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
@@ -245,6 +245,7 @@ foreach(dir ${SUBDIRS})
     COMPONENT devel
     FILES_MATCHING
     PATTERN *_ispc.h
+    PATTERN CMakeFiles EXCLUDE
   )
 endforeach()
 

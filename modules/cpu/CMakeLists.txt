@@ -115,7 +115,6 @@ set(OSPRAY_HOST_SOURCES
   texture/Texture.cpp
   texture/Texture2D.cpp
   texture/registration.cpp
-  texture/MipMapGeneration.ispc
 )
 
 set(OSPRAY_KERNEL_SOURCES
@@ -214,7 +213,7 @@ set(OSPRAY_BCKND_SYCL_SOURCES
 )
 
 if (OSPRAY_ENABLE_VOLUMES)
-  set(OSPRAY_VOLUMES_HOST_SOURCES
+  list(APPEND OSPRAY_HOST_SOURCES
     geometry/Isosurfaces.cpp
 
     texture/TextureVolume.cpp
@@ -227,7 +226,7 @@ if (OSPRAY_ENABLE_VOLUMES)
     volume/transferFunction/registration.cpp
   )
 
-  set(OSPRAY_VOLUMES_KERNEL_SOURCES
+  list(APPEND OSPRAY_KERNEL_SOURCES
     geometry/Isosurfaces.ispc
 
     render/ao/volumes.ispc
@@ -343,18 +342,19 @@ if (OSPRAY_MODULE_CPU)
     )
   endif()
 
-  add_library(ospray_module_cpu SHARED)
+  add_library(ospray_module_cpu SHARED
+    ${OSPRAY_HOST_SOURCES}
+    ${OSPRAY_ISPC_DEF}
+    ${OSPRAY_BCKND_ISPC_SOURCES}
+    math/halton.c math/sobol.c # constants exported for ISPC only
+    geometry/Subdivision.cpp
+  )
 
   ispc_target_add_sources(ospray_module_cpu
-      ${OSPRAY_BCKND_ISPC_SOURCES}
-      ${OSPRAY_HOST_SOURCES}
-      ${OSPRAY_VOLUMES_HOST_SOURCES}
-      ${OSPRAY_KERNEL_SOURCES}
-      ${OSPRAY_VOLUMES_KERNEL_SOURCES}
-      ${OSPRAY_ISPC_DEF}
-      math/halton.c math/sobol.c # constants exported for ISPC only
-      geometry/Subdivision.cpp
-      geometry/Subdivision.ispc)
+    ${OSPRAY_KERNEL_SOURCES}
+    geometry/Subdivision.ispc
+    texture/MipMapGeneration.ispc
+  )
 
   ospray_install_library(ospray_module_cpu lib)
 
@@ -395,11 +395,6 @@ if (OSPRAY_MODULE_CPU)
       $<BUILD_INTERFACE:openvkl::openvkl_module_cpu_device>
     )
 
-    target_include_directories(ospray_module_cpu
-    PUBLIC
-      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
-    )
-
     target_compile_definitions(ospray_module_cpu
     PUBLIC
       OSPRAY_ENABLE_VOLUMES
@@ -422,7 +417,6 @@ if (OSPRAY_MODULE_GPU)
 
   add_library(ospray_module_gpu_kernels OBJECT
     ${OSPRAY_KERNEL_SOURCES}
-    ${OSPRAY_VOLUMES_KERNEL_SOURCES}
   )
 
   ospray_add_sycl_target(ospray_module_gpu_kernels)
@@ -498,11 +492,6 @@ if (OSPRAY_MODULE_GPU)
       $<BUILD_INTERFACE:openvkl::openvkl_module_gpu_device>
     )
 
-    target_include_directories(ospray_module_gpu_kernels
-    PUBLIC
-      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
-    )
-
     target_compile_definitions(ospray_module_gpu_kernels
     PUBLIC
       OSPRAY_ENABLE_VOLUMES
@@ -513,11 +502,11 @@ if (OSPRAY_MODULE_GPU)
   install(TARGETS ospray_module_gpu_kernels EXPORT ospray_Exports)
 
   add_library(ospray_module_gpu SHARED
+    ${OSPRAY_HOST_SOURCES}
     ${OSPRAY_BCKND_SYCL_SOURCES}
   )
   ispc_target_add_sources(ospray_module_gpu
-    ${OSPRAY_HOST_SOURCES}
-    ${OSPRAY_VOLUMES_HOST_SOURCES}
+    texture/MipMapGeneration.ispc
   )
 
   target_link_libraries(ospray_module_gpu
@@ -547,6 +536,7 @@ foreach(dir . ${SUBDIRS})
     COMPONENT devel
     FILES_MATCHING
     PATTERN *_ispc.h
+    PATTERN CMakeFiles EXCLUDE
   )
 endforeach()
 

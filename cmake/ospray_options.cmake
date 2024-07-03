@@ -84,9 +84,6 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
 ospray_find_embree(${EMBREE_VERSION_REQUIRED} FALSE)
 ospray_verify_embree_features()
 
-# ISPC
-set(ISPC_FAST_MATH ON)
-
 # Open VKL
 if (OSPRAY_ENABLE_VOLUMES)
   ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} FALSE)
