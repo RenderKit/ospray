@@ -53,6 +53,7 @@ inline T *StructSharedCreate(devicert::Device &device)
 
 struct StructSharedPtr
 {
+  StructSharedPtr() : _device(nullptr), _ptr(nullptr) {}
   ~StructSharedPtr();
 
   template <typename, typename>
@@ -62,14 +63,14 @@ struct StructSharedPtr
   friend struct AddStructShared;
 
  private:
-  devicert::Device *_device{nullptr};
-  void *_ptr{nullptr};
+  devicert::Device *_device;
+  void *_ptr;
 };
 
 template <typename T, typename>
 struct StructSharedGet
 {
-  StructSharedGet(devicert::Device &, StructSharedPtr &);
+  StructSharedGet(devicert::Device &, devicert::Device **, void **);
   T *getSh() const;
 };
 
@@ -126,7 +127,7 @@ struct AddStructShared
   template <typename... Args>
   AddStructShared(devicert::Device &device, Args &&...args)
       : StructSharedGet<Struct, AddStructShared<Base, Struct>>(
-          device, *static_cast<StructSharedPtr *>(this)),
+          device, &_device, &_ptr),
         Base(std::forward<Args>(args)...)
   {}
 };
@@ -140,11 +141,11 @@ inline StructSharedPtr::~StructSharedPtr()
 
 template <typename T, typename B>
 StructSharedGet<T, B>::StructSharedGet(
-    devicert::Device &device, StructSharedPtr &ssptr)
+    devicert::Device &device, devicert::Device **_device, void **_ptr)
 {
-  if (!ssptr._ptr) {
-    ssptr._ptr = (void *)StructSharedCreate<T>(device);
-    ssptr._device = &device;
+  if (!*_ptr) {
+    *_ptr = (void *)StructSharedCreate<T>(device);
+    *_device = &device;
   }
 }
 
