@@ -36,13 +36,20 @@ void ImageOpBase::SetUp()
   camera.setParam("position", vec3f(0.f, 0.f, -2.5f));
 
   imageOp = cpp::ImageOperation(imageOpType);
+
+  frames = 1;
+  framebuffer = cpp::FrameBuffer(imgSize.x,
+      imgSize.y,
+      frameBufferFormat,
+      OSP_FB_COLOR | OSP_FB_ALBEDO | OSP_FB_NORMAL);
   framebuffer.setParam("imageOperation", cpp::CopiedData(imageOp));
   framebuffer.commit();
 }
 
 #ifdef OSPRAY_MODULE_DENOISER
 class DenoiserOp : public ImageOpBase,
-                   public ::testing::TestWithParam<bool /*denoiseAlpha*/>
+                   public ::testing::TestWithParam<
+                       std::tuple<bool /*denoiseAlpha*/, OSPDenoiserQuality>>
 {
  public:
   DenoiserOp()
@@ -55,7 +62,9 @@ class DenoiserOp : public ImageOpBase,
   void SetUp() override
   {
     ImageOpBase::SetUp();
-    imageOp.setParam("denoiseAlpha", GetParam());
+    auto params = GetParam();
+    imageOp.setParam("denoiseAlpha", std::get<0>(params));
+    imageOp.setParam("quality", std::get<1>(params));
     imageOp.commit();
   }
 };
@@ -86,7 +95,12 @@ TEST_P(DenoiserOp, DenoiserOp)
 {
   PerformRenderTest();
 }
-INSTANTIATE_TEST_SUITE_P(DenoiserOp, DenoiserOp, ::testing::Bool());
+INSTANTIATE_TEST_SUITE_P(DenoiserOp,
+    DenoiserOp,
+    ::testing::Combine(::testing::Bool(),
+        ::testing::Values(OSP_DENOISER_QUALITY_LOW,
+            OSP_DENOISER_QUALITY_MEDIUM,
+            OSP_DENOISER_QUALITY_HIGH)));
 #endif
 
 TEST_P(ImageOp, ImageOp)

@@ -21,7 +21,8 @@ Version History
         `targetFrames` parameter at the framebuffer
       - Note a maximum of 64k samples is supported
 -   Improved `denoiser` image operation:
-      - Optionally denoise alpha channel as well, controlled via
+      - User-controlled quality levels via parameter `quality`
+      - Optionally denoise alpha channel as well, enabled via
         parameter `denoiseAlpha`
 -   Removed Intel ISPCRT dependency (ISPC compiler is still needed):
     -   oneAPI Level Zero Loader is no longer necessary

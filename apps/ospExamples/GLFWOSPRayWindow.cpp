@@ -100,6 +100,9 @@ static const std::vector<std::string> g_pixelFilterTypes = {
 static const std::vector<std::string> g_AOVs = {
     "color", "depth", "albedo", "primID", "objID", "instID"};
 
+static const std::vector<std::string> g_denoiserQuality = {
+    "low", "medium", "high"};
+
 const char *vec_string_getter(void *vec_, int index)
 {
   auto v = (std::vector<std::string> *)vec_;
@@ -115,12 +118,15 @@ void error_callback(int error, const char *desc)
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
-GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
-    : denoiserAvailable(denoiser)
+GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiserAvail)
+    : denoiserAvailable(denoiserAvail)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
   }
+
+  if (denoiserAvailable)
+    denoiser = cpp::ImageOperation("denoiser");
 
   activeWindow = this;
 
@@ -643,6 +649,18 @@ void GLFWOSPRayWindow::buildUI()
   if (denoiserAvailable) {
     if (ImGui::Checkbox("denoiser", &denoiserEnabled))
       updateFrameOpsNextFrame = true;
+
+    static int whichQuality = 1; // medium
+    if (denoiserEnabled
+        && ImGui::Combo("quality##whichQuality",
+            &whichQuality,
+            vec_string_getter,
+            (void *)&g_denoiserQuality,
+            g_denoiserQuality.size())) {
+      denoiser.setParam("quality",
+          OSPDenoiserQuality::OSP_DENOISER_QUALITY_LOW + whichQuality);
+      addObjectToCommit(denoiser.handle());
+    }
   }
 
   ImGui::Separator();
@@ -975,8 +993,7 @@ void GLFWOSPRayWindow::refreshFrameOperations()
 {
   framebuffer.setParam("targetFrames", targetFrames);
   if (denoiserEnabled) {
-    cpp::ImageOperation d("denoiser");
-    framebuffer.setParam("imageOperation", cpp::CopiedData(d));
+    framebuffer.setParam("imageOperation", cpp::CopiedData(denoiser));
   } else {
     framebuffer.removeParam("imageOperation");
   }

@@ -24,7 +24,7 @@ struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOpInterface
 
   devicert::Device &drtDevice;
   oidn::DeviceRef oidnDevice;
-  bool sharedMem{false};
+  int quality{OSP_DENOISER_QUALITY_MEDIUM};
   bool denoiseAlpha{false};
 };
 

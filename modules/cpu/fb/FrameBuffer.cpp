@@ -83,8 +83,10 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
 void FrameBuffer::commit()
 {
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
-  getSh()->targetFrames =
-      doAccum ? max(0, getParam<int>("targetFrames", 0)) : 1;
+  // always query `targetFrames` to clear query status
+  getSh()->targetFrames = max(0, getParam<int>("targetFrames", 0));
+  if (!doAccum)
+    getSh()->targetFrames = 1;
 }
 
 void FrameBuffer::clear()

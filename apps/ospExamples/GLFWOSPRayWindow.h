@@ -94,6 +94,7 @@ class GLFWOSPRayWindow
   cpp::FrameBuffer framebuffer;
   cpp::Future currentFrame;
   cpp::Texture backplateTex{"texture2d"};
+  cpp::ImageOperation denoiser;
 
   int targetFrames{8};
 

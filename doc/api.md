@@ -3121,10 +3121,24 @@ using a GPU when available. The device selection be overridden by the
 environment variable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
 `sycl`, `cuda`, `hip`, or a physical device ID
 
-  Type  Name           Default  Description
-  ----- ------------- --------  ------------------------------------------------
-  bool  denoiseAlpha     false  whether to denoise the alpha channel as well
-  ----- ------------- --------  ------------------------------------------------
+  ----- ------------- ----------------------------------------------------------
+  Type  Name          Description
+  ----- ------------- ----------------------------------------------------------
+  uint  quality       `OSPDenoiserQuality` for denoiser quality, default is
+
+                      `OSP_DENOISER_QUALITY_MEDIUM`: balanced
+                      quality/performance for interactive/real-time rendering;
+                      also allowed are:
+
+                      `OSP_DENOISER_QUALITY_LOW`: high performance, for
+                      interactive/real-time preview rendering
+
+                      `OSP_DENOISER_QUALITY_HIGH`: high quality, for final frame
+                      rendering
+
+  bool  denoiseAlpha  whether to denoise the alpha channel as well, default
+                      false
+  ----- ------------- ----------------------------------------------------------
   : Parameters accepted by the denoiser.
 
 Rendering

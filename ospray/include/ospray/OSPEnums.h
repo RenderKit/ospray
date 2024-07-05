@@ -423,3 +423,14 @@ typedef enum
   OSP_INTENSITY_QUANTITY_SCALE, // linear scaling factor for the built-in type
   OSP_INTENSITY_QUANTITY_UNKNOWN
 } OSPIntensityQuantity;
+
+// OSPRay quality levels (used for denoiser), same values as OIDN
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
+  OSP_DENOISER_QUALITY_LOW = 4,
+  OSP_DENOISER_QUALITY_MEDIUM = 5,
+  OSP_DENOISER_QUALITY_HIGH = 6
+} OSPDenoiserQuality;
