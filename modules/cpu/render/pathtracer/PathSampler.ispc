@@ -157,7 +157,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #endif
     pathVertex.type = noHit(ray) || !ff.geometry ? ENVIRONMENT : SURFACE;
 
-    if (shadowCatcher(pathContext, pathState, pathVertex, ray, sample, ffh)) {
+    if (shadowCatcher(pathContext, pathState, pathVertex, ray, rayCone, ffh)) {
       pathVertex.type = ENVIRONMENT;
     }
 

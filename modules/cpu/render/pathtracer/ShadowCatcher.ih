@@ -11,13 +11,14 @@ struct PathContext;
 struct PathState;
 struct PathVertex;
 struct Ray;
+struct RayCone;
 struct ScreenSample;
 
 SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     PathState &pathState,
     PathVertex &pathVertex,
     const Ray &ray,
-    ScreenSample &sample,
+    const RayCone &rayCone,
     const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

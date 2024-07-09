@@ -22,7 +22,7 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     PathState &pathState,
     PathVertex &pathVertex,
     const Ray &ray,
-    ScreenSample &,
+    const RayCone &rayCone,
     const uniform FeatureFlagsHandler &ffh)
 
 {
@@ -44,6 +44,8 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
 
     pathVertex.dg.renderer = &pathContext.context->super;
     pathVertex.dg.P = ray.org + pathState.shadowCatcherDist * ray.dir;
+    const float rayConeWidth = rayCone.width
+        + rayCone.dwdt * pathState.shadowCatcherDist; // propagate to hit
     const float eps =
         calcEpsilon(pathVertex.dg.P, ray.dir, pathState.shadowCatcherDist);
     pathVertex.dg.P = pathVertex.dg.P + eps * pathVertex.dg.Ng;
@@ -76,8 +78,11 @@ SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
 
       // test for shadows
       Ray shadowRay;
-      RayCone shadowCone;
       setRay(shadowRay, pathVertex.dg.P, ls.dir, 0.0f, ls.dist, pathState.time);
+      // connect ray cone to point on light
+      RayCone shadowCone;
+      shadowCone.width = rayConeWidth;
+      shadowCone.dwdt = -rayConeWidth * rcp(ls.dist);
 
       // Trace ray in clipping geometries scene, fill array with ray intervals
       RayIntervals rayIntervals;
