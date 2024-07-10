@@ -47,9 +47,7 @@ inline void updateAuxilliaryData(
     PathState &pathState, const PathVertex &pathVertex, ScreenSample &sample)
 {
   sample.albedo = pathState.throughput * pathVertex.albedo;
-  if (pathVertex.type == VOLUME) {
-    sample.normal = make_vec3f(0.f);
-  } else if (pathVertex.type == SURFACE) {
+  if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;
     foreach_unique (f in pathVertex.bsdf) {
       if (f != NULL && f->frame != NULL)
@@ -57,7 +55,6 @@ inline void updateAuxilliaryData(
     }
     sample.normal = pathState.throughput * Ns;
   }
-  pathState.auxFree = false;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

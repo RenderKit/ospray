@@ -83,7 +83,6 @@ struct PathState
                      // backplate
   bool specularTransmissionPath; // path from camera only has specular
                                  // transmissions, for alpha and backplate
-  bool auxFree; // normal & albedo buffer were not yet written to
   uniform uint32 depth;
 };
 

@@ -2983,7 +2983,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
   OSP_FB_ACCUM        accumulation buffer for progressive refinement
   OSP_FB_VARIANCE     for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
   OSP_FB_NORMAL       accumulated world-space normal of the first non-specular hit, as vec3f
-  OSP_FB_ALBEDO       accumulated material albedo (color without illumination) at the first hit, as vec3f
+  OSP_FB_ALBEDO       accumulated material albedo (color without illumination) at the first non-specular hit, as vec3f
   OSP_FB_ID_PRIMITIVE primitive index of the first hit, as uint32
   OSP_FB_ID_OBJECT    geometric/volumetric model `id`, if specified, or index in [group] of first hit, as uint32
   OSP_FB_ID_INSTANCE  user defined [instance] `id`, if specified, or instance index of first hit, as uint32

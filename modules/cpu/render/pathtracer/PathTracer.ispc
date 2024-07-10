@@ -54,7 +54,6 @@ static ScreenSample PathTraceIntegrator_Li(PathContext &pathContext,
   pathState.specularTransmissionPath =
       true; // path from camera only has specular transmissions, for alpha and
             // backplate
-  pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;
   pathState.scatteringEvents = 0;
   pathState.firstBounceLight = true;

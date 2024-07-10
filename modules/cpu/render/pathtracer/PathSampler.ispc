@@ -77,6 +77,7 @@ inline Scattering_SampleRes sampleDirection(const vec2f &s,
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
   Scattering_SampleRes fs;
+  fs.weight = make_vec3f(0.0f);
   if (ff.geometry && pathVertex.type == SURFACE) {
     foreach_unique (f in pathVertex.bsdf) {
       if (f != NULL) {
@@ -273,24 +274,25 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     // unconditionally advance sampler state to stay in lockstep across paths
     LDSampler_nextGroup(pathState.ldSampler);
     // next event estimation
+    if (isSmooth(pathVertex)) {
+      // record last vertex of a specular-only path
+      if (pathState.scatteringEvents == 0)
+        updateAuxilliaryData(pathState, pathVertex, sample);
 #ifdef OSPRAY_PATHTRACER_DEBUG
-    if (!pathContext.disableNEE)
+      if (!pathContext.disableNEE)
 #endif
-      if (isSmooth(pathVertex)) {
+      {
         pathState.contribution = pathState.contribution
             + nextEventEstimation(
                 pathContext, pathState, pathVertex, sample.rayCone.width, ffh);
         pathState.firstBounceLight = false;
       }
+    }
 
     float ss;
     uint32 uu3;
     const vec2f s = LDSampler_getNext4Samples(pathState.ldSampler, ss, uu3);
     Scattering_SampleRes fs = sampleDirection(s, ss, pathVertex, ffh);
-
-    if (pathState.auxFree && (fs.type & SCATTERING_SMOOTH)) {
-      updateAuxilliaryData(pathState, pathVertex, sample);
-    }
 
     // terminate path when zero contribution from material
     if (reduce_max(fs.weight) <= 0.0f || fs.pdf <= PDF_CULLING) {
