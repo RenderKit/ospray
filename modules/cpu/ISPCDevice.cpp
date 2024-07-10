@@ -18,6 +18,7 @@
 #include "render/Material.h"
 #include "render/Renderer.h"
 #include "render/RenderingFuture.h"
+#include "texture/MipMapCache.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -307,6 +308,10 @@ void ISPCDevice::commit()
     vklCommitDevice(vklDevice);
   }
 #endif
+
+  // Create MIP map cache if needed
+  if (!disableMipMapGeneration)
+    mipMapCache = rkcommon::make_unique<MipMapCache>();
 
 #ifndef OSPRAY_TARGET_SYCL
   // Output device info string

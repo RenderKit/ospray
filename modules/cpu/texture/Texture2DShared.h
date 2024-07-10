@@ -19,7 +19,6 @@ struct Texture2D
 
   void *data[MAX_MIPMAP_LEVEL];
   int maxLevel;
-  vec4f avg; // used instead of last level
 
   OSPTextureFormat format;
   OSPTextureFilter filter;
@@ -30,7 +29,6 @@ struct Texture2D
       : size(0),
         data{nullptr},
         maxLevel(0),
-        avg(0.f, 0.f, 0.f, 1.f),
         format(OSP_TEXTURE_FORMAT_INVALID),
         filter(OSP_TEXTURE_FILTER_LINEAR),
         wrapMode(vec2ui(OSP_TEXTURE_WRAP_REPEAT))
@@ -42,8 +40,7 @@ struct Texture2D
       int maxLevel,
       OSPTextureFormat format,
       OSPTextureFilter flags,
-      const vec2ui &wrapMode,
-      const vec4f &avg = {0.f, 0.f, 0.f, 1.f});
+      const vec2ui &wrapMode);
 };
 } // namespace ispc
 #else

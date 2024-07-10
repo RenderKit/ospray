@@ -28,6 +28,7 @@ int ISPCDevice_isa();
 namespace ospray {
 
 struct LocalTiledLoadBalancer;
+struct MipMapCache;
 
 namespace api {
 
@@ -170,6 +171,11 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
       const size_t globalSize, const size_t workgroupSize) const;
 #endif
 
+  inline MipMapCache &getMipMapCache()
+  {
+    return *mipMapCache;
+  }
+
  private:
   std::unique_ptr<devicert::Device> drtDevice;
 
@@ -181,6 +187,10 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   // External SYCL context and device
   void *appSyclCtx{nullptr};
   void *appSyclDevice{nullptr};
+
+  // Device-wide MIP map cache is needed because the same texture data objects
+  // (and thus generated MIP maps) can be shared among many textures
+  std::unique_ptr<MipMapCache> mipMapCache;
 };
 
 } // namespace api

@@ -7,8 +7,6 @@
 #endif
 #include "texture/MipMapGeneration_ispc.h"
 
-#include "../common/Data.h"
-
 namespace ispc {
 
 void Texture2D::set(const rkcommon::math::vec2i &aSize,
@@ -16,15 +14,13 @@ void Texture2D::set(const rkcommon::math::vec2i &aSize,
     int aMaxLevel,
     OSPTextureFormat aFormat,
     OSPTextureFilter aFilter,
-    const rkcommon::math::vec2ui &aWrapMode,
-    const rkcommon::math::vec4f &aAvg)
+    const rkcommon::math::vec2ui &aWrapMode)
 {
   size = aSize;
   maxLevel = aMaxLevel;
   format = aFormat;
   filter = aFilter;
   wrapMode = aWrapMode;
-  avg = aAvg;
 
   for (int l = 0; l <= aMaxLevel; l++)
     data[l] = aData[l];
@@ -35,16 +31,25 @@ void Texture2D::set(const rkcommon::math::vec2i &aSize,
       || aFormat == OSP_TEXTURE_RA16 || aFormat == OSP_TEXTURE_RA16F
       || aFormat == OSP_TEXTURE_RA32F || aFormat == OSP_TEXTURE_RGBA16F;
 #ifndef OSPRAY_TARGET_SYCL
-  super.get = reinterpret_cast<ispc::Texture_get>(
-      ispc::Texture2D_get_addr(aFormat));
-  super.getNormal = reinterpret_cast<ispc::Texture_getN>(
-      ispc::Texture2D_getN_addr(aFormat));
+  super.get =
+      reinterpret_cast<ispc::Texture_get>(ispc::Texture2D_get_addr(aFormat));
+  super.getNormal =
+      reinterpret_cast<ispc::Texture_getN>(ispc::Texture2D_getN_addr(aFormat));
 #endif
 }
 
 } // namespace ispc
 
 namespace ospray {
+
+Texture2D::~Texture2D()
+{
+  // If no one else is referencing the MIP map buffer (just this object and the
+  // cache map), we need to remove it from the MIP map cache so the buffer will
+  // be deleted as well
+  if (mipMapData && mipMapData.use_count() == 2)
+    getISPCDevice().getMipMapCache().remove(texData->data());
+}
 
 std::string Texture2D::toString() const
 {
@@ -92,42 +97,52 @@ void Texture2D::commit()
         + "'!");
 
   std::vector<void *> dataPtr;
-  dataPtr.emplace_back(texData->data());
-  vec4f avg{0.f, 0.f, 0.f, 1.f};
+  dataPtr.push_back(texData->data());
 
   if (getISPCDevice().disableMipMapGeneration)
     mipMapData = nullptr;
   else {
-    // conservatively estimate needed space for MIP maps and allocate
-    const auto maxMipTexels = (size.product() + 2) / 3 // for square textures
-        + (size.x + size.y - 1) / std::min(size.x, size.y); // remaining 1D case
-    mipMapData = devicert::make_buffer_shared_unique<char>(
-        getISPCDevice().getDRTDevice(), maxMipTexels * sizeOf(format));
+    // Check if MIP maps were generated already
+    bool generateMipMaps = false;
+    MipMapCache &mmc = getISPCDevice().getMipMapCache();
+    mipMapData = mmc.find(texData->data());
+    if (!mipMapData) {
+      // conservatively estimate needed space for MIP maps and allocate
+      const auto maxMipTexels = (size.product() + 2) / 3 // for square textures
+          + (size.x + size.y - 1)
+              / std::min(size.x, size.y); // remaining 1D case
+      mipMapData = std::make_shared<devicert::BufferShared<char>>(
+          getISPCDevice().getDRTDevice(), maxMipTexels * sizeOf(format));
+
+      // Add generated MIP maps to the cache
+      mmc.add(texData->data(), mipMapData);
+      generateMipMaps = true;
+    }
 
     // generate MIP map levels
-    vec2i prevSize = size;
-    void *prevData = texData->data();
+    vec2i srcSize = size;
+    void *srcData = texData->data();
     char *dstData = (char *)mipMapData->data();
-    while (prevSize != vec2i(1)) {
+    while (srcSize != vec2i(1)) {
       assert(dataPtr.size() <= MAX_MIPMAP_LEVEL); // max tex size is 2^32
-      vec2i dstSize(max(prevSize.x / 2, 1), max(prevSize.y / 2, 1));
-      ispc::MipMap_generate(prevData,
-          (ispc::vec2i &)prevSize,
-          dstData,
-          (ispc::vec2i &)dstSize,
-          (ispc::vec4f &)avg,
-          format);
+      vec2i dstSize(max(srcSize / 2, vec2i(1)));
+      if (generateMipMaps)
+        ispc::MipMap_generate(srcData,
+            (ispc::vec2i &)srcSize,
+            dstData,
+            (ispc::vec2i &)dstSize,
+            format);
 
-      dataPtr.emplace_back(dstData);
-      prevSize = dstSize;
-      prevData = dstData;
+      dataPtr.push_back(dstData);
+      srcSize = dstSize;
+      srcData = dstData;
       dstData += dstSize.product() * ospray::sizeOf(format);
     }
   }
 
   // Initialize ispc shared structure
   getSh()->set(
-      size, dataPtr.data(), dataPtr.size() - 1, format, filter, wrapMode, avg);
+      size, dataPtr.data(), dataPtr.size() - 1, format, filter, wrapMode);
 }
 
 } // namespace ospray

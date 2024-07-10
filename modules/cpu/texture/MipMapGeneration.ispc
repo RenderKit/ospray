@@ -27,8 +27,7 @@ task unmasked void MipMap_generateRows(const void *uniform const src,
     const uniform vec2i &srcSize,
     void *uniform const dst,
     const uniform vec2i &dstSize,
-    const uniform uint32 format,
-    uniform vec4f &avg)
+    const uniform uint32 format)
 {
   const uniform int y = taskIndex;
   vec4f val;
@@ -57,12 +56,6 @@ task unmasked void MipMap_generateRows(const void *uniform const src,
   default:
     break;
   }
-  if (y == 0) {
-    avg.x = extract(val.x, 0);
-    avg.y = extract(val.y, 0);
-    avg.z = extract(val.z, 0);
-    avg.w = extract(val.w, 0);
-  }
 }
 #undef __define_tex_filterkernel_case
 
@@ -82,8 +75,7 @@ void MipMap_generateRow(const void *uniform const src,
     const uniform int &srcSize,
     void *uniform const dst,
     const uniform int &dstSize,
-    const uniform uint32 format,
-    uniform vec4f &avg)
+    const uniform uint32 format)
 {
   vec4f val;
   uniform float r = rcp((float)srcSize);
@@ -99,10 +91,6 @@ void MipMap_generateRow(const void *uniform const src,
   default:
     break;
   }
-  avg.x = extract(val.x, 0);
-  avg.y = extract(val.y, 0);
-  avg.z = extract(val.z, 0);
-  avg.w = extract(val.w, 0);
 }
 #undef __define_tex_filterkernel_case1D
 
@@ -110,16 +98,14 @@ export void MipMap_generate(const void *uniform const src,
     const uniform vec2i &srcSize,
     void *uniform const dst,
     const uniform vec2i &dstSize,
-    uniform vec4f &avg,
     const uniform uint32 format)
 {
   if (srcSize.x > 1 && srcSize.y > 1) {
-    launch[dstSize.y] MipMap_generateRows(
-        src, srcSize, dst, dstSize, format, avg);
+    launch[dstSize.y] MipMap_generateRows(src, srcSize, dst, dstSize, format);
     sync;
   } else if (srcSize.x > 1 || srcSize.y > 1) {
     const uniform int srcSize = max(srcSize.x, srcSize.y);
     const uniform int dstSize = max(dstSize.x, dstSize.y);
-    MipMap_generateRow(src, srcSize, dst, dstSize, format, avg);
+    MipMap_generateRow(src, srcSize, dst, dstSize, format);
   }
 }

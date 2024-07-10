@@ -131,18 +131,16 @@ inline vec2i sizeAtLevel(const vec2i size, const int level)
       const DifferentialGeometry &dg,                                          \
       const int level,                                                         \
       const float frac,                                                        \
-      vec4f t1,                                                                \
-      const bool lastLevel,                                                    \
       const bool filter_nearest)                                               \
   {                                                                            \
-    vec4f t0;                                                                  \
-    t0 = filter_nearest ? Texture2D_nearest_l_##FMT(self, dg, level)           \
-                        : Texture2D_bilinear_l_##FMT(self, dg, level);         \
-    if (!frac)                                                                 \
+    vec4f t0 = filter_nearest ? Texture2D_nearest_l_##FMT(self, dg, level)     \
+                              : Texture2D_bilinear_l_##FMT(self, dg, level);   \
+    if (frac == 0.f)                                                           \
       return t0;                                                               \
-    if (lastLevel)                                                             \
-      t1 = filter_nearest ? Texture2D_nearest_l_##FMT(self, dg, level + 1)     \
-                          : Texture2D_bilinear_l_##FMT(self, dg, level + 1);   \
+                                                                               \
+    vec4f t1 = filter_nearest                                                  \
+        ? Texture2D_nearest_l_##FMT(self, dg, level + 1)                       \
+        : Texture2D_bilinear_l_##FMT(self, dg, level + 1);                     \
     return lerp(frac, t0, t1);                                                 \
   }                                                                            \
   struct swallow_semicolon
@@ -154,12 +152,9 @@ __foreach_fetcher(__define_tex_get);
       const DifferentialGeometry &dg,                                          \
       const int level,                                                         \
       const float frac,                                                        \
-      const vec4f avg,                                                         \
-      const bool lastLevel,                                                    \
       const bool filter_nearest)                                               \
   {                                                                            \
-    return make_vec3f(Texture2D_##FMT(                                         \
-               self, dg, level, frac, avg, lastLevel, filter_nearest))         \
+    return make_vec3f(Texture2D_##FMT(self, dg, level, frac, filter_nearest))  \
         * C                                                                    \
         - 1.f;                                                                 \
   }                                                                            \
@@ -178,11 +173,9 @@ __foreach_fetcher(__define_tex_get);
 
 #define __define_call_tex_case(NAME, FMT)                                      \
   case OSP_TEXTURE_##FMT:                                                      \
-    return NAME##_##FMT(                                                       \
-        self, dg, mipLevel, frac, avg, nextLevel, filter_nearest)
+    return NAME##_##FMT(self, dg, mipLevel, frac, filter_nearest)
 
-export void *uniform Texture2D_get_addr(
-    const uniform uint32 type)
+export void *uniform Texture2D_get_addr(const uniform uint32 type)
 {
   switch (type) {
     __foreach_fetcher(__define_tex_get_case);
@@ -208,18 +201,13 @@ SYCL_EXTERNAL vec4f Texture2D_get(
   const Texture2D *uniform self = (const Texture2D *uniform)_self;
 
   int mipLevel = 0;
-  bool nextLevel = false;
   float frac = 0.f;
-  const vec4f avg = self->avg;
   const uniform bool filter_nearest = self->filter & OSP_TEXTURE_FILTER_NEAREST;
   if (self->maxLevel) {
     const float lambda =
         max(0.f, calcLambda(dg.pixelFootprint, self->size, filter_nearest));
-    mipLevel = lambda;
-    if (mipLevel > self->maxLevel)
-      return avg;
-    frac = lambda - mipLevel;
-    nextLevel = mipLevel < self->maxLevel;
+    mipLevel = min((int)lambda, self->maxLevel - 1);
+    frac = min(lambda - mipLevel, 1.f);
   }
   switch (self->format) {
     __foreach_fetcher(__define_tex_call_tex_case);
@@ -244,8 +232,7 @@ __define_tex_getN(RGBA16F, 2.f);
 __define_tex_getN(RGB16, (65535.f / 32767.f));
 __define_tex_getN(RGBA16, (65535.f / 32767.f));
 
-export void *uniform Texture2D_getN_addr(
-    const uniform uint32 type)
+export void *uniform Texture2D_getN_addr(const uniform uint32 type)
 {
   switch (type) {
   case OSP_TEXTURE_SRGBA: /* fallthrough, sRGB ignored for normals */
@@ -270,18 +257,13 @@ SYCL_EXTERNAL vec3f Texture2D_getNormal(
   const Texture2D *uniform self = (const Texture2D *uniform)_self;
 
   int mipLevel = 0;
-  bool nextLevel = false;
   float frac = 0.f;
-  const vec4f avg = self->avg;
   const uniform bool filter_nearest = self->filter & OSP_TEXTURE_FILTER_NEAREST;
   if (self->maxLevel) {
     const float lambda =
         max(0.f, calcLambda(dg.pixelFootprint, self->size, filter_nearest));
-    mipLevel = lambda;
-    if (mipLevel > self->maxLevel)
-      return make_vec3f(avg) * 2.f - 1.f;
-    frac = lambda - mipLevel;
-    nextLevel = mipLevel < self->maxLevel;
+    mipLevel = min((int)lambda, self->maxLevel - 1);
+    frac = min(lambda - mipLevel, 1.f);
   }
   switch (self->format) {
   case OSP_TEXTURE_SRGBA: /* fallthrough, sRGB ignored for normals */
