@@ -10,6 +10,7 @@ mark_as_advanced(OSPRAY_MPI_COMPRESSION_THRESHOLD)
 ## Build the MPI Offload module ##
 
 add_library(ospray_module_mpi_offload SHARED
+  ${OSPRAY_RESOURCE}
   OffloadModuleInit.cpp
   MPIOffloadWorker.cpp
   MPIOffloadDevice.cpp

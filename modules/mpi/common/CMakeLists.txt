@@ -2,6 +2,7 @@
 ## SPDX-License-Identifier: Apache-2.0
 
 add_library(ospray_mpi_common SHARED
+    ${OSPRAY_RESOURCE}
     Collectives.cpp
     MPIBcastFabric.cpp
     MPICommon.cpp
