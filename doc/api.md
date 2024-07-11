@@ -1140,7 +1140,7 @@ recognizes the following parameters:
   vec3f[][]            motion.vertex.position  [data] array of vertex position arrays (uniformly distributed keys for deformation motion blur)
   vec3f[][]            motion.normal           [data] array of face-varying normal arrays (uniformly distributed keys for deformation motion blur)
   vec3f[][]            motion.vertex.normal    [data] array of vertex-varying normal arrays (uniformly distributed keys for deformation motion blur)
-  box1f                time                    time associated with first and last key in `motion.*` arrays (for deformation motion blur), default [0, 1] 
+  box1f                time                    time associated with first and last key in `motion.*` arrays (for deformation motion blur), default [0, 1]
   -------------------- ----------------------- -------------------------------------------------
   : Parameters defining a mesh geometry.
 
@@ -1526,7 +1526,7 @@ specific light source).
                                       assuming the light is oriented towards to the
                                       surface, unit is W/m^2^
 
-  OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
+  OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a
                                       built-in quantity (e.g., `HDRI`, or `sunSky`, or
                                       when using `intensityDistribution`).
   ----------------------------------  ----------------------------------------------------
@@ -1626,7 +1626,7 @@ tracer]).
 
 The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string "`spot`" to `ospNewLight`. The
-spotlight 
+spotlight
 supports only `OSP_INTENSITY_QUANTITY_SCALE` when
 `intensityDistribution` is set, or otherwise
 `OSP_INTENSITY_QUANTITY_POWER`,
@@ -1706,7 +1706,7 @@ shadows.
 
 The cylinder light is a cylinderical, procedural area light source
 emitting uniformly outwardly into the space beyond the boundary. It is
-created by passing the type string "`cylinder`" to `ospNewLight`. The 
+created by passing the type string "`cylinder`" to `ospNewLight`. The
 cylinder light supports `OSP_INTENSITY_QUANTITY_POWER`,
 `OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
 (default) as `intensityQuantity` parameter. In addition to the [general
@@ -1723,7 +1723,7 @@ the following special parameters:
 
 Note that only renderers that use stochastic sampling (like the path
 tracer) will compute soft shadows from the cylinder light. Other renderers
-will just sample the closest point on the cylinder light, which results in 
+will just sample the closest point on the cylinder light, which results in
 hard shadows.
 
 ### HDRI Light
@@ -1731,8 +1731,8 @@ hard shadows.
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
 "`hdri`" to `ospNewLight`. The values of the HDRI correspond to radiance
-and therefore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
-as `intensityQuantity` parameter value. 
+and therefore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE`
+as `intensityQuantity` parameter value.
 In addition to the [general parameters](#lights) the HDRI light
 supports the following special parameters:
 
@@ -2228,9 +2228,9 @@ thus individual flakes are not visible.
 
 The [path tracer] supports the Luminous material which emits light
 uniformly in all directions and which can thus be used to turn any
-geometric object into a light source. It is created by passing the type 
-string "`luminous`" to `ospNewMaterial`. The amount of constant radiance 
-that is emitted is determined by combining the general parameters of 
+geometric object into a light source. It is created by passing the type
+string "`luminous`" to `ospNewMaterial`. The amount of constant radiance
+that is emitted is determined by combining the general parameters of
 lights: [`color` and `intensity`](#lights) (which essentially means that
 parameter `intensityQuantity` is not needed because it is always
 `OSP_INTENSITY_QUANTITY_RADIANCE`).
@@ -3048,11 +3048,18 @@ The framebuffer takes a list of pixel operations to be applied to the image
 in sequence as an `OSPData`. The pixel operations will be run in the order
 they are in the array.
 
+  -------------------- --------------- -----------------------------------------
   Type                 Name            Description
-  -------------------- --------------- ---------------------------------------
+  -------------------- --------------- -----------------------------------------
   OSPImageOperation[]  imageOperation  ordered sequence of image operations
-  int                  targetFrames    anticipated number of frames that will be accumulated for progressive refinement, used renderers to generate a blue noise sampling pattern; should be a power of 2, is always 1 without `OSP_FB_ACCUM`; default disabled
-  -------------------- --------------- ---------------------------------------
+
+  int                  targetFrames    anticipated number of frames that will be
+                                       accumulated for progressive refinement,
+                                       used renderers to generate a blue noise
+                                       sampling pattern; should be a power of 2,
+                                       is always 1 without `OSP_FB_ACCUM`;
+                                       default 0 (disabled)
+  -------------------- --------------- -----------------------------------------
   : Parameters accepted by the framebuffer.
 
 If the total number of frames to be accumulated is known, then
@@ -3077,43 +3084,31 @@ Color Encoding System (ACES). The tone mapper is created by passing the type
 string "`tonemapper`" to `ospNewImageOperation`. The tone mapping curve can be
 customized using the parameters listed in the table below.
 
-  ------ ---------- ---------  -----------------------------------------
-  Type   Name         Default  Description
-  ------ ---------- ---------  -----------------------------------------
-  float  exposure         1.0  amount of light per unit area
+  ------ ---------- --------- ---------  -----------------------------------------
+  Type   Name         Default    Filmic  Description
+  ------ ---------- --------- ---------  -----------------------------------------
+  float  exposure         1.0       1.0  amount of light per unit area
 
-  float  contrast      1.6773  contrast (toe of the curve); typically is
-                               in [1–2]
+  float  contrast      1.6773    1.1759  contrast (toe of the curve); typically is
+                                         in [1–2]
 
-  float  shoulder      0.9714  highlight compression (shoulder of the
-                               curve); typically is in [0.9–1]
+  float  shoulder      0.9714    0.9746  highlight compression (shoulder of the
+                                         curve); typically is in [0.9–1]
 
-  float  midIn           0.18  mid-level anchor input; default is 18%
-                               gray
+  float  midIn           0.18      0.18  mid-level anchor input; default is 18%
+                                         gray
 
-  float  midOut          0.18  mid-level anchor output; default is 18%
-                               gray
+  float  midOut          0.18      0.18  mid-level anchor output; default is 18%
+                                         gray
 
-  float  hdrMax       11.0785  maximum HDR input that is not clipped
+  float  hdrMax       11.0785    6.3704  maximum HDR input that is not clipped
 
-  bool   acesColor       true  apply the ACES color transforms
-  ------ ---------- ---------  -----------------------------------------
-  : Parameters accepted by the tone mapper.
-
-To use the popular "Uncharted 2" filmic tone mapping curve instead, set the
-parameters to the values listed in the table below.
-
-  Name       Value
-  ---------  --------
-  contrast   1.1759
-  shoulder   0.9746
-  midIn      0.18
-  midOut     0.18
-  hdrMax     6.3704
-  acesColor  false
-  ---------  --------
-  : Filmic tone mapping curve parameters. Note that the curve includes an
-  exposure bias to match 18% middle gray.
+  bool   acesColor       true     false  apply the ACES color transforms
+  ------ ---------- --------- ---------  -----------------------------------------
+  : Parameters accepted by the tone mapper. The column "Filmic" lists
+  alternative values for the popular "Uncharted 2" tone mapping curve
+  (note that that curve includes an exposure bias to match 18% middle
+  gray).
 
 #### Denoiser
 
@@ -3462,7 +3457,7 @@ devices set the environment variable `OSPRAY_MPI_DISTRIBUTED_GPU`, e.g.,
 export OSPRAY_MPI_DISTRIBUTED_GPU=1
 ```
 
-or 
+or
 
 ```sh
 mpiexec -genv OSPRAY_MPI_DISTRIBUTED_GPU 1 \
@@ -3487,7 +3482,7 @@ for GPU rendering, and manually creating and using an instance of the
 `mpiDistributed` device, for example:
 
     ospLoadModule("mpi_distributed_cpu");
-    
+
     OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
     ospDeviceCommit(mpiDevice);
     ospSetCurrentDevice(mpiDevice);
