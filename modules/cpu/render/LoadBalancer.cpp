@@ -20,10 +20,11 @@ LocalTiledLoadBalancer::renderFrame(
   // Get render tasks and process them all
   utility::ArrayView<uint32_t> taskIds =
       fb->getRenderTaskIDs(renderer->errorThreshold, renderer->spp);
-  if (!taskIds.size())
-    return std::make_pair(devicert::AsyncEvent(), devicert::AsyncEvent());
-  devicert::AsyncEvent rendererEvent =
-      renderer->renderTasks(fb, camera, world, perFrameData, taskIds);
+  devicert::AsyncEvent rendererEvent;
+
+  if (taskIds.size())
+    rendererEvent =
+        renderer->renderTasks(fb, camera, world, perFrameData, taskIds);
 
   // Schedule post-processing kernels
   devicert::AsyncEvent fbEvent = fb->postProcess();
