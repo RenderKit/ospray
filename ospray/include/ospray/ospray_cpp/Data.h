@@ -45,7 +45,7 @@ class Data : public ManagedObject<OSPData, OSP_DATA>
   // Set a single object as a 1-item data array
 
   template <typename T>
-  Data(const T &obj);
+  explicit Data(const T &obj);
 
   // Construct from an existing OSPData handle (cpp::Data then owns handle)
 

@@ -11,7 +11,7 @@ namespace cpp {
 class Instance : public ManagedObject<OSPInstance, OSP_INSTANCE>
 {
  public:
-  Instance(Group &group);
+  Instance(const Group &group);
   Instance(OSPGroup group);
   Instance(OSPInstance existing = nullptr);
 };
@@ -21,7 +21,7 @@ static_assert(sizeof(Instance) == sizeof(OSPInstance),
 
 // Inlined function definitions ///////////////////////////////////////////
 
-inline Instance::Instance(Group &group) : Instance(group.handle()) {}
+inline Instance::Instance(const Group &group) : Instance(group.handle()) {}
 
 inline Instance::Instance(OSPGroup group)
 {

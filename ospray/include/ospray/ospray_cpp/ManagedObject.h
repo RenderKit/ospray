@@ -30,6 +30,9 @@ class ManagedObject
   ManagedObject &operator=(const ManagedObject<HANDLE_T, TYPE> &copy);
   ManagedObject &operator=(ManagedObject<HANDLE_T, TYPE> &&move);
 
+  bool operator==(const ManagedObject<HANDLE_T, TYPE> &other) const;
+  bool operator!=(const ManagedObject<HANDLE_T, TYPE> &other) const;
+
   template <typename T>
   void setParam(const std::string &name, const T &v) const;
 
@@ -182,6 +185,20 @@ template <typename HANDLE_T, OSPDataType TYPE>
 inline ManagedObject<HANDLE_T, TYPE>::operator bool() const
 {
   return handle() != nullptr;
+}
+
+template <typename HANDLE_T, OSPDataType TYPE>
+inline bool ManagedObject<HANDLE_T, TYPE>::operator==(
+    const ManagedObject<HANDLE_T, TYPE> &other) const
+{
+  return handle() == other.handle();
+}
+
+template <typename HANDLE_T, OSPDataType TYPE>
+inline bool ManagedObject<HANDLE_T, TYPE>::operator!=(
+    const ManagedObject<HANDLE_T, TYPE> &other) const
+{
+  return !(*this == other);
 }
 
 } // namespace cpp
