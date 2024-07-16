@@ -38,7 +38,8 @@ struct Renderer
         minContribution(0.001f),
         numMaterials(0),
         material(nullptr),
-        pixelFilter(nullptr)
+        pixelFilter(nullptr),
+        mipBiasFactor(1.f)
   {}
 };
 } // namespace ispc

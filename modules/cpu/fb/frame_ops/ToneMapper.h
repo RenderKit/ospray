@@ -21,9 +21,9 @@ struct OSPRAY_SDK_INTERFACE ToneMapperFrameOp : public FrameOp
 
  private:
   // Params for the tone mapping curve
-  float a, b, c, d;
-  bool acesColor;
-  float exposure;
+  float a{1.6773f}, b{1.11743f}, c{0.244676f}, d{0.9714f};
+  bool acesColor{true};
+  float exposure{1.f};
 };
 
 struct OSPRAY_SDK_INTERFACE LiveToneMapperFrameOp

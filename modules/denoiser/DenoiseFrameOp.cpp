@@ -111,7 +111,6 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOpShared
   void updateAuxImages(oidn::FilterRef &) override;
 
   oidn::BufferRef bufferAux; // scratch buffer when prefiltering
-  size_t byteBufferSize;
   size_t byteAlbedoOffset;
 };
 
@@ -153,7 +152,7 @@ void LiveDenoiseFrameOpShared::initFilterAlphaImages()
 void LiveDenoiseFrameOpShared::initFilterAuxImages()
 {
   if (!bufferAux) {
-    byteBufferSize = 3 * sizeof(float) * fbView.fbDims.product();
+    const size_t byteBufferSize = 3 * sizeof(float) * fbView.fbDims.product();
     size_t sz = 0;
     if (fbView.normalBuffer)
       sz += byteBufferSize;
