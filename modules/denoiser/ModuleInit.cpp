@@ -20,3 +20,13 @@ extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_denoiser(
 
   return status;
 }
+
+extern "C" int OSPRAY_DLLEXPORT ospray_module_denoiser_gpu_supported()
+{
+  int gpu = 0;
+  const int numDevices = oidnGetNumPhysicalDevices();
+  for (int i = 0; i < numDevices; ++i)
+    gpu += oidnGetPhysicalDeviceInt(i, "type") > OIDN_DEVICE_TYPE_CPU;
+
+  return gpu;
+}
