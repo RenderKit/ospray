@@ -438,9 +438,7 @@ jobs:
         $msiFile = (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName)
         Start-Process msiexec "/a $msiFile /qn TARGETDIR=$env:GITHUB_WORKSPACE" -Wait
         if ($LastExitCode) { $exitCode++ }
-        # compare whether files in bin folder of archives are identical
-        Get-ChildItem "ospray-*\bin\*" | Select-Object -Expand Name | % { if ((Get-FileHash "Intel\OSPRay*\bin\$_").hash -ne (Get-FileHash "ospray-*\bin\$_").hash) { $exitCode++ } }
-        & $env:SIGN_FILE_WINDOWS -t build_release\*.msi (Get-ChildItem "Intel\OSPRay*\bin\*" | Select-Object -Expand FullName)
+        & $env:SIGN_FILE_WINDOWS -t build_release\*.msi (Get-ChildItem "Intel\OSPRay*\bin\*" | Select-Object -Expand FullName) (Get-ChildItem "ospray-*\bin\*" | Select-Object -Expand FullName)
         if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: release-windows

@@ -285,7 +285,6 @@ if (DOWNLOAD_TBB)
 endif()
 
 include(dep_rkcommon)
-include(dep_embree)
 
 if (BUILD_GLFW)
   include(dep_glfw)
@@ -307,7 +306,7 @@ if (BUILD_OSPRAY_MODULE_MPI)
   include(dep_snappy)
 endif()
 
-##### FIXME WA for VKL and OSPRay to build with GNU-style options
+##### FIXME WA for Embree, VKL and OSPRay to build with GNU-style options
 if (WIN32 AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"))
   # remember CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS before switching to GNU-style
   # frontend, which won't look for MSVCRT anymore
@@ -319,6 +318,8 @@ if (WIN32 AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"))
   set(CMAKE_C_COMPILER clang)
   set(CMAKE_CXX_COMPILER clang++)
 endif()
+
+include(dep_embree)
 
 if (BUILD_OPENVKL)
   include(dep_openvkl)
