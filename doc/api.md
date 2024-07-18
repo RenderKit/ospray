@@ -1126,22 +1126,60 @@ A mesh consisting of either triangles or quads is created by calling
 `ospNewGeometry` with type string "`mesh`". Once created, a mesh
 recognizes the following parameters:
 
+  -------------------- ----------------------- ---------------------------------
   Type                 Name                    Description
-  -------------------- ----------------------- -------------------------------------------------
-  vec3f[]              vertex.position         [data] array of vertex positions, overridden by `motion.*` arrays
-  vec3f[]              normal                  [data] array of face-varying normals, overridden by `motion.*` arrays
-  vec3f[]              vertex.normal           [data] array of vertex-varying normals, overridden by `motion.*` arrays
-  vec4f[] / vec3f[]    color                   [data] array of face-varying colors (linear RGBA/RGB)
-  vec4f[] / vec3f[]    vertex.color            [data] array of vertex-varying colors (linear RGBA/RGB)
-  vec2f[]              texcoord                [data] array of face-varying texture coordinates
-  vec2f[]              vertex.texcoord         [data] array of vertex-varying texture coordinates
-  vec3ui[] / vec4ui[]  index                   [data] array of (either triangle or quad) indices (into the vertex array(s))
-  bool                 quadSoup                when no explicit `index` is given, indicates whether to assume a 'soup' of quads instead of triangles, default false
-  vec3f[][]            motion.vertex.position  [data] array of vertex position arrays (uniformly distributed keys for deformation motion blur)
-  vec3f[][]            motion.normal           [data] array of face-varying normal arrays (uniformly distributed keys for deformation motion blur)
-  vec3f[][]            motion.vertex.normal    [data] array of vertex-varying normal arrays (uniformly distributed keys for deformation motion blur)
-  box1f                time                    time associated with first and last key in `motion.*` arrays (for deformation motion blur), default [0, 1]
-  -------------------- ----------------------- -------------------------------------------------
+  -------------------- ----------------------- ---------------------------------
+  vec3f[]              vertex.position         [data] array of vertex positions,
+                                               overridden by `motion.*` arrays
+
+  vec3f[]              normal                  [data] array of face-varying
+                                               normals, overridden by `motion.*`
+                                               arrays
+
+  vec3f[]              vertex.normal           [data] array of vertex-varying
+                                               normals, overridden by `motion.*`
+                                               arrays
+
+  vec4f[] / vec3f[]    color                   [data] array of face-varying
+                                               colors (linear RGBA/RGB)
+
+  vec4f[] / vec3f[]    vertex.color            [data] array of vertex-varying
+                                               colors (linear RGBA/RGB)
+
+  vec2f[]              texcoord                [data] array of face-varying
+                                               texture coordinates
+
+  vec2f[]              vertex.texcoord         [data] array of vertex-varying
+                                               texture coordinates
+
+  vec3ui[] / vec4ui[]  index                   [data] array of (either triangle
+                                               or quad) indices (into the vertex
+                                               array(s))
+
+  bool                 quadSoup                when no explicit `index` is
+                                               given, indicates whether to
+                                               assume a 'soup' of quads instead
+                                               of triangles, default false
+
+  vec3f[][]            motion.vertex.position  [data] array of vertex position
+                                               arrays (uniformly distributed
+                                               keys for deformation motion blur)
+
+  vec3f[][]            motion.normal           [data] array of face-varying
+                                               normal arrays (uniformly
+                                               distributed keys for deformation
+                                               motion blur)
+
+  vec3f[][]            motion.vertex.normal    [data] array of vertex-varying
+                                               normal arrays (uniformly
+                                               distributed keys for deformation
+                                               motion blur)
+
+  box1f                time                    time associated with first and
+                                               last key in `motion.*` arrays
+                                               (for deformation motion blur),
+                                               default [0, 1]
+  -------------------- ----------------------- ---------------------------------
   : Parameters defining a mesh geometry.
 
 The data type of index arrays differentiates between the underlying
@@ -1159,6 +1197,17 @@ the boolean `quadSoup` is set to true, then a 'quad soup' is assumed
 i.e., each four subsequent vertices form one quad. If the size of the
 `vertex.position` array is not a multiple of three for triangles or four
 for quads, the remainder vertices are ignored.
+
+Face-varying attributes (`normal`, `motion.normal`, `color`, `texcoord`)
+map unique values to each vertex of a primitive/face (triangle or quad),
+thus attributes can be different for the same vertex that is shared by
+multiple primitives. Essentially, face-varying attributes are a
+'attribute soup' and behave similar to the implicit index, the size of
+the array must be at least three times the number of triangles or four
+times the number of quads, respectively. Face-varying attributes take
+precedence over the respective vertex attributes (`vertex.normal`,
+`motion.vertex.normal`, `vertex.color`, `vertex.texcoord`) when both
+arrays of the same attribute are present.
 
 ### Subdivision
 
