@@ -2843,7 +2843,8 @@ refinement of image regions that have an estimated variance below the
 Per default the background of the rendered image will be transparent
 black, i.e., the alpha channel holds the opacity of the rendered
 objects. This eases transparency-aware blending of the image with an
-arbitrary background image by the application. The parameter
+arbitrary background image by the application (via $ospray.rgb +
+appBackground.rgb⋅(1-ospray.alpha)$). The parameter
 `backgroundColor` or `map_backplate` can be used to already blend with a
 constant background color or backplate texture, respectively, (and
 alpha) during rendering.

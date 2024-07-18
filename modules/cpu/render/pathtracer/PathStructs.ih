@@ -51,7 +51,7 @@ struct PathVertex
 // constant, typically uniform
 struct PathContext
 {
-  vec2f screen;
+  vec2f screen; // normalized coords, center of pixel, for backplate sampling
   const PathTracer *uniform context;
   const World *uniform world;
   uniform uint32 numLights;

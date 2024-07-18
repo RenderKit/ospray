@@ -31,6 +31,8 @@ Version History
         supported
 -   Superbuild uses binary packages of Open VKL
 -   Avoid color bleeding across eye-subimages when stereo rendering
+-   The backplate (background texture) is now always sampled at the pixel
+    center and thus not blurred by the pixel filter anymore
 -   Fix artifacts occassionally appearing with `gpu` device
 
 ### Changes in v3.1.0:

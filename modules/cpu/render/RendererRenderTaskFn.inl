@@ -65,8 +65,8 @@ static void Renderer_default_renderTask(const uniform vec3ui itemIndex,
       screenSample.sampleID.z = startSampleID + s;
 
       cameraSample.pixel_center = (make_vec2f(x, y) + 0.5f) * fb->rcpSize;
+      screenSample.pos = cameraSample.pixel_center;
       cameraSample.screen = cameraSample.pixel_center + pfSample * fb->rcpSize;
-      screenSample.pos = cameraSample.screen;
 
       // no DoF or MB per default
       cameraSample.lens.x = 0.0f;

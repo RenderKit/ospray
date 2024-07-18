@@ -204,7 +204,7 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
 
     screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-    pathContext.screen = cameraSample.screen;
+    pathContext.screen = cameraSample.pixel_center;
     ScreenSample sample = PathTraceIntegrator_Li(
         pathContext, pathState, screenSample.ray, screenSample.rayCone, ffh);
 
