@@ -59,10 +59,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
       const float errorThreshold, const uint32_t spp) = 0;
 
-  // get number of pixels in x and y diretion
   vec2i getNumPixels() const;
 
-  // get the color format type for this Buffer
   ColorBufferFormat getColorBufferFormat() const;
 
   virtual float getVariance() const;
@@ -139,7 +137,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   bool accumulationFinished() const;
 
  private:
-  // for consistent reproducability of variance accumulation
+  // for consistent reproducibility of variance accumulation
   constexpr static uint32_t mtSeed = 43;
   std::mt19937 mtGen{mtSeed};
   bool pickOdd{false};

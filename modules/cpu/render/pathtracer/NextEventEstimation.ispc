@@ -55,7 +55,8 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     foreach_unique (l in light)
       ls = Light_dispatch_sample(l, pathVertex.dg, s, pathState.time, ffh);
 
-    // adjust the contibution with the probabiltiy of selecting the light source
+    // adjust the contribution with the probabiltiy of selecting the light
+    // source
     ls.weight = ls.weight / lightSelectionProb;
     ls.pdf *= lightSelectionProb;
 

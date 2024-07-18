@@ -273,7 +273,7 @@ inline Device &DeviceAllocator<T>::getDevice() const
 // Use it for data that needs the highest read/write performance on the device.
 // The buffer supports initialization from system (non-USM) memory. Preferably
 // should be used for all scene data that does not need to be updated from or
-// transfered back to the host.
+// transferred back to the host.
 template <typename T>
 struct BufferDevice
 {
@@ -319,7 +319,7 @@ BufferDevice<T>::BufferDevice(Device &device, const std::vector<T> &v)
       ptr(static_cast<T *>(device.deviceMalloc(v.size() * sizeof(T))))
 {
   // Schedule buffer copying and wait till completed so the input resource can
-  // be released immediatelly
+  // be released immediately
   AsyncEvent event = device.memcpy(ptr, v.data(), v.size() * sizeof(T));
   event.wait();
 }
@@ -331,7 +331,7 @@ BufferDevice<T>::BufferDevice(Device &device, T *data, std::size_t count)
       ptr(static_cast<T *>(device.deviceMalloc(count * sizeof(T))))
 {
   // Schedule buffer copying and wait till completed so the input resource can
-  // be released immediatelly
+  // be released immediately
   AsyncEvent event = device.memcpy(ptr, data, count * sizeof(T));
   event.wait();
 }
@@ -378,7 +378,7 @@ inline std::unique_ptr<BufferDevice<T>> make_buffer_device_unique(
 // Buffer in the device memory with host memory shadow
 
 // For usages that need the highest read/write efficiency on the device, similar
-// to `BufferDevice`, but additionally the data has to be transfered from/to
+// to `BufferDevice`, but additionally the data has to be transferred from/to
 // host periodically, e.g. framebuffers. After construction and initialization
 // of the host/shadow buffer, an explicit call to copyToDevice() is required so
 // the data will be visible for the device. Beware, it may use pinned (not

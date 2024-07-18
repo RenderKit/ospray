@@ -90,7 +90,7 @@ static void Renderer_default_renderTask(const uniform vec3ui itemIndex,
           make_vec3f(Renderer_getBackground(self, screenSample.pos, ffh));
       screenSample.normal = make_vec3f(0.f);
 
-      // The proper sample rendering function name is substitued here via macro
+      // The proper sample rendering function name is substituted here via macro
       renderSampleFn(self, fb, world, screenSample, ffh);
 
       col = col + screenSample.rgb;

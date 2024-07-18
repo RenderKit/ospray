@@ -26,7 +26,7 @@ SYCL_EXTERNAL __noinline vec3f transparentShadow(
     const uniform FeatureFlagsHandler &ffh)
 {
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
-  // It's not possible to have transpareny shadows if we don't have any geometry
+  // It's not possible to have transparent shadows if we don't have any geometry
   if (!ff.geometry) {
     return lightContrib;
   }

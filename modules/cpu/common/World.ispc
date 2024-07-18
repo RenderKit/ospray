@@ -50,7 +50,7 @@ unmasked void clippingIntersectionFilterV(
           instance, NULL, dg, *ray, DG_NG | DG_NS, true, *context->super.ffh);
 
       // Use geometry normal for clipping
-      // but use shading normal to check if invertion is needed
+      // but use shading normal to check if inversion is needed
       Nc = (dot(dg.Ns, dg.Ng) > 0.f) ? ray->Ng : neg(ray->Ng);
     }
 
@@ -60,7 +60,7 @@ unmasked void clippingIntersectionFilterV(
   }
 
   // Based on clipping normal vector decide if the ray is
-  // entering clipping geometry (set positive hit value) or exitting clipping
+  // entering clipping geometry (set positive hit value) or exiting clipping
   // geometry (set negative hit value)
   const bool exitsClipping = (dot(ray->dir, Nc) > 0.f);
   ClippingHit cHit;

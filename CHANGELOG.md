@@ -3,17 +3,6 @@ Version History
 
 ### Changes in v3.2.0:
 
--   Clarify the size of `OSP_BOOL` to be 1 byte
--   Support half-precision (16\ bit float) texture formats
-    `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
-    float textures `OSP_TEXTURE_RA32F`
--   Implement MIP Mapping for better texture filtering. If the
-    additional memory per texture needed cannot be spared, applications
-    can disable the generation of MIP maps with device parameter
-    `disableMipMapGeneration`
--   New parameter `limitIndirectLightSamples` for the `pathtracer` which
-    limits the number of light samples after the first non-specular
-    (i.e., diffuse and glossy) bounce to at most one
 -   Sampling improvements:
       - Better performance (lower rendering time and faster convergence)
       - More pleasing blue noise enabled when the total number of frames
@@ -24,18 +13,32 @@ Version History
       - User-controlled quality levels via parameter `quality`
       - Optionally denoise alpha channel as well, enabled via
         parameter `denoiseAlpha`
+-   Support half-precision (16\ bit float) texture formats
+    `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
+    float textures `OSP_TEXTURE_RA32F`
+-   New parameter `limitIndirectLightSamples` for the `pathtracer` which
+    limits the number of light samples after the first non-specular
+    (i.e., diffuse and glossy) bounce to at most one
+-   Implement MIP Mapping for better texture filtering. If the
+    additional memory per texture needed cannot be spared, applications
+    can disable the generation of MIP maps with device parameter
+    `disableMipMapGeneration`
+-   The backplate (background texture) is now always sampled at the pixel
+    center and thus not blurred by the pixel filter anymore
+-   Avoid color bleeding across eye-subimages when stereo rendering
+-   Superbuild uses binary packages of Open VKL
 -   Removed Intel ISPCRT dependency (ISPC compiler is still needed):
     -   oneAPI Level Zero Loader is no longer necessary
     -   `zeContext` and `zeDevice`device parameters are no longer supported
     -   `ispcrtContext` and `ispcrtDevice`device parameters are no longer
         supported
--   Superbuild uses binary packages of Open VKL
--   Avoid color bleeding across eye-subimages when stereo rendering
--   The backplate (background texture) is now always sampled at the pixel
-    center and thus not blurred by the pixel filter anymore
--   Fix artifacts occassionally appearing with `gpu` device
+-   Clarify the size of `OSP_BOOL` to be 1 byte
+-   Fix artifacts occasionally appearing with `gpu` device
 -   The new minimum versions of dependencies:
     -    Embree v4.3.3 (better error reporting)
+    -    Open Image Denoise v2.3 (better image quality with `HIGH`
+         quality mode, added `FAST` quality mode)
+    -    rkcommon v1.14.0
 
 ### Changes in v3.1.0:
 

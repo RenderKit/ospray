@@ -423,7 +423,7 @@ vec2i LocalFrameBuffer::getTaskStartPos(const uint32_t taskID) const
 devicert::AsyncEvent LocalFrameBuffer::postProcess()
 {
   // Calculate per-task variance if any samples accumulated into variance
-  // buffer, skip it if frameVariance overriden in writeTiles()
+  // buffer, skip it if frameVariance overridden in writeTiles()
   devicert::AsyncEvent event;
   const bool oddFrame = (getSh()->super.frameID & 1) == 1;
   if (varianceFrameOp && oddFrame && (frameVariance == float(inf)))

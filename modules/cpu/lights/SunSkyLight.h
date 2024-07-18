@@ -59,7 +59,7 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
   float intensityScale{0.025f};
 };
 
-// Inlined defintions /////////////////////////////////////////////////////////
+// Inlined definitions /////////////////////////////////////////////////////////
 
 inline uint32_t SunSkyLight::getShCount() const
 {

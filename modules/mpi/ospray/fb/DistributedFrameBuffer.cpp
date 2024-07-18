@@ -439,7 +439,7 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB *msg)
     }
     // All IDs are sent if any were requested, however we need to write only the
     // ones that actually exist in the local FB since it doesn't allocate
-    // buffers for the non-existant channels
+    // buffers for the non-existent channels
     if (hasPrimitiveIDBuffer) {
       pidBuf = reinterpret_cast<uint32 *>(data);
     }

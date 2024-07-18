@@ -172,7 +172,7 @@ macro (ispc_compile)
     message(FATAL_ERROR "CMAKE_BUILD_TYPE (${CMAKE_BUILD_TYPE}) allows only the following values: Debug;Release;RelWithDebInfo")
   endif()
 
-  # turn space sparated list into ';' separated list
+  # turn space separated list into ';' separated list
   string(REPLACE " " ";" ISPC_OPT_FLAGS "${ISPC_OPT_FLAGS}")
 
   if (NOT WIN32)
@@ -225,8 +225,8 @@ macro (ispc_compile)
       endforeach()
     endif()
 
-    # use relative path for genereated header file, because the path is
-    # included as commment and the header will be distributed
+    # use relative path for generated header file, because the path is
+    # included as comment and the header will be distributed
     set(headerfile "${outdir}/${fname}_ispc.h")
     file(RELATIVE_PATH headerfile ${CMAKE_CURRENT_BINARY_DIR} ${headerfile})
 

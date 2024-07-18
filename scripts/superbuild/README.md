@@ -14,7 +14,7 @@ cmake [<OSPRAY_SOURCE_DIR>/scripts/superbuild]
 cmake --build .
 ```
 
-On Windows make sure to select a 64bit generator, e.g.
+On Windows make sure to select a 64\ bit generator, e.g.
 
 ```sh
 cmake -G "Visual Studio 17 2022" [<OSPRAY_SOURCE_DIR>/scripts/superbuild]

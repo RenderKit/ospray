@@ -162,7 +162,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 
 #ifdef OSPRAY_TARGET_SYCL
   /* Compute the rounded dispatch global size for the given work group size.
-   * SYCL requires that globalSize % workgroupSize == 0, ths function will
+   * SYCL requires that globalSize % workgroupSize == 0, this function will
    * round up globalSize and return nd_range(roundedSize, workgroupSize).
    * The kernel being launched must discard tasks that are out of bounds
    * bounds due to this rounding

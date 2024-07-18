@@ -3368,8 +3368,8 @@ memory with OSPRay or to control which device should be used
 (e.g., in case multiple GPUs are present). If neither parameter is set,
 the `gpu` device will automatically create a context internally
 and select a GPU (that selection can be influenced via environment
-variable `ONEAPI_DEVICE_SELECTOR`, see [Intel oneAPI DPC++ Compiler documentation]
-(https://intel.github.io/llvm-docs/EnvironmentVariables.html#oneapi-device-selector)).
+variable `ONEAPI_DEVICE_SELECTOR`, see [Intel oneAPI DPC++ Compiler
+documentation](https://intel.github.io/llvm-docs/EnvironmentVariables.html#oneapi-device-selector)).
 
 Compile times for just in time compilation (JIT compilation) can be
 large. To resolve this issue we recommend enabling persistent JIT
@@ -3382,8 +3382,8 @@ To reduce GPU memory allocation overhead when rendering scenes with many
 objects (geometries, instances, etc.), memory pooling should be enabled
 by setting the environment variable
 `SYCL_PI_LEVEL_ZERO_USM_ALLOCATOR="1;0;shared:1M,0,2M"`.
-See [Intel oneAPI DPC++ Compiler documentation]
-(https://intel.github.io/llvm-docs/EnvironmentVariables.html#debugging-variables-for-level-zero-plugin)
+See [Intel oneAPI DPC++ Compiler
+documentation](https://intel.github.io/llvm-docs/EnvironmentVariables.html#debugging-variables-for-level-zero-plugin)
 for more details.
 
 ### Known Issues {-}
