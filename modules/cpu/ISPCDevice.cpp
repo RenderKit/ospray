@@ -186,10 +186,12 @@ ISPCDevice::~ISPCDevice()
 
 static void embreeErrorFunc(void *, const RTCError code, const char *str)
 {
-  postStatusMsg() << "#osp: Embree internal error " << code << " : " << str;
+  const std::string msg = std::string("Embree internal error ")
+      + rtcGetErrorString(code) + " : " + str;
+  postStatusMsg() << "#osp: Embree internal error " << msg;
   OSPError e =
       (code > RTC_ERROR_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
-  handleError(e, "Embree internal error '" + std::string(str) + "'");
+  handleError(e, msg);
 }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -262,8 +264,8 @@ void ISPCDevice::commit()
     rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
     RTCError erc = rtcGetDeviceError(embreeDevice);
     if (erc != RTC_ERROR_NONE) {
-      // why did the error function not get called !?
-      postStatusMsg() << "#osp:init: embree internal error number " << erc;
+      postStatusMsg() << "#osp:init: embree internal error: "
+                      << rtcGetDeviceLastErrorMessage(embreeDevice);
       throw std::runtime_error("failed to initialize Embree");
     }
   }

@@ -34,6 +34,8 @@ Version History
 -   The backplate (background texture) is now always sampled at the pixel
     center and thus not blurred by the pixel filter anymore
 -   Fix artifacts occassionally appearing with `gpu` device
+-   The new minimum versions of dependencies:
+    -    Embree v4.3.3 (better error reporting)
 
 ### Changes in v3.1.0:
 
