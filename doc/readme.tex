@@ -1,6 +1,6 @@
-\IfFileExists{ospray-doc/intel-spec.cls}
+\IfFileExists{intel-spec.cls}
 {
-  \documentclass[oneside]{ospray-doc/intel-spec}
+  \documentclass[oneside]{intel-spec}
 }{
   \documentclass[oneside]{report}
   \newcommand{\copyrightyears}[1] {}
@@ -9,9 +9,10 @@
   \newcommand{\optimizationdisclaimer}{}
   \newcommand{\makedisclaimers}{}
   \newcommand{\version}[1] { \author{Version ##1} }
+  \extrafloats{100}
 }
 
-\include{preamble}
+\input{preamble}
 
 \begin{document}
 \title{Intel® OSPRay\vskip0.3\baselineskip\LARGE

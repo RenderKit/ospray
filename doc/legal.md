@@ -5,8 +5,8 @@ Disclaimer and Legal Information
 
 [Privacy Notice](https://www.intel.com/privacy)
 
-Intel, the Intel logo, Xeon, Intel Xeon Phi, and Intel Core are
-trademarks of Intel Corporation in the U.S. and/or other countries.  
+Intel, the Intel logo, and other Intel marks are trademarks of Intel
+Corporation or its subsidiaries.  
 *Other names and brands may be claimed as the property of others.
 
 Performance varies by use, configuration and other factors. Learn more

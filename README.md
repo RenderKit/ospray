@@ -1706,7 +1706,7 @@ uniformly mapped to γ in \[0–π\]; the first intensity value to 0, the
 last value to π, thus at least two values need to be present.
 
 ![C-γ coordinate system for the mapping of `intensityDistribution` with
-photometric lights.](https://ospray.github.io/images/c-gamma_coords.png)
+photometric lights.](https://ospray.github.io/images/c-gamma_coords.svg)
 
 If the array has a second dimension then the intensities are not
 rotational symmetric around the main direction (where angle γ is zero),
@@ -1803,7 +1803,7 @@ parameters listed in the table.
 Special parameters accepted by the spotlight.
 
 ![Angles used by the
-spotlight.](https://ospray.github.io/images/spot_light.png)
+spotlight.](https://ospray.github.io/images/spot_light.svg)
 
 Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
@@ -1832,7 +1832,7 @@ the following special parameters:
 Special parameters accepted by the quad light.
 
 ![Defining a quad light which emits toward the
-reader.](https://ospray.github.io/images/quad_light.png)
+reader.](https://ospray.github.io/images/quad_light.svg)
 
 The emission side is determined by the cross product of `edge1`×`edge2`.
 which is also the main emission direction for `intensityDistribution`.
@@ -1884,7 +1884,7 @@ parameters:
 Special parameters accepted by the HDRI light.
 
 ![Orientation and Mapping of an HDRI
-Light.](https://ospray.github.io/images/hdri_light.png)
+Light.](https://ospray.github.io/images/hdri_light.svg)
 
 Note that the [SciVis renderer](#scivis-renderer) only shows the HDRI
 light in the background (like an environment map) without computing

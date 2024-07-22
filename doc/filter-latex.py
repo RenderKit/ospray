@@ -10,7 +10,7 @@ def inlatex(s):
     return pf.RawInline('latex', s)
 
 def tbl_caption(s):
-    return pf.Para([inlatex(r'\caption{')] + s + [inlatex(r'}')])
+    return pf.Para([inlatex(r'\caption{')] + s[1][0]['c'] + [inlatex(r'}')])
 
 def tbl_alignment(a):
     aligns = {
@@ -24,20 +24,22 @@ def tbl_alignment(a):
     return s
 
 def tbl_headers(s):
-    result = s[0][0]['c'][:]
+    s = s[1][0][1]
+    result = s[0][4][0]['c']
     for i in range(1, len(s)):
         result.append(inlatex(' & '))
-        result.extend(s[i][0]['c'])
+        result.extend(s[i][4][0]['c'])
     result.append(inlatex(r'\\' '\n'))
     return pf.Para(result)
 
 def tbl_contents(s):
+    s = s[3]
     result = []
     for row in s:
         para = []
-        for col in row:
-            if col:
-                para.extend(col[0]['c'])
+        for col in row[1]:
+            if col[4]:
+                para.extend(col[4][0]['c'])
             para.append(inlatex(' & '))
         result.extend(para)
         result[-1] = inlatex(r'\\' '\n')
@@ -45,22 +47,23 @@ def tbl_contents(s):
 
 def do_filter(k, v, f, m):
     if k == "Table":
-        w = v[2]
-        if sum(w) == 0:
+        a, w = zip(*v[2])
+        if w[0]['t'] == "ColWidthDefault":
             w = [1 for e in w]
             wd = ''
             ha = r'\centering'
         else:
+            w = [e['c'] for e in w]
             wd = '*'
             ha = r'\raggedright'
         return [latex(r'\begin{table'+wd+'}[!h]'),
-                tbl_caption(v[0]),
+                tbl_caption(v[1]),
                 latex(ha),
-                latex(r'\begin{tabu}{' + tbl_alignment(v[1]) + '}'),
+                latex(r'\begin{tabu}{' + tbl_alignment(a) + '}'),
                 latex(r'\toprule'),
                 tbl_headers(v[3]),
                 latex(r'\midrule'),
-                tbl_contents(v[4]),
+                tbl_contents(v[4][0]),
                 latex(r'\bottomrule' '\n' r'\end{tabu}'),
                 latex(r'\end{table'+wd+'}')]
 

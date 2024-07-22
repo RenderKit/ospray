@@ -10,17 +10,17 @@ images_svg := structured_spherical_coords vdb_structure
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_svg2pdf := $(addprefix images/, $(addsuffix .pdf, $(images_svg)))
-images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
-webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, vdb_structure.png $(addsuffix .svg, $(images_svg))))
+images_fig2svg := $(addprefix images/, $(addsuffix .svg, $(images_fig)))
+webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2svg) $(addprefix images/, vdb_structure.png $(addsuffix .svg, $(images_svg))))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_svg2pdf)
 
 PANDOC := pandoc
-PDMINVERSION := 2000000
-PDVERSION := $(shell $(PANDOC) --version|head -n 1)
-$(info Using $(PDVERSION))
-PDOK := $(shell expr `$(PANDOC) --version|head -n 1|cut -d' ' -f 2| sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/' -e 's/^[0-9]\{5,6\}$$/&00/'` \>= $(PDMINVERSION))
-ifneq "$(PDOK)" "1"
-  $(error You need at least pandoc v2.0)
+PD_VERSION_NEEDED := 2.19.2
+PD_VERSION := $(shell $(PANDOC) --version|head -n 1)
+$(info Using $(PD_VERSION))
+PD_VERSION := $(shell echo $(PD_VERSION) |cut -d' ' -f 2)
+ifneq "$(PD_VERSION)" "$(PD_VERSION_NEEDED)"
+  $(error You need pandoc v$(PD_VERSION_NEEDED))
 endif
 
 all: www doc pdf
@@ -68,10 +68,10 @@ tmp/links_local.md: tmp/links.md
 	sed -e "s@: [a-z]\+\.html#@: #@" $< > $@
 
 tmp/images_web.md: images.md
-	sed -e "s/\.fig/.png/" -e "s/vdb_structure\.svg/vdb_structure.png/" -e "s@: @: https://ospray.github.io/images/@" $< > $@
+	sed -e "s/\.fig/.svg/" -e "s/vdb_structure\.svg/vdb_structure.png/" -e "s@: @: https://ospray.github.io/images/@" $< > $@
 
-tmp/images_local_png.md: images.md
-	sed -e "s@: @: images/@" -e "s/vdb_structure\.svg/vdb_structure.png/" -e "s/\.fig/.png/" $< > $@
+tmp/images_local.md: images.md
+	sed -e "s@: @: images/@" -e "s/vdb_structure\.svg/vdb_structure.png/" -e "s/\.fig/.svg/" $< > $@
 
 tmp/images_local_pdf.md: images.md
 	sed -e "s@: @: images/@" -e "s@images/\(.*\)\.fig@tmp/\1.pdf@" -e "s@\.svg@.pdf@" $< > $@
@@ -92,7 +92,7 @@ wwwscripts: | wwwdir
 	  cp -r ospray-doc/scripts/ www ;\
 	fi
 
-$(process_version) tmp/version ../readme.pdf $(tmptexfiles) $(images_fig2pdf) tmp/api.md tmp/api_web.md tmp/changelog.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_png.md tmp/images_local_pdf.md: | tmpdir
+$(process_version) tmp/version ../readme.pdf $(tmptexfiles) $(images_fig2pdf) tmp/api.md tmp/api_web.md tmp/changelog.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local.md tmp/images_local_pdf.md: | tmpdir
 tmpdir:
 	@mkdir -p tmp
 
@@ -100,7 +100,7 @@ tmpdir:
 ### spec
 ########################################################################
 
-ospray-spec.rst: api.md tmp/links_local.md tmp/images_local_png.md
+ospray-spec.rst: api.md tmp/links_local.md tmp/images_local.md
 	$(PANDOC) --wrap=none --indented-code-classes=cpp --email-obfuscation=none $+ -t rst | sed -e 's@½@\\frac{1}{2}@g' > $@
 
 ospray-spec.html: ospray-spec.rst
@@ -111,7 +111,7 @@ ospray-spec.html: ospray-spec.rst
 
 markdown2web = $(PANDOC) --email-obfuscation=none -f markdown $(filter-out webtemplate.html,$+) --template webtemplate -V select_$(basename $(@F)) -o $@
 
-$(webpages): tmp/links.md tmp/images_local_png.md webtemplate.html
+$(webpages): tmp/links.md tmp/images_local.md webtemplate.html
 
 www/%.html:
 	$(markdown2web)
@@ -119,7 +119,7 @@ www/%.html:
 www/stylesheet.css: stylesheet.css
 	cp $< $@
 
-tmp/api_web.md: api.md tmp/links.md tmp/images_local_png.md
+tmp/api_web.md: api.md tmp/links.md tmp/images_local.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
 tmp/compilation_web.md: prerequisites.md ../scripts/superbuild/README.md compilation.md tmp/links.md
@@ -146,8 +146,8 @@ www/ospray2_porting_guide.html: ospray2_porting_guide.md
 ### images
 ########################################################################
 
-www/images/%.png: %.fig
-	fig2dev -L png -S 4 $+ $@
+www/images/%.svg: %.fig
+	fig2dev -L svg $+ $@
 
 www/images/%.svg: %.svg
 	cp $+ $@

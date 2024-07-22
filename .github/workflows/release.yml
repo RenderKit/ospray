@@ -25,11 +25,10 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: ospray/docker-images:docu
-      submodules: true
+      image: ospray/pandoc/latex:2.19.2
       cmd: |
         cd doc
-        git clone --depth 1 -b release-2.12.x https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/documentation.graphics.renderkit.ospray-website.git ospray-doc
+        git clone --depth 1 -b release-3.3.x https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/documentation.graphics.renderkit.ospray-website.git ospray-doc
         make pdf
         make checklinks
       artifact-out: pdf

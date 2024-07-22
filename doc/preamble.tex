@@ -1,8 +1,8 @@
 \usepackage{polyglossia}
 \setdefaultlanguage{english}
 
-\usepackage{amssymb,amsmath}
-\usepackage{nicefrac}
+\usepackage{amsmath}
+\usepackage{xfrac}
 \usepackage{ifxetex,ifluatex}
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[T1]{fontenc}
@@ -98,20 +98,21 @@
 \read\versionfile to\osprayversion
 \closein\versionfile
 
+\IfFileExists{intel-spec.cls}{}{\definecolor{IntelElectricCobaltBlue}{RGB}{0,0,255}} % fallback to plain blue
 \hypersetup{breaklinks=true,
             bookmarks=true,
             pdfauthor={Intel Corporation},
             pdftitle={OSPRay: An Open, Scalable, Parallel, Ray Tracing Based Rendering Engine for High-Fidelity Visualization \osprayversion},
             colorlinks=true,
-            citecolor=blue,
-            urlcolor=blue,
-            linkcolor=blue,
+            citecolor=IntelElectricCobaltBlue,
+            urlcolor=IntelElectricCobaltBlue,
+            linkcolor=IntelElectricCobaltBlue,
             pdfborder={0 0 0}}
 
 \copyrightyears{2013}
 \trademarkacknowledgment{%
-Intel, the Intel logo, Xeon, Intel Xeon Phi, and Intel Core are
-trademarks of Intel Corporation in the U.S. and/or other countries.
+Intel, the Intel logo, and other Intel marks are trademarks of Intel
+Corporation or its subsidiaries.
 }
 \performancedisclaimer
 \optimizationdisclaimer
@@ -137,19 +138,19 @@ trademarks of Intel Corporation in the U.S. and/or other countries.
 \def∞{\ensuremath{\infty}}
 
 \catcode`\½\active
-\def½{\nicefrac12}
+\def½{\sfrac12}
 
 \catcode`\⅓\active
-\def⅓{\nicefrac13}
+\def⅓{\sfrac13}
 
 \catcode`\⅔\active
-\def⅔{\nicefrac23}
+\def⅔{\sfrac23}
 
 \catcode`\¼\active
-\def¼{\nicefrac14}
+\def¼{\sfrac14}
 
 \catcode`\¾\active
-\def¾{\nicefrac34}
+\def¾{\sfrac34}
 
 \catcode`\∙\active
 \def∙{\ensuremath{\cdot}}
