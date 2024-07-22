@@ -21,7 +21,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["x86_64", "build"]'
       cmd: |
         scripts/build/macosx.sh -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
@@ -32,10 +31,9 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["arm", "build"]'
       cmd: |
-        scripts/build/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON
+        scripts/build/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON
       artifact-out: build-osx-arm
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -43,10 +41,9 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["arm", "build"]'
       cmd: |
-        scripts/build/macosx.sh -DCMAKE_TOOLCHAIN_FILE=../scripts/superbuild/toolchains/macos-rosetta.cmake -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_ISA_AVX=OFF -DBUILD_ISA_AVX2=OFF -DBUILD_ISA_AVX512=OFF
+        scripts/build/macosx.sh -DCMAKE_TOOLCHAIN_FILE=../scripts/superbuild/toolchains/macos-rosetta.cmake -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_ISA_AVX=OFF -DBUILD_ISA_AVX2=OFF -DBUILD_ISA_AVX512=OFF
       artifact-out: build-osx-x64
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 

@@ -23,39 +23,41 @@ SunSkyLight::SunSkyLight(api::ISPCDevice &device)
 {
   static const int skyResolution = 512;
   this->skySize = vec2i(skyResolution, skyResolution / 2);
-  this->skyImage = make_buffer_shared_unique<vec3f>(
-      getISPCDevice().getIspcrtContext(), skySize.product());
+  this->skyImage = devicert::make_buffer_shared_unique<vec3f>(
+      getISPCDevice().getDRTDevice(), skySize.product());
   static auto format = static_cast<OSPTextureFormat>(OSP_TEXTURE_RGB32F);
   static auto filter = static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_LINEAR);
   map = new Texture2D(getISPCDevice());
   map->refDec();
-  map->getSh()->set(
-      skySize, (ispc::vec3f *)this->skyImage->data(), format, filter);
+  void *data = skyImage->data();
+  map->getSh()->set(skySize,
+      &data,
+      0,
+      format,
+      filter,
+      vec2ui(OSP_TEXTURE_WRAP_REPEAT, OSP_TEXTURE_WRAP_CLAMP_TO_EDGE));
 }
 
-ISPCRTMemoryView SunSkyLight::createSh(
+ispc::Light *SunSkyLight::createSh(
     uint32_t index, const ispc::Instance *instance) const
 {
   switch (index) {
   case 0: {
-    ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>(
-        getISPCDevice().getIspcrtContext().handle());
-    ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
+    ispc::HDRILight *sh =
+        StructSharedCreate<ispc::HDRILight>(getISPCDevice().getDRTDevice());
     sh->set(visible,
         instance,
         coloredIntensity,
         frame,
         map->getSh(),
         distribution->getSh());
-    return view;
+    return &sh->super;
   }
   case 1: {
-    ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>(
-        getISPCDevice().getIspcrtContext().handle());
-    ispc::DirectionalLight *sh =
-        (ispc::DirectionalLight *)ispcrtSharedPtr(view);
+    ispc::DirectionalLight *sh = StructSharedCreate<ispc::DirectionalLight>(
+        getISPCDevice().getDRTDevice());
     sh->set(visible, instance, direction, solarIrradiance, cosAngle);
-    return view;
+    return &sh->super;
   }
 
   default:

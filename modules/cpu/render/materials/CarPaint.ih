@@ -13,7 +13,7 @@ struct DifferentialGeometry;
 struct Ray;
 struct Medium;
 
-SYCL_EXTERNAL __noinline const varying BSDF *uniform CarPaint_getBSDF(
+SYCL_EXTERNAL const varying BSDF *uniform CarPaint_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -21,10 +21,10 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform CarPaint_getBSDF(
     const Medium &currentMedium,
     const uniform FeatureFlagsHandler &ffh);
 
-SYCL_EXTERNAL __noinline BSDF_EvalRes CarPaint_BSDF_eval(
+SYCL_EXTERNAL BSDF_EvalRes CarPaint_BSDF_eval(
     const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi);
 
-SYCL_EXTERNAL __noinline BSDF_SampleRes CarPaint_BSDF_sample(
+SYCL_EXTERNAL BSDF_SampleRes CarPaint_BSDF_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,

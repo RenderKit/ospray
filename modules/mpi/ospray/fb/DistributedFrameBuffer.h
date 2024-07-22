@@ -103,7 +103,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
 
   void waitUntilFinished();
 
-  AsyncEvent postProcess(bool wait) override;
+  devicert::AsyncEvent postProcess() override;
 
   void setTileOperation(
       std::shared_ptr<TileOperation> tileOp, const Renderer *renderer);

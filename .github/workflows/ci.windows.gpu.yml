@@ -18,10 +18,9 @@ jobs:
 ### BUILD JOBS ###
 
   dpcpp-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      force-delete: true
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
@@ -34,10 +33,9 @@ jobs:
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
   icx-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      force-delete: true
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/icx-windows.env
       ocloc-version: 77a13ae6-6100-4ddc-b069-0086ff44730c/ocloc_win_101.5082
@@ -45,7 +43,7 @@ jobs:
         # disable warnings which lead to excessively large log files
         $env:CXXFLAGS = '-w'
         $env:CFLAGS = '-w'
-        scripts\build\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=icx -DCMAKE_C_COMPILER=icx -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        scripts\build\win.ps1 -G Ninja -DCMAKE_CXX_COMPILER=icx -DCMAKE_C_COMPILER=icx -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-windows-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
@@ -55,7 +53,7 @@ jobs:
 
   dpcpp-test:
     needs: dpcpp-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -71,7 +69,7 @@ jobs:
 
   mpi-dpcpp-test:
     needs: dpcpp-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -88,7 +86,7 @@ jobs:
 
   icx-test:
     needs: icx-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -104,7 +102,7 @@ jobs:
 
   mpi-icx-test:
     needs: icx-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100

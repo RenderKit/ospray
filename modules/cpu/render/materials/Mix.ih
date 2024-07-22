@@ -29,6 +29,10 @@ SYCL_EXTERNAL vec3f Mix_getTransparency(const uniform Material *uniform super,
     const Medium &currentMedium,
     const uniform FeatureFlagsHandler &ffh);
 
+SYCL_EXTERNAL vec3f Mix_getEmission(const Material *uniform super,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh);
+
 SYCL_EXTERNAL BSDF_EvalRes Mix_BSDF_eval(
     const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi);
 

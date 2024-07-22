@@ -1,7 +1,6 @@
 // Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "common/ISPCRTBuffers.h"
 #include "fb/FrameOp.h"
 // ispc shared
 #include "VarianceShared.h"
@@ -12,11 +11,11 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE LiveVarianceFrameOp
     : public AddStructShared<LiveFrameOp, ispc::LiveVariance>
 {
-  LiveVarianceFrameOp(api::ISPCDevice &device,
+  LiveVarianceFrameOp(devicert::Device &device,
       FrameBufferView &fbView,
       const vec4f *varianceBuffer);
 
-  void process(void *) override;
+  devicert::AsyncEvent process() override;
   void restart();
 
   bool validError() const;
@@ -24,7 +23,7 @@ struct OSPRAY_SDK_INTERFACE LiveVarianceFrameOp
   float getAvgError(const float errorThreshold) const;
 
  private:
-  BufferShared<float> taskVariance;
+  devicert::BufferShared<float> taskVariance;
   bool firstRun{true};
 };
 

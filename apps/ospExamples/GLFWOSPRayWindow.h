@@ -27,7 +27,9 @@ enum class OSPRayRendererType
 class GLFWOSPRayWindow
 {
  public:
-  GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser = false);
+  GLFWOSPRayWindow(const vec2i &windowSize,
+      bool denoiserAvail = false,
+      bool denoiserGPUAvail = false);
 
   ~GLFWOSPRayWindow();
 
@@ -50,6 +52,7 @@ class GLFWOSPRayWindow
   void commitOutstandingHandles();
   void refreshScene(bool resetCamera = false);
   void refreshFrameOperations();
+  void updateTargetFrames(const bool commit = true);
 
   static GLFWOSPRayWindow *activeWindow;
 
@@ -60,6 +63,7 @@ class GLFWOSPRayWindow
   bool updateFrameOpsNextFrame{false};
   bool denoiserEnabled{false};
   bool showAlbedo{false};
+  bool showNormal{false};
   bool showDepth{false};
   bool showPrimID{false};
   bool showGeomID{false};
@@ -94,18 +98,23 @@ class GLFWOSPRayWindow
   cpp::FrameBuffer framebuffer;
   cpp::Future currentFrame;
   cpp::Texture backplateTex{"texture2d"};
+  cpp::ImageOperation denoiser;
+
+  int frame{0};
+  bool blueNoise{true};
+  int accumLimit{0};
 
   vec3f bgColor{0.f};
-  vec3f sunDirection{-0.25f, -1.0f, 0.0f};
+  vec3f sunDirection{-0.25f, -1.0f, 1.0f};
   float turbidity{3.f};
-  float horizonExtension{0.1f};
+  float horizonExtension{0.25f};
 
-  std::string scene{"boxes_lit"};
+  std::string scene{"cornell_box"};
 
   std::string curveVariant{"bspline"};
 
-  OSPRayRendererType rendererType{OSPRayRendererType::SCIVIS};
-  std::string rendererTypeStr{"scivis"};
+  OSPRayRendererType rendererType{OSPRayRendererType::PATHTRACER};
+  std::string rendererTypeStr{"pathtracer"};
 
   std::string pixelFilterTypeStr{"gaussian"};
 

@@ -13,7 +13,7 @@ struct DifferentialGeometry;
 struct Ray;
 struct Medium;
 
-SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
+SYCL_EXTERNAL const varying BSDF *uniform Principled_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -21,25 +21,29 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
     const Medium &currentMedium,
     const uniform FeatureFlagsHandler &ffh);
 
-SYCL_EXTERNAL __noinline vec3f Principled_getTransparency(
+SYCL_EXTERNAL vec3f Principled_getTransparency(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium,
     const uniform FeatureFlagsHandler &ffh);
 
-SYCL_EXTERNAL __noinline void Principled_selectNextMedium(
+SYCL_EXTERNAL void Principled_selectNextMedium(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium);
 
-SYCL_EXTERNAL __noinline BSDF_EvalRes Principled_BSDF_eval(
+SYCL_EXTERNAL BSDF_EvalRes Principled_BSDF_eval(
     const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi);
 
-SYCL_EXTERNAL __noinline BSDF_SampleRes Principled_BSDF_sample(
+SYCL_EXTERNAL BSDF_SampleRes Principled_BSDF_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
     float ss);
+
+SYCL_EXTERNAL vec3f Principled_getEmission(const Material *uniform super,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

@@ -25,7 +25,6 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      force-delete: true
       image: ospray/docker-images:docu
       submodules: true
       cmd: |
@@ -40,11 +39,10 @@ jobs:
 
   release-linux:
     needs: pdf
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: rockylinux:8.7
+      image: rockylinux:8
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
         module load cmake/3.25.3
@@ -65,7 +63,7 @@ jobs:
       runs-on: '[ "Linux", "ARM64" ]'
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        scripts/release/linux.sh -DBUILD_GLFW=OFF -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        scripts/release/linux.sh -DBUILD_GLFW=OFF -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
         cp build_release/*.gz $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-linux-arm
@@ -76,7 +74,6 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["sign", "x86_64"]'
       cmd: |
         export CC=clang
@@ -92,10 +89,9 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["arm", "build"]'
       cmd: |
-        scripts/release/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON
+        scripts/release/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON
         cp build_release/*.zip $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
       artifact-out: release-osx-arm
@@ -103,10 +99,9 @@ jobs:
 
   release-windows:
     needs: pdf
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
@@ -138,7 +133,7 @@ jobs:
       prebuild: >
         module load impi/latest &&
         echo "Configure dependencies" &&
-        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF &&
+        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF &&
         echo "Build dependencies" &&
         cmake --build build_deps &&
         INSTALL_DIR=$(pwd)/build_deps/install &&
@@ -173,6 +168,7 @@ jobs:
       artifact-in-linux: release-linux-arm
       artifact-in-macos: release-osx-arm
       path: build_release/ospray-*
+      artifact-out-name: binary-analysis-arm
 
   antivirus-scan:
     needs:
@@ -199,6 +195,7 @@ jobs:
       artifact-in-linux: release-linux-arm
       artifact-in-macos: release-osx-arm
       path: build_release/ospray-*
+      artifact-out-name: antivirus-scan-arm
 
 ### TEST JOBS ###
 
@@ -206,7 +203,7 @@ jobs:
     needs: release-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: rockylinux:8.7
+      image: rockylinux:8
       cmd: |
         module load cmake/3.15.2
         tar -xzf build_release/*.gz
@@ -218,7 +215,7 @@ jobs:
     needs: release-linux
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: rockylinux:8.7
+      image: rockylinux:8
       cmd: |
         module load cmake/3.15.2
         module load mpi/mpich-x86_64
@@ -229,7 +226,7 @@ jobs:
 
   test-ubuntu-oidnsycl:
     needs: release-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -281,7 +278,7 @@ jobs:
 
   test-ubuntu-dg2:
     needs: release-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 100
       image: ubuntu:22.04
@@ -296,7 +293,7 @@ jobs:
 
   test-ubuntu-mpi-dg2:
     needs: release-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 100
       image: ubuntu:22.04
@@ -317,7 +314,7 @@ jobs:
 
   test-ubuntu-pvc:
     needs: release-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 100
       image: ubuntu:22.04
@@ -332,7 +329,7 @@ jobs:
 
   test-ubuntu-mpi-pvc:
     needs: release-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 100
       image: ubuntu:22.04
@@ -441,9 +438,7 @@ jobs:
         $msiFile = (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName)
         Start-Process msiexec "/a $msiFile /qn TARGETDIR=$env:GITHUB_WORKSPACE" -Wait
         if ($LastExitCode) { $exitCode++ }
-        # compare whether files in bin folder of archives are identical
-        Get-ChildItem "ospray-*\bin\*" | Select-Object -Expand Name | % { if ((Get-FileHash "Intel\OSPRay*\bin\$_").hash -ne (Get-FileHash "ospray-*\bin\$_").hash) { $exitCode++ } }
-        & $env:SIGN_FILE_WINDOWS -t build_release\*.msi (Get-ChildItem "Intel\OSPRay*\bin\*" | Select-Object -Expand FullName)
+        & $env:SIGN_FILE_WINDOWS -t build_release\*.msi (Get-ChildItem "Intel\OSPRay*\bin\*" | Select-Object -Expand FullName) (Get-ChildItem "ospray-*\bin\*" | Select-Object -Expand FullName)
         if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: release-windows
@@ -454,9 +449,13 @@ jobs:
     with:
       runs-on: '"avx512"'
       cmd: |
+        $exitCode = 0 # keep job status to properly fail
         Expand-Archive build_release/*.zip -DestinationPath .
+        if ($LastExitCode) { $exitCode++ }
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX
+        if ($LastExitCode) { $exitCode++ }
+        exit $exitCode
       artifact-in: release-windows
 
   test-windows-mpi-cpu:
@@ -465,56 +464,73 @@ jobs:
     with:
       runs-on: '["avx512", "mpi"]'
       cmd: |
+        $exitCode = 0 # keep job status to properly fail
         Expand-Archive build_release/*.zip -DestinationPath .
+        if ($LastExitCode) { $exitCode++ }
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
         scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX SKIP_CPU TEST_MPI
+        if ($LastExitCode) { $exitCode++ }
+        exit $exitCode
       artifact-in: release-windows
 
   test-windows-oidnsycl:
     needs: release-windows
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
       runs-on: '"dg2"'
-      force-delete: true
       env-from-files: .github/workflows/gfx-windows.env
       cmd: |
+        $exitCode = 0 # keep job status to properly fail
         Expand-Archive build_release/*.zip -DestinationPath .
+        if ($LastExitCode) { $exitCode++ }
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
         $env:OIDN_DEFAULT_DEVICE="sycl"
         $env:OIDN_VERBOSE="2"
         md build_regression_tests
         cd build_regression_tests
         cmake -G Ninja -D OSPRAY_TEST_ISA=AVX2 $env:GITHUB_WORKSPACE\test_image_data
+        if ($LastExitCode) { $exitCode++ }
         cmake --build . --config Release --target ospray_test_data
+        if ($LastExitCode) { $exitCode++ }
         ospTestSuite.exe --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
+        if ($LastExitCode) { $exitCode++ }
+        exit $exitCode
       artifact-in: release-windows
 
   test-windows-dg2:
     needs: release-windows
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       timeout-minutes: 100
       runs-on: '"dg2"'
       env-from-files: .github/workflows/gfx-windows.env
       cmd: |
+        $exitCode = 0 # keep job status to properly fail
         $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
         Expand-Archive build_release/*.zip -DestinationPath .
+        if ($LastExitCode) { $exitCode++ }
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
         scripts\tests\run_gpu_tests.ps1 $env:GITHUB_WORKSPACE
+        if ($LastExitCode) { $exitCode++ }
+        exit $exitCode
       artifact-in: release-windows
 
   test-windows-mpi-dg2:
     needs: release-windows
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       timeout-minutes: 100
       runs-on: '"dg2"' # FIXME: mpi
       env-from-files: .github/workflows/gfx-windows.env
       cmd: |
+        $exitCode = 0 # keep job status to properly fail
         $env:Path += ";C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin"
         Expand-Archive build_release/*.zip -DestinationPath .
+        if ($LastExitCode) { $exitCode++ }
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
         scripts\tests\run_gpu_tests.ps1 $env:GITHUB_WORKSPACE SKIP_GPU TEST_MPI
+        if ($LastExitCode) { $exitCode++ }
+        exit $exitCode
       artifact-in: release-windows

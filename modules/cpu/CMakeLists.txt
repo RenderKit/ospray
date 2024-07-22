@@ -20,12 +20,11 @@ endif()
 # Setup module include directories and source files
 # -------------------------------------------------------
 
-set(OSPRAY_CPP_SOURCES
+set(OSPRAY_HOST_SOURCES
   ${OSPRAY_RESOURCE}
 
   ModuleInit.cpp
   ispc_tasksys.cpp
-  ispc_tasksys.h
 
   ISPCDevice.h
   ISPCDevice.cpp
@@ -81,9 +80,6 @@ set(OSPRAY_CPP_SOURCES
   lights/registration.cpp
 
   math/spectrum.h
-  math/halton.cpp
-  math/sobol.cpp
-  math/MathConstants.cpp
   math/Distribution2D.cpp
 
   render/LoadBalancer.cpp
@@ -121,7 +117,7 @@ set(OSPRAY_CPP_SOURCES
   texture/registration.cpp
 )
 
-set(OSPRAY_ISPC_SOURCES
+set(OSPRAY_KERNEL_SOURCES
   ISPCDevice.ispc
 
   common/World.ispc
@@ -205,10 +201,19 @@ set(OSPRAY_ISPC_SOURCES
 
   texture/TextureDispatch.ispc
   texture/Texture2D.ispc
+  texture/TextureParam.ispc
+)
+
+set(OSPRAY_BCKND_ISPC_SOURCES
+  common/DeviceRTImpl_ispc.cpp
+)
+
+set(OSPRAY_BCKND_SYCL_SOURCES
+  common/DeviceRTImpl_sycl.cpp
 )
 
 if (OSPRAY_ENABLE_VOLUMES)
-  set(OSPRAY_VOLUMES_CPP_SOURCES
+  list(APPEND OSPRAY_HOST_SOURCES
     geometry/Isosurfaces.cpp
 
     texture/TextureVolume.cpp
@@ -221,7 +226,7 @@ if (OSPRAY_ENABLE_VOLUMES)
     volume/transferFunction/registration.cpp
   )
 
-  set(OSPRAY_VOLUMES_ISPC_SOURCES
+  list(APPEND OSPRAY_KERNEL_SOURCES
     geometry/Isosurfaces.ispc
 
     render/ao/volumes.ispc
@@ -337,16 +342,19 @@ if (OSPRAY_MODULE_CPU)
     )
   endif()
 
-  add_library(ospray_module_cpu SHARED)
+  add_library(ospray_module_cpu SHARED
+    ${OSPRAY_HOST_SOURCES}
+    ${OSPRAY_ISPC_DEF}
+    ${OSPRAY_BCKND_ISPC_SOURCES}
+    math/halton.c math/sobol.c # constants exported for ISPC only
+    geometry/Subdivision.cpp
+  )
 
   ispc_target_add_sources(ospray_module_cpu
-      ${OSPRAY_CPP_SOURCES}
-      ${OSPRAY_VOLUMES_CPP_SOURCES}
-      ${OSPRAY_ISPC_SOURCES}
-      ${OSPRAY_VOLUMES_ISPC_SOURCES}
-      ${OSPRAY_ISPC_DEF}
-      geometry/Subdivision.cpp
-      geometry/Subdivision.ispc)
+    ${OSPRAY_KERNEL_SOURCES}
+    geometry/Subdivision.ispc
+    texture/MipMapGeneration.ispc
+  )
 
   ospray_install_library(ospray_module_cpu lib)
 
@@ -354,7 +362,6 @@ if (OSPRAY_MODULE_CPU)
   PUBLIC
     ospray
     rkcommon::rkcommon
-    $<BUILD_INTERFACE:ispcrt::ispcrt>
     $<BUILD_INTERFACE:embree>
   )
 
@@ -367,7 +374,6 @@ if (OSPRAY_MODULE_CPU)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
       $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
       # NOTE(jda) - the following includes are missing despite PUBLIC linking
-      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
       $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
       #######################################################################
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
@@ -379,6 +385,7 @@ if (OSPRAY_MODULE_CPU)
     TILE_SIZE=${OSPRAY_TILE_SIZE}
     MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
     SYCL_EXTERNAL=
+    OSPRAY_GLOBAL=
   )
 
   if (OSPRAY_ENABLE_VOLUMES)
@@ -386,11 +393,6 @@ if (OSPRAY_MODULE_CPU)
     PUBLIC
       $<BUILD_INTERFACE:openvkl::openvkl>
       $<BUILD_INTERFACE:openvkl::openvkl_module_cpu_device>
-    )
-
-    target_include_directories(ospray_module_cpu
-    PUBLIC
-      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
     )
 
     target_compile_definitions(ospray_module_cpu
@@ -408,17 +410,13 @@ if (OSPRAY_MODULE_GPU)
     cmake_minimum_required(VERSION 3.20.5)
   endif()
 
-
-  include(${ISPCRT_DIR}/interop.cmake)
-
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
-  set_source_files_properties(${OSPRAY_ISPC_SOURCES} ${OSPRAY_VOLUMES_ISPC_SOURCES}
+  set_source_files_properties(${OSPRAY_KERNEL_SOURCES} ${OSPRAY_VOLUMES_KERNEL_SOURCES}
     PROPERTIES
     LANGUAGE CXX)
 
   add_library(ospray_module_gpu_kernels OBJECT
-    ${OSPRAY_ISPC_SOURCES}
-    ${OSPRAY_VOLUMES_ISPC_SOURCES}
+    ${OSPRAY_KERNEL_SOURCES}
   )
 
   ospray_add_sycl_target(ospray_module_gpu_kernels)
@@ -427,7 +425,6 @@ if (OSPRAY_MODULE_GPU)
   PUBLIC
     ospray
     rkcommon::rkcommon
-    $<BUILD_INTERFACE:ispcrt::ispcrt>
     $<BUILD_INTERFACE:embree>
   )
 
@@ -440,7 +437,6 @@ if (OSPRAY_MODULE_GPU)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
     # NOTE(jda) - the following includes are missing despite PUBLIC linking
-    $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
     #######################################################################
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
@@ -467,8 +463,10 @@ if (OSPRAY_MODULE_GPU)
   target_compile_definitions(ospray_module_gpu_kernels
   PUBLIC
     OSPRAY_TARGET_SYCL
+    __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__ # WA to allow printf of float, see https://github.com/intel/llvm/issues/12880
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}
+    OSPRAY_GLOBAL=static
     _ALLOW_KEYWORD_MACROS # avoid error when redefining reserved keywords like "export"
     uniform=
     varying=
@@ -494,11 +492,6 @@ if (OSPRAY_MODULE_GPU)
       $<BUILD_INTERFACE:openvkl::openvkl_module_gpu_device>
     )
 
-    target_include_directories(ospray_module_gpu_kernels
-    PUBLIC
-      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
-    )
-
     target_compile_definitions(ospray_module_gpu_kernels
     PUBLIC
       OSPRAY_ENABLE_VOLUMES
@@ -509,8 +502,11 @@ if (OSPRAY_MODULE_GPU)
   install(TARGETS ospray_module_gpu_kernels EXPORT ospray_Exports)
 
   add_library(ospray_module_gpu SHARED
-    ${OSPRAY_CPP_SOURCES}
-    ${OSPRAY_VOLUMES_CPP_SOURCES}
+    ${OSPRAY_HOST_SOURCES}
+    ${OSPRAY_BCKND_SYCL_SOURCES}
+  )
+  ispc_target_add_sources(ospray_module_gpu
+    texture/MipMapGeneration.ispc
   )
 
   target_link_libraries(ospray_module_gpu
@@ -540,6 +536,7 @@ foreach(dir . ${SUBDIRS})
     COMPONENT devel
     FILES_MATCHING
     PATTERN *_ispc.h
+    PATTERN CMakeFiles EXCLUDE
   )
 endforeach()
 

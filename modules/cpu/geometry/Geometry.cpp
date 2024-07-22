@@ -13,8 +13,7 @@ namespace ospray {
 // Geometry definitions ///////////////////////////////////////////////////////
 
 Geometry::Geometry(api::ISPCDevice &device, const FeatureFlagsGeometry ffg)
-    : AddStructShared(device.getIspcrtContext(), device),
-      featureFlagsGeometry(ffg)
+    : AddStructShared(device.getDRTDevice(), device), featureFlagsGeometry(ffg)
 {
   managedObjectType = OSP_GEOMETRY;
 }

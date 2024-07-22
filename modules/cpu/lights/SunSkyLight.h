@@ -39,7 +39,7 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
 {
   SunSkyLight(api::ISPCDevice &device);
   virtual uint32_t getShCount() const override;
-  virtual ISPCRTMemoryView createSh(
+  virtual ispc::Light *createSh(
       uint32_t index, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;
@@ -47,7 +47,7 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
  private:
   void processIntensityQuantityType();
 
-  std::unique_ptr<BufferShared<vec3f>> skyImage;
+  BufferSharedUq<vec3f> skyImage;
   Ref<Texture2D> map;
   Ref<Distribution2D> distribution;
   vec2i skySize;
@@ -59,7 +59,7 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
   float intensityScale{0.025f};
 };
 
-// Inlined defintions /////////////////////////////////////////////////////////
+// Inlined definitions /////////////////////////////////////////////////////////
 
 inline uint32_t SunSkyLight::getShCount() const
 {

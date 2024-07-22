@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/Ray.ih"
+#include "common/RayCone.ih"
 #include "rkcommon/math/box.ih"
 // c++ shared
 #include "CameraShared.h"
@@ -21,6 +22,7 @@ struct CameraSample
   vec2f screen; // normalized screen sample, in [0..1]
   vec2f lens;
   float time;
+  vec2f pixel_center;
 };
 
 inline vec2f Camera_subRegion(const Camera *uniform self, const vec2f &screen)

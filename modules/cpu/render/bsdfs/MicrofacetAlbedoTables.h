@@ -30,30 +30,30 @@ struct OSPRAY_SDK_INTERFACE MicrofacetAlbedoTables
  private:
   // Microfacet GGX albedo tables
   // directional 2D table (cosThetaO, roughness)
-  std::unique_ptr<BufferShared<float>> albedo_dir;
+  BufferSharedUq<float> albedo_dir;
   // average 1D table (roughness)
-  std::unique_ptr<BufferShared<float>> albedo_avg;
+  BufferSharedUq<float> albedo_avg;
 
   // Microfacet GGX dielectric albedo table. eta in [1/3, 1]
   // directional 3D table (cosThetaO, eta, roughness)
-  std::unique_ptr<BufferShared<float>> dielectricAlbedo_dir;
+  BufferSharedUq<float> dielectricAlbedo_dir;
   // average 2D table (eta, roughness)
-  std::unique_ptr<BufferShared<float>> dielectricAlbedo_avg;
+  BufferSharedUq<float> dielectricAlbedo_avg;
   // eta in [1, 3]
   // directional 3D table (cosThetaO, eta, roughness)
-  std::unique_ptr<BufferShared<float>> dielectricRcpEtaAlbedo_dir;
+  BufferSharedUq<float> dielectricRcpEtaAlbedo_dir;
   // average 2D table (eta, roughness)
-  std::unique_ptr<BufferShared<float>> dielectricRcpEtaAlbedo_avg;
+  BufferSharedUq<float> dielectricRcpEtaAlbedo_avg;
 
   // Microfacet GGX dielectric reflection-only albedo table. eta in [1/3, 1]
   // directional 3D table (cosThetaO, eta, roughness)
-  std::unique_ptr<BufferShared<float>> dielectricReflectionAlbedo_dir;
+  BufferSharedUq<float> dielectricReflectionAlbedo_dir;
   // average 2D table (eta, roughness)
-  std::unique_ptr<BufferShared<float>> dielectricReflectionAlbedo_avg;
+  BufferSharedUq<float> dielectricReflectionAlbedo_avg;
 
   // Microfacet sheen albedo table
   // directional 2D table (cosThetaO, roughness)
-  std::unique_ptr<BufferShared<float>> sheenAlbedo_dir;
+  BufferSharedUq<float> sheenAlbedo_dir;
 };
 
 } // namespace ospray

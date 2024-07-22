@@ -50,7 +50,7 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : AddStructShared(device.getIspcrtContext(),
+    : AddStructShared(device.getDRTDevice(),
         device,
         _size,
         _colorBufferFormat,
@@ -61,18 +61,18 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
 {
   const size_t numPixels = _size.long_product();
   if (hasColorBuffer)
-    colorBuffer = make_buffer_device_shadowed_unique<vec4f>(
-        device.getIspcrtDevice(), numPixels);
+    colorBuffer = devicert::make_buffer_device_shadowed_unique<vec4f>(
+        device.getDRTDevice(), numPixels);
 
   if (hasDepthBuffer)
-    depthBuffer = make_buffer_device_shadowed_unique<float>(
-        device.getIspcrtDevice(), numPixels);
+    depthBuffer = devicert::make_buffer_device_shadowed_unique<float>(
+        device.getDRTDevice(), numPixels);
 
   // If variance is going to be used we need to construct helper buffer and
   // FrameOp to do the calculations
   if (hasVarianceBuffer) {
-    varianceBuffer =
-        make_buffer_device_unique<vec4f>(device.getIspcrtDevice(), numPixels);
+    varianceBuffer = devicert::make_buffer_device_unique<vec4f>(
+        device.getDRTDevice(), numPixels);
 
     // Create and initialize FrameBufferView structure which define domain for
     // VarianceFrameOp. Since the VarianceFrameOp calculates per-RenderTask
@@ -82,45 +82,45 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     FrameBufferView fbv(getNumPixels(), colorBuffer->devicePtr());
     fbv.viewDims = getNumRenderTasks();
     varianceFrameOp = rkcommon::make_unique<LiveVarianceFrameOp>(
-        device, fbv, varianceBuffer->devicePtr());
+        device.getDRTDevice(), fbv, varianceBuffer->devicePtr());
   }
 
   if (hasNormalBuffer)
-    normalBuffer = make_buffer_device_shadowed_unique<vec3f>(
-        device.getIspcrtDevice(), numPixels);
+    normalBuffer = devicert::make_buffer_device_shadowed_unique<vec3f>(
+        device.getDRTDevice(), numPixels);
 
   if (hasAlbedoBuffer)
-    albedoBuffer = make_buffer_device_shadowed_unique<vec3f>(
-        device.getIspcrtDevice(), numPixels);
+    albedoBuffer = devicert::make_buffer_device_shadowed_unique<vec3f>(
+        device.getDRTDevice(), numPixels);
 
   if (hasPrimitiveIDBuffer)
-    primitiveIDBuffer = make_buffer_device_shadowed_unique<uint32_t>(
-        device.getIspcrtDevice(), numPixels);
+    primitiveIDBuffer = devicert::make_buffer_device_shadowed_unique<uint32_t>(
+        device.getDRTDevice(), numPixels);
 
   if (hasObjectIDBuffer)
-    objectIDBuffer = make_buffer_device_shadowed_unique<uint32_t>(
-        device.getIspcrtDevice(), numPixels);
+    objectIDBuffer = devicert::make_buffer_device_shadowed_unique<uint32_t>(
+        device.getDRTDevice(), numPixels);
 
   if (hasInstanceIDBuffer)
-    instanceIDBuffer = make_buffer_device_shadowed_unique<uint32_t>(
-        device.getIspcrtDevice(), numPixels);
+    instanceIDBuffer = devicert::make_buffer_device_shadowed_unique<uint32_t>(
+        device.getDRTDevice(), numPixels);
 
   // Create color conversion FrameOp if needed
   if ((hasColorBuffer) && (getColorBufferFormat() != OSP_FB_RGBA32F)) {
     FrameBufferView fbv(getNumPixels(), colorBuffer->devicePtr());
     colorConversionFrameOp = rkcommon::make_unique<LiveColorConversionFrameOp>(
-        device, fbv, getColorBufferFormat());
+        device.getDRTDevice(), fbv, getColorBufferFormat());
   }
 
   // TODO: Better way to pass the task IDs that doesn't require just storing
   // them all? Maybe as blocks/tiles similar to when we just had tiles? Will
   // make task ID lookup more expensive for sparse case though
-  renderTaskIDs = make_buffer_device_shadowed_unique<uint32_t>(
-      device.getIspcrtDevice(), getTotalRenderTasks());
+  renderTaskIDs = devicert::make_buffer_device_shadowed_unique<uint32_t>(
+      device.getDRTDevice(), getTotalRenderTasks());
   std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
   if (hasVarianceBuffer)
-    activeTaskIDs = make_buffer_device_shadowed_unique<uint32_t>(
-        device.getIspcrtDevice(), getTotalRenderTasks());
+    activeTaskIDs = devicert::make_buffer_device_shadowed_unique<uint32_t>(
+        device.getDRTDevice(), getTotalRenderTasks());
 
     // TODO: Could use TBB parallel sort here if it's exposed through the
     // rkcommon tasking system
@@ -137,9 +137,7 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
 #endif
   {
     // Upload the task IDs to the device
-    ispcrt::TaskQueue &tq = device.getIspcrtQueue();
-    tq.copyToDevice(*renderTaskIDs);
-    tq.sync();
+    renderTaskIDs->copyToDevice();
   }
 
 #ifndef OSPRAY_TARGET_SYCL
@@ -169,13 +167,9 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
       instanceIDBuffer ? instanceIDBuffer->devicePtr() : nullptr;
 }
 
-LocalFrameBuffer::~LocalFrameBuffer()
-{
-#ifdef OSPRAY_TARGET_SYCL
-  device.getSyclQueue().wait_and_throw();
-  device.getIspcrtQueue().sync();
-#endif
-}
+// Need this destructor to be in the cpp where we have full definition of
+// LiveVarianceFrameOp and LiveColorConversionFrameOp
+LocalFrameBuffer::~LocalFrameBuffer() {}
 
 void LocalFrameBuffer::commit()
 {
@@ -196,8 +190,8 @@ void LocalFrameBuffer::commit()
   frameOps.clear();
   if (imageOpData) {
     // Create buffer for post-processing output
-    ppColorBuffer = make_buffer_device_shadowed_unique<vec4f>(
-        device.getIspcrtDevice(), getNumPixels().long_product());
+    ppColorBuffer = devicert::make_buffer_device_shadowed_unique<vec4f>(
+        device.getDRTDevice(), getNumPixels().long_product());
     fbv.colorBufferOutput = ppColorBuffer->devicePtr();
 
     // Build FrameOps chain by iterating through all image operations set on
@@ -219,7 +213,7 @@ void LocalFrameBuffer::commit()
   colorConversionFrameOp.reset();
   if (getColorBufferFormat() != OSP_FB_RGBA32F) {
     colorConversionFrameOp = rkcommon::make_unique<LiveColorConversionFrameOp>(
-        device, fbv, getColorBufferFormat());
+        device.getDRTDevice(), fbv, getColorBufferFormat());
   }
 }
 
@@ -236,6 +230,9 @@ uint32_t LocalFrameBuffer::getTotalRenderTasks() const
 utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
     const float errorThreshold_, const uint32_t spp)
 {
+  if (accumulationFinished())
+    return utility::ArrayView<uint32_t>();
+
   errorThreshold = errorThreshold_; // remember
   if (errorThreshold > 0.0f && varianceFrameOp
       && (getFrameID() >= minimumAdaptiveFrames(spp))) {
@@ -247,12 +244,8 @@ utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
           return varianceFrameOp->getError(i) > errorThreshold;
         });
 
+    activeTaskIDs->copyToDevice();
     const size_t numActive = last - activeTaskIDs->begin();
-    if (numActive) {
-      ispcrt::TaskQueue &tq = device.getIspcrtQueue();
-      tq.copyToDevice(*activeTaskIDs);
-      tq.sync();
-    }
     return utility::ArrayView<uint32_t>(activeTaskIDs->devicePtr(), numActive);
   } else
     return utility::ArrayView<uint32_t>(
@@ -344,9 +337,10 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
   vec3f *normalBufferPtr = fbSh->super.channels & OSP_FB_NORMAL
       ? normalBuffer->devicePtr()
       : nullptr;
-
-  device.getSyclQueue()
-      .submit([&](sycl::handler &cgh) {
+  sycl::queue *queue =
+      static_cast<sycl::queue *>(device.getDRTDevice().getSyclQueuePtr());
+  queue
+      ->submit([&](sycl::handler &cgh) {
         const sycl::nd_range<1> dispatchRange =
             device.computeDispatchRange(numTasks, 16);
         cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
@@ -426,22 +420,22 @@ vec2i LocalFrameBuffer::getTaskStartPos(const uint32_t taskID) const
   return taskStart * getRenderTaskSize();
 }
 
-AsyncEvent LocalFrameBuffer::postProcess(bool wait)
+devicert::AsyncEvent LocalFrameBuffer::postProcess()
 {
   // Calculate per-task variance if any samples accumulated into variance
-  // buffer, skip it if frameVariance overriden in writeTiles()
-  AsyncEvent event;
+  // buffer, skip it if frameVariance overridden in writeTiles()
+  devicert::AsyncEvent event;
   const bool oddFrame = (getSh()->super.frameID & 1) == 1;
   if (varianceFrameOp && oddFrame && (frameVariance == float(inf)))
-    varianceFrameOp->process((wait) ? nullptr : &event);
+    event = varianceFrameOp->process();
 
   // Execute user-defined post-processing kernels
   for (auto &p : frameOps)
-    p->process((wait) ? nullptr : &event);
+    event = p->process();
 
   // Run final color conversion if needed
   if (colorConversionFrameOp)
-    colorConversionFrameOp->process((wait) ? nullptr : &event);
+    event = colorConversionFrameOp->process();
 
   // Return asynchronous event
   return event;
@@ -449,38 +443,36 @@ AsyncEvent LocalFrameBuffer::postProcess(bool wait)
 
 namespace {
 template <typename T>
-const void *copyToHost(ispcrt::TaskQueue &tq, const T &buffer)
+const void *copyToHost(T &buffer)
 {
-  tq.copyToHost(buffer);
-  tq.sync();
-  return static_cast<const void *>(buffer.data());
+  buffer.copyToHost().wait();
+  return static_cast<const void *>(buffer.hostPtr());
 }
 } // namespace
 
 const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
 {
   const void *buf = nullptr;
-  ispcrt::TaskQueue &tq = device.getIspcrtQueue();
 
   if (channel == OSP_FB_COLOR) {
     if (colorConversionFrameOp)
-      buf = copyToHost(tq, colorConversionFrameOp->getConvertedBuffer());
+      buf = copyToHost(colorConversionFrameOp->getConvertedBuffer());
     else if (ppColorBuffer)
-      buf = copyToHost(tq, *ppColorBuffer);
+      buf = copyToHost(*ppColorBuffer);
     else if (colorBuffer)
-      buf = copyToHost(tq, *colorBuffer);
+      buf = copyToHost(*colorBuffer);
   } else if ((channel == OSP_FB_DEPTH) && (depthBuffer)) {
-    buf = copyToHost(tq, *depthBuffer);
+    buf = copyToHost(*depthBuffer);
   } else if ((channel == OSP_FB_NORMAL) && (normalBuffer)) {
-    buf = copyToHost(tq, *normalBuffer);
+    buf = copyToHost(*normalBuffer);
   } else if ((channel == OSP_FB_ALBEDO) && (albedoBuffer)) {
-    buf = copyToHost(tq, *albedoBuffer);
+    buf = copyToHost(*albedoBuffer);
   } else if ((channel == OSP_FB_ID_PRIMITIVE) && (primitiveIDBuffer)) {
-    buf = copyToHost(tq, *primitiveIDBuffer);
+    buf = copyToHost(*primitiveIDBuffer);
   } else if ((channel == OSP_FB_ID_OBJECT) && (objectIDBuffer)) {
-    buf = copyToHost(tq, *objectIDBuffer);
+    buf = copyToHost(*objectIDBuffer);
   } else if ((channel == OSP_FB_ID_INSTANCE) && (instanceIDBuffer)) {
-    buf = copyToHost(tq, *instanceIDBuffer);
+    buf = copyToHost(*instanceIDBuffer);
   }
 
   if (buf)

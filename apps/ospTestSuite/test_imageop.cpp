@@ -16,7 +16,8 @@ class ImageOpBase : public Base
   void SetUp() override;
 
  protected:
-  std::string imageOp;
+  std::string imageOpType;
+  cpp::ImageOperation imageOp;
 };
 
 void ImageOpBase::SetUp()
@@ -25,7 +26,7 @@ void ImageOpBase::SetUp()
 
   instances.clear();
 
-  auto builder = ospray::testing::newBuilder("cornell_box");
+  auto builder = ospray::testing::newBuilder("random_discs");
   ospray::testing::setParam(builder, "rendererType", rendererType);
   ospray::testing::commit(builder);
 
@@ -34,13 +35,21 @@ void ImageOpBase::SetUp()
 
   camera.setParam("position", vec3f(0.f, 0.f, -2.5f));
 
-  cpp::ImageOperation imgOp(imageOp);
-  framebuffer.setParam("imageOperation", cpp::CopiedData(imgOp));
+  imageOp = cpp::ImageOperation(imageOpType);
+
+  frames = 1;
+  framebuffer = cpp::FrameBuffer(imgSize.x,
+      imgSize.y,
+      frameBufferFormat,
+      OSP_FB_COLOR | OSP_FB_ALBEDO | OSP_FB_NORMAL);
+  framebuffer.setParam("imageOperation", cpp::CopiedData(imageOp));
   framebuffer.commit();
 }
 
 #ifdef OSPRAY_MODULE_DENOISER
-class DenoiserOp : public ImageOpBase, public ::testing::Test
+class DenoiserOp : public ImageOpBase,
+                   public ::testing::TestWithParam<
+                       std::tuple<bool /*denoiseAlpha*/, OSPDenoiserQuality>>
 {
  public:
   DenoiserOp()
@@ -48,11 +57,15 @@ class DenoiserOp : public ImageOpBase, public ::testing::Test
     ospLoadModule("denoiser");
 
     rendererType = "pathtracer";
-    imageOp = "denoiser";
+    imageOpType = "denoiser";
   }
   void SetUp() override
   {
     ImageOpBase::SetUp();
+    auto params = GetParam();
+    imageOp.setParam("denoiseAlpha", std::get<0>(params));
+    imageOp.setParam("quality", std::get<1>(params));
+    imageOp.commit();
   }
 };
 #endif
@@ -66,7 +79,7 @@ class ImageOp
   ImageOp()
   {
     auto params = GetParam();
-    imageOp = std::get<0>(params);
+    imageOpType = std::get<0>(params);
     rendererType = std::get<1>(params);
   }
   void SetUp() override
@@ -78,10 +91,16 @@ class ImageOp
 // Test Instantiations //////////////////////////////////////////////////////
 
 #ifdef OSPRAY_MODULE_DENOISER
-TEST_F(DenoiserOp, DenoiserOp)
+TEST_P(DenoiserOp, DenoiserOp)
 {
   PerformRenderTest();
 }
+INSTANTIATE_TEST_SUITE_P(DenoiserOp,
+    DenoiserOp,
+    ::testing::Combine(::testing::Bool(),
+        ::testing::Values(OSP_DENOISER_QUALITY_LOW,
+            OSP_DENOISER_QUALITY_MEDIUM,
+            OSP_DENOISER_QUALITY_HIGH)));
 #endif
 
 TEST_P(ImageOp, ImageOp)

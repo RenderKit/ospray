@@ -100,33 +100,38 @@ to set parameters on the device. The semantics of setting parameters is
 exactly the same as `ospSetParam`, which is documented below in the
 [parameters] section. The following parameters can be set on all devices:
 
-  ------ ------------ ----------------------------------------------------------
-  Type   Name         Description
-  ------ ------------ ----------------------------------------------------------
-  int    numThreads   number of threads which OSPRay should use
+  ------ ------------------------ ----------------------------------------------
+  Type   Name                     Description
+  ------ ------------------------ ----------------------------------------------
+  int    numThreads               number of threads which OSPRay should use
 
-  uint   logLevel     logging level; valid values (in order of severity) are
-                      `OSP_LOG_NONE`, `OSP_LOG_ERROR`, `OSP_LOG_WARNING`,
-                      `OSP_LOG_INFO`, and `OSP_LOG_DEBUG`
+  bool   disableMipMapGeneration  disable the default generation of MIP maps for
+                                  textures (e.g., to save the additional memory
+                                  needed)
 
-  string logOutput    convenience for setting where status messages go; valid
-                      values are `cerr` and `cout`
+  uint   logLevel                 logging level; valid values (in order of
+                                  severity) are `OSP_LOG_NONE`, `OSP_LOG_ERROR`,
+                                  `OSP_LOG_WARNING`, `OSP_LOG_INFO`, and
+                                  `OSP_LOG_DEBUG`
 
-  string errorOutput  convenience for setting where error messages go; valid
-                      values  are `cerr` and `cout`
+  string logOutput                convenience for setting where status messages
+                                  go; valid values are `cerr` and `cout`
 
-  bool   debug        set debug mode; equivalent to `logLevel=debug` and
-                      `numThreads=1`
+  string errorOutput              convenience for setting where error messages
+                                  go; valid values  are `cerr` and `cout`
 
-  bool   warnAsError  send `warning` and `error` messages through the error
-                      callback, otherwise send `warning` messages through
-                      the message callback; must have sufficient `logLevel` to
-                      enable warnings
+  bool   debug                    set debug mode; equivalent to `logLevel=debug`
+                                  and `numThreads=1`
 
-  bool   setAffinity  bind software threads to hardware threads if set to 1;
-                      0 disables binding omitting the parameter will let OSPRay
-                      choose
-  ------ ------------ ----------------------------------------------------------
+  bool   warnAsError              send `warning` and `error` messages through
+                                  the error callback, otherwise send `warning`
+                                  messages through the message callback; must
+                                  have sufficient `logLevel` to enable warnings
+
+  bool   setAffinity              bind software threads to hardware threads if
+                                  set to 1; 0 disables binding omitting the
+                                  parameter will let OSPRay choose
+  ------ ------------------------ ----------------------------------------------
   : Parameters shared by all devices.
 
 Once parameters are set on the created device, the device must be
@@ -453,6 +458,8 @@ below.
 
   OSP_FRAMEBUFFER            framebuffer object reference
 
+  OSP_FUTURE                 future object reference
+
   OSP_LIGHT                  light object reference
 
   OSP_MATERIAL               material object reference
@@ -463,15 +470,25 @@ below.
 
   OSP_WORLD                  world object reference
 
+  OSP_GROUP                  group object reference
+
+  OSP_INSTANCE               instance object reference
+
   OSP_GEOMETRY               geometry object reference
 
+  OSP_GEOMETRIC_MODEL        geometric model object reference
+
   OSP_VOLUME                 volume object reference
+
+  OSP_VOLUMETRIC_MODEL       volumetric model object reference
 
   OSP_TRANSFER_FUNCTION      transfer function object reference
 
   OSP_IMAGE_OPERATION        image operation object reference
 
   OSP_STRING                 C-style zero-terminated character string
+
+  OSP_BOOL                   8\ bit boolean
 
   OSP_CHAR, OSP_VEC[234]C    8\ bit signed character scalar and [234]-element vector
 
@@ -846,7 +863,7 @@ the `cell.type` parameter must be omitted).
 
   uint8[]             cell.type                    [data] array of cell types (VTK
                                                    compatible), only set if `indexPrefixed
-                                                   = false` false. Supported types are:
+                                                   = false`. Supported types are:
 
                                                    `OSP_TETRAHEDRON`
 
@@ -1109,22 +1126,60 @@ A mesh consisting of either triangles or quads is created by calling
 `ospNewGeometry` with type string "`mesh`". Once created, a mesh
 recognizes the following parameters:
 
+  -------------------- ----------------------- ---------------------------------
   Type                 Name                    Description
-  -------------------- ----------------------- -------------------------------------------------
-  vec3f[]              vertex.position         [data] array of vertex positions, overridden by `motion.*` arrays
-  vec3f[]              normal                  [data] array of face-varying normals, overridden by `motion.*` arrays
-  vec3f[]              vertex.normal           [data] array of vertex-varying normals, overridden by `motion.*` arrays
-  vec4f[] / vec3f[]    color                   [data] array of face-varying colors (linear RGBA/RGB)
-  vec4f[] / vec3f[]    vertex.color            [data] array of vertex-varying colors (linear RGBA/RGB)
-  vec2f[]              texcoord                [data] array of face-varying texture coordinates
-  vec2f[]              vertex.texcoord         [data] array of vertex-varying texture coordinates
-  vec3ui[] / vec4ui[]  index                   [data] array of (either triangle or quad) indices (into the vertex array(s))
-  bool                 quadSoup                when no explicit `index` is given, indicates whether to assume a 'soup' of quads instead of triangles, default false
-  vec3f[][]            motion.vertex.position  [data] array of vertex position arrays (uniformly distributed keys for deformation motion blur)
-  vec3f[][]            motion.normal           [data] array of face-varying normal arrays (uniformly distributed keys for deformation motion blur)
-  vec3f[][]            motion.vertex.normal    [data] array of vertex-varying normal arrays (uniformly distributed keys for deformation motion blur)
-  box1f                time                    time associated with first and last key in `motion.*` arrays (for deformation motion blur), default [0, 1] 
-  -------------------- ----------------------- -------------------------------------------------
+  -------------------- ----------------------- ---------------------------------
+  vec3f[]              vertex.position         [data] array of vertex positions,
+                                               overridden by `motion.*` arrays
+
+  vec3f[]              normal                  [data] array of face-varying
+                                               normals, overridden by `motion.*`
+                                               arrays
+
+  vec3f[]              vertex.normal           [data] array of vertex-varying
+                                               normals, overridden by `motion.*`
+                                               arrays
+
+  vec4f[] / vec3f[]    color                   [data] array of face-varying
+                                               colors (linear RGBA/RGB)
+
+  vec4f[] / vec3f[]    vertex.color            [data] array of vertex-varying
+                                               colors (linear RGBA/RGB)
+
+  vec2f[]              texcoord                [data] array of face-varying
+                                               texture coordinates
+
+  vec2f[]              vertex.texcoord         [data] array of vertex-varying
+                                               texture coordinates
+
+  vec3ui[] / vec4ui[]  index                   [data] array of (either triangle
+                                               or quad) indices (into the vertex
+                                               array(s))
+
+  bool                 quadSoup                when no explicit `index` is
+                                               given, indicates whether to
+                                               assume a 'soup' of quads instead
+                                               of triangles, default false
+
+  vec3f[][]            motion.vertex.position  [data] array of vertex position
+                                               arrays (uniformly distributed
+                                               keys for deformation motion blur)
+
+  vec3f[][]            motion.normal           [data] array of face-varying
+                                               normal arrays (uniformly
+                                               distributed keys for deformation
+                                               motion blur)
+
+  vec3f[][]            motion.vertex.normal    [data] array of vertex-varying
+                                               normal arrays (uniformly
+                                               distributed keys for deformation
+                                               motion blur)
+
+  box1f                time                    time associated with first and
+                                               last key in `motion.*` arrays
+                                               (for deformation motion blur),
+                                               default [0, 1]
+  -------------------- ----------------------- ---------------------------------
   : Parameters defining a mesh geometry.
 
 The data type of index arrays differentiates between the underlying
@@ -1142,6 +1197,17 @@ the boolean `quadSoup` is set to true, then a 'quad soup' is assumed
 i.e., each four subsequent vertices form one quad. If the size of the
 `vertex.position` array is not a multiple of three for triangles or four
 for quads, the remainder vertices are ignored.
+
+Face-varying attributes (`normal`, `motion.normal`, `color`, `texcoord`)
+map unique values to each vertex of a primitive/face (triangle or quad),
+thus attributes can be different for the same vertex that is shared by
+multiple primitives. Essentially, face-varying attributes are a
+'attribute soup' and behave similar to the implicit index, the size of
+the array must be at least three times the number of triangles or four
+times the number of quads, respectively. Face-varying attributes take
+precedence over the respective vertex attributes (`vertex.normal`,
+`motion.vertex.normal`, `vertex.color`, `vertex.texcoord`) when both
+arrays of the same attribute are present.
 
 ### Subdivision
 
@@ -1509,7 +1575,7 @@ specific light source).
                                       assuming the light is oriented towards to the
                                       surface, unit is W/m^2^
 
-  OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
+  OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a
                                       built-in quantity (e.g., `HDRI`, or `sunSky`, or
                                       when using `intensityDistribution`).
   ----------------------------------  ----------------------------------------------------
@@ -1609,7 +1675,7 @@ tracer]).
 
 The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string "`spot`" to `ospNewLight`. The
-spotlight 
+spotlight
 supports only `OSP_INTENSITY_QUANTITY_SCALE` when
 `intensityDistribution` is set, or otherwise
 `OSP_INTENSITY_QUANTITY_POWER`,
@@ -1689,7 +1755,7 @@ shadows.
 
 The cylinder light is a cylinderical, procedural area light source
 emitting uniformly outwardly into the space beyond the boundary. It is
-created by passing the type string "`cylinder`" to `ospNewLight`. The 
+created by passing the type string "`cylinder`" to `ospNewLight`. The
 cylinder light supports `OSP_INTENSITY_QUANTITY_POWER`,
 `OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
 (default) as `intensityQuantity` parameter. In addition to the [general
@@ -1706,7 +1772,7 @@ the following special parameters:
 
 Note that only renderers that use stochastic sampling (like the path
 tracer) will compute soft shadows from the cylinder light. Other renderers
-will just sample the closest point on the cylinder light, which results in 
+will just sample the closest point on the cylinder light, which results in
 hard shadows.
 
 ### HDRI Light
@@ -1714,8 +1780,8 @@ hard shadows.
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
 "`hdri`" to `ospNewLight`. The values of the HDRI correspond to radiance
-and therefore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
-as `intensityQuantity` parameter value. 
+and therefore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE`
+as `intensityQuantity` parameter value.
 In addition to the [general parameters](#lights) the HDRI light
 supports the following special parameters:
 
@@ -2211,9 +2277,9 @@ thus individual flakes are not visible.
 
 The [path tracer] supports the Luminous material which emits light
 uniformly in all directions and which can thus be used to turn any
-geometric object into a light source. It is created by passing the type 
-string "`luminous`" to `ospNewMaterial`. The amount of constant radiance 
-that is emitted is determined by combining the general parameters of 
+geometric object into a light source. It is created by passing the type
+string "`luminous`" to `ospNewMaterial`. The amount of constant radiance
+that is emitted is determined by combining the general parameters of
 lights: [`color` and `intensity`](#lights) (which essentially means that
 parameter `intensityQuantity` is not needed because it is always
 `OSP_INTENSITY_QUANTITY_RADIANCE`).
@@ -2222,7 +2288,7 @@ parameter `intensityQuantity` is not needed because it is always
   ------ ------------ --------  ---------------------------------------
   vec3f  color           white  color of the emitted light (linear RGB)
   float  intensity           1  intensity of the light (a factor)
-  float  transparency        1  material transparency
+  float  transparency        0  material transparency
   ------ ------------ --------  ---------------------------------------
   : Parameters accepted by the Luminous material.
 
@@ -2266,14 +2332,19 @@ The supported texture formats for `texture2d` are:
   OSP_TEXTURE_RGBA8   8\ bit [0–255] linear components red, green, blue, alpha
   OSP_TEXTURE_SRGBA   8\ bit sRGB gamma encoded color components, and linear alpha
   OSP_TEXTURE_RGBA32F 32\ bit float components red, green, blue, alpha
+  OSP_TEXTURE_RGBA16F 16\ bit float components red, green, blue, alpha
   OSP_TEXTURE_RGB8    8\ bit [0–255] linear components red, green, blue
   OSP_TEXTURE_SRGB    8\ bit sRGB gamma encoded components red, green, blue
   OSP_TEXTURE_RGB32F  32\ bit float components red, green, blue
+  OSP_TEXTURE_RGB16F  16\ bit float components red, green, blue
   OSP_TEXTURE_R8      8\ bit [0–255] linear single component red
   OSP_TEXTURE_RA8     8\ bit [0–255] linear two components red, alpha
   OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance (replicated into red, green, blue)
   OSP_TEXTURE_LA8     8\ bit [0–255] gamma encoded luminance, and linear alpha
+  OSP_TEXTURE_RA32F   32\ bit float two component red, alpha
   OSP_TEXTURE_R32F    32\ bit float single component red
+  OSP_TEXTURE_RA16F   16\ bit float two component red, alpha
+  OSP_TEXTURE_R16F    16\ bit float single component red
   OSP_TEXTURE_RGBA16  16\ bit [0–65535] linear components red, green, blue, alpha
   OSP_TEXTURE_RGB16   16\ bit [0–65535] linear components red, green, blue
   OSP_TEXTURE_RA16    16\ bit [0–65535] linear two components red, alpha
@@ -2728,7 +2799,8 @@ General parameters of all renderers are
   -------------- ------------------ -----------------------  -----------------------------------------
   Type           Name                               Default  Description
   -------------- ------------------ -----------------------  -----------------------------------------
-  int            pixelSamples                             1  samples per pixel
+  int            pixelSamples                             1  samples per pixel, best results when a
+                                                             power of 2
 
   int            maxPathLength                           20  maximum ray recursion depth
 
@@ -2740,8 +2812,8 @@ General parameters of all renderers are
   float /        backgroundColor                     black,  background color and alpha (linear
   vec3f / vec4f                                 transparent  A/RGB/RGBA), if no `map_backplate` is set
 
-  OSPTexture     map_backplate                               optional [texture] image used as background
-                                                             (use texture type `texture2d`)
+  OSPTexture     map_backplate                               optional [texture] image used as
+                                                             background (use texture type `texture2d`)
 
   OSPTexture     map_maxDepth                                optional screen-sized float [texture]
                                                              with maximum far distance per pixel
@@ -2755,6 +2827,10 @@ General parameters of all renderers are
                                                              filter used by the renderer for
                                                              antialiasing. Possible pixel filters
                                                              are listed below.
+
+  float           mipMapBias                              0  bias for texture MIP-mapping, balancing
+                                                             between sharpness/aliasing and
+                                                             blurriness due to prefiltering
   -------------- ------------------ -----------------------  -----------------------------------------
   : Parameters understood by all renderers.
 
@@ -2767,7 +2843,8 @@ refinement of image regions that have an estimated variance below the
 Per default the background of the rendered image will be transparent
 black, i.e., the alpha channel holds the opacity of the rendered
 objects. This eases transparency-aware blending of the image with an
-arbitrary background image by the application. The parameter
+arbitrary background image by the application (via $ospray.rgb +
+appBackground.rgb⋅(1-ospray.alpha)$). The parameter
 `backgroundColor` or `map_backplate` can be used to already blend with a
 constant background color or backplate texture, respectively, (and
 alpha) during rendering.
@@ -2781,7 +2858,7 @@ distance of primary rays, thus objects of other renderers can hide
 objects rendered by OSPRay.
 
 OSPRay supports antialiasing in image space by using pixel filters,
-which are centered around the center of a pixel. The size $w×w$ of the
+which are aligned around the center of a pixel. The size $w×w$ of the
 filter depends on the selected filter type. The types of supported pixel
 filters are defined by the `OSPPixelFilterType` enum and can be set
 using the `pixelFilter` parameter.
@@ -2806,6 +2883,14 @@ using the `pixelFilter` parameter.
   -------------------------------- ---------------------------------------------
   : Pixel filter types supported by OSPRay for antialiasing in image space.
 
+OSPRay also antialiases textures with prefiltering and MIP-mapping,
+which can be adjusted with parameter `mipMapBias`. For final frame
+rendering with a high number of `pixelSamples` or accumulated frames
+`mipMapBias` can be lowered (e.g., set to -0.5 or -2) to result in sharper
+textures which are essentially anisotropically filtered. Conversely, for
+preview rendering with just a single sample per pixel a higher
+`mipMapBias` of 1 or 2 can reduce texture aliasing and increase
+rendering speed.
 
 ### SciVis Renderer
 
@@ -2874,27 +2959,34 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-  ---------- -------------------- --------  ------------------------------------
-  Type       Name                  Default  Description
-  ---------- -------------------- --------  ------------------------------------
-  int        lightSamples              all  number of random light samples
-                                            per path vertex, per default
-                                            all light sources are sampled
+  ------ -------------------------- --------  ----------------------------------
+  Type   Name                        Default  Description
+  ------ -------------------------- --------  ----------------------------------
+  int    lightSamples                    all  number of random light samples
+                                              per path vertex, best results
+                                              when a power of 2; per default
+                                              all light sources are sampled
 
-  int        roulettePathLength          5  ray recursion depth at which to
-                                            start Russian roulette termination
+  bool   limitIndirectLightSamples      true  after the first non-specular
+                                              (i.e., diffuse and glossy) path
+                                              vertex take (at most) a single
+                                              light sample (instead of
+                                              `lightSamples` many)
 
-  int        maxScatteringEvents        20  maximum number of non-specular
-                                            (i.e., diffuse and glossy) bounces
+  int    roulettePathLength                5  ray recursion depth at which to
+                                              start Russian roulette termination
 
-  float      maxContribution             ∞  samples are clamped to this value
-                                            before they are accumulated into
-                                            the framebuffer
+  int    maxScatteringEvents              20  maximum number of non-specular
+                                              (i.e., diffuse and glossy) bounces
 
-  bool       backgroundRefraction    false  allow for alpha blending even if
-                                            background is seen through
-                                            refractive objects like glass
-  ---------- -------------------- --------  ------------------------------------
+  float  maxContribution                   ∞  samples are clamped to this value
+                                              before they are accumulated into
+                                              the framebuffer
+
+  bool   backgroundRefraction          false  allow for alpha blending even if
+                                              background is seen through
+                                              refractive objects like glass
+  ------ -------------------------- --------  ----------------------------------
   : Special parameters understood by the path tracer.
 
 The path tracer requires that [materials] are assigned to [geometries],
@@ -2941,7 +3033,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
   OSP_FB_ACCUM        accumulation buffer for progressive refinement
   OSP_FB_VARIANCE     for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
   OSP_FB_NORMAL       accumulated world-space normal of the first non-specular hit, as vec3f
-  OSP_FB_ALBEDO       accumulated material albedo (color without illumination) at the first hit, as vec3f
+  OSP_FB_ALBEDO       accumulated material albedo (color without illumination) at the first non-specular hit, as vec3f
   OSP_FB_ID_PRIMITIVE primitive index of the first hit, as uint32
   OSP_FB_ID_OBJECT    geometric/volumetric model `id`, if specified, or index in [group] of first hit, as uint32
   OSP_FB_ID_INSTANCE  user defined [instance] `id`, if specified, or instance index of first hit, as uint32
@@ -3006,12 +3098,24 @@ The framebuffer takes a list of pixel operations to be applied to the image
 in sequence as an `OSPData`. The pixel operations will be run in the order
 they are in the array.
 
+  -------------------- --------------- -----------------------------------------
   Type                 Name            Description
-  -------------------- --------------- ---------------------------------------
+  -------------------- --------------- -----------------------------------------
   OSPImageOperation[]  imageOperation  ordered sequence of image operations
-  -------------------- --------------- ---------------------------------------
+
+  int                  targetFrames    anticipated number of frames that will be
+                                       accumulated for progressive refinement,
+                                       used renderers to generate a blue noise
+                                       sampling pattern; should be a power of 2,
+                                       is always 1 without `OSP_FB_ACCUM`;
+                                       default 0 (disabled)
+  -------------------- --------------- -----------------------------------------
   : Parameters accepted by the framebuffer.
 
+If the total number of frames to be accumulated is known, then
+`targetFrames` should be set, because then renderers can generate more
+pleasing blue noise patterns. Accumulation stops when `targetFrames` is
+reached.
 
 ### Image Operation
 
@@ -3030,43 +3134,31 @@ Color Encoding System (ACES). The tone mapper is created by passing the type
 string "`tonemapper`" to `ospNewImageOperation`. The tone mapping curve can be
 customized using the parameters listed in the table below.
 
-  ------ ---------- ---------  -----------------------------------------
-  Type   Name         Default  Description
-  ------ ---------- ---------  -----------------------------------------
-  float  exposure         1.0  amount of light per unit area
+  ------ ---------- --------- ---------  -----------------------------------------
+  Type   Name         Default    Filmic  Description
+  ------ ---------- --------- ---------  -----------------------------------------
+  float  exposure         1.0       1.0  amount of light per unit area
 
-  float  contrast      1.6773  contrast (toe of the curve); typically is
-                               in [1–2]
+  float  contrast      1.6773    1.1759  contrast (toe of the curve); typically is
+                                         in [1–2]
 
-  float  shoulder      0.9714  highlight compression (shoulder of the
-                               curve); typically is in [0.9–1]
+  float  shoulder      0.9714    0.9746  highlight compression (shoulder of the
+                                         curve); typically is in [0.9–1]
 
-  float  midIn           0.18  mid-level anchor input; default is 18%
-                               gray
+  float  midIn           0.18      0.18  mid-level anchor input; default is 18%
+                                         gray
 
-  float  midOut          0.18  mid-level anchor output; default is 18%
-                               gray
+  float  midOut          0.18      0.18  mid-level anchor output; default is 18%
+                                         gray
 
-  float  hdrMax       11.0785  maximum HDR input that is not clipped
+  float  hdrMax       11.0785    6.3704  maximum HDR input that is not clipped
 
-  bool   acesColor       true  apply the ACES color transforms
-  ------ ---------- ---------  -----------------------------------------
-  : Parameters accepted by the tone mapper.
-
-To use the popular "Uncharted 2" filmic tone mapping curve instead, set the
-parameters to the values listed in the table below.
-
-  Name       Value
-  ---------  --------
-  contrast   1.1759
-  shoulder   0.9746
-  midIn      0.18
-  midOut     0.18
-  hdrMax     6.3704
-  acesColor  false
-  ---------  --------
-  : Filmic tone mapping curve parameters. Note that the curve includes an
-  exposure bias to match 18% middle gray.
+  bool   acesColor       true     false  apply the ACES color transforms
+  ------ ---------- --------- ---------  -----------------------------------------
+  : Parameters accepted by the tone mapper. The column "Filmic" lists
+  alternative values for the popular "Uncharted 2" tone mapping curve
+  (note that that curve includes an exposure bias to match 18% middle
+  gray).
 
 #### Denoiser
 
@@ -3079,6 +3171,25 @@ using a GPU when available. The device selection be overridden by the
 environment variable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
 `sycl`, `cuda`, `hip`, or a physical device ID
 
+  ----- ------------- ----------------------------------------------------------
+  Type  Name          Description
+  ----- ------------- ----------------------------------------------------------
+  uint  quality       `OSPDenoiserQuality` for denoiser quality, default is
+
+                      `OSP_DENOISER_QUALITY_MEDIUM`: balanced
+                      quality/performance for interactive/real-time rendering;
+                      also allowed are:
+
+                      `OSP_DENOISER_QUALITY_LOW`: high performance, for
+                      interactive/real-time preview rendering
+
+                      `OSP_DENOISER_QUALITY_HIGH`: high quality, for final frame
+                      rendering
+
+  bool  denoiseAlpha  whether to denoise the alpha channel as well, default
+                      false
+  ----- ------------- ----------------------------------------------------------
+  : Parameters accepted by the denoiser.
 
 Rendering
 ---------
@@ -3091,7 +3202,8 @@ combining a framebuffer, renderer, camera, and world.
 What to render and how to render it depends on the renderer's
 parameters. If the framebuffer supports accumulation (i.e., it was
 created with `OSP_FB_ACCUM`) then successive calls to `ospRenderFrame`
-will progressively refine the rendered image.
+will progressively refine the rendered image (until `targetFrames` is
+reached).
 
 To start an render task, use
 
@@ -3248,18 +3360,16 @@ or via explicit device creation by the application:
   -------- ------------- --------------------------------
   void\ *  syclContext   SYCL context
   void\ *  syclDevice    SYCL device
-  void\ *  zeContext     Level Zero context
-  void\ *  zeDevice      Level Zero device
   -------- ------------- --------------------------------
   : Parameters specific to the `gpu` device.
 
-Applications can either set their SYCL context and device or their Level
-Zero context and device, to share device memory with OSPRay or to
-control which device should be used (e.g., in case multiple GPUs are
-present). If neither parameter is set, the `gpu` device will
-automatically create a context internally and select a GPU (that
-selection can be influenced via environment variable
-`ONEAPI_DEVICE_SELECTOR`).
+Applications can set their SYCL context and device to share device
+memory with OSPRay or to control which device should be used
+(e.g., in case multiple GPUs are present). If neither parameter is set,
+the `gpu` device will automatically create a context internally
+and select a GPU (that selection can be influenced via environment
+variable `ONEAPI_DEVICE_SELECTOR`, see [Intel oneAPI DPC++ Compiler
+documentation](https://intel.github.io/llvm-docs/EnvironmentVariables.html#oneapi-device-selector)).
 
 Compile times for just in time compilation (JIT compilation) can be
 large. To resolve this issue we recommend enabling persistent JIT
@@ -3270,7 +3380,11 @@ JIT cache should get stored).
 
 To reduce GPU memory allocation overhead when rendering scenes with many
 objects (geometries, instances, etc.), memory pooling should be enabled
-by setting the environment variable `ISPCRT_MEM_POOL=1`.
+by setting the environment variable
+`SYCL_PI_LEVEL_ZERO_USM_ALLOCATOR="1;0;shared:1M,0,2M"`.
+See [Intel oneAPI DPC++ Compiler
+documentation](https://intel.github.io/llvm-docs/EnvironmentVariables.html#debugging-variables-for-level-zero-plugin)
+for more details.
 
 ### Known Issues {-}
 
@@ -3407,7 +3521,7 @@ devices set the environment variable `OSPRAY_MPI_DISTRIBUTED_GPU`, e.g.,
 export OSPRAY_MPI_DISTRIBUTED_GPU=1
 ```
 
-or 
+or
 
 ```sh
 mpiexec -genv OSPRAY_MPI_DISTRIBUTED_GPU 1 \
@@ -3432,7 +3546,7 @@ for GPU rendering, and manually creating and using an instance of the
 `mpiDistributed` device, for example:
 
     ospLoadModule("mpi_distributed_cpu");
-    
+
     OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
     ospDeviceCommit(mpiDevice);
     ospSetCurrentDevice(mpiDevice);

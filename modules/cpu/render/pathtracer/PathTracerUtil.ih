@@ -25,10 +25,15 @@ inline bool isSmooth(const PathVertex &pathVertex)
   return false;
 }
 
-inline float misHeuristic(const PathState &pathState, float pdf1, float pdf2)
+inline float misHeuristic(
+    const PathContext &pathContext, float pdf1, float pdf2)
 {
-  if (pathState.disableNEE || pathState.disableFWD)
+#ifdef OSPRAY_PATHTRACER_DEBUG
+  if (pathContext.disableNEE || pathContext.disableFWD)
     return 1.f;
+#else
+  (void)pathContext;
+#endif
 
   // power heuristic with beta=2
   const float p = sqr(pdf1) * rcp(sqr(pdf1) + sqr(pdf2));
@@ -42,9 +47,7 @@ inline void updateAuxilliaryData(
     PathState &pathState, const PathVertex &pathVertex, ScreenSample &sample)
 {
   sample.albedo = pathState.throughput * pathVertex.albedo;
-  if (pathVertex.type == VOLUME) {
-    sample.normal = make_vec3f(0.f);
-  } else if (pathVertex.type == SURFACE) {
+  if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;
     foreach_unique (f in pathVertex.bsdf) {
       if (f != NULL && f->frame != NULL)
@@ -52,7 +55,6 @@ inline void updateAuxilliaryData(
     }
     sample.normal = pathState.throughput * Ns;
   }
-  pathState.auxFree = false;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

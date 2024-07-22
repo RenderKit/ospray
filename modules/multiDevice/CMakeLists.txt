@@ -15,7 +15,7 @@ endif()
 
 rkcommon_configure_build_type()
 
-set(OSPRAY_MULTIDEVICE_CPP_SOURCES
+set(OSPRAY_MULTIDEVICE_HOST_SOURCES
   ${OSPRAY_RESOURCE}
 
   MultiDevice.cpp
@@ -40,10 +40,8 @@ add_definitions_ispc(
 )
 
 
-add_library(ospray_module_multidevice_cpu SHARED)
-
-ispc_target_add_sources(ospray_module_multidevice_cpu
-  ${OSPRAY_MULTIDEVICE_CPP_SOURCES}
+add_library(ospray_module_multidevice_cpu SHARED
+  ${OSPRAY_MULTIDEVICE_HOST_SOURCES}
 )
 
 target_link_libraries(ospray_module_multidevice_cpu
@@ -68,13 +66,8 @@ target_compile_definitions(ospray_module_multidevice_cpu PRIVATE
 ospray_install_library(ospray_module_multidevice_cpu lib)
 
 if (OSPRAY_MODULE_GPU)
-  include(${ISPCRT_DIR}/interop.cmake)
-  if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "${DPCPP_COMPILER}")
-    message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
-  endif()
-
   add_library(ospray_module_multidevice_gpu SHARED
-    ${OSPRAY_MULTIDEVICE_CPP_SOURCES})
+    ${OSPRAY_MULTIDEVICE_HOST_SOURCES})
 
   target_link_libraries(ospray_module_multidevice_gpu
   PRIVATE

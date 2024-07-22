@@ -4,7 +4,6 @@
 #include "Camera.ih"
 #include "common/Embree.h"
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
 // c++ shared
@@ -16,6 +15,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
+    varying RayCone &rayCone,
     const varying CameraSample &sample,
     const uniform FeatureFlagsHandler &)
 {
@@ -27,9 +27,11 @@ SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
+  float pixel_center = sbs ? sample.pixel_center.x : sample.pixel_center.y;
+
   if (sbs || self->stereoMode == OSP_STEREO_TOP_BOTTOM) {
     *split *= 2.f;
-    if (*split < 1.f) {
+    if (pixel_center < 0.5f) {
       org = org - self->ipd_offset;
     } else {
       org = org + self->ipd_offset;
@@ -40,7 +42,7 @@ SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
   screen = Camera_subRegion(_self, screen);
 
   vec3f dir = self->dir_00 + screen.x * self->du_size + screen.y * self->dv_up;
-
+  const float coneShortening = rsqrt(dot(dir, dir));
   if (self->scaledAperture > 0.f) {
     const vec3f llp = uniformSampleDisk(self->scaledAperture, sample.lens);
     // transform local lens point to focal plane (dir_XX are prescaled)
@@ -52,10 +54,18 @@ SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
 
   const float time = Camera_shutterTime(_self, screen, sample.time);
   setRay(ray, org, normalize(dir), self->super.nearClip, inf, time);
+
+  rayCone.width = 0.f;
+  const uniform vec2f subImageSize = box_size(self->super.subImage);
+  rayCone.dwdt = self->imgPlaneSize.y * abs(subImageSize.y)
+      * coneShortening; // coneShortening is 1 for pixel at the center
+  if (self->stereoMode == OSP_STEREO_TOP_BOTTOM)
+    rayCone.dwdt *= 2.f;
 }
 
 SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
     varying Ray &ray,
+    varying RayCone &rayCone,
     const varying CameraSample &sample,
     const uniform FeatureFlagsHandler &)
 {
@@ -127,8 +137,15 @@ SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
     org = org + lp;
     dir = dir - lp;
   }
+  const float coneShortening = rsqrt(dot(dir, dir));
 
   setRay(ray, org, normalize(dir), self->super.nearClip, inf, time);
+  rayCone.width = 0.f;
+  const uniform vec2f subImageSize = box_size(self->super.subImage);
+  rayCone.dwdt = self->imgPlaneSize.y * abs(subImageSize.y)
+      * coneShortening; // cone shortening is 1 for pixel at the center
+  if (self->stereoMode == OSP_STEREO_TOP_BOTTOM)
+    rayCone.dwdt *= 2.f;
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////

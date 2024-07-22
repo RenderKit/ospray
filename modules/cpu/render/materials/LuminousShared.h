@@ -14,9 +14,11 @@ struct Luminous
   Material super;
 
   float transparency;
+  vec3f radiance;
+  TextureParam emissionMap;
 
 #ifdef __cplusplus
-  Luminous() : super(1.f), transparency(0.f)
+  Luminous() : super(), transparency(0.f), radiance(1.f)
   {
     super.type = ispc::MATERIAL_TYPE_LUMINOUS;
   }

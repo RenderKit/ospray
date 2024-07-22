@@ -37,7 +37,7 @@ void HDRILight::set(bool isVisible,
   this->map = map;
   this->distribution = distribution;
 
-  this->rcpSize = 1.f / this->map->sizef;
+  this->rcpSize = 1.f / this->map->size;
   this->light2world = light2world;
 
   // Enable dynamic runtime instancing or apply static transformation
@@ -59,19 +59,17 @@ void HDRILight::set(bool isVisible,
 
 namespace ospray {
 
-ISPCRTMemoryView HDRILight::createSh(
-    uint32_t, const ispc::Instance *instance) const
+ispc::Light *HDRILight::createSh(uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>(
-      getISPCDevice().getIspcrtContext().handle());
-  ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
+  ispc::HDRILight *sh =
+      StructSharedCreate<ispc::HDRILight>(getISPCDevice().getDRTDevice());
   sh->set(visible,
       instance,
       coloredIntensity,
       frame,
       map->getSh(),
       distribution->getSh());
-  return view;
+  return &sh->super;
 }
 
 std::string HDRILight::toString() const

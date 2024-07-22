@@ -54,7 +54,7 @@ static cpp::Texture makeCheckerboardTextureRGBA8()
   index_sequence_2D idx(vec2i(width, height));
   for (auto i : idx) {
     uint8_t v = ((i.x & 2) ^ (i.y & 2)) * 255;
-    dbyte[idx.flatten(i)] = vec4uc(v, v, v, 255);
+    dbyte[idx.flatten(i)] = vec4uc(v, v, v, 128 + v / 2);
   }
 
   // Create texture object
@@ -202,8 +202,10 @@ inline cpp::World PtTex::buildWorld() const
   cpp::Texture texRGBA = makeCheckerboardTextureRGBA8();
 
   std::vector<cpp::Material> materials = buildMaterials(texR, texRGBA);
-  const int dimCount = sqrtf(materials.size());
-  const int dimSize = dimCount - 1;
+  size_t dimCount = sqrtf(materials.size());
+  if (dimCount * dimCount < materials.size())
+    dimCount++;
+  const size_t dimSize = dimCount - 1;
 
   cpp::Geometry sphereGeometry = makeSphereMesh(25, 50);
 
@@ -212,10 +214,12 @@ inline cpp::World PtTex::buildWorld() const
   box3f bbox(empty);
   index_sequence_2D numSpheres(dimCount);
   for (auto i : numSpheres) {
+    const auto idx = numSpheres.flatten(i);
+    if (idx >= materials.size())
+      break;
     // Construct GeometricModel for each instance
     cpp::GeometricModel model(sphereGeometry);
-    model.setParam(
-        "material", cpp::CopiedData(materials[numSpheres.flatten(i)]));
+    model.setParam("material", cpp::CopiedData(materials[idx]));
     model.commit();
 
     // Construct Group for each instance

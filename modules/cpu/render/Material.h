@@ -10,6 +10,7 @@
 // ispc shared
 #include "MaterialShared.h"
 #include "bsdfs/MicrofacetAlbedoTables.h"
+#include "texture/Texture.h"
 #include "texture/TextureParamShared.h"
 
 namespace ospray {
@@ -20,6 +21,7 @@ struct MaterialParam
 {
   T factor;
   ispc::TextureParam tex;
+  Ref<Texture> ref_tex;
   linear2f rot;
 };
 
@@ -38,13 +40,14 @@ struct OSPRAY_SDK_INTERFACE Material
   FeatureFlags getFeatureFlags() const;
 
   // helper function to get all texture related parameters
-  ispc::TextureParam getTextureParam(const char *texture_name);
+  ispc::TextureParam getTextureParam(
+      const char *texture_name, const Ref<Texture> &ref_tex);
 
   /*! \brief helper function to get a uniform or texture material parameter */
   MaterialParam1f getMaterialParam1f(const char *name, float valIfNotFound);
   MaterialParam3f getMaterialParam3f(const char *name, vec3f valIfNotFound);
 
-  bool isEmissive() const;
+  virtual bool isEmissive() const;
 
  private:
   /*! \brief helper function to combine multiple texture transformation
@@ -88,6 +91,7 @@ inline FeatureFlags Material::getFeatureFlags() const
 
 inline bool Material::isEmissive() const
 {
-  return reduce_max(getSh()->emission) > 0.f;
+  return false;
 }
+
 } // namespace ospray

@@ -13,7 +13,7 @@ struct SciVis;
 struct FrameBuffer;
 struct ScreenSample;
 struct World;
-struct LDSampler;
+struct RandomSampler;
 struct DifferentialGeometry;
 
 struct SciVisRenderContext
@@ -22,21 +22,23 @@ struct SciVisRenderContext
   const FrameBuffer *uniform fb;
   const World *uniform world;
   ScreenSample sample;
-  varying LDSampler *uniform ldSampler;
+  varying RandomSampler *uniform randomSampler;
 };
 
 SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
+    RayCone &shadowCone,
     const World *uniform world,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     vec3f weight,
     uniform float quality,
     const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const World *uniform world,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const varying DifferentialGeometry &dg,
+    const float coneWidth,
     const uniform int sampleCnt,
     const uniform float aoRadius,
     const varying vec3i &sampleID,

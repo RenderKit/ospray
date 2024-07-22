@@ -27,7 +27,7 @@ namespace ospray {
 namespace mpi {
 
 DistributedRenderer::DistributedRenderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device),
+    : AddStructShared(device.getDRTDevice(), device),
       mpiGroup(mpicommon::worker.dup())
 {}
 
@@ -60,7 +60,9 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   const size_t numTasks = taskIDs.size();
 
-  auto event = device.getSyclQueue().submit([&](sycl::handler &cgh) {
+  sycl::queue *queue =
+      static_cast<sycl::queue *>(device.getDRTDevice().getSyclQueuePtr());
+  auto event = queue->submit([&](sycl::handler &cgh) {
     FeatureFlags ff = world->getFeatureFlags();
     ff.other = FFO_NONE;
     ff |= fb->getFeatureFlags();
@@ -120,6 +122,11 @@ OSPPickResult DistributedRenderer::pick(
       primID,
       depth,
       res.hasHit);
+#else
+  // Silence unused parameter warning
+  (void)fb;
+  (void)camera;
+  (void)screenPos;
 #endif
 
   // Find the closest picked object globally, only the rank

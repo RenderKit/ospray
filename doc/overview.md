@@ -4,8 +4,8 @@ OSPRay Overview
 Intel® OSPRay is an **o**pen source, **s**calable, and **p**ortable
 **ray** tracing engine for high-performance, high-fidelity visualization
 on Intel Architecture CPUs, Intel Xe GPUs, and ARM64 CPUs. OSPRay is part
-of the [Intel oneAPI Rendering
-Toolkit](https://software.intel.com/en-us/rendering-framework) and is
+of the [Intel Rendering Toolkit (Render
+Kit)](https://software.intel.com/en-us/rendering-framework) and is
 released under the permissive [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
 

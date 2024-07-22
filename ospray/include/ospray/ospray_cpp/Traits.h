@@ -6,6 +6,9 @@
 // ospray
 #include "ospray/ospray.h"
 
+static_assert(
+    sizeof(bool) == 1, "OSPRay assumes the size of 'bool' to be 1 byte.");
+
 namespace ospray {
 
 // Infer (compile time) OSP_DATA_TYPE from input type /////////////////////////
@@ -82,6 +85,7 @@ OSPTYPEFOR_SPECIALIZATION(OSPVolumeFormat, OSP_UINT);
 OSPTYPEFOR_SPECIALIZATION(OSPPixelFilterType, OSP_UINT);
 OSPTYPEFOR_SPECIALIZATION(OSPIntensityQuantity, OSP_UINT);
 OSPTYPEFOR_SPECIALIZATION(OSPSphereType, OSP_UINT);
+OSPTYPEFOR_SPECIALIZATION(OSPDenoiserQuality, OSP_UINT);
 
 #define OSPTYPEFOR_DEFINITION(type)                                            \
   constexpr OSPDataType OSPTypeFor<type>::value

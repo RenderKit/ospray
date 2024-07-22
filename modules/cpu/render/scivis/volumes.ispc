@@ -113,8 +113,14 @@ static void sampleVolume(SciVisRenderContext &rc,
       dg.Ns = dg.Ng =
           normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
       dg.P = ray.org + vc.distance * ray.dir;
-      SSI shading = SciVis_computeShading(
-          rc.renderer, rc.world, dg, rc.sample, rc.ldSampler, ray.dir, ffh);
+      SSI shading = SciVis_computeShading(rc.renderer,
+          rc.world,
+          dg,
+          rc.sample,
+          *rc.randomSampler,
+          ray.dir,
+          0.f, // no coneWidth used
+          ffh);
       vec4f shadedColor = make_vec4f(
           shading.shadedColor, 1.f - luminance(shading.transmission));
       vc.sample = lerp(m->gradientShadingScale, vc.sample, shadedColor);
@@ -177,7 +183,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     const VolumeIntervals &volumeIntervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const uniform float samplingRate,
     const uniform FeatureFlagsHandler &)
 {
@@ -188,7 +194,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
               * sizeof(varying VolumeContext));
 
   // Sampling position jitter
-  const float jitter = LDSampler_getFloat(ldSampler, 0);
+  const float jitter = RandomSampler_getFloat(&randomSampler);
 
   // Iterate through all volumes and initialize its contexts with data that
   // do not change across ray intervals
@@ -297,7 +303,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     const VolumeIntervals &volumeIntervals,
     const RayIntervals &,
     Ray &ray,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const uniform float samplingRate,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -324,7 +330,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
           ff.volume);
 
   // Sampling position jitter
-  const float jitter = LDSampler_getFloat(ldSampler, 0);
+  const float jitter = RandomSampler_getFloat(&randomSampler);
 
   // Propagate ray across all volumes till opaque
   const SciVis *uniform scivis = rc.renderer;
@@ -399,8 +405,14 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
           dg.Ns = dg.Ng =
               normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
           dg.P = p;
-          SSI shading = SciVis_computeShading(
-              rc.renderer, rc.world, dg, rc.sample, rc.ldSampler, ray.dir, ffh);
+          SSI shading = SciVis_computeShading(rc.renderer,
+              rc.world,
+              dg,
+              rc.sample,
+              *rc.randomSampler,
+              ray.dir,
+              0.f, // no coneWidth used
+              ffh);
           vec4f shadedColor = make_vec4f(
               shading.shadedColor, 1.f - luminance(shading.transmission));
           sampledColor =

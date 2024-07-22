@@ -36,16 +36,18 @@
 #include "volume/transferFunction/TransferFunction.h"
 #endif
 
+static_assert(sizeof(bool) == 1,
+    "OSPRay's implementation assumes the size of 'bool' to be 1 byte.");
+
 namespace ospray {
 namespace mpi {
 
 // Helper functions ///////////////////////////////////////////////////////
 
-using SetParamFcn = void(OSPObject, const char *, const void *m, OSPDataType);
+using SetParamFcn = void(OSPObject, const char *, const void *m);
 
 template <typename T>
-static void setParamOnObject(
-    OSPObject _obj, const char *p, const T &v, OSPDataType)
+static void setParamOnObject(OSPObject _obj, const char *p, const T &v)
 {
   auto *obj = lookupObject<ManagedObject>(_obj);
   obj->setParam(p, v);
@@ -53,29 +55,26 @@ static void setParamOnObject(
 
 #define declare_param_setter(TYPE)                                             \
   {                                                                            \
-    OSPTypeFor<TYPE>::value,                                                   \
-        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
-          setParamOnObject(o, p, *(TYPE *)v, t);                               \
-        }                                                                      \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
+      setParamOnObject(o, p, *(TYPE *)v);                                      \
+    }                                                                          \
   }
 
 #define declare_param_setter_object(TYPE)                                      \
   {                                                                            \
-    OSPTypeFor<TYPE>::value,                                                   \
-        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
-          auto *obj = lookupObject<ManagedObject>(                             \
-              *reinterpret_cast<const OSPObject *>(v));                        \
-          setParamOnObject(o, p, obj, t);                                      \
-        }                                                                      \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
+      auto *obj = lookupObject<ManagedObject>(                                 \
+          *reinterpret_cast<const OSPObject *>(v));                            \
+      setParamOnObject(o, p, obj);                                             \
+    }                                                                          \
   }
 
 #define declare_param_setter_string(TYPE)                                      \
   {                                                                            \
-    OSPTypeFor<TYPE>::value,                                                   \
-        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
-          const char *str = (const char *)v;                                   \
-          setParamOnObject(o, p, std::string(str), t);                         \
-        }                                                                      \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
+      const char *str = (const char *)v;                                       \
+      setParamOnObject(o, p, std::string(str));                                \
+    }                                                                          \
   }
 
 static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
@@ -261,11 +260,6 @@ void MPIDistributedDevice::commit()
   internalDevice->setParam<void *>("syclContext", appSyclCtx);
   void *appSyclDevice = getParam<void *>("syclDevice", nullptr);
   internalDevice->setParam<void *>("syclDevice", appSyclDevice);
-
-  void *appZeCtx = getParam<void *>("zeContext", nullptr);
-  internalDevice->setParam<void *>("zeContext", appZeCtx);
-  void *appZeDevice = getParam<void *>("zeDevice", nullptr);
-  internalDevice->setParam<void *>("zeDevice", appZeDevice);
 
   internalDevice->commit();
 }
@@ -523,12 +517,6 @@ float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
   return internalDevice->getVariance((OSPFrameBuffer)fb);
 }
 
-void *MPIDistributedDevice::getPostProcessingCommandQueuePtr()
-{
-  // Run post-processing on internal device only
-  return internalDevice->getPostProcessingCommandQueuePtr();
-}
-
 void MPIDistributedDevice::setObjectParam(
     OSPObject object, const char *name, OSPDataType type, const void *mem)
 {
@@ -536,11 +524,11 @@ void MPIDistributedDevice::setObjectParam(
     throw std::runtime_error("cannot set OSP_UNKNOWN parameter type");
 
   if (type == OSP_BYTE || type == OSP_RAW) {
-    setParamOnObject(object, name, *(const byte_t *)mem, type);
+    setParamOnObject(object, name, *(const byte_t *)mem);
     return;
   }
 
-  setParamFcns[type](object, name, mem, type);
+  setParamFcns[type](object, name, mem);
 }
 
 void MPIDistributedDevice::removeObjectParam(

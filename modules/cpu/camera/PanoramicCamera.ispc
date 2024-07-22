@@ -4,7 +4,6 @@
 #include "Camera.ih"
 #include "common/Embree.h"
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
 // c++ shared
@@ -16,12 +15,16 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
+    varying RayCone &rayCone,
     const varying CameraSample &sample,
     const uniform FeatureFlagsHandler &ffh)
 {
   const PanoramicCamera *uniform self = (const PanoramicCamera *uniform)_self;
 
   vec2f screen = sample.screen;
+  float pixel_center = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE
+      ? sample.pixel_center.x
+      : sample.pixel_center.y;
 
   varying float *uniform split =
       self->stereoMode == OSP_STEREO_SIDE_BY_SIDE ? &screen.x : &screen.y;
@@ -36,7 +39,7 @@ SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
   case OSP_STEREO_SIDE_BY_SIDE:
   case OSP_STEREO_TOP_BOTTOM:
     *split *= 2.f;
-    if (*split < 1.f) {
+    if (pixel_center < 0.5f) {
       offset = -self->ipd_offset;
     } else {
       offset = self->ipd_offset;
@@ -80,6 +83,14 @@ SYCL_EXTERNAL void PanoramicCamera_initRay(const Camera *uniform _self,
   }
 
   setRay(ray, org, dir, self->super.nearClip, inf, time);
+  rayCone.width = 0.f;
+  rayCone.dwdt = pi * sinTheta;
+
+  const uniform vec2f subImageSize = box_size(self->super.subImage);
+  rayCone.dwdt *= abs(subImageSize.y);
+
+  if (self->stereoMode == OSP_STEREO_TOP_BOTTOM)
+    rayCone.dwdt *= 2.f;
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////

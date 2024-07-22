@@ -12,12 +12,7 @@
 #include "geometry/GeometricModel.h"
 #include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
-#ifdef OSPRAY_TARGET_SYCL
-namespace ispc {
-void precomputeZOrder();
-}
-#else
-// ispc exports
+#ifndef OSPRAY_TARGET_SYCL
 #include "render/Renderer_ispc.h"
 #include "render/util_ispc.h"
 #endif
@@ -27,12 +22,12 @@ namespace ospray {
 // Renderer definitions ///////////////////////////////////////////////////////
 
 Renderer::Renderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device), device(device)
+    : AddStructShared(device.getDRTDevice(), device),
+      device(device),
+      drtDevice(device.getDRTDevice())
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
-  mathConstants = rkcommon::make_unique<MathConstants>(device);
-  getSh()->mathConstants = mathConstants->getSh();
 }
 
 std::string Renderer::toString() const
@@ -43,6 +38,7 @@ std::string Renderer::toString() const
 void Renderer::commit()
 {
   spp = std::max(1, getParam<int>("pixelSamples", 1));
+  const float mipBias = getParam<float>("mipMapBias", 0.f);
   const uint32_t maxDepth = std::max(0, getParam<int>("maxPathLength", 20));
   const float minContribution = getParam<float>("minContribution", 0.001f);
   errorThreshold = getParam<float>("varianceThreshold", 0.f);
@@ -75,8 +71,8 @@ void Renderer::commit()
     for (auto &&mat : *materialData)
       featureFlags |= mat->getFeatureFlags();
 
-    materialArray = make_buffer_shared_unique<ispc::Material *>(
-        getISPCDevice().getIspcrtContext(),
+    materialArray = devicert::make_buffer_shared_unique<ispc::Material *>(
+        getISPCDevice().getDRTDevice(),
         createArrayOfSh<ispc::Material>(*materialData));
     getSh()->numMaterials = materialArray->size();
     getSh()->material = materialArray->sharedPtr();
@@ -92,8 +88,7 @@ void Renderer::commit()
 
   setupPixelFilter();
   getSh()->pixelFilter = pixelFilter ? pixelFilter->getSh() : nullptr;
-
-  ispc::precomputeZOrder();
+  getSh()->mipBiasFactor = powf(2, mipBias);
 }
 
 OSPPickResult Renderer::pick(

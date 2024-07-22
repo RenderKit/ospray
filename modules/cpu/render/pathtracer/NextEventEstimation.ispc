@@ -11,20 +11,21 @@
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 
+#include "common/RayCone.ih"
 #include "common/World.ih"
 #include "math/Distribution1D.ih"
-#include "math/sampling.ih"
 #include "math/random.ih"
+#include "math/sampling.ih"
 // c++ shared
-#include "PathTracerDataShared.h"
 #include "lights/LightDispatch.ih"
 #include "lights/LightShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
-    const PathState &pathState,
+    PathState &pathState,
     PathVertex &pathVertex,
+    float rayConeWidth,
     const uniform FeatureFlagsHandler &ffh)
 {
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
@@ -32,28 +33,32 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
 
-  const World *uniform world = pathContext.world;
-  const uniform PathTracerData &pathtracerData =
-      *((const uniform PathTracerData *)world->pathtracerData);
-  for (uniform uint32 i = 0; i < pathContext.numLightSamples; i++) {
+  const uint32 numLightSamples = pathState.firstBounceLight
+      ? pathContext.numFirstBounceLightSamples
+      : pathContext.numIndirectBounceLightSamples;
+
+  // remember for MIS
+  pathVertex.numLightSamples = numLightSamples;
+
+  for (uniform uint32 i = 0; i < numLightSamples; i++) {
     // select a random light source from the list
-    const float s1 = LDSampler_getFloat(
-        pathContext.ldSampler, pathState.sampleDim + 3 + i * 3);
+    float ss;
+    const vec2f s = LDSampler_get3LightSamples(
+        pathState.ldSampler, i, numLightSamples > 1, ss);
     const Sample1D lSelectSample = Distribution1D_sample(
-        pathContext.numLights, pathContext.lightsCDF, 0, s1);
-    const float lightSelectionProb =
-        lSelectSample.prob * pathContext.numLightSamples;
-    const Light *light = pathtracerData.lights[lSelectSample.idx];
+        pathContext.numLights, pathContext.lightsCDF, 0, ss);
+
+    const float lightSelectionProb = lSelectSample.prob * numLightSamples;
+    const Light *light = pathContext.lights[lSelectSample.idx];
     // sample the contribution from the random light source
-    const vec2f s2 = LDSampler_getFloat2(
-        pathContext.ldSampler, pathState.sampleDim + 3 + i * 3 + 1);
     Light_SampleRes ls;
     foreach_unique (l in light)
-      ls = Light_dispatch_sample(l, pathVertex.dg, s2, pathState.time, ffh);
+      ls = Light_dispatch_sample(l, pathVertex.dg, s, pathState.time, ffh);
 
-    // adjust the contibution with the probabiltiy of selecting the light source
+    // adjust the contribution with the probabiltiy of selecting the light
+    // source
     ls.weight = ls.weight / lightSelectionProb;
-    ls.pdf = ls.pdf * lightSelectionProb;
+    ls.pdf *= lightSelectionProb;
 
     // skip when zero contribution from light
     if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -79,7 +84,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     if (reduce_max(fe.value) <= 0.0f)
       continue;
 
-    // test for shadows
+    // test for shadows with rayCones
     Ray shadowRay;
     vec3f org = pathVertex.dg.P;
     if (pathVertex.type != VOLUME) {
@@ -87,6 +92,10 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         org = org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
     }
     setRay(shadowRay, org, ls.dir, 0.f, ls.dist, pathState.time);
+    // connect ray cone to point on light
+    RayCone shadowCone;
+    shadowCone.width = rayConeWidth;
+    shadowCone.dwdt = -rayConeWidth * rcp(ls.dist);
 
     // Trace ray in clipping geometries scene, fill array with ray intervals
     RayIntervals rayIntervals;
@@ -94,20 +103,12 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
 
     const vec3f throughput = pathState.throughput * fe.value;
 
-#if ROULETTE == 1
-    // Russian roulette adjustment
-    if (pathState.depth >= pathContext.context->rouletteDepth) {
-      const float contProb =
-          min(luminance(throughput * rcp(fe.pdf)), MAX_ROULETTE_CONT_PROB);
-      fe.pdf *= contProb;
-    }
-#endif
-
     const vec3f unshadedLightContrib = throughput * ls.weight;
     const vec3f lightContrib = transparentShadow(pathContext.context,
         pathContext.world,
         unshadedLightContrib,
         shadowRay,
+        shadowCone,
         rayIntervals,
         pathState.currentMedium,
         ffh);
@@ -117,29 +118,34 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         const float T = volumeTransmittance(pathContext.world,
             shadowRay,
             rayIntervals,
-            pathContext.randomSampler,
+            &pathState.randomSampler,
             ffh);
         if (reduce_max(T) > 0) {
           // we have to use an independent transmittance estimate for MIS to get
           // a correct result
-          const float T_mis = pathState.disableFWD || pathState.disableNEE
+          const float T_mis =
+#ifdef OSPRAY_PATHTRACER_DEBUG
+              pathContext.disableFWD || pathContext.disableNEE
               ? 1.f
-              : volumeTransmittance(pathContext.world,
+              :
+#endif
+              volumeTransmittance(pathContext.world,
                   shadowRay,
                   rayIntervals,
-                  pathContext.randomSampler,
+                  &pathState.randomSampler,
                   ffh);
           L = L
               + T * lightContrib
-                  * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);
+                  * misHeuristic(pathContext, ls.pdf, fe.pdf * T_mis);
         }
       } else
 #endif
       {
-        L = L + lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf);
+        L = L + lightContrib * misHeuristic(pathContext, ls.pdf, fe.pdf);
       }
     }
   }
+
   return L;
 }
 

@@ -1,3 +1,0 @@
-# Ignore TBB memory leaks as TBB worker threads may terminate after
-# the main thread
-leak:libtbb

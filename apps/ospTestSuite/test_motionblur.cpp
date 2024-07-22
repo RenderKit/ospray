@@ -180,7 +180,7 @@ void MotionBlurBoxes::SetUp()
       n.x += 1.0f;
     mnordata.push_back(cpp::CopiedData(nor));
     for (vec3f &p : pos)
-      p = xfmPoint(quatf::rotate(vec3f(0.4, 0, 1), -0.1), p);
+      p = xfmPoint(quatf::rotate(vec3f(.4f, 0.f, 1.f), -.1f), p);
     mposdata.push_back(cpp::CopiedData(pos));
     for (vec3f &n : nor)
       n.x -= 0.5f;

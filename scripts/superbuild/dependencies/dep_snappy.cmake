@@ -10,11 +10,8 @@ else()
 endif()
 
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/snappy/archive/refs/tags/1.1.10.zip"
-  URL_HASH "SHA256=3c6f7b07f92120ebbba5f7742f2cc2386fd46c53f5730322b7b90d4afc126fca"
-
-  # `patch` is not available on all systems, so use `git apply` instead
-  PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/snappy-sign-compare.patch
+  URL "https://github.com/google/snappy/archive/refs/tags/1.2.1.tar.gz"
+  URL_HASH "SHA256=736aeb64d86566d2236ddffa2865ee5d7a82d26c9016b36218fcc27ea4f09f86"
 
   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""

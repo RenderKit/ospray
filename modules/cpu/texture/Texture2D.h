@@ -5,6 +5,7 @@
 
 #include "Texture.h"
 #include "common/Data.h"
+#include "texture/MipMapCache.h"
 // ispc shared
 #include "Texture2DShared.h"
 
@@ -15,13 +16,13 @@ struct OSPRAY_SDK_INTERFACE Texture2D
     : public AddStructShared<Texture, ispc::Texture2D>
 {
   Texture2D(api::ISPCDevice &device)
-      : AddStructShared(device.getIspcrtContext(), device)
+      : AddStructShared(device.getDRTDevice(), device)
   {}
-  virtual ~Texture2D() override = default;
+  ~Texture2D() override;
 
-  virtual std::string toString() const override;
+  std::string toString() const override;
 
-  virtual void commit() override;
+  void commit() override;
 
   OSPTextureFormat format{OSP_TEXTURE_FORMAT_INVALID};
   OSPTextureFilter filter{OSP_TEXTURE_FILTER_LINEAR};
@@ -29,6 +30,7 @@ struct OSPRAY_SDK_INTERFACE Texture2D
 
  protected:
   Ref<const Data> texData;
+  MipMapCache::BufferPtr mipMapData;
 };
 
 } // namespace ospray

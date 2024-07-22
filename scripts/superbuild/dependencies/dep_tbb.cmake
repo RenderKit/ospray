@@ -21,7 +21,7 @@ if (BUILD_TBB_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    URL "https://github.com/oneapi-src/oneTBB/archive/refs/tags/${TBB_ARCHIVE}.zip"
+    URL "https://github.com/oneapi-src/oneTBB/archive/refs/tags/${TBB_ARCHIVE}.tar.gz"
     ${TBB_URL_HASH}
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}

@@ -13,7 +13,7 @@ struct PathVertex;
 struct Ray;
 
 SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
-    const PathState &pathState,
+    PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
     Ray &ray,

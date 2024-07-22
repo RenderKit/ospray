@@ -21,7 +21,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       cmd: |
         scripts\build\win.ps1 -G "Visual Studio 15 2017 Win64"
       artifact-out: build-windows-msvc15
@@ -31,7 +30,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["build", "mpi"]'
       cmd: |
         scripts\build\win.ps1 -G "Visual Studio 16 2019" -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
@@ -42,7 +40,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       cmd: |
         scripts\build\win.ps1 -G "Visual Studio 17 2022"
       artifact-out: build-windows-msvc17

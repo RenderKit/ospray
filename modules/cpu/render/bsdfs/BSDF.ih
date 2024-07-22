@@ -116,13 +116,12 @@ inline linear3f getFrame(const varying BSDF *uniform bsdf)
   return *bsdf->frame;
 }
 
-SYCL_EXTERNAL __noinline BSDF_EvalRes BSDF_dispatch_eval(
-    const varying BSDF *uniform self,
+SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval(const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
     const uniform FeatureFlagsHandler &ffh);
 
-SYCL_EXTERNAL __noinline BSDF_SampleRes BSDF_dispatch_sample(
+SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample(
     const varying BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,

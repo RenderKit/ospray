@@ -23,32 +23,71 @@
 
 #pragma once
 
-#include "math/sobol.h"
 #include "rkcommon/math/math.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// Compute one component of the Sobol'-sequence, where the component
-// corresponds to the dimension parameter, and the index specifies
-// the point inside the sequence. The scramble parameter can be used
-// to permute elementary intervals, and might be chosen randomly to
-// generate a randomized QMC sequence.
-inline float Sobol_sample(const unsigned int *uniform sobol_matrices,
-    unsigned int index,
-    uniform unsigned int dimension,
-    unsigned int scramble = 0)
-{
-#ifndef OSPRAY_TARGET_SYCL
-  assert(dimension < Sobol_numDimensions);
+#ifdef OSPRAY_TARGET_SYCL
+#include "sobol.inl"
+#else
+extern const uniform unsigned int Sobol_revMatrices[4 * 32];
+extern const uniform unsigned int Sobol_matrices[5 * 52];
 #endif
 
-  unsigned int result = scramble;
-  for (uniform unsigned int i = dimension * Sobol_numBits; index;
-       index >>= 1, ++i) {
-    if (index & 1)
-      result ^= sobol_matrices[i];
+// compute components 1 and 2 of the Sobol'-sequence (count starting from 0)
+inline vec2ui Sobol_revSample2(uint32 revIndex)
+{
+  vec2ui result = make_vec2ui(0);
+  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 4) {
+    if (revIndex & 0x80000000u) {
+      result.x ^= Sobol_revMatrices[i];
+      result.y ^= Sobol_revMatrices[i + 1];
+    }
   }
 
-  return to_float_unorm(result);
+  return result;
 }
+
+// compute components 1 to 3 of the Sobol'-sequence (count starting from 0)
+inline vec3ui Sobol_revSample3(uint32 revIndex)
+{
+  vec3ui result = make_vec3ui(0);
+  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 4) {
+    if (revIndex & 0x80000000u) {
+      result.x ^= Sobol_revMatrices[i];
+      result.y ^= Sobol_revMatrices[i + 1];
+      result.z ^= Sobol_revMatrices[i + 2];
+    }
+  }
+
+  return result;
+}
+
+// compute components 1 to 4 of the Sobol'-sequence (count starting from 0)
+inline vec4ui Sobol_revSample4(uint32 revIndex)
+{
+  vec4ui result = make_vec4ui(0);
+  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 4) {
+    if (revIndex & 0x80000000u) {
+      result.x ^= Sobol_revMatrices[i];
+      result.y ^= Sobol_revMatrices[i + 1];
+      result.z ^= Sobol_revMatrices[i + 2];
+      result.w ^= Sobol_revMatrices[i + 3];
+    }
+  }
+
+  return result;
+}
+
+inline uint32 Sobol_sample(uint32 index, uniform uint32 dim)
+{
+  uint32 res = 0;
+  for (uniform uint32 i = dim * 52; index; index >>= 1, i++) {
+    if (index & 1)
+      res ^= Sobol_matrices[i];
+  }
+
+  return res;
+}
+
 OSPRAY_END_ISPC_NAMESPACE

@@ -34,7 +34,7 @@ using DFB = DistributedFrameBuffer;
 
 DistributedTileError::DistributedTileError(
     api::ISPCDevice &device, const vec2i &numTiles, mpicommon::Group group)
-    : TaskError(device.getIspcrtContext(), numTiles), group(group)
+    : TaskError(device.getDRTDevice(), numTiles), group(group)
 {}
 
 void DistributedTileError::sync()
@@ -237,6 +237,8 @@ void DistributedFrameBuffer::setSparseFBLayerCount(size_t numLayers)
           getISPCDevice(), size, getColorBufferFormat(), channelFlags);
     }
   }
+  for (auto &l : layers)
+    l->getSh()->super.targetFrames = getSh()->targetFrames;
 }
 
 size_t DistributedFrameBuffer::getSparseLayerCount() const
@@ -437,7 +439,7 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB *msg)
     }
     // All IDs are sent if any were requested, however we need to write only the
     // ones that actually exist in the local FB since it doesn't allocate
-    // buffers for the non-existant channels
+    // buffers for the non-existent channels
     if (hasPrimitiveIDBuffer) {
       pidBuf = reinterpret_cast<uint32 *>(data);
     }
@@ -911,9 +913,9 @@ float DFB::tileError(const uint32_t tileID)
   return tileErrorRegion[tileID];
 }
 
-AsyncEvent DFB::postProcess(bool wait)
+devicert::AsyncEvent DFB::postProcess()
 {
-  AsyncEvent event;
+  devicert::AsyncEvent event;
   if (localFBonMaster) {
     // FrameOps are run on the device, but the DFB receives the final image
     // data over MPI into host-memory, and returns host-memory pointers
@@ -921,21 +923,19 @@ AsyncEvent DFB::postProcess(bool wait)
     // ops. If we can receive with MPI directly into device
     // memory we can drop this first copy step. When running on the CPU device,
     // these copies will become no-ops.
-    ispcrt::TaskQueue &tq = getISPCDevice().getIspcrtQueue();
     if (localFBonMaster->colorBuffer) {
-      tq.copyToDevice(*localFBonMaster->colorBuffer);
+      localFBonMaster->colorBuffer->copyToDevice();
     }
     if (localFBonMaster->depthBuffer) {
-      tq.copyToDevice(*localFBonMaster->depthBuffer);
+      localFBonMaster->depthBuffer->copyToDevice();
     }
     if (localFBonMaster->normalBuffer) {
-      tq.copyToDevice(*localFBonMaster->normalBuffer);
+      localFBonMaster->normalBuffer->copyToDevice();
     }
     if (localFBonMaster->albedoBuffer) {
-      tq.copyToDevice(*localFBonMaster->albedoBuffer);
+      localFBonMaster->albedoBuffer->copyToDevice();
     }
-    tq.sync();
-    event = localFBonMaster->postProcess(wait);
+    event = localFBonMaster->postProcess();
   }
   return event;
 }

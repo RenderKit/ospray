@@ -33,7 +33,7 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels,
     const FeatureFlagsOther ffo)
-    : AddStructShared(device.getIspcrtContext(), device),
+    : AddStructShared(device.getDRTDevice(), device),
       size(_size),
       colorBufferFormat(_colorBufferFormat),
       hasColorBuffer(channels & OSP_FB_COLOR),
@@ -56,8 +56,8 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->size = _size;
   getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
   getSh()->channels = channels;
-  getSh()->doAccumulation = doAccum;
   getSh()->accumulateVariance = false;
+  getSh()->targetFrames = !doAccum;
 
 #if OSPRAY_RENDER_TASK_SIZE == -1
 #ifdef OSPRAY_TARGET_SYCL
@@ -82,8 +82,11 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
 
 void FrameBuffer::commit()
 {
-  // Read image operations array set by user
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
+  // always query `targetFrames` to clear query status
+  getSh()->targetFrames = max(0, getParam<int>("targetFrames", 0));
+  if (!doAccum)
+    getSh()->targetFrames = 1;
 }
 
 void FrameBuffer::clear()
@@ -109,7 +112,7 @@ float FrameBuffer::getVariance() const
 void FrameBuffer::beginFrame()
 {
   cancelRender = false;
-  getSh()->frameID++;
+  getSh()->frameID = doAccum ? getSh()->frameID + 1 : 0;
 #ifndef OSPRAY_TARGET_SYCL
   // TODO: Cancellation isn't supported on the GPU
   getSh()->cancelRender = 0;

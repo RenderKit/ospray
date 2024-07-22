@@ -33,12 +33,9 @@ DistributedLoadBalancer::~DistributedLoadBalancer()
   handle.free();
 }
 
-std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
-    FrameBuffer *_fb,
-    Renderer *_renderer,
-    Camera *camera,
-    World *_world,
-    bool /*wait*/)
+std::pair<devicert::AsyncEvent, devicert::AsyncEvent>
+DistributedLoadBalancer::renderFrame(
+    FrameBuffer *_fb, Renderer *_renderer, Camera *camera, World *_world)
 {
   auto *dfb = dynamic_cast<DistributedFrameBuffer *>(_fb);
   if (!dfb) {
@@ -56,7 +53,7 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
   if (!renderer) {
     if (world->allRegions.size() == 1) {
       renderFrameReplicated(dfb, _renderer, camera, world);
-      return std::make_pair(AsyncEvent(), AsyncEvent());
+      return std::make_pair(devicert::AsyncEvent(), devicert::AsyncEvent());
     } else {
       throw std::runtime_error(
           "Distributed rendering requires a distributed renderer!");
@@ -155,144 +152,152 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
    * region per rank configs. Right now this is serial to avoid a race condition
    * on the SYCL queue.
    */
-  tasking::serial_for(dfb->getSparseLayerCount(), [&](size_t layer)
+  tasking::serial_for(dfb->getSparseLayerCount(),
+      [&](size_t layer)
 #else
-  tasking::parallel_for(dfb->getSparseLayerCount(), [&](size_t layer)
+  tasking::parallel_for(dfb->getSparseLayerCount(),
+      [&](size_t layer)
 #endif
-  {
-    // Just render the background color and compute visibility information for
-    // the tiles we own for layer "0"
-    SparseFrameBuffer *sparseFb = dfb->getSparseFBLayer(layer);
-    if (sparseFb->getNumTiles() == 0) {
-      return;
-    }
-
-    RKCOMMON_IF_TRACING_ENABLED(
-        rkcommon::tracing::beginEvent("setupLayerRendering", "DistributedLB"));
-
-    // Explicitly avoiding std::vector<bool> because we need to match ISPC's
-    // memory layout
-    const utility::ArrayView<uint32_t> tileIDs = sparseFb->getTileIDs();
-
-    // We use uint8 instead of bool to avoid hitting UB with differing "true"
-    // values used by ISPC and C++
-    BufferShared<uint8_t> regionVisible(
-        sparseFb->getISPCDevice().getIspcrtContext(),
-        numRegions * sparseFb->getNumTiles());
-    std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
-
-    // Compute visibility for the tasks we're rendering
-    RKCOMMON_IF_TRACING_ENABLED({
-      rkcommon::tracing::endEvent();
-      rkcommon::tracing::beginEvent("computeRegionVisibility", "DistributedLB");
-    });
-
-    renderer->computeRegionVisibility(sparseFb,
-        camera,
-        world,
-        regionVisible.sharedPtr(),
-        perFrameData,
-        sparseFb->getRenderTaskIDs());
-
-    RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
-
-    // If we're rendering the background tiles send them over now
-    if (layer == 0) {
-      RKCOMMON_IF_TRACING_ENABLED(
-          rkcommon::tracing::beginEvent("sendLayer0Tiles", "DistributedLB"));
-      tasking::parallel_for(sparseFb->getNumTiles(), [&](size_t i) {
-        // Don't send anything if this tile was finished due to adaptive
-        // refinement
-        if (dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
+      {
+        // Just render the background color and compute visibility information
+        // for the tiles we own for layer "0"
+        SparseFrameBuffer *sparseFb = dfb->getSparseFBLayer(layer);
+        if (sparseFb->getNumTiles() == 0) {
           return;
         }
 
-        // Just generate the bgtile properties the same way as the SparseFB
-        // does to avoid having to read them back to the host
-        Tile bgtile;
-        bgtile.fbSize = sparseFb->getNumPixels();
-        bgtile.rcp_fbSize = rcp(vec2f(sparseFb->getNumPixels()));
-        bgtile.region = sparseFb->getTileRegion(tileIDs[i]);
-        bgtile.accumID = 0;
+        RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
+            "setupLayerRendering", "DistributedLB"));
 
-        bgtile.sortOrder = std::numeric_limits<int32_t>::max();
-        bgtile.generation = 0;
-        bgtile.children = 0;
-        bgtile.accumID = dfb->getFrameID();
-        for (size_t r = 0; r < numRegions; ++r) {
-          if (regionVisible[numRegions * i + r]) {
-            ++bgtile.children;
-          }
+        // Explicitly avoiding std::vector<bool> because we need to match ISPC's
+        // memory layout
+        const utility::ArrayView<uint32_t> tileIDs = sparseFb->getTileIDs();
+
+        // We use uint8 instead of bool to avoid hitting UB with differing
+        // "true" values used by ISPC and C++
+        devicert::BufferShared<uint8_t> regionVisible(
+            sparseFb->getISPCDevice().getDRTDevice(),
+            numRegions * sparseFb->getNumTiles());
+        std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
+
+        // Compute visibility for the tasks we're rendering
+        RKCOMMON_IF_TRACING_ENABLED({
+          rkcommon::tracing::endEvent();
+          rkcommon::tracing::beginEvent(
+              "computeRegionVisibility", "DistributedLB");
+        });
+
+        renderer->computeRegionVisibility(sparseFb,
+            camera,
+            world,
+            regionVisible.sharedPtr(),
+            perFrameData,
+            sparseFb->getRenderTaskIDs());
+
+        RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
+
+        // If we're rendering the background tiles send them over now
+        if (layer == 0) {
+          RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::beginEvent(
+              "sendLayer0Tiles", "DistributedLB"));
+          tasking::parallel_for(sparseFb->getNumTiles(), [&](size_t i) {
+            // Don't send anything if this tile was finished due to adaptive
+            // refinement
+            if (dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
+              return;
+            }
+
+            // Just generate the bgtile properties the same way as the SparseFB
+            // does to avoid having to read them back to the host
+            Tile bgtile;
+            bgtile.fbSize = sparseFb->getNumPixels();
+            bgtile.rcp_fbSize = rcp(vec2f(sparseFb->getNumPixels()));
+            bgtile.region = sparseFb->getTileRegion(tileIDs[i]);
+            bgtile.accumID = 0;
+
+            bgtile.sortOrder = std::numeric_limits<int32_t>::max();
+            bgtile.generation = 0;
+            bgtile.children = 0;
+            bgtile.accumID = dfb->getFrameID();
+            for (size_t r = 0; r < numRegions; ++r) {
+              if (regionVisible[numRegions * i + r]) {
+                ++bgtile.children;
+              }
+            }
+            // Fill the tile with the background color
+            // TODO: Should replace this with a smaller metadata message so we
+            // don't need to send a full tile
+            std::fill(bgtile.r,
+                bgtile.r + TILE_SIZE * TILE_SIZE,
+                renderer->bgColor.x);
+            std::fill(bgtile.g,
+                bgtile.g + TILE_SIZE * TILE_SIZE,
+                renderer->bgColor.y);
+            std::fill(bgtile.b,
+                bgtile.b + TILE_SIZE * TILE_SIZE,
+                renderer->bgColor.z);
+            std::fill(bgtile.a,
+                bgtile.a + TILE_SIZE * TILE_SIZE,
+                renderer->bgColor.w);
+            std::fill(bgtile.z,
+                bgtile.z + TILE_SIZE * TILE_SIZE,
+                std::numeric_limits<float>::infinity());
+            dfb->setTile(bgtile);
+          });
+          RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
+        } else {
+          // If we're rendering a region, render it and send over the tile data
+          RKCOMMON_IF_TRACING_ENABLED({
+            rkcommon::tracing::beginEvent("renderRegionData", "DistributedLB");
+            rkcommon::tracing::beginEvent("initRegionTaskIDs", "DistributedLB");
+            rkcommon::tracing::setCounter(
+                "regionTileCount", sparseFb->getNumTiles());
+          });
+
+          sparseFb->beginFrame();
+          const size_t rid = world->myRegionIds[layer - 1];
+
+          RKCOMMON_IF_TRACING_ENABLED({
+            rkcommon::tracing::endEvent();
+            rkcommon::tracing::beginEvent("renderRegionTasks", "DistributedLB");
+          });
+          renderer->renderRegionTasks(sparseFb,
+              camera,
+              world,
+              world->allRegions[rid],
+              perFrameData,
+              sparseFb->getRenderTaskIDs());
+
+          RKCOMMON_IF_TRACING_ENABLED({
+            rkcommon::tracing::endEvent();
+            rkcommon::tracing::beginEvent(
+                "readbackRegionTiles", "DistributedLB");
+          });
+
+          const auto tiles = sparseFb->getTiles();
+
+          RKCOMMON_IF_TRACING_ENABLED({
+            rkcommon::tracing::endEvent();
+            rkcommon::tracing::beginEvent("sendRegionTiles", "DistributedLB");
+          });
+          tasking::parallel_for(tiles.size(), [&](size_t i) {
+            if (!regionVisible[numRegions * i + rid]
+                || dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
+              return;
+            }
+            Tile &regionTile = tiles[i];
+            regionTile.generation = 1;
+            regionTile.children = 0;
+            regionTile.accumID = dfb->getFrameID();
+            dfb->setTile(regionTile);
+          });
+
+          RKCOMMON_IF_TRACING_ENABLED({
+            rkcommon::tracing::endEvent();
+            rkcommon::tracing::endEvent();
+          });
         }
-        // Fill the tile with the background color
-        // TODO: Should replace this with a smaller metadata message so we don't
-        // need to send a full tile
-        std::fill(
-            bgtile.r, bgtile.r + TILE_SIZE * TILE_SIZE, renderer->bgColor.x);
-        std::fill(
-            bgtile.g, bgtile.g + TILE_SIZE * TILE_SIZE, renderer->bgColor.y);
-        std::fill(
-            bgtile.b, bgtile.b + TILE_SIZE * TILE_SIZE, renderer->bgColor.z);
-        std::fill(
-            bgtile.a, bgtile.a + TILE_SIZE * TILE_SIZE, renderer->bgColor.w);
-        std::fill(bgtile.z,
-            bgtile.z + TILE_SIZE * TILE_SIZE,
-            std::numeric_limits<float>::infinity());
-        dfb->setTile(bgtile);
       });
-      RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
-    } else {
-      // If we're rendering a region, render it and send over the tile data
-      RKCOMMON_IF_TRACING_ENABLED({
-        rkcommon::tracing::beginEvent("renderRegionData", "DistributedLB");
-        rkcommon::tracing::beginEvent("initRegionTaskIDs", "DistributedLB");
-        rkcommon::tracing::setCounter(
-            "regionTileCount", sparseFb->getNumTiles());
-      });
-
-      sparseFb->beginFrame();
-      const size_t rid = world->myRegionIds[layer - 1];
-
-      RKCOMMON_IF_TRACING_ENABLED({
-        rkcommon::tracing::endEvent();
-        rkcommon::tracing::beginEvent("renderRegionTasks", "DistributedLB");
-      });
-      renderer->renderRegionTasks(sparseFb,
-          camera,
-          world,
-          world->allRegions[rid],
-          perFrameData,
-          sparseFb->getRenderTaskIDs());
-
-      RKCOMMON_IF_TRACING_ENABLED({
-        rkcommon::tracing::endEvent();
-        rkcommon::tracing::beginEvent("readbackRegionTiles", "DistributedLB");
-      });
-
-      const auto tiles = sparseFb->getTiles();
-
-      RKCOMMON_IF_TRACING_ENABLED({
-        rkcommon::tracing::endEvent();
-        rkcommon::tracing::beginEvent("sendRegionTiles", "DistributedLB");
-      });
-      tasking::parallel_for(tiles.size(), [&](size_t i) {
-        if (!regionVisible[numRegions * i + rid]
-            || dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
-          return;
-        }
-        Tile &regionTile = tiles[i];
-        regionTile.generation = 1;
-        regionTile.children = 0;
-        regionTile.accumID = dfb->getFrameID();
-        dfb->setTile(regionTile);
-      });
-
-      RKCOMMON_IF_TRACING_ENABLED({
-        rkcommon::tracing::endEvent();
-        rkcommon::tracing::endEvent();
-      });
-    }
-  });
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();
     rkcommon::tracing::beginEvent("waitUntilFinished", "DistributedLB");
@@ -308,7 +313,8 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
-  dfb->postProcess(true);
+  devicert::AsyncEvent event = dfb->postProcess();
+  event.wait();
   dfb->setCompletedEvent(OSP_FRAME_FINISHED);
 
   RKCOMMON_IF_TRACING_ENABLED({
@@ -316,7 +322,7 @@ std::pair<AsyncEvent, AsyncEvent> DistributedLoadBalancer::renderFrame(
     rkcommon::tracing::endEvent();
   });
 
-  return std::make_pair(AsyncEvent(), AsyncEvent());
+  return std::make_pair(devicert::AsyncEvent(), devicert::AsyncEvent());
 }
 
 void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
@@ -372,7 +378,8 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
   // TODO: We can start to pipeline the post processing here,
   // but needs support from the rest of the async tasking from
   // MPI tasks. Right now we just run on a separate thread.
-  dfb->postProcess(true);
+  devicert::AsyncEvent event = dfb->postProcess();
+  event.wait();
   dfb->setCompletedEvent(OSP_FRAME_FINISHED);
 
   RKCOMMON_IF_TRACING_ENABLED({
@@ -463,6 +470,10 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       dfb->getColorBufferFormat(),
       sparseFbChannelFlags);
 
+  sparseFb->setFrameID(dfb->getFrameID());
+  sparseFb->getSh()->super.targetFrames = dfb->getSh()->targetFrames;
+  sparseFb->getSh()->accumulate = false; // accumulation happens later
+
   while (0 < totalActiveTiles) {
     Work currentWorkItem;
     if (0 < dynamicLB->getWorkSize()) {
@@ -494,19 +505,19 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
         // Set the tiles and fill the right accumID for them
         sparseFb->setTiles(taskTileIDs);
         sparseFb->beginFrame();
-        sparseFb->setFrameID(dfb->getFrameID());
 
         RKCOMMON_IF_TRACING_ENABLED({
           rkcommon::tracing::endEvent();
           rkcommon::tracing::beginEvent("renderTasks", "DistributedLB,Dynamic");
         });
 
-        renderer->renderTasks(sparseFb.get(),
+        devicert::AsyncEvent event = renderer->renderTasks(sparseFb.get(),
             camera,
             world,
             perFrameData,
             sparseFb->getRenderTaskIDs(
                 renderer->errorThreshold, renderer->spp));
+        event.wait();
 
         RKCOMMON_IF_TRACING_ENABLED({
           rkcommon::tracing::endEvent();
@@ -573,17 +584,22 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     void *perFrameData)
 {
   SparseFrameBuffer *ownedTilesFb = dfb->getSparseFBLayer(0);
+  ownedTilesFb->setFrameID(dfb->getFrameID());
+  ownedTilesFb->getSh()->super.targetFrames = dfb->getSh()->targetFrames;
+  // frame 0 is not accumulated
+  ownedTilesFb->getSh()->accumulate = dfb->getFrameID();
 
   // Note: these views are already in USM
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
 
   RKCOMMON_IF_TRACING_ENABLED(
       rkcommon::tracing::beginEvent("localRenderLoop", "DistributedLB,Static"));
-  renderer->renderTasks(ownedTilesFb,
+  devicert::AsyncEvent event = renderer->renderTasks(ownedTilesFb,
       camera,
       world,
       perFrameData,
       ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold, renderer->spp));
+  event.wait();
 
   RKCOMMON_IF_TRACING_ENABLED({
     rkcommon::tracing::endEvent();

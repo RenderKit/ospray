@@ -18,10 +18,9 @@ jobs:
 ### BUILD JOBS ###
 
   ubu22-mpi-dpcpp-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
@@ -34,36 +33,33 @@ jobs:
 
 
   ubu22-mpi-icx-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env # OIDN AOT needs ocloc
       cmd: |
         module load cmake/3.25.3
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-mpi-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 
   suse-icx-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: opensuse/leap:15.3
       env-from-files: .github/workflows/icx-linux.env
       cmd: |
         module load cmake/3.25.3
-        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON
+        scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON
 
   rocky8-mpich-dpcpp-build:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: rockylinux:8.7
+      image: rockylinux:8
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
         module load cmake/3.25.3
@@ -80,7 +76,7 @@ jobs:
 
   dpcpp-dg2-ubu22-test:
     needs: ubu22-mpi-dpcpp-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -99,7 +95,7 @@ jobs:
 
   dpcpp-pvc-ubu22-test:
     needs: ubu22-mpi-dpcpp-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -118,7 +114,7 @@ jobs:
 
   mpi-dpcpp-pvc-ubu22-test:
     needs: ubu22-mpi-dpcpp-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -137,7 +133,7 @@ jobs:
 
   multidev-dpcpp-pvc-ubu22-test:
     needs: ubu22-mpi-dpcpp-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -156,7 +152,7 @@ jobs:
 
   icx-dg2-ubu22-test:
     needs: ubu22-mpi-icx-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -174,7 +170,7 @@ jobs:
 
   mpi-icx-dg2-ubu22-test:
     needs: ubu22-mpi-icx-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -192,7 +188,7 @@ jobs:
 
   icx-pvc-ubu22-test:
     needs: ubu22-mpi-icx-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -210,7 +206,7 @@ jobs:
 
   mpi-icx-pvc-ubu22-test:
     needs: ubu22-mpi-icx-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100
@@ -228,7 +224,7 @@ jobs:
 
   multidev-icx-pvc-ubu22-test:
     needs: ubu22-mpi-icx-build
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       timeout-minutes: 100

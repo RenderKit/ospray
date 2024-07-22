@@ -76,7 +76,7 @@ static const std::vector<std::string> g_scenes = {"boxes_lit",
     "test_pt_velvet"};
 
 static const std::vector<std::string> g_curveVariant = {
-    "bspline", "hermite", "catmull-rom", "linear", "cones"};
+    "bspline", "bezier", "hermite", "catmull-rom", "linear", "cones"};
 
 static const std::vector<std::string> g_renderers = {
     "scivis", "pathtracer", "ao", "debug"};
@@ -89,6 +89,7 @@ static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
     "Ns",
     "backfacing_Ng",
     "backfacing_Ns",
+    "texCoord",
     "dPds",
     "dPdt",
     "volume"};
@@ -97,7 +98,10 @@ static const std::vector<std::string> g_pixelFilterTypes = {
     "point", "box", "gaussian", "mitchell", "blackmanHarris"};
 
 static const std::vector<std::string> g_AOVs = {
-    "color", "depth", "albedo", "primID", "objID", "instID"};
+    "color", "depth", "albedo", "normal", "primID", "objID", "instID"};
+
+static const std::vector<std::string> g_denoiserQuality = {
+    "low", "medium", "high"};
 
 const char *vec_string_getter(void *vec_, int index)
 {
@@ -114,11 +118,18 @@ void error_callback(int error, const char *desc)
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
-GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
-    : denoiserAvailable(denoiser)
+GLFWOSPRayWindow::GLFWOSPRayWindow(
+    const vec2i &windowSize, bool denoiserAvail, bool denoiserGPUAvail)
+    : denoiserAvailable(denoiserAvail)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
+  }
+
+  if (denoiserAvailable) {
+    denoiser = cpp::ImageOperation("denoiser");
+    denoiserEnabled = denoiserGPUAvail;
+    updateFrameOpsNextFrame = denoiserEnabled;
   }
 
   activeWindow = this;
@@ -222,10 +233,10 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
 
   // set up backplate texture
   std::vector<vec4f> backplate;
-  backplate.push_back(vec4f(0.8f, 0.2f, 0.2f, 1.0f));
-  backplate.push_back(vec4f(0.2f, 0.8f, 0.2f, 1.0f));
-  backplate.push_back(vec4f(0.2f, 0.2f, 0.8f, 1.0f));
-  backplate.push_back(vec4f(0.4f, 0.2f, 0.4f, 1.0f));
+  backplate.push_back(vec4f(0.05f, 0.05f, 0.05f, 1.0f));
+  backplate.push_back(vec4f(0.05f, 0.05f, 0.05f, 1.0f));
+  backplate.push_back(vec4f(0.01f, 0.01f, 0.01f, 1.0f));
+  backplate.push_back(vec4f(0.01f, 0.01f, 0.01f, 1.0f));
 
   backplateTex.setParam(
       "data", cpp::CopiedData(backplate.data(), vec2ul(2, 2)));
@@ -296,6 +307,7 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   framebuffer =
       cpp::FrameBuffer(windowSize.x, windowSize.y, OSP_FB_RGBA32F, buffers);
 
+  updateTargetFrames(false);
   refreshFrameOperations();
 
   // reset OpenGL viewport and orthographic projection
@@ -309,7 +321,7 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   arcballCamera->updateWindowSize(windowSize);
 
   camera.setParam("aspect", windowSize.x / float(windowSize.y));
-  camera.commit();
+  addObjectToCommit(camera.handle());
 }
 
 void GLFWOSPRayWindow::updateCamera()
@@ -332,6 +344,7 @@ void GLFWOSPRayWindow::updateCamera()
     camera.setParam("transform", xfm);
     camera.setParam("shutter", range1f(0.5f));
   }
+  addObjectToCommit(camera.handle());
 }
 
 void GLFWOSPRayWindow::motion(const vec2f &position)
@@ -366,7 +379,6 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
         waitOnOSPRayFrame();
       }
       updateCamera();
-      addObjectToCommit(camera.handle());
     }
   }
 
@@ -409,6 +421,8 @@ void GLFWOSPRayWindow::display()
       fbChannel = OSP_FB_DEPTH;
     if (showAlbedo)
       fbChannel = OSP_FB_ALBEDO;
+    if (showNormal)
+      fbChannel = OSP_FB_NORMAL;
     if (showPrimID)
       fbChannel = OSP_FB_ID_PRIMITIVE;
     if (showGeomID)
@@ -449,24 +463,34 @@ void GLFWOSPRayWindow::display()
             id == -1u ? vec3f(0.f) : rkcommon::utility::makeRandomColor(id);
       }
     }
+    if (showNormal) {
+      float *nFb = static_cast<float *>(fb);
+      float *iFb = reinterpret_cast<float *>(idFbArray.data());
+      for (int i = 0; i < windowSize.x * windowSize.y * 3; i++)
+        iFb[i] = std::abs(nFb[i]);
+    }
 
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
         0,
         showDepth ? GL_DEPTH_COMPONENT
-                  : ((showAlbedo || showPrimID || showGeomID || showInstID)
+                  : ((showAlbedo || showNormal || showPrimID || showGeomID
+                         || showInstID)
                           ? GL_RGB32F
                           : GL_RGBA32F),
         windowSize.x,
         windowSize.y,
         0,
         showDepth ? GL_DEPTH_COMPONENT
-                  : ((showAlbedo || showPrimID || showGeomID || showInstID)
+                  : ((showAlbedo || showNormal || showPrimID || showGeomID
+                         || showInstID)
                           ? GL_RGB
                           : GL_RGBA),
         GL_FLOAT,
-        showDepth ? depthFb
-                  : ((showPrimID || showGeomID || showInstID) ? idFb : fb));
+        showDepth
+            ? depthFb
+            : ((showNormal || showPrimID || showGeomID || showInstID) ? idFb
+                                                                      : fb));
 
     framebuffer.unmap(fb);
 
@@ -499,12 +523,20 @@ void GLFWOSPRayWindow::display()
 
 void GLFWOSPRayWindow::startNewOSPRayFrame()
 {
-  if (updateFrameOpsNextFrame) {
+  if (updateFrameOpsNextFrame)
     refreshFrameOperations();
-    updateFrameOpsNextFrame = false;
-  }
   lastXfm = arcballCamera->transform();
-  currentFrame = framebuffer.renderFrame(*renderer, camera, world);
+  if (updateFrameOpsNextFrame || accumLimit == 0 || frame < accumLimit) {
+    currentFrame = framebuffer.renderFrame(*renderer, camera, world);
+
+    // correctly count rendered frames: to run the PP (e.g. toggling the
+    // denoiser) we need to start a renderFrame and cannot skip rendering via
+    // targetFrames in case PT should *not* use blue noise
+    if (accumLimit == 0 || frame < accumLimit
+        || (rendererType == OSPRayRendererType::PATHTRACER && !blueNoise))
+      frame++;
+  }
+  updateFrameOpsNextFrame = false;
   if (renderCameraMotionBlur) {
     camera.removeParam("motion.transform");
     camera.setParam("transform", lastXfm);
@@ -526,8 +558,12 @@ void GLFWOSPRayWindow::addObjectToCommit(OSPObject obj)
 void GLFWOSPRayWindow::updateTitleBar()
 {
   std::stringstream windowTitle;
-  windowTitle << "OSPRay: " << std::setprecision(4) << " render: " << latestFPS
-              << " fps, app: " << displayFPS << " fps";
+  windowTitle << "OSPRay frame: " << frame
+              << (accumLimit && frame >= accumLimit ? " (limit reached), last"
+                                                    : ", ")
+              << " render:" << std::fixed << std::setprecision(2)
+              << std::setw(7) << latestFPS << " fps, app:" << std::setw(7)
+              << displayFPS << " fps";
   if (latestFPS > 0.f && latestFPS < 2.f) {
     float progress = currentFrame.progress();
     windowTitle << " | ";
@@ -552,7 +588,7 @@ void GLFWOSPRayWindow::buildUI()
   ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
   ImGui::Begin("press 'g' to hide/show UI", nullptr, flags);
 
-  static int whichScene = 0;
+  static int whichScene = 2;
   if (ImGui::Combo("scene##whichScene",
           &whichScene,
           vec_string_getter,
@@ -579,7 +615,7 @@ void GLFWOSPRayWindow::buildUI()
       refreshScene(true);
   }
 
-  static int whichRenderer = 0;
+  static int whichRenderer = 1;
   static int whichDebuggerType = 0;
   if (ImGui::Combo("renderer##whichRenderer",
           &whichRenderer,
@@ -603,6 +639,7 @@ void GLFWOSPRayWindow::buildUI()
       rendererType = OSPRayRendererType::OTHER;
 
     refreshScene();
+    updateTargetFrames();
   }
 
   if (rendererType == OSPRayRendererType::DEBUGGER) {
@@ -616,6 +653,8 @@ void GLFWOSPRayWindow::buildUI()
     }
   }
 
+  if (ImGui::SliderInt("accumulation limit", &accumLimit, 0, 64))
+    updateTargetFrames();
   ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
 
   static int whichAOV = 0;
@@ -625,11 +664,14 @@ void GLFWOSPRayWindow::buildUI()
           (void *)&g_AOVs,
           g_AOVs.size())) {
     const auto &aovStr = g_AOVs[whichAOV];
-    showDepth = showAlbedo = showPrimID = showGeomID = showInstID = false;
+    showDepth = showAlbedo = showNormal = showPrimID = showGeomID = showInstID =
+        false;
     if (aovStr == "depth")
       showDepth = true;
     if (aovStr == "albedo")
       showAlbedo = true;
+    if (aovStr == "normal")
+      showNormal = true;
     if (aovStr == "primID")
       showPrimID = true;
     if (aovStr == "objID")
@@ -642,6 +684,18 @@ void GLFWOSPRayWindow::buildUI()
   if (denoiserAvailable) {
     if (ImGui::Checkbox("denoiser", &denoiserEnabled))
       updateFrameOpsNextFrame = true;
+
+    static int whichQuality = 1; // medium
+    if (denoiserEnabled
+        && ImGui::Combo("quality##whichQuality",
+            &whichQuality,
+            vec_string_getter,
+            (void *)&g_denoiserQuality,
+            g_denoiserQuality.size())) {
+      denoiser.setParam("quality",
+          OSPDenoiserQuality::OSP_DENOISER_QUALITY_LOW + whichQuality);
+      addObjectToCommit(denoiser.handle());
+    }
   }
 
   ImGui::Separator();
@@ -687,8 +741,19 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer->handle());
   }
 
+  if (scene == "mip_map_textures") {
+    static float mipBias = 0.0f;
+    if (ImGui::SliderFloat("mipMapBias", &mipBias, -5.0f, 10.0f)) {
+      rendererPT.setParam("mipMapBias", mipBias);
+      rendererSV.setParam("mipMapBias", mipBias);
+      rendererAO.setParam("mipMapBias", mipBias);
+      rendererDBG.setParam("mipMapBias", mipBias);
+      addObjectToCommit(renderer->handle());
+    }
+  }
+
   static float varianceThreshold = 0.0f;
-  if (ImGui::SliderFloat("varianceThreshold", &varianceThreshold, 0.f, .5f)) {
+  if (ImGui::SliderFloat("varianceThreshold", &varianceThreshold, 0.f, 5.f)) {
     renderer->setParam("varianceThreshold", varianceThreshold);
     addObjectToCommit(renderer->handle());
   }
@@ -705,8 +770,10 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer->handle());
   }
 
-  static bool useTestTex = false;
-  if (ImGui::Checkbox("backplate texture", &useTestTex)) {
+  static bool useTestTex = true;
+  static bool init = true;
+  if (init || ImGui::Checkbox("backplate texture", &useTestTex)) {
+    init = false;
     if (useTestTex) {
       rendererPT.setParam("map_backplate", backplateTex);
       rendererSV.setParam("map_backplate", backplateTex);
@@ -721,35 +788,49 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer->handle());
   }
 
-  if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
+  if (rendererType == OSPRayRendererType::SCIVIS
+      || rendererType == OSPRayRendererType::PATHTRACER) {
+    if (ImGui::Checkbox("sun-sky illumination", &renderSunSky)) {
+      if (renderSunSky) {
+        sunSky.setParam("direction", sunDirection);
+        sunSky.setParam("horizonExtension", horizonExtension);
+        sunSky.setParam("turbidity", turbidity);
+        world.setParam("light", cpp::CopiedData(sunSky));
+        addObjectToCommit(sunSky.handle());
+        // turn-off background
+        bgColorSRGB = bgColor = vec3f(0.f);
+        renderer->setParam("backgroundColor", bgColor);
+        useTestTex = false;
+        rendererPT.removeParam("map_backplate");
+        rendererSV.removeParam("map_backplate");
+        rendererAO.removeParam("map_backplate");
+        rendererDBG.removeParam("map_backplate");
+        addObjectToCommit(renderer->handle());
+      } else {
+        cpp::Light light("ambient");
+        light.setParam("visible", false);
+        light.commit();
+        world.setParam("light", cpp::CopiedData(light));
+      }
+      addObjectToCommit(world.handle());
+    }
     if (renderSunSky) {
-      sunSky.setParam("direction", sunDirection);
-      world.setParam("light", cpp::CopiedData(sunSky));
-      addObjectToCommit(sunSky.handle());
-    } else {
-      cpp::Light light("ambient");
-      light.setParam("visible", false);
-      light.commit();
-      world.setParam("light", cpp::CopiedData(light));
-    }
-    addObjectToCommit(world.handle());
-  }
-  if (renderSunSky) {
-    if (ImGui::DragFloat3("sunDirection", sunDirection, 0.01f, -1.f, 1.f)) {
-      sunSky.setParam("direction", sunDirection);
-      addObjectToCommit(sunSky.handle());
-      addObjectToCommit(world.handle());
-    }
-    if (ImGui::DragFloat("turbidity", &turbidity, 0.1f, 1.f, 10.f)) {
-      sunSky.setParam("turbidity", turbidity);
-      addObjectToCommit(sunSky.handle());
-      addObjectToCommit(world.handle());
-    }
-    if (ImGui::DragFloat(
-            "horizonExtension", &horizonExtension, 0.01f, 0.f, 1.f)) {
-      sunSky.setParam("horizonExtension", horizonExtension);
-      addObjectToCommit(sunSky.handle());
-      addObjectToCommit(world.handle());
+      if (ImGui::DragFloat3("sunDirection", sunDirection, 0.01f, -1.f, 1.f)) {
+        sunSky.setParam("direction", sunDirection);
+        addObjectToCommit(sunSky.handle());
+        addObjectToCommit(world.handle());
+      }
+      if (ImGui::DragFloat("turbidity", &turbidity, 0.1f, 1.f, 10.f)) {
+        sunSky.setParam("turbidity", turbidity);
+        addObjectToCommit(sunSky.handle());
+        addObjectToCommit(world.handle());
+      }
+      if (ImGui::DragFloat(
+              "horizonExtension", &horizonExtension, 0.01f, 0.f, 1.f)) {
+        sunSky.setParam("horizonExtension", horizonExtension);
+        addObjectToCommit(sunSky.handle());
+        addObjectToCommit(world.handle());
+      }
     }
   }
 
@@ -758,6 +839,22 @@ void GLFWOSPRayWindow::buildUI()
     if (ImGui::SliderInt("lightSamples", &lightSamples, -1, 32)) {
       renderer->setParam("lightSamples", lightSamples);
       addObjectToCommit(renderer->handle());
+    }
+
+    static bool limitIndirectLightSamples = true;
+    if (ImGui::Checkbox("limitIndirectLightSamples", &limitIndirectLightSamples)) {
+      renderer->setParam("limitIndirectLightSamples", limitIndirectLightSamples);
+      addObjectToCommit(renderer->handle());
+    }
+
+    if (accumLimit) {
+      if (ImGui::Checkbox("blue noise", &blueNoise))
+        updateTargetFrames();
+    } else {
+      ImGui::BeginDisabled();
+      bool f = false;
+      ImGui::Checkbox("blue noise (needs accumulation limit)", &f);
+      ImGui::EndDisabled();
     }
 
     static int maxDepth = 20;
@@ -786,7 +883,6 @@ void GLFWOSPRayWindow::buildUI()
 
     if (ImGui::SliderFloat("camera motion blur", &cameraMotionBlur, 0.f, 1.f)) {
       updateCamera();
-      addObjectToCommit(camera.handle());
     }
 
     if (cameraMotionBlur > 0.0f) {
@@ -805,33 +901,31 @@ void GLFWOSPRayWindow::buildUI()
             ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
+        updateCamera();
       }
-
-      updateCamera();
-      addObjectToCommit(camera.handle());
     }
 
     if (cameraShutterType != OSP_SHUTTER_GLOBAL
         && ImGui::SliderFloat(
             "rollingShutterDuration", &cameraRollingShutter, 0.f, 1.0f)) {
       updateCamera();
-      addObjectToCommit(camera.handle());
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
-    static bool shadowsEnabled = false;
-    if (ImGui::Checkbox("shadows", &shadowsEnabled)) {
+    static bool init = true;
+    static bool shadowsEnabled = true;
+    if (init || ImGui::Checkbox("shadows", &shadowsEnabled)) {
       renderer->setParam("shadows", shadowsEnabled);
       addObjectToCommit(renderer->handle());
     }
 
-    static bool visibleLights = false;
-    if (ImGui::Checkbox("visibleLights", &visibleLights)) {
+    static bool visibleLights = true;
+    if (init || ImGui::Checkbox("visibleLights", &visibleLights)) {
       renderer->setParam("visibleLights", visibleLights);
       addObjectToCommit(renderer->handle());
     }
 
-    static int aoSamples = 0;
-    if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
+    static int aoSamples = 1;
+    if (init || ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
       renderer->setParam("aoSamples", aoSamples);
       addObjectToCommit(renderer->handle());
     }
@@ -841,6 +935,7 @@ void GLFWOSPRayWindow::buildUI()
       renderer->setParam("volumeSamplingRate", samplingRate);
       addObjectToCommit(renderer->handle());
     }
+    init = false;
   } else if (rendererType == OSPRayRendererType::AO) {
     static int aoSamples = 1;
     if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
@@ -875,7 +970,6 @@ void GLFWOSPRayWindow::buildUI()
     ImGui::EndCombo();
 
     updateCamera();
-    addObjectToCommit(camera.handle());
   }
 
   if (uiCallback) {
@@ -892,6 +986,7 @@ void GLFWOSPRayWindow::commitOutstandingHandles()
   if (!handles.empty()) {
     for (auto &h : handles)
       ospCommit(h);
+    frame = 0;
     framebuffer.resetAccumulation();
   }
 }
@@ -911,12 +1006,9 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
   testing::release(builder);
 
   switch (rendererType) {
-  case OSPRayRendererType::PATHTRACER: {
+  case OSPRayRendererType::PATHTRACER:
     renderer = &rendererPT;
-    if (renderSunSky)
-      world.setParam("light", cpp::CopiedData(sunSky));
     break;
-  }
   case OSPRayRendererType::SCIVIS:
     renderer = &rendererSV;
     break;
@@ -929,6 +1021,12 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
   default:
     throw std::runtime_error("invalid renderer chosen!");
   }
+  if (rendererType == OSPRayRendererType::SCIVIS
+      || rendererType == OSPRayRendererType::PATHTRACER) {
+    if (renderSunSky)
+      world.setParam("light", cpp::CopiedData(sunSky));
+  } else
+    renderSunSky = false;
   // retains a set background color on renderer change
   renderer->setParam("backgroundColor", bgColor);
   addObjectToCommit(renderer->handle());
@@ -944,18 +1042,25 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
     // init camera
     camera.setParam("position", vec3f(0.0f, 0.0f, 1.0f));
     updateCamera();
-    camera.commit();
   }
 }
 
 void GLFWOSPRayWindow::refreshFrameOperations()
 {
   if (denoiserEnabled) {
-    cpp::ImageOperation d("denoiser");
-    framebuffer.setParam("imageOperation", cpp::CopiedData(d));
+    framebuffer.setParam("imageOperation", cpp::CopiedData(denoiser));
   } else {
     framebuffer.removeParam("imageOperation");
   }
 
   framebuffer.commit();
+}
+
+void GLFWOSPRayWindow::updateTargetFrames(const bool commit)
+{
+  framebuffer.setParam("targetFrames",
+      rendererType != OSPRayRendererType::PATHTRACER || blueNoise ? accumLimit
+                                                                  : 0);
+  if (commit)
+    addObjectToCommit(framebuffer.handle());
 }

@@ -4,6 +4,7 @@
 // ospray
 #include "camera/Camera.ih"
 #include "camera/CameraDispatch.ih"
+#include "common/DeviceRT.ih"
 #include "common/FeatureFlagsEnum.h"
 #include "common/Intersect.ih"
 #include "common/World.ih"
@@ -89,7 +90,8 @@ static void DebugRenderer_Ng(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NG, ffh);
+  postIntersect(
+      world, self, dg, sample.ray, sample.rayCone, DG_NORMALIZE | DG_NG, ffh);
   sample.rgb = absf(dg.Ng);
 }
 
@@ -102,7 +104,8 @@ static void DebugRenderer_Ns(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS, ffh);
+  postIntersect(
+      world, self, dg, sample.ray, sample.rayCone, DG_NORMALIZE | DG_NS, ffh);
   sample.rgb = absf(dg.Ns);
 }
 
@@ -114,7 +117,7 @@ static void DebugRenderer_texCoord(Renderer *uniform self,
   if (hitBackground(self, world, sample, ffh))
     return;
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TEXCOORD, ffh);
+  postIntersect(world, self, dg, sample.ray, sample.rayCone, DG_TEXCOORD, ffh);
   sample.rgb = abs(make_vec3f(dg.st.x, dg.st.y, 0.0f));
 }
 
@@ -126,7 +129,7 @@ static void DebugRenderer_dPds(Renderer *uniform self,
   if (hitBackground(self, world, sample, ffh))
     return;
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TANGENTS, ffh);
+  postIntersect(world, self, dg, sample.ray, sample.rayCone, DG_TANGENTS, ffh);
   sample.rgb = normalize(dg.dPds);
   if (sample.rgb.x < 0.f)
     sample.rgb.x = sample.rgb.x * -0.3f;
@@ -145,7 +148,7 @@ static void DebugRenderer_dPdt(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TANGENTS, ffh);
+  postIntersect(world, self, dg, sample.ray, sample.rayCone, DG_TANGENTS, ffh);
   sample.rgb = normalize(dg.dPdt);
   if (sample.rgb.x < 0.f)
     sample.rgb.x = sample.rgb.x * -0.3f;
@@ -164,7 +167,8 @@ static void DebugRenderer_vertexColor(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_COLOR | DG_NS, ffh);
+  postIntersect(
+      world, self, dg, sample.ray, sample.rayCone, DG_COLOR | DG_NS, ffh);
   sample.rgb = make_vec3f(dg.color)
       * abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
 }
@@ -224,7 +228,8 @@ static void DebugRenderer_backfacing_Ns(Renderer *uniform self,
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS, ffh);
+  postIntersect(
+      world, self, dg, sample.ray, sample.rayCone, DG_NORMALIZE | DG_NS, ffh);
   const float c = dot(dg.Ns, sample.ray.dir);
   sample.rgb = make_vec3f(.2f + .8f * abs(c));
   if (c > 0.f)
@@ -243,10 +248,8 @@ static void DebugRenderer_volume(Renderer *uniform self,
     return;
   }
 
-  LDSampler ldSamplerObj;
-  varying LDSampler *uniform ldSampler = &ldSamplerObj;
-  LDSampler_init(ldSampler,
-      self->mathConstants,
+  RandomSampler randomSampler;
+  RandomSampler_init(&randomSampler,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -271,7 +274,7 @@ static void DebugRenderer_volume(Renderer *uniform self,
   ray.t0 = vInterval.interval.lower;
   ray.t = vInterval.interval.upper;
 
-  const float jitter = LDSampler_getFloat(ldSampler, 0);
+  const float jitter = RandomSampler_getFloat(&randomSampler);
 
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   foreach_unique (m in model) {
@@ -363,13 +366,8 @@ static void DebugRenderer_renderSample(Renderer *uniform _self,
     varying ScreenSample &sample,
     const uniform FeatureFlagsHandler &ffh)
 {
-#ifdef OSPRAY_TARGET_SYCL
-  const DebugRendererType debugType =
-      ffh.kernel_handler.get_specialization_constant<debugRendererType>();
-#else
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
   const DebugRendererType debugType = self->type;
-#endif
   switch (debugType) {
   case TEST_FRAME:
     DebugRenderer_testFrame(_self, world, sample);
@@ -426,35 +424,17 @@ static void DebugRenderer_renderSample(Renderer *uniform _self,
 #include "render/RendererRenderTaskFn.inl"
 #undef renderSampleFn
 
-#ifdef OSPRAY_TARGET_SYCL
-SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
+inline void DebugRenderer_renderTask(const uniform vec3ui itemIndex,
+    Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
     const uint32 *uniform taskIDs,
-    const sycl::nd_item<3> taskIndex,
     const uniform FeatureFlagsHandler &ffh)
 {
-  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex, ffh);
+  Renderer_default_renderTask(itemIndex, self, fb, camera, world, taskIDs, ffh);
 }
-#else
-export void DebugRenderer_renderTasks(void *uniform _self,
-    void *uniform _fb,
-    void *uniform _camera,
-    void *uniform _world,
-    void *uniform _taskIDs,
-    uniform uint32 numTasks)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
-  Camera *uniform camera = (Camera * uniform) _camera;
-  World *uniform world = (World * uniform) _world;
-  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
-  uniform FeatureFlagsHandler ffh;
-  launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, taskIDs, ffh);
-  sync;
-}
-#endif
+
+DEFINE_RENDERER_KERNEL_LAUNCHER(DebugRenderer_renderTask);
 
 OSPRAY_END_ISPC_NAMESPACE

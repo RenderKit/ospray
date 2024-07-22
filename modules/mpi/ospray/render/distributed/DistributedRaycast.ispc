@@ -40,8 +40,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
 // inside the region, not after.
-inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
-    const VolumeInterval &interval,
+inline vec4f DRR_integrateVolumeInterval(const VolumeInterval &interval,
     Ray &ray,
     uniform float samplingRate,
     const uniform FeatureFlagsHandler &ffh)
@@ -64,7 +63,6 @@ inline vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
   float alpha = 0.f;
   foreach_unique (vm in volModel) {
     Volume *uniform volume = vm->volume;
-    TransferFunction *uniform tf = vm->transferFunction;
 
     float time = 0.5f;
 
@@ -165,8 +163,7 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton =
-        HaltonSequence_get2D(self->super.mathConstants, accumID + i);
+    const vec2f halton = HaltonSequence_get2D(accumID + i);
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -271,9 +268,9 @@ inline vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 inline void DRR_renderRegionSample(Renderer *uniform _self,
     SparseFB *uniform fb,
     DistributedWorld *uniform world,
-    const box3f *uniform region,
+    const box3f *uniform /*region*/,
     const vec2f &regionInterval,
-    void *uniform perFrameData,
+    void *uniform /*perFrameData*/,
     varying ScreenSample &sample,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -333,6 +330,7 @@ inline void DRR_renderRegionSample(Renderer *uniform _self,
           &self->super,
           dg,
           geomRay,
+          sample.rayCone,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
               | DG_TEXCOORD,
           ffh);
@@ -363,7 +361,7 @@ inline void DRR_renderRegionSample(Renderer *uniform _self,
       int iy = sample.sampleID.y % 4;
 
       int patternID = ix + 4 * iy;
-      jitter += Halton_sample3(self->super.mathConstants, patternID);
+      jitter += Halton_sample3(patternID);
       if (jitter > 1.f) {
         jitter -= 1.f;
       }
@@ -380,7 +378,7 @@ inline void DRR_renderRegionSample(Renderer *uniform _self,
           volumeInterval.interval.lower,
           volumeInterval.interval.upper);
       volumeColor = DRR_integrateVolumeInterval(
-          sample, volumeInterval, volumeRay, self->volumeSamplingRate, ffh);
+          volumeInterval, volumeRay, self->volumeSamplingRate, ffh);
     }
 #endif
 

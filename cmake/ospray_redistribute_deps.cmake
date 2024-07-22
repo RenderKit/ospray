@@ -56,8 +56,6 @@ macro(ospray_add_dependent_lib_plugins TARGET_NAME PLUGINS_PATTERN VER_PATTERN)
   endif()
 endmacro()
 
-ospray_add_dependent_lib(ispcrt::ispcrt)
-ospray_add_dependent_lib_plugins(ispcrt::ispcrt "ispcrt_device_*" "")
 ospray_add_dependent_lib(rkcommon::rkcommon)
 if (RKCOMMON_TASKING_TBB)
   ospray_add_dependent_lib(TBB::tbb)

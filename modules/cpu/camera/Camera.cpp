@@ -7,8 +7,7 @@
 namespace ospray {
 
 Camera::Camera(api::ISPCDevice &device, const FeatureFlagsOther featureFlags)
-    : AddStructShared(device.getIspcrtContext(), device),
-      featureFlags(featureFlags)
+    : AddStructShared(device.getDRTDevice(), device), featureFlags(featureFlags)
 {
   managedObjectType = OSP_CAMERA;
 }
@@ -105,6 +104,10 @@ void Camera::commit()
   getSh()->rollingShutterHorizontal = (shutterType == OSP_SHUTTER_ROLLING_RIGHT
       || shutterType == OSP_SHUTTER_ROLLING_LEFT);
   getSh()->rollingShutterDuration = rollingShutterDuration;
+  getSh()->needTimeSample = shutterType == OSP_SHUTTER_GLOBAL
+      ? shutter.size()
+      : rollingShutterDuration;
+  getSh()->needLensSample = false;
 
   if (motionTransform.motionBlur)
     featureFlags |= FFO_CAMERA_MOTION_BLUR;

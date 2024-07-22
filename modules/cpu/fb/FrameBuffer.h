@@ -59,10 +59,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
       const float errorThreshold, const uint32_t spp) = 0;
 
-  // get number of pixels in x and y diretion
   vec2i getNumPixels() const;
 
-  // get the color format type for this Buffer
   ColorBufferFormat getColorBufferFormat() const;
 
   virtual float getVariance() const;
@@ -72,7 +70,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual void beginFrame();
 
   // Invoke post-processing by calling all FrameOps
-  virtual AsyncEvent postProcess(bool wait) = 0;
+  virtual devicert::AsyncEvent postProcess() = 0;
 
   // common function to help printf-debugging, every derived class should
   // override this
@@ -136,9 +134,10 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   FeatureFlagsOther featureFlags{FFO_NONE};
 
   int32_t minimumAdaptiveFrames(const uint32_t spp) const;
+  bool accumulationFinished() const;
 
  private:
-  // for consistent reproducability of variance accumulation
+  // for consistent reproducibility of variance accumulation
   constexpr static uint32_t mtSeed = 43;
   std::mt19937 mtGen{mtSeed};
   bool pickOdd{false};
@@ -225,6 +224,11 @@ inline sycl::nd_range<3> FrameBuffer::getDispatchRange(
 inline int32_t FrameBuffer::minimumAdaptiveFrames(const uint32_t spp) const
 {
   return std::max(2u, 16 / spp);
+}
+
+inline bool FrameBuffer::accumulationFinished() const
+{
+  return getSh()->targetFrames && getFrameID() >= getSh()->targetFrames;
 }
 
 } // namespace ospray

@@ -6,12 +6,12 @@
 
 namespace ospray {
 
-TaskError::TaskError(ispcrt::Context &context, const vec2i &_numTasks)
+TaskError::TaskError(devicert::Device &device, const vec2i &_numTasks)
     : numTasks(_numTasks)
 {
   if (numTasks.long_product() > 0) {
-    taskErrorBuffer =
-        make_buffer_shared_unique<float>(context, numTasks.long_product());
+    taskErrorBuffer = devicert::make_buffer_shared_unique<float>(
+        device, numTasks.long_product());
     // maximum number of regions: all regions are of size 3 are split in
     // half
     errorRegion.reserve(divRoundUp(taskErrorBuffer->size() * 2, size_t(3)));

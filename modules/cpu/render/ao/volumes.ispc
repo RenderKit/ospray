@@ -132,7 +132,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
     const VolumeIntervals &volumeIntervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const uniform float samplingRate,
     const uniform FeatureFlagsHandler &)
 {
@@ -143,7 +143,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
               * sizeof(varying VolumeContext));
 
   // Sampling position jitter
-  const float jitter = LDSampler_getFloat(ldSampler, 0);
+  const float jitter = RandomSampler_getFloat(&randomSampler);
 
   // Iterate through all volumes and initialize its contexts with data that
   // do not change across ray intervals
@@ -252,7 +252,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
     const VolumeIntervals &volumeIntervals,
     const RayIntervals &,
     Ray &ray,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const uniform float samplingRate,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -279,7 +279,7 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervals(
           ff.volume);
 
   // Sampling position jitter
-  const float jitter = LDSampler_getFloat(ldSampler, 0);
+  const float jitter = RandomSampler_getFloat(&randomSampler);
 
   // Propagate ray across all volumes till opaque
   float distance = inf;

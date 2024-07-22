@@ -31,7 +31,7 @@ struct CarPaint_BSDF
   OrenNayar baseDiffuse;
 };
 
-SYCL_EXTERNAL __noinline const varying BSDF *uniform CarPaint_getBSDF(
+SYCL_EXTERNAL const varying BSDF *uniform CarPaint_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -326,7 +326,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayerBSDF_sample(
 
 // CarPaint BSDF
 
-SYCL_EXTERNAL __noinline BSDF_EvalRes CarPaint_BSDF_eval(
+SYCL_EXTERNAL BSDF_EvalRes CarPaint_BSDF_eval(
     const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   const varying CarPaint_BSDF *uniform self =
@@ -343,7 +343,7 @@ SYCL_EXTERNAL __noinline BSDF_EvalRes CarPaint_BSDF_eval(
     return DielectricLayerBSDF_eval(self, wo, wi);
 }
 
-SYCL_EXTERNAL __noinline BSDF_SampleRes CarPaint_BSDF_sample(
+SYCL_EXTERNAL BSDF_SampleRes CarPaint_BSDF_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,

@@ -8,7 +8,7 @@ namespace ospray {
 // Texture definitions ////////////////////////////////////////////////////////
 
 Texture::Texture(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device)
+    : AddStructShared(device.getDRTDevice(), device)
 {
   managedObjectType = OSP_TEXTURE;
 }

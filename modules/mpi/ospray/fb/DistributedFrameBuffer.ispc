@@ -347,8 +347,6 @@ inline void swapFragments(
   t1->iid[fragID] = iid;
 }
 
-#define PIXELS_PER_BLEND_JOB 64
-
 inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
     uniform int32 numTiles,
     uniform int begin_frag,

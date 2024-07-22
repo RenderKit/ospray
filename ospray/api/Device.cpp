@@ -136,6 +136,8 @@ void Device::commit()
 
   tasking::initTaskingSystem(numThreads);
 
+  disableMipMapGeneration = getParam<bool>("disableMipMapGeneration", false);
+
   committed = true;
 }
 

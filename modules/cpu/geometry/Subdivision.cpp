@@ -16,7 +16,7 @@ void *Subdivision_postIntersect_addr();
 namespace ospray {
 
 Subdivision::Subdivision(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFG_SUBDIVISION)
+    : AddStructShared(device.getDRTDevice(), device, FFG_SUBDIVISION)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =

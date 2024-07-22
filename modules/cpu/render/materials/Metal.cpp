@@ -12,7 +12,7 @@ namespace ospray {
 namespace pathtracer {
 
 Metal::Metal(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_METAL)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_METAL)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =
@@ -30,7 +30,7 @@ void Metal::commit()
   auto ior = getParamDataT<vec3f>("ior");
   const vec3f &eta = getParam<vec3f>("eta", vec3f(RGB_AL_ETA));
   const vec3f &k = getParam<vec3f>("k", vec3f(RGB_AL_K));
-  MaterialParam1f roughness = getMaterialParam1f("roughness", 0.1f);
+  roughness = getMaterialParam1f("roughness", 0.1f);
 
   if (ior) {
     // resample, relies on ordered samples

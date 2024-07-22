@@ -7,7 +7,7 @@ be overly strict. However, deviations from this document should be
 supported with technical reasoning.
 
 This document is relatively simple and meant as a "quick overview" of
-expecations for OSPRay. A more complete set of guidelines for all of C++
+expectations for OSPRay. A more complete set of guidelines for all of C++
 can be found in the [ISO C++ Core
 Guidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md).
 

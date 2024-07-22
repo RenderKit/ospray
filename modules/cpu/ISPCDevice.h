@@ -5,8 +5,8 @@
 
 // ospray
 #include "Device.h"
-// ispcrt
-#include "ispcrt.hpp"
+// device run-time
+#include "DeviceRT.h"
 // embree
 #include "common/Embree.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -28,20 +28,14 @@ int ISPCDevice_isa();
 namespace ospray {
 
 struct LocalTiledLoadBalancer;
-
-#ifdef OSPRAY_TARGET_SYCL
-using AsyncEvent = sycl::event;
-#else
-struct AsyncEvent
-{
-};
-#endif
+struct MipMapCache;
 
 namespace api {
 
 struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 {
   ISPCDevice();
+  ISPCDevice(std::unique_ptr<devicert::Device> device);
   virtual ~ISPCDevice() override;
 
   /////////////////////////////////////////////////////////////////////////
@@ -161,38 +155,14 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   }
 #endif
 
-  ispcrt::Device &getIspcrtDevice()
+  inline devicert::Device &getDRTDevice()
   {
-    return ispcrtDevice;
-  }
-
-  ispcrt::Context &getIspcrtContext()
-  {
-    return ispcrtContext;
-  }
-
-  ispcrt::TaskQueue &getIspcrtQueue()
-  {
-    return ispcrtQueue;
-  }
-
-  void *getPostProcessingCommandQueuePtr() override
-  {
-#ifdef OSPRAY_TARGET_SYCL
-    return &syclQueue;
-#else
-    return nullptr;
-#endif
+    return *drtDevice;
   }
 
 #ifdef OSPRAY_TARGET_SYCL
-  sycl::queue &getSyclQueue()
-  {
-    return syclQueue;
-  }
-
   /* Compute the rounded dispatch global size for the given work group size.
-   * SYCL requires that globalSize % workgroupSize == 0, ths function will
+   * SYCL requires that globalSize % workgroupSize == 0, this function will
    * round up globalSize and return nd_range(roundedSize, workgroupSize).
    * The kernel being launched must discard tasks that are out of bounds
    * bounds due to this rounding
@@ -201,24 +171,26 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
       const size_t globalSize, const size_t workgroupSize) const;
 #endif
 
+  inline MipMapCache &getMipMapCache()
+  {
+    return *mipMapCache;
+  }
+
  private:
-  ispcrt::Context ispcrtContext;
-  ispcrt::Device ispcrtDevice;
-  ispcrt::TaskQueue ispcrtQueue;
+  std::unique_ptr<devicert::Device> drtDevice;
 
   RTCDevice embreeDevice = nullptr;
 #ifdef OSPRAY_ENABLE_VOLUMES
   VKLDevice vklDevice = nullptr;
 #endif
 
-#ifdef OSPRAY_TARGET_SYCL
-  sycl::platform syclPlatform;
-  sycl::device syclDevice;
-  sycl::context syclContext;
-  sycl::queue syclQueue;
-#endif
+  // External SYCL context and device
+  void *appSyclCtx{nullptr};
+  void *appSyclDevice{nullptr};
 
-  bool userContext{false}; // app can set context only once
+  // Device-wide MIP map cache is needed because the same texture data objects
+  // (and thus generated MIP maps) can be shared among many textures
+  std::unique_ptr<MipMapCache> mipMapCache;
 };
 
 } // namespace api

@@ -23,7 +23,9 @@ inline Light_SampleRes Sample(const HDRILight *uniform self,
   Sample2D sample2d = Distribution2D_sample(self->distribution, s);
   // Distribution2D samples within bin i as (i, i+1), whereas we provided
   // average importance for (i-0.5, i+0.5), thus shift by 0.5
-  sample2d.uv = sample2d.uv - self->map->halfTexel;
+  const vec2f halfTexel =
+      rcp(make_vec2f(self->map->size.x, self->map->size.y)) * 0.5f;
+  sample2d.uv = sample2d.uv - halfTexel;
 
   const float phi = (float)two_pi * sample2d.uv.x;
   const float theta = (float)pi * sample2d.uv.y;
@@ -39,8 +41,7 @@ inline Light_SampleRes Sample(const HDRILight *uniform self,
   res.dist = inf;
 
   // clamp2edge for theta for tex lookup, to prevent light leaks at the poles
-  sample2d.uv.y = clamp(
-      sample2d.uv.y, self->map->halfTexel.y, 1.0f - self->map->halfTexel.y);
+  sample2d.uv.y = clamp(sample2d.uv.y, halfTexel.y, 1.0f - halfTexel.y);
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, sample2d.uv);
   res.weight = get3f(self->map, lookup) * self->radianceScale / res.pdf;
@@ -97,15 +98,16 @@ inline Light_EvalRes Eval(const HDRILight *uniform self,
   const float v = acos(clamp(localDir.z, -1.f, 1.f)) * (float)one_over_pi;
 
   // clamp2edge for theta for tex lookup, to prevent light leaks at the poles
-  const vec2f uvc = make_vec2f(
-      u, clamp(v, self->map->halfTexel.y, 1.0f - self->map->halfTexel.y));
+  const vec2f halfTexel =
+      rcp(make_vec2f(self->map->size.x, self->map->size.y)) * 0.5f;
+  const vec2f uvc = make_vec2f(u, clamp(v, halfTexel.y, 1.0f - halfTexel.y));
 
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, uvc);
   res.radiance = get3f(self->map, lookup) * self->radianceScale;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
-  vec2f uv = uvc + self->map->halfTexel;
+  vec2f uv = uvc + halfTexel;
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)
   uv.x = frac(uv.x);
   res.pdf = Distribution2D_pdf(self->distribution, uv);
@@ -167,7 +169,7 @@ task
     )
 {
   const uniform int y = taskIndex;
-  const uniform vec2f rcpSize = 1.f / map->sizef;
+  const uniform vec2f rcpSize = 1.f / make_vec2f(map->size.x, map->size.y);
   const uniform float fy = y * rcpSize.y;
   const uniform int width = map->size.x;
   const uniform float sinTheta = sin(fy * M_PI);

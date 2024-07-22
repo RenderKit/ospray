@@ -5,6 +5,7 @@
 
 #include "common/DifferentialGeometry.ih"
 #include "common/FeatureFlags.ih"
+#include "rkcommon/math/AffineSpace.ih"
 #include "texture/TextureParam.ih"
 // c++ shared
 #include "MaterialShared.h"
@@ -99,5 +100,9 @@ SYCL_EXTERNAL void Material_selectNextMedium(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     Medium &currentMedium);
+
+SYCL_EXTERNAL vec3f Material_getEmission(const Material *uniform self,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh);
 
 OSPRAY_END_ISPC_NAMESPACE

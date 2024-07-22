@@ -38,21 +38,23 @@ struct DifferentialGeometry
   const Renderer *uniform renderer; // pointer to renderer being used
   unsigned int objID; // user definable model id (0xffff none)
   unsigned int instID; // user definable instance id (0xffff none)
+
+  float pixelFootprint; // 1:1 mapping between pixels and texels
 };
 
 // assumed precision of intersection routines
 #define ulpEpsilon 0x1.0fp-21f
 
+inline float calcEpsilon(const vec3f &P, float t)
+{
+  return reduce_max(make_vec4f(abs(P), t)) * ulpEpsilon;
+}
+
 inline float calcEpsilon(const vec3f &P, const vec3f &dir, float t)
 {
   // convert ray-space t to object-/world-space using max(dir) instead of
   // costly length; the error is at most sqrt(3)~1.7, quite acceptable for eps
-  return reduce_max(make_vec4f(abs(P), reduce_max(abs(dir)) * t)) * ulpEpsilon;
+  return calcEpsilon(P, reduce_max(abs(dir)) * t);
 }
 
-inline float calcEpsilon(const vec3f &P, float dist)
-{
-  const vec3f dummy_dir = make_vec3f(1.0f);
-  return calcEpsilon(P, dummy_dir, dist);
-}
 OSPRAY_END_ISPC_NAMESPACE

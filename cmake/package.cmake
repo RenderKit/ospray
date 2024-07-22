@@ -79,7 +79,12 @@ set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}")
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)
 
 # do not disable, stripping symbols is important for security reasons
-set(CPACK_STRIP_FILES TRUE)
+# except on Windows, where stripping is usually not supported/required; but on
+# some systems it is done via llvm-strip, which only slightly changes the
+# binary, enough to invalidate code signatures
+if (NOT WIN32)
+  set(CPACK_STRIP_FILES TRUE)
+endif()
 
 set(CPACK_PACKAGE_VERSION_MAJOR ${OSPRAY_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${OSPRAY_VERSION_MINOR})

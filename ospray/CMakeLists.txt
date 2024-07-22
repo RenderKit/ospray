@@ -82,7 +82,7 @@ target_include_directories(ospray
 if (OSPRAY_ENABLE_PROFILING)
   target_compile_definitions(ospray
     PUBLIC
-      -DRKCOMMON_ENABLE_PROFILING
+      RKCOMMON_ENABLE_PROFILING
   )
 endif()
 

@@ -2,24 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Debug.h"
-#include "ISPCDevice.h"
 #include "fb/FrameBufferView.h"
 
-#ifndef OSPRAY_TARGET_SYCL
-extern "C" {
-#endif
-namespace ispc {
-void Debug_kernelLauncher(const FrameBufferView *, void *, void *);
-}
-#ifndef OSPRAY_TARGET_SYCL
-}
-#endif
+DECLARE_FRAMEOP_KERNEL_LAUNCHER(Debug_kernelLauncher);
 
 namespace ospray {
 
-DebugFrameOp::DebugFrameOp(api::Device &device)
-    : FrameOp(static_cast<api::ISPCDevice &>(device))
-{}
+DebugFrameOp::DebugFrameOp(devicert::Device &device) : FrameOp(device) {}
 
 std::unique_ptr<LiveFrameOpInterface> DebugFrameOp::attach(
     FrameBufferView &fbView)
@@ -32,13 +21,16 @@ std::string DebugFrameOp::toString() const
   return "ospray::DebugFrameOp";
 }
 
-void LiveDebugFrameOp::process(void *waitEvent)
+LiveDebugFrameOp::LiveDebugFrameOp(
+    devicert::Device &device, FrameBufferView &fbView)
+    : LiveFrameOp(device, fbView)
+{}
+
+devicert::AsyncEvent LiveDebugFrameOp::process()
 {
-  void *cmdQueue = nullptr;
-#ifdef OSPRAY_TARGET_SYCL
-  cmdQueue = &device.getSyclQueue();
-#endif
-  ispc::Debug_kernelLauncher(getSh(), cmdQueue, waitEvent);
+  const vec2ui &itemDims = getSh()->viewDims;
+  return device.launchFrameOpKernel(
+      itemDims, ispc::Debug_kernelLauncher, getSh());
 }
 
 } // namespace ospray

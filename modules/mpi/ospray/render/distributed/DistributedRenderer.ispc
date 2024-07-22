@@ -79,7 +79,7 @@ task
         Camera *uniform camera,
         DistributedWorld *uniform world,
         uint8 *uniform regionVisible,
-        void *uniform perFrameData,
+        void *uniform /*perFrameData*/,
         const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
         const int taskIndex0,
@@ -137,8 +137,8 @@ task
       // texture
       vec2f center =
           make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
-      const float tMax = inf;
-      // Renderer_getMaxDepth(&self->super, center * fb->super.rcpSize);
+      const float tMax =
+          Renderer_getMaxDepth(self, center * fb->super.rcpSize, ffh);
 
       for (uniform uint32 s = 0; s < nVisibilitySamples; s++) {
         screenSample.sampleID.z = s;
@@ -155,7 +155,13 @@ task
         cameraSample.lens.y = 0.0f;
         cameraSample.time = 0.5f;
 
-        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample, ffh);
+        Camera_dispatch_initRay(
+            camera, screenSample.ray, screenSample.rayCone, cameraSample, ffh);
+        // take screen resolution (unnormalized coordinates), i.e., pixel size
+        // into account
+        screenSample.rayCone.dwdt *= fb->super.rcpSize.y;
+        screenSample.rayCone.width *= fb->super.rcpSize.y;
+
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         if (world->regionScene) {
@@ -236,7 +242,8 @@ export void DistributedRenderer_pick(const void *uniform _self,
   cameraSample.time = 0.5f;
 
   Ray ray;
-  Camera_dispatch_initRay(camera, ray, cameraSample, ffh);
+  RayCone rayCone;
+  Camera_dispatch_initRay(camera, ray, rayCone, cameraSample, ffh);
   ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen, ffh));
 
   // Clip the ray to each region this rank owns and trace the clipped ray to

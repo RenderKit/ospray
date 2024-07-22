@@ -1027,13 +1027,6 @@ float MPIOffloadDevice::getTaskDuration(OSPFuture _task)
   return result;
 }
 
-void *MPIOffloadDevice::getPostProcessingCommandQueuePtr()
-{
-  // We don't support running external GPU post-processing through
-  // offload device
-  return nullptr;
-}
-
 OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
     OSPRenderer renderer,
     OSPCamera camera,

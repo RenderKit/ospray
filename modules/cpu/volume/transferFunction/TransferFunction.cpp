@@ -9,7 +9,7 @@ namespace ospray {
 // TransferFunction definitions ///////////////////////////////////////////////
 
 TransferFunction::TransferFunction(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device)
+    : AddStructShared(device.getDRTDevice(), device)
 {
   managedObjectType = OSP_TRANSFER_FUNCTION;
 }

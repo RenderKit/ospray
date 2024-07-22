@@ -4,7 +4,6 @@
 #include "render/bsdfs/BSDF.ih"
 
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 #include "render/materials/Alloy.ih"
 #include "render/materials/CarPaint.ih"
 #include "render/materials/Glass.ih"
@@ -20,8 +19,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL __noinline BSDF_EvalRes BSDF_dispatch_eval(
-    const varying BSDF *uniform self,
+SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval(const varying BSDF *uniform self,
     const vec3f &wo,
     const vec3f &wi,
     const uniform FeatureFlagsHandler &ffh)
@@ -60,7 +58,7 @@ SYCL_EXTERNAL __noinline BSDF_EvalRes BSDF_dispatch_eval(
   return make_BSDF_EvalRes_zero();
 }
 
-SYCL_EXTERNAL __noinline BSDF_SampleRes BSDF_dispatch_sample(
+SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample(
     const varying BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,

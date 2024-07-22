@@ -10,7 +10,7 @@
 namespace ospray {
 
 PerspectiveCamera::PerspectiveCamera(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_CAMERA_PERSPECTIVE)
+    : AddStructShared(device.getDRTDevice(), device, FFO_CAMERA_PERSPECTIVE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.initRay = reinterpret_cast<ispc::Camera_initRay>(
@@ -56,6 +56,7 @@ void PerspectiveCamera::commit()
     getSh()->scaledAperture = apertureRadius
         ? apertureRadius / (imgPlaneSize.x * focusDistance)
         : 0.0f;
+    getSh()->super.needLensSample = getSh()->scaledAperture;
     getSh()->aspect = aspect;
     getSh()->stereoMode = stereoMode;
     getSh()->dir_00 = normalize(dir);

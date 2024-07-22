@@ -11,10 +11,20 @@ int main(int argc, const char *argv[])
 {
   initializeOSPRay(argc, argv, false);
 
-  bool denoiser = ospLoadModule("denoiser") == OSP_NO_ERROR;
+  const bool denoiserAvailable = ospLoadModule("denoiser") == OSP_NO_ERROR;
 
-  auto glfwOSPRayWindow =
-      make_unique<GLFWOSPRayWindow>(vec2i(1024, 768), denoiser);
+  bool denoiserGPUSupport = false;
+  if (denoiserAvailable) {
+    const void *sym =
+        rkcommon::getSymbol("ospray_module_denoiser_gpu_supported");
+    if (sym) {
+      auto denoiserGPUSupported = (int (*)())sym;
+      denoiserGPUSupport = denoiserGPUSupported();
+    }
+  }
+
+  auto glfwOSPRayWindow = make_unique<GLFWOSPRayWindow>(
+      vec2i(1024, 768), denoiserAvailable, denoiserGPUSupport);
   glfwOSPRayWindow->mainLoop();
   glfwOSPRayWindow.reset();
 

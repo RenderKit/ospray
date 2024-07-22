@@ -21,6 +21,7 @@ struct PathTracer
   vec4f shadowCatcherPlane;
   bool shadowCatcher; // preprocessed
   bool backgroundRefraction;
+  bool limitIndirectLightSamples;
   int32 numLightSamples; // number of light samples used for NEE
 
 #ifdef __cplusplus
@@ -31,7 +32,8 @@ struct PathTracer
         shadowCatcherPlane(0.f),
         shadowCatcher(false),
         backgroundRefraction(false),
-        numLightSamples(1)
+        limitIndirectLightSamples(true),
+        numLightSamples(-1)
   {}
 };
 } // namespace ispc

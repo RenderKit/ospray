@@ -1,5 +1,4 @@
 #include "MicrofacetAlbedoTables.h"
-#include "common/ISPCRTBuffers.h"
 #include "render/bsdfs/MicrofacetAlbedoTablesShared.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "render/bsdfs/MicrofacetAlbedoTables_ispc.h"
@@ -12,44 +11,45 @@ void precomputeMicrofacetAlbedoTables(void *_tables);
 namespace ospray {
 
 MicrofacetAlbedoTables::MicrofacetAlbedoTables(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext())
+    : AddStructShared(device.getDRTDevice())
 {
-  albedo_dir = make_buffer_shared_unique<float>(device.getIspcrtContext(),
+  albedo_dir = devicert::make_buffer_shared_unique<float>(device.getDRTDevice(),
       MICROFACET_ALBEDO_TABLE_SIZE * MICROFACET_ALBEDO_TABLE_SIZE);
-  albedo_avg = make_buffer_shared_unique<float>(
-      device.getIspcrtContext(), MICROFACET_ALBEDO_TABLE_SIZE);
+  albedo_avg = devicert::make_buffer_shared_unique<float>(
+      device.getDRTDevice(), MICROFACET_ALBEDO_TABLE_SIZE);
 
   dielectricAlbedo_dir =
-      make_buffer_shared_unique<float>(device.getIspcrtContext(),
+      devicert::make_buffer_shared_unique<float>(device.getDRTDevice(),
           MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE);
   dielectricAlbedo_avg =
-      make_buffer_shared_unique<float>(device.getIspcrtContext(),
+      devicert::make_buffer_shared_unique<float>(device.getDRTDevice(),
           MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE);
 
   dielectricRcpEtaAlbedo_dir =
-      make_buffer_shared_unique<float>(device.getIspcrtContext(),
+      devicert::make_buffer_shared_unique<float>(device.getDRTDevice(),
           MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE);
   dielectricRcpEtaAlbedo_avg =
-      make_buffer_shared_unique<float>(device.getIspcrtContext(),
+      devicert::make_buffer_shared_unique<float>(device.getDRTDevice(),
           MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE);
 
   dielectricReflectionAlbedo_dir =
-      make_buffer_shared_unique<float>(device.getIspcrtContext(),
+      devicert::make_buffer_shared_unique<float>(device.getDRTDevice(),
           MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE);
   dielectricReflectionAlbedo_avg =
-      make_buffer_shared_unique<float>(device.getIspcrtContext(),
+      devicert::make_buffer_shared_unique<float>(device.getDRTDevice(),
           MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
               * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE);
 
-  sheenAlbedo_dir = make_buffer_shared_unique<float>(device.getIspcrtContext(),
+  sheenAlbedo_dir = devicert::make_buffer_shared_unique<float>(
+      device.getDRTDevice(),
       MICROFACET_SHEEN_ALBEDO_TABLE_SIZE * MICROFACET_SHEEN_ALBEDO_TABLE_SIZE);
 
   getSh()->albedo_dir = albedo_dir->data();

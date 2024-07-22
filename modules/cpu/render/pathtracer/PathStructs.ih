@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common/DifferentialGeometry.ih"
+#include "math/random.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/materials/Medium.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -15,8 +16,7 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct World;
-struct LDSampler;
-struct RandomSampler;
+struct Light;
 
 enum PathVertexType
 {
@@ -45,40 +45,45 @@ struct PathVertex
 
   float pdf_w; // the pdf of sampling wo in solid angle measure
   PathVertexType type;
+  uint32 numLightSamples;
 };
 
+// constant, typically uniform
 struct PathContext
 {
+  vec2f screen; // normalized coords, center of pixel, for backplate sampling
   const PathTracer *uniform context;
   const World *uniform world;
-  const varying vec2f *uniform pixel;
-  varying LDSampler *uniform ldSampler;
-  varying RandomSampler *uniform randomSampler;
   uniform uint32 numLights;
-  uniform uint32 numLightSamples;
-  uniform float *uniform lightsCDF;
-  uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light
-                                      // samples (numLightSamples*(1D+2D))
+  uniform uint32 numGeoLights;
+  uniform uint32 numFirstBounceLightSamples;
+  uniform uint32 numIndirectBounceLightSamples;
+  Light **uniform lights;
+  float *uniform lightsCDF;
+#ifdef OSPRAY_PATHTRACER_DEBUG
+  uniform bool disableNEE; // turn off NEE contribution for debugging purposes
+  uniform bool disableFWD; // turn off FWD contribution for debugging purposes
+  bool debug;
+#endif
 };
 
+// changing, typically varying
 struct PathState
 {
-  bool straightPath; // path from camera did not change direction, for alpha and
-                     // backplate
-  bool specularTransmissionPath; // path from camera only has specular
-                                 // transmissions, for alpha and backplate
-  bool auxFree; // normal & albedo buffer were not yet written to
   vec3f throughput;
   vec3f contribution;
   float time;
   Medium currentMedium;
   float shadowCatcherDist;
-  uniform uint32 sampleDim; // skip: pixel (2D), lens (2D), time (1D)
+  bool firstBounceLight;
   uint32 scatteringEvents; // counting diffuse and glossy bounces
+  LDSampler ldSampler;
+  RandomSampler randomSampler;
+  bool straightPath; // path from camera did not change direction, for alpha and
+                     // backplate
+  bool specularTransmissionPath; // path from camera only has specular
+                                 // transmissions, for alpha and backplate
   uniform uint32 depth;
-  uniform bool disableNEE; // turn off NEE contribution for debugging purposes
-  uniform bool disableFWD; // turn off FWD contribution for debugging purposes
-  uniform bool debug;
 };
 
 OSPRAY_END_ISPC_NAMESPACE

@@ -9,22 +9,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-uniform z_order_t z_order;
-uniform bool z_order_initialized = false;
-
-// precompute a per-pixel z-order to be used within a tile
-export void precomputeZOrder()
-{
-  if (!z_order_initialized) {
-    for (uniform uint32 i = 0; i < TILE_SIZE * TILE_SIZE; i++) {
-      deinterleaveZOrder(i, &z_order.xs[i], &z_order.ys[i]);
-      z_order.xyIdx[i] = z_order.xs[i] | (z_order.ys[i] << 16);
-    }
-    z_order_initialized = true;
-  }
-}
-
-SYCL_EXTERNAL float computeAO(const Renderer *uniform renderer,
+SYCL_EXTERNAL float computeAO(const Renderer *uniform,
     const World *uniform world,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,
@@ -46,9 +31,8 @@ SYCL_EXTERNAL float computeAO(const Renderer *uniform renderer,
 
   for (uniform int i = 0; i < sampleCnt; i++) {
     // Use base-5 and base-7 Halton to avoid correlation with sample position
-    const vec2f halton =
-        make_vec2f(PermHalton_sample5(renderer->mathConstants, accumID + i),
-            PermHalton_sample7(renderer->mathConstants, accumID + i));
+    const vec2f halton = make_vec2f(
+        PermHalton_sample5(accumID + i), PermHalton_sample7(accumID + i));
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -67,11 +51,6 @@ SYCL_EXTERNAL float computeAO(const Renderer *uniform renderer,
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
   // cancel
   return 1.0f - (hits / (float)sampleCnt);
-}
-
-const z_order_t *uniform get_zorder()
-{
-  return &z_order;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

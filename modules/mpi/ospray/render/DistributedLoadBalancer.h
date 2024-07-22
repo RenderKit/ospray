@@ -30,11 +30,11 @@ struct DistributedLoadBalancer : public TiledLoadBalancer
 
   ~DistributedLoadBalancer() override;
 
-  std::pair<AsyncEvent, AsyncEvent> renderFrame(FrameBuffer *fb,
+  std::pair<devicert::AsyncEvent, devicert::AsyncEvent> renderFrame(
+      FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
-      World *world,
-      bool wait = true) override;
+      World *world) override;
 
   void renderFrameReplicated(DistributedFrameBuffer *dfb,
       Renderer *renderer,

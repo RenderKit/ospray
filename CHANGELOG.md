@@ -1,6 +1,45 @@
 Version History
 ---------------
 
+### Changes in v3.2.0:
+
+-   Sampling improvements:
+      - Better performance (lower rendering time and faster convergence)
+      - More pleasing blue noise enabled when the total number of frames
+        to be accumulated is known in advance and set as the
+        `targetFrames` parameter at the framebuffer
+      - Note a maximum of 64k samples is supported
+-   Improved `denoiser` image operation:
+      - User-controlled quality levels via parameter `quality`
+      - Optionally denoise alpha channel as well, enabled via
+        parameter `denoiseAlpha`
+-   Support half-precision (16\ bit float) texture formats
+    `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
+    float textures `OSP_TEXTURE_RA32F`
+-   New parameter `limitIndirectLightSamples` for the `pathtracer` which
+    limits the number of light samples after the first non-specular
+    (i.e., diffuse and glossy) bounce to at most one
+-   Implement MIP Mapping for better texture filtering. If the
+    additional memory per texture needed cannot be spared, applications
+    can disable the generation of MIP maps with device parameter
+    `disableMipMapGeneration`
+-   The backplate (background texture) is now always sampled at the pixel
+    center and thus not blurred by the pixel filter anymore
+-   Avoid color bleeding across eye-subimages when stereo rendering
+-   Superbuild uses binary packages of Open VKL
+-   Removed Intel ISPCRT dependency (ISPC compiler is still needed):
+    -   oneAPI Level Zero Loader is no longer necessary
+    -   `zeContext` and `zeDevice`device parameters are no longer supported
+    -   `ispcrtContext` and `ispcrtDevice`device parameters are no longer
+        supported
+-   Clarify the size of `OSP_BOOL` to be 1 byte
+-   Fix artifacts occasionally appearing with `gpu` device
+-   The new minimum versions of dependencies:
+    -    Embree v4.3.3 (better error reporting)
+    -    Open Image Denoise v2.3 (better image quality with `HIGH`
+         quality mode, added `FAST` quality mode)
+    -    rkcommon v1.14.0
+
 ### Changes in v3.1.0:
 
 -   Principled and Luminous materials support emissive textures
@@ -39,9 +78,11 @@ Version History
     -   Clipping
     -   Motion blur
     -   Subdivision surfaces
-    -   Progress reporting via `ospGetProgress` or canceling the frame via `ospCancel`
+    -   Progress reporting via `ospGetProgress` or canceling the frame
+        via `ospCancel`
     -   Picking via `ospPick`
-    -   Adaptive accumulation via `OSP_FB_VARIANCE` and `varianceThreshold`
+    -   Adaptive accumulation via `OSP_FB_VARIANCE` and
+        `varianceThreshold`
     -   Framebuffer channels `OSP_FB_ID_*` (id buffers)
     -   Experimental support for shared device-only data, works only for
         `structuredRegular` volume
@@ -88,10 +129,14 @@ Version History
         -   error callback signatures without user pointer
         -   first argument of `ospNewMaterial`
         -   module name `ispc`; use `cpu`
-        -   `volume` texture and `isosurface` geometry: `volumetricModel`; use `OSPVolume volume`
+        -   `volume` texture and `isosurface` geometry:
+            `volumetricModel`; use `OSPVolume volume`
         -   Transfer function `vec2f valueRange`; use `box1f value`
-        -   `hdri` and `sun-sky` lights: `intensityQuantity` `OSP_INTENSITY_QUANTITY_RADIANCE`
-        -   `spot` light with `intensityDistribution`: `intensityQuantity` other than `OSP_INTENSITY_QUANTITY_SCALE`
+        -   `hdri` and `sun-sky` lights: `intensityQuantity`
+            `OSP_INTENSITY_QUANTITY_RADIANCE`
+        -   `spot` light with `intensityDistribution`:
+            `intensityQuantity` other than
+            `OSP_INTENSITY_QUANTITY_SCALE`
 
 
 ### Changes in v2.12.0:

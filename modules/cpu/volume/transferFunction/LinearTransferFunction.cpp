@@ -14,7 +14,7 @@ void *LinearTransferFunction_getMaxOpacity_addr();
 namespace ospray {
 
 LinearTransferFunction::LinearTransferFunction(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device)
+    : AddStructShared(device.getDRTDevice(), device)
 {
   getSh()->super.valueRange = range1f(0.0f, 1.0f);
 }

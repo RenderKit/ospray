@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v3.1.0 of Intel® OSPRay. For changes and new features
+This is release v3.2.0 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -11,8 +11,8 @@ OSPRay Overview
 Intel® OSPRay is an **o**pen source, **s**calable, and **p**ortable
 **ray** tracing engine for high-performance, high-fidelity visualization
 on Intel Architecture CPUs, Intel Xe GPUs, and ARM64 CPUs. OSPRay is
-part of the [Intel oneAPI Rendering
-Toolkit](https://software.intel.com/en-us/rendering-framework) and is
+part of the [Intel Rendering Toolkit (Render
+Kit)](https://software.intel.com/en-us/rendering-framework) and is
 released under the permissive [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
 
@@ -84,21 +84,22 @@ before you can build OSPRay you need the following prerequisites:
   Compiler (ISPC)](http://ispc.github.io), version 1.23.0 or later.
   Please obtain a release of ISPC from the [ISPC downloads
   page](https://ispc.github.io/downloads.html). If ISPC is not found by
-  CMake its location can be hinted with the variable `ispcrt_DIR`.
+  CMake its location can be hinted with the variable `ISPC_EXECUTABLE`.
 
-- OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
-  library (rkcommon)](https://www.github.com/ospray/rkcommon). The
-  library provides abstractions for tasking, aligned memory allocation,
-  vector math types, among others. For users who also need to build
-  rkcommon, we recommend the default the Intel [Threading Building
-  Blocks (TBB)](https://www.threadingbuildingblocks.org/) as tasking
-  system for performance and flexibility reasons. TBB must be built from
-  source when targeting ARM CPUs, or can be built from source as part of
-  the [superbuild](#cmake-superbuild). Alternatively you can set CMake
-  variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or `Internal`.
+- OSPRay builds on top of the [Intel Rendering Toolkit (Render Kit)
+  common library (rkcommon)](https://www.github.com/ospray/rkcommon).
+  The library provides abstractions for tasking, aligned memory
+  allocation, vector math types, among others. For users who also need
+  to build rkcommon, we recommend the default the Intel [Threading
+  Building Blocks (TBB)](https://www.threadingbuildingblocks.org/) as
+  tasking system for performance and flexibility reasons. TBB must be
+  built from source when targeting ARM CPUs, or can be built from source
+  as part of the [superbuild](#cmake-superbuild). Alternatively you can
+  set CMake variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or
+  `Internal`.
 
 - OSPRay also heavily uses Intel [Embree](https://www.embree.org/),
-  installing version 4.3.1 or newer is required. If Embree is not found
+  installing version 4.3.3 or newer is required. If Embree is not found
   by CMake its location can be hinted with the variable `embree_DIR`.
 
 - OSPRay supports volume rendering (enabled by default via
@@ -110,7 +111,7 @@ before you can build OSPRay you need the following prerequisites:
 - OSPRay also provides an optional module implementing the `denoiser`
   image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
   module requires Intel [Open Image
-  Denoise](https://openimagedenoise.github.io/) in version 2.2.0 or
+  Denoise](https://openimagedenoise.github.io/) in version 2.3.0 or
   newer. You may need to hint the location of the library with the CMake
   variable `OpenImageDenoise_DIR`.
 
@@ -163,16 +164,6 @@ To build OSPRay’s GPU module you need
   or the latest [Intel oneAPI DPC++/C++
   Compiler](https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#dpcpp-cpp)
 - a recent [CMake](http://www.cmake.org), version 3.25.3 or higher
-- the [oneAPI Level Zero Loader
-  v1.12.0](https://github.com/oneapi-src/level-zero/releases/tag/v1.12.0)
-  development packages
-  - On Linux Ubuntu 22.04 there are prebuilt packages available for
-    this: `level-zero-devel` and `level-zero`
-  - Other Linux distributions require building these packages from
-    source
-  - On Windows, you can use the single package
-    `level-zero_<version>_win-sdk`; note you will need to set the
-    environment variable `LEVEL_ZERO_ROOT` to the location of the SDK
 
 CMake Superbuild
 ----------------
@@ -191,7 +182,7 @@ cmake [<OSPRAY_SOURCE_DIR>/scripts/superbuild]
 cmake --build .
 ```
 
-On Windows make sure to select a 64bit generator, e.g.
+On Windows make sure to select a 64 bit generator, e.g.
 
 ``` sh
 cmake -G "Visual Studio 17 2022" [<OSPRAY_SOURCE_DIR>/scripts/superbuild]
@@ -517,15 +508,16 @@ exactly the same as `ospSetParam`, which is documented below in the
 [parameters](#parameters) section. The following parameters can be set
 on all devices:
 
-| Type   | Name        | Description                                                                                                                                                                        |
-|:-------|:------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| int    | numThreads  | number of threads which OSPRay should use                                                                                                                                          |
-| uint   | logLevel    | logging level; valid values (in order of severity) are `OSP_LOG_NONE`, `OSP_LOG_ERROR`, `OSP_LOG_WARNING`, `OSP_LOG_INFO`, and `OSP_LOG_DEBUG`                                     |
-| string | logOutput   | convenience for setting where status messages go; valid values are `cerr` and `cout`                                                                                               |
-| string | errorOutput | convenience for setting where error messages go; valid values are `cerr` and `cout`                                                                                                |
-| bool   | debug       | set debug mode; equivalent to `logLevel=debug` and `numThreads=1`                                                                                                                  |
-| bool   | warnAsError | send `warning` and `error` messages through the error callback, otherwise send `warning` messages through the message callback; must have sufficient `logLevel` to enable warnings |
-| bool   | setAffinity | bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose                                                            |
+| Type   | Name                    | Description                                                                                                                                                                        |
+|:-------|:------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| int    | numThreads              | number of threads which OSPRay should use                                                                                                                                          |
+| bool   | disableMipMapGeneration | disable the default generation of MIP maps for textures (e.g., to save the additional memory needed)                                                                               |
+| uint   | logLevel                | logging level; valid values (in order of severity) are `OSP_LOG_NONE`, `OSP_LOG_ERROR`, `OSP_LOG_WARNING`, `OSP_LOG_INFO`, and `OSP_LOG_DEBUG`                                     |
+| string | logOutput               | convenience for setting where status messages go; valid values are `cerr` and `cout`                                                                                               |
+| string | errorOutput             | convenience for setting where error messages go; valid values are `cerr` and `cout`                                                                                                |
+| bool   | debug                   | set debug mode; equivalent to `logLevel=debug` and `numThreads=1`                                                                                                                  |
+| bool   | warnAsError             | send `warning` and `error` messages through the error callback, otherwise send `warning` messages through the message callback; must have sufficient `logLevel` to enable warnings |
+| bool   | setAffinity             | bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose                                                            |
 
 Parameters shared by all devices.
 
@@ -882,16 +874,22 @@ below.
 | OSP_OBJECT                   | generic object reference                                                                     |
 | OSP_CAMERA                   | camera object reference                                                                      |
 | OSP_FRAMEBUFFER              | framebuffer object reference                                                                 |
+| OSP_FUTURE                   | future object reference                                                                      |
 | OSP_LIGHT                    | light object reference                                                                       |
 | OSP_MATERIAL                 | material object reference                                                                    |
 | OSP_TEXTURE                  | texture object reference                                                                     |
 | OSP_RENDERER                 | renderer object reference                                                                    |
 | OSP_WORLD                    | world object reference                                                                       |
+| OSP_GROUP                    | group object reference                                                                       |
+| OSP_INSTANCE                 | instance object reference                                                                    |
 | OSP_GEOMETRY                 | geometry object reference                                                                    |
+| OSP_GEOMETRIC_MODEL          | geometric model object reference                                                             |
 | OSP_VOLUME                   | volume object reference                                                                      |
+| OSP_VOLUMETRIC_MODEL         | volumetric model object reference                                                            |
 | OSP_TRANSFER_FUNCTION        | transfer function object reference                                                           |
 | OSP_IMAGE_OPERATION          | image operation object reference                                                             |
 | OSP_STRING                   | C-style zero-terminated character string                                                     |
+| OSP_BOOL                     | 8 bit boolean                                                                                |
 | OSP_CHAR, OSP_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                     |
 | OSP_UCHAR, OSP_VEC\[234\]UC  | 8 bit unsigned character scalar and \[234\]-element vector                                   |
 | OSP_SHORT, OSP_VEC\[234\]S   | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
@@ -1181,7 +1179,7 @@ the `cell.type` parameter must be omitted).
 | bool                    | indexPrefixed      |   false | indicates that the `index` array is compatible to VTK, where the indices of each cell are prefixed with the number of vertices                          |
 | uint32\[\] / uint64\[\] | cell.index         |         | [data](#data) array of locations (into the index array), specifying the first index of each cell                                                        |
 | float\[\]               | cell.data          |         | [data](#data) array of cell data values to be sampled                                                                                                   |
-| uint8\[\]               | cell.type          |         | [data](#data) array of cell types (VTK compatible), only set if `indexPrefixed = false` false. Supported types are:                                     |
+| uint8\[\]               | cell.type          |         | [data](#data) array of cell types (VTK compatible), only set if `indexPrefixed = false`. Supported types are:                                           |
 |                         |                    |         | `OSP_TETRAHEDRON`                                                                                                                                       |
 |                         |                    |         | `OSP_HEXAHEDRON`                                                                                                                                        |
 |                         |                    |         | `OSP_WEDGE`                                                                                                                                             |
@@ -1402,6 +1400,17 @@ the boolean `quadSoup` is set to true, then a ‘quad soup’ is assumed
 i.e., each four subsequent vertices form one quad. If the size of the
 `vertex.position` array is not a multiple of three for triangles or four
 for quads, the remainder vertices are ignored.
+
+Face-varying attributes (`normal`, `motion.normal`, `color`, `texcoord`)
+map unique values to each vertex of a primitive/face (triangle or quad),
+thus attributes can be different for the same vertex that is shared by
+multiple primitives. Essentially, face-varying attributes are a
+‘attribute soup’ and behave similar to the implicit index, the size of
+the array must be at least three times the number of triangles or four
+times the number of quads, respectively. Face-varying attributes take
+precedence over the respective vertex attributes (`vertex.normal`,
+`motion.vertex.normal`, `vertex.color`, `vertex.texcoord`) when both
+arrays of the same attribute are present.
 
 ### Subdivision
 
@@ -2376,7 +2385,7 @@ because it is always `OSP_INTENSITY_QUANTITY_RADIANCE`).
 |:------|:-------------|--------:|:----------------------------------------|
 | vec3f | color        |   white | color of the emitted light (linear RGB) |
 | float | intensity    |       1 | intensity of the light (a factor)       |
-| float | transparency |       1 | material transparency                   |
+| float | transparency |       0 | material transparency                   |
 
 Parameters accepted by the Luminous material.
 
@@ -2430,14 +2439,19 @@ The supported texture formats for `texture2d` are:
 | OSP_TEXTURE_RGBA8   | 8 bit \[0–255\] linear components red, green, blue, alpha                  |
 | OSP_TEXTURE_SRGBA   | 8 bit sRGB gamma encoded color components, and linear alpha                |
 | OSP_TEXTURE_RGBA32F | 32 bit float components red, green, blue, alpha                            |
+| OSP_TEXTURE_RGBA16F | 16 bit float components red, green, blue, alpha                            |
 | OSP_TEXTURE_RGB8    | 8 bit \[0–255\] linear components red, green, blue                         |
 | OSP_TEXTURE_SRGB    | 8 bit sRGB gamma encoded components red, green, blue                       |
 | OSP_TEXTURE_RGB32F  | 32 bit float components red, green, blue                                   |
+| OSP_TEXTURE_RGB16F  | 16 bit float components red, green, blue                                   |
 | OSP_TEXTURE_R8      | 8 bit \[0–255\] linear single component red                                |
 | OSP_TEXTURE_RA8     | 8 bit \[0–255\] linear two components red, alpha                           |
 | OSP_TEXTURE_L8      | 8 bit \[0–255\] gamma encoded luminance (replicated into red, green, blue) |
 | OSP_TEXTURE_LA8     | 8 bit \[0–255\] gamma encoded luminance, and linear alpha                  |
+| OSP_TEXTURE_RA32F   | 32 bit float two component red, alpha                                      |
 | OSP_TEXTURE_R32F    | 32 bit float single component red                                          |
+| OSP_TEXTURE_RA16F   | 16 bit float two component red, alpha                                      |
+| OSP_TEXTURE_R16F    | 16 bit float single component red                                          |
 | OSP_TEXTURE_RGBA16  | 16 bit \[0–65535\] linear components red, green, blue, alpha               |
 | OSP_TEXTURE_RGB16   | 16 bit \[0–65535\] linear components red, green, blue                      |
 | OSP_TEXTURE_RA16    | 16 bit \[0–65535\] linear two components red, alpha                        |
@@ -2834,7 +2848,7 @@ General parameters of all renderers are
 
 | Type                  | Name              |                 Default | Description                                                                                                                                 |
 |:----------------------|:------------------|------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------|
-| int                   | pixelSamples      |                       1 | samples per pixel                                                                                                                           |
+| int                   | pixelSamples      |                       1 | samples per pixel, best results when a power of 2                                                                                           |
 | int                   | maxPathLength     |                      20 | maximum ray recursion depth                                                                                                                 |
 | float                 | minContribution   |                   0.001 | sample contributions below this value will be neglected to speedup rendering                                                                |
 | float                 | varianceThreshold |                       0 | threshold for adaptive accumulation                                                                                                         |
@@ -2843,6 +2857,7 @@ General parameters of all renderers are
 | OSPTexture            | map_maxDepth      |                         | optional screen-sized float [texture](#texture) with maximum far distance per pixel (use texture type `texture2d`)                          |
 | OSPMaterial\[\]       | material          |                         | optional [data](#data) array of [materials](#materials) which can be indexed by a [GeometricModel](#geometricmodels)’s `material` parameter |
 | uint                  | pixelFilter       | `OSP_PIXELFILTER_GAUSS` | `OSPPixelFilterType` to select the pixel filter used by the renderer for antialiasing. Possible pixel filters are listed below.             |
+| float                 | mipMapBias        |                       0 | bias for texture MIP-mapping, balancing between sharpness/aliasing and blurriness due to prefiltering                                       |
 
 Parameters understood by all renderers.
 
@@ -2855,7 +2870,8 @@ variance below the `varianceThreshold`. This feature requires a
 Per default the background of the rendered image will be transparent
 black, i.e., the alpha channel holds the opacity of the rendered
 objects. This eases transparency-aware blending of the image with an
-arbitrary background image by the application. The parameter
+arbitrary background image by the application (via
+$ospray.rgb + appBackground.rgb⋅(1-ospray.alpha)$). The parameter
 `backgroundColor` or `map_backplate` can be used to already blend with a
 constant background color or backplate texture, respectively, (and
 alpha) during rendering.
@@ -2869,7 +2885,7 @@ distance of primary rays, thus objects of other renderers can hide
 objects rendered by OSPRay.
 
 OSPRay supports antialiasing in image space by using pixel filters,
-which are centered around the center of a pixel. The size $w×w$ of the
+which are aligned around the center of a pixel. The size $w×w$ of the
 filter depends on the selected filter type. The types of supported pixel
 filters are defined by the `OSPPixelFilterType` enum and can be set
 using the `pixelFilter` parameter.
@@ -2883,6 +2899,15 @@ using the `pixelFilter` parameter.
 | OSP_PIXELFILTER_BLACKMAN_HARRIS | the Blackman-Harris filter with a width of $w = 3$                                                            |
 
 Pixel filter types supported by OSPRay for antialiasing in image space.
+
+OSPRay also antialiases textures with prefiltering and MIP-mapping,
+which can be adjusted with parameter `mipMapBias`. For final frame
+rendering with a high number of `pixelSamples` or accumulated frames
+`mipMapBias` can be lowered (e.g., set to -0.5 or -2) to result in
+sharper textures which are essentially anisotropically filtered.
+Conversely, for preview rendering with just a single sample per pixel a
+higher `mipMapBias` of 1 or 2 can reduce texture aliasing and increase
+rendering speed.
 
 ### SciVis Renderer
 
@@ -2935,13 +2960,14 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-| Type  | Name                 | Default | Description                                                                               |
-|:------|:---------------------|--------:|:------------------------------------------------------------------------------------------|
-| int   | lightSamples         |     all | number of random light samples per path vertex, per default all light sources are sampled |
-| int   | roulettePathLength   |       5 | ray recursion depth at which to start Russian roulette termination                        |
-| int   | maxScatteringEvents  |      20 | maximum number of non-specular (i.e., diffuse and glossy) bounces                         |
-| float | maxContribution      |       ∞ | samples are clamped to this value before they are accumulated into the framebuffer        |
-| bool  | backgroundRefraction |   false | allow for alpha blending even if background is seen through refractive objects like glass |
+| Type  | Name                      | Default | Description                                                                                                                               |
+|:------|:--------------------------|--------:|:------------------------------------------------------------------------------------------------------------------------------------------|
+| int   | lightSamples              |     all | number of random light samples per path vertex, best results when a power of 2; per default all light sources are sampled                 |
+| bool  | limitIndirectLightSamples |    true | after the first non-specular (i.e., diffuse and glossy) path vertex take (at most) a single light sample (instead of `lightSamples` many) |
+| int   | roulettePathLength        |       5 | ray recursion depth at which to start Russian roulette termination                                                                        |
+| int   | maxScatteringEvents       |      20 | maximum number of non-specular (i.e., diffuse and glossy) bounces                                                                         |
+| float | maxContribution           |       ∞ | samples are clamped to this value before they are accumulated into the framebuffer                                                        |
+| bool  | backgroundRefraction      |   false | allow for alpha blending even if background is seen through refractive objects like glass                                                 |
 
 Special parameters understood by the path tracer.
 
@@ -2993,7 +3019,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 | OSP_FB_ACCUM        | accumulation buffer for progressive refinement                                                                                             |
 | OSP_FB_VARIANCE     | for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering](#rendering)                                     |
 | OSP_FB_NORMAL       | accumulated world-space normal of the first non-specular hit, as vec3f                                                                     |
-| OSP_FB_ALBEDO       | accumulated material albedo (color without illumination) at the first hit, as vec3f                                                        |
+| OSP_FB_ALBEDO       | accumulated material albedo (color without illumination) at the first non-specular hit, as vec3f                                           |
 | OSP_FB_ID_PRIMITIVE | primitive index of the first hit, as uint32                                                                                                |
 | OSP_FB_ID_OBJECT    | geometric/volumetric model `id`, if specified, or index in [group](#groups) of first hit, as uint32                                        |
 | OSP_FB_ID_INSTANCE  | user defined [instance](#instances) `id`, if specified, or instance index of first hit, as uint32                                          |
@@ -3068,11 +3094,17 @@ The framebuffer takes a list of pixel operations to be applied to the
 image in sequence as an `OSPData`. The pixel operations will be run in
 the order they are in the array.
 
-| Type                  | Name           | Description                          |
-|:----------------------|:---------------|:-------------------------------------|
-| OSPImageOperation\[\] | imageOperation | ordered sequence of image operations |
+| Type                  | Name           | Description                                                                                                                                                                                                                  |
+|:----------------------|:---------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPImageOperation\[\] | imageOperation | ordered sequence of image operations                                                                                                                                                                                         |
+| int                   | targetFrames   | anticipated number of frames that will be accumulated for progressive refinement, used renderers to generate a blue noise sampling pattern; should be a power of 2, is always 1 without `OSP_FB_ACCUM`; default 0 (disabled) |
 
 Parameters accepted by the framebuffer.
+
+If the total number of frames to be accumulated is known, then
+`targetFrames` should be set, because then renderers can generate more
+pleasing blue noise patterns. Accumulation stops when `targetFrames` is
+reached.
 
 ### Image Operation
 
@@ -3094,32 +3126,20 @@ passing the type string “`tonemapper`” to `ospNewImageOperation`. The
 tone mapping curve can be customized using the parameters listed in the
 table below.
 
-| Type  | Name      | Default | Description                                                              |
-|:------|:----------|--------:|:-------------------------------------------------------------------------|
-| float | exposure  |     1.0 | amount of light per unit area                                            |
-| float | contrast  |  1.6773 | contrast (toe of the curve); typically is in \[1–2\]                     |
-| float | shoulder  |  0.9714 | highlight compression (shoulder of the curve); typically is in \[0.9–1\] |
-| float | midIn     |    0.18 | mid-level anchor input; default is 18% gray                              |
-| float | midOut    |    0.18 | mid-level anchor output; default is 18% gray                             |
-| float | hdrMax    | 11.0785 | maximum HDR input that is not clipped                                    |
-| bool  | acesColor |    true | apply the ACES color transforms                                          |
+| Type  | Name      | Default | Filmic | Description                                                              |
+|:------|:----------|--------:|-------:|:-------------------------------------------------------------------------|
+| float | exposure  |     1.0 |    1.0 | amount of light per unit area                                            |
+| float | contrast  |  1.6773 | 1.1759 | contrast (toe of the curve); typically is in \[1–2\]                     |
+| float | shoulder  |  0.9714 | 0.9746 | highlight compression (shoulder of the curve); typically is in \[0.9–1\] |
+| float | midIn     |    0.18 |   0.18 | mid-level anchor input; default is 18% gray                              |
+| float | midOut    |    0.18 |   0.18 | mid-level anchor output; default is 18% gray                             |
+| float | hdrMax    | 11.0785 | 6.3704 | maximum HDR input that is not clipped                                    |
+| bool  | acesColor |    true |  false | apply the ACES color transforms                                          |
 
-Parameters accepted by the tone mapper.
-
-To use the popular “Uncharted 2” filmic tone mapping curve instead, set
-the parameters to the values listed in the table below.
-
-| Name      | Value  |
-|:----------|:-------|
-| contrast  | 1.1759 |
-| shoulder  | 0.9746 |
-| midIn     | 0.18   |
-| midOut    | 0.18   |
-| hdrMax    | 6.3704 |
-| acesColor | false  |
-
-Filmic tone mapping curve parameters. Note that the curve includes an
-exposure bias to match 18% middle gray.
+Parameters accepted by the tone mapper. The column “Filmic” lists
+alternative values for the popular “Uncharted 2” tone mapping curve
+(note that that curve includes an exposure bias to match 18% middle
+gray).
 
 #### Denoiser
 
@@ -3132,6 +3152,16 @@ using a GPU when available. The device selection be overridden by the
 environment variable `OIDN_DEFAULT_DEVICE`, possible values are `cpu`,
 `sycl`, `cuda`, `hip`, or a physical device ID
 
+| Type | Name         | Description                                                                                                        |
+|:-----|:-------------|:-------------------------------------------------------------------------------------------------------------------|
+| uint | quality      | `OSPDenoiserQuality` for denoiser quality, default is                                                              |
+|      |              | `OSP_DENOISER_QUALITY_MEDIUM`: balanced quality/performance for interactive/real-time rendering; also allowed are: |
+|      |              | `OSP_DENOISER_QUALITY_LOW`: high performance, for interactive/real-time preview rendering                          |
+|      |              | `OSP_DENOISER_QUALITY_HIGH`: high quality, for final frame rendering                                               |
+| bool | denoiseAlpha | whether to denoise the alpha channel as well, default false                                                        |
+
+Parameters accepted by the denoiser.
+
 Rendering
 ---------
 
@@ -3143,7 +3173,8 @@ combining a framebuffer, renderer, camera, and world.
 What to render and how to render it depends on the renderer’s
 parameters. If the framebuffer supports accumulation (i.e., it was
 created with `OSP_FB_ACCUM`) then successive calls to `ospRenderFrame`
-will progressively refine the rendered image.
+will progressively refine the rendered image (until `targetFrames` is
+reached).
 
 To start an render task, use
 
@@ -3306,22 +3337,20 @@ ospDeviceCommit(dev);
 ospSetCurrentDevice(dev);
 ```
 
-| Type    | Name        | Description        |
-|:--------|:------------|:-------------------|
-| void \* | syclContext | SYCL context       |
-| void \* | syclDevice  | SYCL device        |
-| void \* | zeContext   | Level Zero context |
-| void \* | zeDevice    | Level Zero device  |
+| Type    | Name        | Description  |
+|:--------|:------------|:-------------|
+| void \* | syclContext | SYCL context |
+| void \* | syclDevice  | SYCL device  |
 
 Parameters specific to the `gpu` device.
 
-Applications can either set their SYCL context and device or their Level
-Zero context and device, to share device memory with OSPRay or to
-control which device should be used (e.g., in case multiple GPUs are
-present). If neither parameter is set, the `gpu` device will
-automatically create a context internally and select a GPU (that
-selection can be influenced via environment variable
-`ONEAPI_DEVICE_SELECTOR`).
+Applications can set their SYCL context and device to share device
+memory with OSPRay or to control which device should be used (e.g., in
+case multiple GPUs are present). If neither parameter is set, the `gpu`
+device will automatically create a context internally and select a GPU
+(that selection can be influenced via environment variable
+`ONEAPI_DEVICE_SELECTOR`, see [Intel oneAPI DPC++ Compiler
+documentation](https://intel.github.io/llvm-docs/EnvironmentVariables.html#oneapi-device-selector)).
 
 Compile times for just in time compilation (JIT compilation) can be
 large. To resolve this issue we recommend enabling persistent JIT
@@ -3332,7 +3361,11 @@ JIT cache should get stored).
 
 To reduce GPU memory allocation overhead when rendering scenes with many
 objects (geometries, instances, etc.), memory pooling should be enabled
-by setting the environment variable `ISPCRT_MEM_POOL=1`.
+by setting the environment variable
+`SYCL_PI_LEVEL_ZERO_USM_ALLOCATOR="1;0;shared:1M,0,2M"`. See [Intel
+oneAPI DPC++ Compiler
+documentation](https://intel.github.io/llvm-docs/EnvironmentVariables.html#debugging-variables-for-level-zero-plugin)
+for more details.
 
 ### Known Issues
 

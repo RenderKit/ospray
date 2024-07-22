@@ -7,7 +7,7 @@ namespace ospray {
 
 // ImageOp definitions ////////////////////////////////////////////////////////
 
-ImageOp *ImageOp::createImageOp(const char *type, api::Device &device)
+ImageOp *ImageOp::createImageOp(const char *type, devicert::Device &device)
 {
   return createInstance(type, device);
 }

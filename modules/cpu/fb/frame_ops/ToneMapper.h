@@ -10,7 +10,7 @@ namespace ospray {
 /*! \brief Generic tone mapping operator approximating ACES by default. */
 struct OSPRAY_SDK_INTERFACE ToneMapperFrameOp : public FrameOp
 {
-  ToneMapperFrameOp(api::Device &device);
+  ToneMapperFrameOp(devicert::Device &device);
 
   void commit() override;
 
@@ -21,15 +21,15 @@ struct OSPRAY_SDK_INTERFACE ToneMapperFrameOp : public FrameOp
 
  private:
   // Params for the tone mapping curve
-  float a, b, c, d;
-  bool acesColor;
-  float exposure;
+  float a{1.6773f}, b{1.11743f}, c{0.244676f}, d{0.9714f};
+  bool acesColor{true};
+  float exposure{1.f};
 };
 
 struct OSPRAY_SDK_INTERFACE LiveToneMapperFrameOp
     : public AddStructShared<LiveFrameOp, ispc::LiveToneMapper>
 {
-  LiveToneMapperFrameOp(api::ISPCDevice &device,
+  LiveToneMapperFrameOp(devicert::Device &device,
       FrameBufferView &fbView,
       float exposure,
       float a,
@@ -39,7 +39,7 @@ struct OSPRAY_SDK_INTERFACE LiveToneMapperFrameOp
       bool acesColor);
 
   // Execute FrameOp kernel
-  void process(void *waitEvent) override;
+  devicert::AsyncEvent process() override;
 };
 
 } // namespace ospray

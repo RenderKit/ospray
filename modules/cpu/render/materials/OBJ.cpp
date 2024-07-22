@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 OBJMaterial::OBJMaterial(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_OBJ)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_OBJ)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =
@@ -29,13 +29,16 @@ std::string OBJMaterial::toString() const
 
 void OBJMaterial::commit()
 {
-  MaterialParam1f d = getMaterialParam1f("d", 1.f);
-  MaterialParam3f Kd = getMaterialParam3f("kd", vec3f(0.8f));
-  MaterialParam3f Ks = getMaterialParam3f("ks", vec3f(0.f));
-  MaterialParam1f Ns = getMaterialParam1f("ns", 10.f);
+  d = getMaterialParam1f("d", 1.f);
+  Kd = getMaterialParam3f("kd", vec3f(0.8f));
+  Ks = getMaterialParam3f("ks", vec3f(0.f));
+  Ns = getMaterialParam1f("ns", 10.f);
 
   vec3f Tf = getParam<vec3f>("tf", vec3f(0.f));
-  ispc::TextureParam bumpTex = getTextureParam("map_bump");
+
+  ref_bumpTex = getParamObject<Texture>("map_bump");
+  ispc::TextureParam bumpTex = getTextureParam("map_bump", ref_bumpTex);
+
   linear2f bumpRot =
       ((linear2f *)(&bumpTex.xform2f.l))->orthogonal().transposed();
 

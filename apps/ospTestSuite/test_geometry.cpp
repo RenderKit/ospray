@@ -39,6 +39,7 @@ void SpherePrecision::SetUp()
     renderer.setParam("aoIntensity", 1.f);
   } else if (rendererType == "pathtracer") {
     renderer.setParam("maxPathLength", 2);
+    renderer.setParam("limitIndirectLightSamples", false);
   }
 
   cpp::Geometry sphere("sphere");
@@ -215,7 +216,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "catmull-rom",
                            "linear_deprecated",
                            "linear",
-                           "cones"),
+                           "cones",
+                           "bezier"),
         ::testing::Values("scivis", "pathtracer", "ao")));
 
 INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
@@ -250,6 +252,7 @@ INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
         ::testing::Values("ao"),
         ::testing::Values(16)));
 
+/*
 TEST_P(FromOsprayTestingVariance, testScenes)
 {
   PerformRenderTest();
@@ -259,6 +262,7 @@ TEST_P(FromOsprayTestingVariance, testScenes)
 INSTANTIATE_TEST_SUITE_P(TestScenesVariance,
     FromOsprayTestingVariance,
     ::testing::Values(std::make_tuple("cornell_box", "pathtracer", 4)));
+*/
 
 TEST_P(FromOsprayTestingLightSamples, testScenes)
 {

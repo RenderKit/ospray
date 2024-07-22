@@ -5,7 +5,6 @@
 
 #include "ISPCDeviceObject.h"
 #include "common/FeatureFlagsEnum.h"
-#include "math/MathConstants.h"
 #include "pf/PixelFilter.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "texture/Texture2D.h"
@@ -49,12 +48,11 @@ struct OSPRAY_SDK_INTERFACE Renderer
   virtual void *beginFrame(FrameBuffer *fb, World *world);
 
   // called by the load balancer to render one "sample" for each task
-  virtual AsyncEvent renderTasks(FrameBuffer *,
+  virtual devicert::AsyncEvent renderTasks(FrameBuffer *,
       Camera *,
       World *,
       void *,
-      const utility::ArrayView<uint32_t> &,
-      bool wait = true) const = 0;
+      const utility::ArrayView<uint32_t> &) const = 0;
 
   virtual OSPPickResult pick(
       FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos);
@@ -69,17 +67,14 @@ struct OSPRAY_SDK_INTERFACE Renderer
   Ref<Texture2D> backplate;
 
   Ref<PixelFilter> pixelFilter;
-  // TODO: This could be shared among multiple renderers but we need to be
-  // careful about making sure it's released before the ISPCDevice so that we
-  // can still release the USM allocations
-  std::unique_ptr<MathConstants> mathConstants;
 
   Ref<const DataT<Material *>> materialData;
-  std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
+  BufferSharedUq<ispc::Material *> materialArray;
 
  protected:
   FeatureFlags featureFlags;
   api::ISPCDevice &device;
+  devicert::Device &drtDevice;
 
  private:
   void setupPixelFilter();

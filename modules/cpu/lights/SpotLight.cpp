@@ -20,12 +20,10 @@ void *SpotLight_eval_instanced_addr();
 
 namespace ospray {
 
-ISPCRTMemoryView SpotLight::createSh(
-    uint32_t, const ispc::Instance *instance) const
+ispc::Light *SpotLight::createSh(uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::SpotLight>(
-      getISPCDevice().getIspcrtContext().handle());
-  ispc::SpotLight *sh = (ispc::SpotLight *)ispcrtSharedPtr(view);
+  ispc::SpotLight *sh =
+      StructSharedCreate<ispc::SpotLight>(getISPCDevice().getDRTDevice());
 #ifndef OSPRAY_TARGET_SYCL
   sh->super.sample =
       reinterpret_cast<ispc::Light_SampleFunc>(ispc::SpotLight_sample_addr());
@@ -65,7 +63,7 @@ ISPCRTMemoryView SpotLight::createSh(
   sh->innerRadius = innerRadius;
   sh->areaPdf = uniformSampleRingPDF(radius, innerRadius);
 
-  return view;
+  return &sh->super;
 }
 
 std::string SpotLight::toString() const

@@ -40,7 +40,7 @@ SYCL_EXTERNAL void Geometry_dispatch_postIntersect(const Geometry *uniform self,
   } else if ((self->type == GEOMETRY_TYPE_PLANES) && (ffg & FFG_PLANE)) {
     Planes_postIntersect(self, dg, ray, flags);
   } else if ((self->type == GEOMETRY_TYPE_CURVES) && (ffg & FFG_CURVES)) {
-    Curves_postIntersect(self, dg, ray, flags);
+    Curves_postIntersect(self, dg, ray, flags, ffh);
 #ifdef OSPRAY_ENABLE_VOLUMES
   } else if ((self->type == GEOMETRY_TYPE_ISOSURFACES)
       && (ffg & FFG_ISOSURFACE)) {

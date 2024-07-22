@@ -46,7 +46,7 @@ set -e
 for FILE in $BASELINE_INPUT_IMAGES_DIR/*; do
     # Copy file to local tmp directory with new name (based on md5 from this img)
     cp $FILE $LOCAL_TMP_DIR/`md5 $FILE`
-    # Create/Filll metadata file in ospray repo
+    # Create/Fill metadata file in ospray repo
     # so we can link img in remote repo by this md5 string
     md5 $FILE > $BASELINE_MD5_OUTPUT_DIR/`basename $FILE`.md5
 done

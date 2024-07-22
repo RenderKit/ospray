@@ -3,6 +3,12 @@
 
 #pragma once
 
+#include "rkcommon/math/vec.ih"
+
+#define STRING(x) #x
+#define TOSTRING(x) STRING(x)
+#define CODE_LOCATION __FILE__ " (" TOSTRING(__LINE__) ")"
+
 #ifdef OSPRAY_TARGET_SYCL
 #include <sycl/sycl.hpp>
 
@@ -23,91 +29,232 @@ using int16 = int16_t;
 using int8 = int8_t;
 } // namespace ispc
 
-#define LOG(x)
+#define PING                                                                   \
+  sycl::ext::oneapi::experimental::printf(CODE_LOCATION ": " __FUNCTION__ "\n")
 
 #undef PRINT
-#undef PRINT3
+#undef PRINTV
 
+// Skip printing in host code.
 #define PRINT(x)
-#define PRINT3(x)
-#define PRINTU(x)
-#define PRINT3U(x)
+#define PRINTV(x)
 
-/*
-// Note: SYCL printf needs the type specifier, unlike ISPC. So instead of a
-// macro we make a function that looks like the macro but overloads based on the
-// type
+// Note: SYCL printf needs the type specifier, unlike ISPC. So, we need
+// overloaded functions to print based on the type of the parameter. We use a
+// wrapper macro to extract argument's name as a char string to print both name
+// and value of the variable.
+
 #ifdef __SYCL_DEVICE_ONLY__
 // rkcommon has its own macros for the host that we conflict with
 #undef PRINT
-#undef PRINT3
+#undef PRINTV
 
-void PRINT(const int &x)
+#define CONSTANT __attribute__((opencl_constant))
+
+void print_(const CONSTANT char *name, const int &x)
 {
-  sycl::ext::oneapi::experimental::printf("#x = %d\n", x);
+  sycl::ext::oneapi::experimental::printf("%s = %d\n", name, x);
 }
 
-void PRINT(const uint32_t &x)
+void print_(const CONSTANT char *name, const float &x)
 {
-  sycl::ext::oneapi::experimental::printf("#x = %u\n", x);
+  sycl::ext::oneapi::experimental::printf("%s = %f\n", name, x);
 }
 
-void PRINT(const float &x)
+void print_(const CONSTANT char *name, const uint32_t &x)
 {
-  sycl::ext::oneapi::experimental::printf("#x = %f\n", x);
+  sycl::ext::oneapi::experimental::printf("%s = %u\n", name, x);
 }
 
-void PRINT3(const rkcommon::math::vec3i &x)
+void print_(const CONSTANT char *name, const ispc::vec2i &v)
+{
+  sycl::ext::oneapi::experimental::printf("%s = (%d, %d)\n", name, v.x, v.y);
+}
+
+void print_(const CONSTANT char *name, const ispc::vec2f &v)
+{
+  sycl::ext::oneapi::experimental::printf("%s = (%f, %f)\n", name, v.x, v.y);
+}
+
+void print_(const CONSTANT char *name, const ispc::vec3i &v)
 {
   sycl::ext::oneapi::experimental::printf(
-      "#x = (%d, %d, %d)\n", x.x, x.y, x.z);
+      "%s = (%d, %d, %d)\n", name, v.x, v.y, v.z);
 }
 
-void PRINT3(const rkcommon::math::vec3ui &x)
+void print_(const CONSTANT char *name, const ispc::vec3f &v)
 {
   sycl::ext::oneapi::experimental::printf(
-      "#x = (%u, %u, %u)\n", x.x, x.y, x.z);
+      "%s = (%f, %f, %f)\n", name, v.x, v.y, v.z);
 }
 
-void PRINT3(const rkcommon::math::vec3f &x)
+void print_(const CONSTANT char *name, const ispc::vec4i &v)
 {
   sycl::ext::oneapi::experimental::printf(
-      "#x = (%f, %f, %f)\n", x.x, x.y, x.z);
+      "%s = (%d, %d, %d, %d)\n", name, v.x, v.y, v.z, v.w);
 }
 
-// SYCL is scalar, PRINTU = PRINT, PRINT3U = PRINT3
-#define PRINTU(x) PRINT
-#define PRINT3U(x) PRINT3
+void print_(const CONSTANT char *name, const ispc::vec4f &v)
+{
+  sycl::ext::oneapi::experimental::printf(
+      "%s = (%f, %f, %f, %f)\n", name, v.x, v.y, v.z, v.w);
+}
 
-#define PRINT_STR(s) sycl::ext::oneapi::experimental::printf(s);
+void print_(const CONSTANT char *name, const CONSTANT char *s)
+{
+  sycl::ext::oneapi::experimental::printf("%s = %s\n", name, s);
+}
+
+#define PRINT(x)                                                               \
+  {                                                                            \
+    static const CONSTANT char var_name[] = #x;                                \
+    print_(var_name, x);                                                       \
+  }
+
+// SYCL is scalar, PRINTV = PRINT
+#define PRINTV(x) PRINT(x);
+
 #endif
-*/
-#else
 
-#define __noinline
+#else // ISPC
 
-#define LOG(x)
+#define PING print(CODE_LOCATION "\n")
 
-#define PRINT(x) print(#x " = %\n", x)
-#define PRINT3(v) print(#v " = (%, %, %)\n", v.x, v.y, v.z)
-// prints first unmasked element
-#define PRINTU(x)                                                              \
-  print(#x "[%] = %\n",                                                        \
-      count_trailing_zeros(lanemask()),                                        \
-      extract(x, count_trailing_zeros(lanemask())))
-#define PRINT2U(v)                                                             \
-  print(#v "[%] = (%, %)\n",                                                   \
-      count_trailing_zeros(lanemask()),                                        \
-      extract(v.x, count_trailing_zeros(lanemask())),                          \
-      extract(v.y, count_trailing_zeros(lanemask())))
-#define PRINT3U(v)                                                             \
-  print(#v "[%] = (%, %, %)\n",                                                \
-      count_trailing_zeros(lanemask()),                                        \
-      extract(v.x, count_trailing_zeros(lanemask())),                          \
-      extract(v.y, count_trailing_zeros(lanemask())),                          \
-      extract(v.z, count_trailing_zeros(lanemask())))
+#define __noinline noinline
 
-#define PRINT_STR(s) print(s);
+inline void printv_(const int &x)
+{
+  print("%\n", x);
+}
+
+inline void printv_(const float &x)
+{
+  print("%\n", x);
+}
+
+inline void printv_(const uint32 &x)
+{
+  print("%\n", x);
+}
+
+inline void printv_(const vec2i &v)
+{
+  print("(%, %)\n", v.x, v.y);
+}
+
+inline void printv_(const vec2f &v)
+{
+  print("(%, %)\n", v.x, v.y);
+}
+
+inline void printv_(const vec3i &v)
+{
+  print("(% % %)\n", v.x, v.y, v.z);
+}
+
+inline void printv_(const vec3f &v)
+{
+  print("(% % %)\n", v.x, v.y, v.z);
+}
+
+inline void printv_(const vec4i &v)
+{
+  print("(% % % %)\n", v.x, v.y, v.z, v.w);
+}
+
+inline void printv_(const vec4f &v)
+{
+  print("(% % % %)\n", v.x, v.y, v.z, v.w);
+}
+
+#define PRINTV(x)                                                              \
+  {                                                                            \
+    print(#x " = ");                                                           \
+    printv_(x);                                                                \
+  }
+
+inline void print_(const int &x)
+{
+  print("[%] = %\n",
+      count_trailing_zeros(lanemask()),
+      extract(x, count_trailing_zeros(lanemask())));
+}
+
+inline void print_(const float &x)
+{
+  print("[%] = %\n",
+      count_trailing_zeros(lanemask()),
+      extract(x, count_trailing_zeros(lanemask())));
+}
+
+inline void print_(const uint32 &x)
+{
+  print("[%] = %\n",
+      count_trailing_zeros(lanemask()),
+      extract(x, count_trailing_zeros(lanemask())));
+}
+
+inline void print_(const vec2i &v)
+{
+  print("[%] = (%, %)\n",
+      count_trailing_zeros(lanemask()),
+      extract(v.x, count_trailing_zeros(lanemask())),
+      extract(v.y, count_trailing_zeros(lanemask())));
+}
+
+inline void print_(const vec2f &v)
+{
+  print("[%] = (%, %)\n",
+      count_trailing_zeros(lanemask()),
+      extract(v.x, count_trailing_zeros(lanemask())),
+      extract(v.y, count_trailing_zeros(lanemask())));
+}
+
+inline void print_(const vec3i &v)
+{
+  print("[%] = (%, %, %)\n",
+      count_trailing_zeros(lanemask()),
+      extract(v.x, count_trailing_zeros(lanemask())),
+      extract(v.y, count_trailing_zeros(lanemask())),
+      extract(v.z, count_trailing_zeros(lanemask())));
+}
+
+inline void print_(const vec3f &v)
+{
+  print("[%] = (%, %, %)\n",
+      count_trailing_zeros(lanemask()),
+      extract(v.x, count_trailing_zeros(lanemask())),
+      extract(v.y, count_trailing_zeros(lanemask())),
+      extract(v.z, count_trailing_zeros(lanemask())));
+}
+
+inline void print_(const vec4i &v)
+{
+  print("[%] = (%, %, %, %)\n",
+      count_trailing_zeros(lanemask()),
+      extract(v.x, count_trailing_zeros(lanemask())),
+      extract(v.y, count_trailing_zeros(lanemask())),
+      extract(v.z, count_trailing_zeros(lanemask())),
+      extract(v.w, count_trailing_zeros(lanemask())));
+}
+
+inline void print_(const vec4f &v)
+{
+  print("[%] = (%, %, %, %)\n",
+      count_trailing_zeros(lanemask()),
+      extract(v.x, count_trailing_zeros(lanemask())),
+      extract(v.y, count_trailing_zeros(lanemask())),
+      extract(v.z, count_trailing_zeros(lanemask())),
+      extract(v.w, count_trailing_zeros(lanemask())));
+}
+
+#define PRINT(x)                                                               \
+  {                                                                            \
+    print(#x);                                                                 \
+    print_(x);                                                                 \
+  }
+
+#define PRINT_STR(s) print(#s " = %\n", s);
 #endif
 
 #ifndef OSPRAY_TARGET_SYCL

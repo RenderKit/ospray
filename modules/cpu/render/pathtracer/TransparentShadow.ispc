@@ -15,22 +15,25 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
+SYCL_EXTERNAL __noinline vec3f transparentShadow(
+    const uniform PathTracer *uniform self,
     const World *uniform world,
     vec3f lightContrib,
     Ray &shadowRay,
+    RayCone &shadowCone,
     RayIntervals &rayIntervals,
     Medium medium,
     const uniform FeatureFlagsHandler &ffh)
 {
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
-  // It's not possible to have transpareny shadows if we don't have any geometry
+  // It's not possible to have transparent shadows if we don't have any geometry
   if (!ff.geometry) {
     return lightContrib;
   }
 
   uniform uint32 maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
+  const float widthOriginal = shadowCone.width;
 
   while (1) {
     traceGeometryRayIntervals(world, shadowRay, rayIntervals, ffh);
@@ -43,6 +46,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
         &self->super,
         dg,
         shadowRay,
+        shadowCone,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
             | DG_MOTIONBLUR,
         ffh);
@@ -76,6 +80,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     }
 
     setRay(shadowRay, shadowRay.t + dg.epsilon, tOriginal);
+    shadowCone.width = widthOriginal;
   }
 }
 

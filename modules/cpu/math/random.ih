@@ -42,6 +42,32 @@ inline uint32 MurmurHash3_finalize(uint32 hash)
   return hash;
 }
 
+// https://github.com/skeeto/hash-prospector/
+inline uint32 tripleHash(uint32 x)
+{
+  x ^= x >> 17;
+  x *= 0xed5ad4bb;
+  x ^= x >> 11;
+  x *= 0xac4c1b51;
+  x ^= x >> 15;
+  x *= 0x31848bab;
+  x ^= x >> 14;
+  return x;
+}
+
+// https://github.com/skeeto/hash-prospector/issues/12#issuecomment-1105792182
+/* but https://github.com/skeeto/hash-prospector/issues/28
+inline uint32 hash32(uint32 hash)
+{
+  hash ^= hash >> 16;
+  hash *= 0x21f0aaad;
+  hash ^= hash >> 15;
+  hash *= 0xf35a2d97;
+  hash ^= hash >> 15;
+
+  return hash;
+}*/
+
 inline uint32 hashToRandom(uint32 value, uint32 scramble)
 {
   value = (value ^ 61) ^ scramble;
@@ -90,7 +116,7 @@ inline float radicalInverse(uint32 idx, const uint32 base)
 struct RandomSampler
 {
   uint64 state;
-  uint64 stream;
+  uint32 stream;
 };
 
 inline uint32 RandomSampler_pcg32(varying RandomSampler *uniform self)
@@ -108,7 +134,7 @@ inline float RandomSampler_getFloat(varying RandomSampler *uniform self)
 }
 
 inline void RandomSampler_init(
-    varying RandomSampler *uniform self, uint64 seed, uint64 stream)
+    varying RandomSampler *uniform self, uint32 seed, uint32 stream)
 {
   self->state = 0;
   self->stream = (stream << 1u) | 1u;
@@ -122,7 +148,7 @@ inline void RandomSampler_init(
   RandomSampler_pcg32(self);
 }
 
-inline void RandomSampler_init(varying RandomSampler *uniform self, uint64 seed)
+inline void RandomSampler_init(varying RandomSampler *uniform self, uint32 seed)
 {
   RandomSampler_init(self, seed, 0);
 }
@@ -204,71 +230,183 @@ inline vec3f LCG_getFloat3(uint32 &state)
   return make_vec3f(x, y, z);
 }
 
+// https://psychopath.io/post/2021_01_30_building_a_better_lk_hash
+inline uint32 OwenHash2(uint32 x, uint32 seed)
+{
+  x ^= x * 0x3d20adea;
+  x += seed;
+  x *= (seed >> 16) | 1;
+  x ^= x * 0x05526c56;
+  x ^= x * 0x53a22864;
+
+  return x;
+}
+
+inline uint32 OwenScramble2(uint32 x, uint32 seed)
+{
+  x = reverseBits(x);
+  x = OwenHash2(x, seed);
+  return reverseBits(x);
+}
+
+inline uint32 OwenScramble4(uint32 x, uint32 seed)
+{
+  x = reverseBits(x);
+
+  // https://psychopath.io/post/2022_08_14_a_fast_hash_for_base_4_owen_scrambling
+  x ^= x * 0x3d20adea;
+  x ^= (x >> 1) & (x << 1) & 0x55555555;
+  x += seed;
+  x *= (seed >> 16) | 1;
+  x ^= (x >> 1) & (x << 1) & 0x55555555;
+  x ^= x * 0x05526c56;
+  x ^= x * 0x53a22864;
+
+  return reverseBits(x);
+}
+
+#define SCRAMBLE0 0x9374b0d3
+#define SCRAMBLE1 0x1ec38426
+#define SCRAMBLE2 0xdb81c29c
+#define SCRAMBLE3 0x5628372b
+#define SCRAMBLE4 0xbcb745bd
+
+#ifdef OSPRAY_PATHTRACER_DEBUG
+// alternative drop-in implementations with same interface for debugging
+#include "random_debug.inl"
+#else
+
 ////////////////////////////////////////////////////////////////////////////////
-// Low-discrepancy (Sobol) sampler
+// Low-discrepancy sampler: shuffled (padding 5 dimensions), scrambled Sobol
+// Burley, "Practical Hash-based Owen Scrambling", 2020
 
 struct LDSampler
 {
-  uint32 index; // sample index
-  uint32 scramble; // random number for scrambling the samples
-  uint32 lcg; // LCG used when we run out of dimensions
-  const unsigned int *uniform sobolMatrices;
+  uint32 revIndex; // bit-reversed sample index
+  uint32 scramble; // seed for scrambling the samples
+  uint32 baseIndexLight; // when sequence is split (blue noise)
+  // valid bits TODO should move to global PT Context
+  uniform uint32 idxMask;
+  uniform uint32 idxMaskLight;
 };
 
-inline void LDSampler_init(varying LDSampler *uniform self,
-    const MathConstants *uniform mathConstants,
-    uint32 pixelID,
-    uint32 sampleIndex)
+inline void LDSampler_init(varying LDSampler &self,
+    const uint32 seed,
+    const uint32 sampleIndex,
+    const uint32 sampleOffsetLight = 0,
+    const uniform uint32 bits = 16,
+    const uniform uint32 bitsLight = 16)
 {
-  // skip the first few samples to reduce correlation artifacts
-  self->index = sampleIndex + 64;
-
-  uint32 hash = 0;
-  hash = MurmurHash3_mix(hash, pixelID);
-  self->scramble = MurmurHash3_finalize(hash);
-
-  hash = MurmurHash3_mix(hash, sampleIndex);
-  self->lcg = MurmurHash3_finalize(hash);
-
-  self->sobolMatrices = mathConstants->sobolMatrices;
+  self.revIndex = reverseBits(sampleIndex);
+  self.scramble = seed; // avoid zero!
+  self.baseIndexLight = sampleOffsetLight;
+  self.idxMask = bits > 31 ? -1u : ~(-1u >> bits);
+  self.idxMaskLight = bitsLight > 31 ? -1u : ~(-1u >> bitsLight);
 }
 
-inline float LDSampler_getFloat(
-    varying LDSampler *uniform self, uniform uint32 dimension)
+inline void LDSampler_nextGroup(LDSampler &self)
 {
-  if (dimension >= Sobol_numDimensions)
-    return LCG_getFloat(self->lcg);
-
-  // Sample the Sobol sequence
-  const float s = Sobol_sample(self->sobolMatrices, self->index, dimension);
-
-  // Apply Cranley-Patterson rotation to reduce correlation artifacts
-  const float shift = to_float_unorm(hashToRandom(dimension, self->scramble));
-  return CranleyPattersonRotation(s, shift);
+  // padding: new decorrelated group
+  self.scramble = tripleHash(self.scramble);
 }
 
-inline vec2f LDSampler_getFloat2(
-    varying LDSampler *uniform self, uniform uint32 dimension)
+inline float LDSamplerScramble(const uint32 sample, const uint32 scramble)
 {
-  const float x = LDSampler_getFloat(self, dimension);
-  const float y = LDSampler_getFloat(self, dimension + 1);
-  return make_vec2f(x, y);
+  return to_float_unorm(reverseBits(OwenHash2(sample, scramble)));
 }
+
+inline vec2f LDSampler_get3LightSamples(const LDSampler &self,
+    const uniform uint32 idx,
+    const bool split,
+    float &ss)
+{
+  uint32 revIndex =
+      split ? reverseBits(self.baseIndexLight + idx) : self.revIndex;
+  revIndex = OwenHash2(revIndex, self.scramble); // shuffle
+  revIndex &= split ? self.idxMaskLight : self.idxMask;
+  // sample
+  const uint32 r0 = reverseBits(revIndex);
+  const vec2ui r12 = Sobol_revSample2(revIndex);
+
+  vec2f res;
+  res.x = LDSamplerScramble(r0, self.scramble ^ SCRAMBLE0);
+  res.y = LDSamplerScramble(r12.x, self.scramble ^ SCRAMBLE1);
+  ss = LDSamplerScramble(r12.y, self.scramble ^ SCRAMBLE2);
+  return res;
+}
+
+// the first 3 dims are already returned
+// the remaining 4th dim needs finalization (scrambling)
+inline vec2f LDSampler_getNext4Samples(LDSampler &self, float &ss, uint32 &u)
+{
+  LDSampler_nextGroup(self);
+  // shuffle
+  const uint32 revIndex =
+      OwenHash2(self.revIndex, self.scramble) & self.idxMask;
+  // sample
+  const uint32 r0 = reverseBits(revIndex);
+  const vec3ui r123 = Sobol_revSample3(revIndex);
+
+  vec2f res;
+  res.x = LDSamplerScramble(r0, self.scramble ^ SCRAMBLE0);
+  res.y = LDSamplerScramble(r123.x, self.scramble ^ SCRAMBLE1);
+  ss = LDSamplerScramble(r123.y, self.scramble ^ SCRAMBLE2);
+  u = r123.z;
+  return res;
+}
+
+inline float LDSampler_finalizeDim3(const LDSampler &self, const uint32 revRes)
+{
+  return LDSamplerScramble(revRes, self.scramble ^ SCRAMBLE3);
+}
+
+// the first 2 dims are already returned (the best ones)
+// the next remaining 3 dims need finalization (scrambling)
+inline vec2f LDSampler_getNext5Samples(LDSampler &self, vec3ui &ss)
+{
+  LDSampler_nextGroup(self);
+  // shuffle
+  const uint32 revIndex =
+      OwenHash2(self.revIndex, self.scramble) & self.idxMask;
+  // sample
+  const uint32 r0 = reverseBits(revIndex);
+  const vec4ui r1234 = Sobol_revSample4(revIndex);
+
+  vec2f res;
+  res.x = LDSamplerScramble(r0, self.scramble ^ SCRAMBLE0);
+  res.y = LDSamplerScramble(r1234.x, self.scramble ^ SCRAMBLE1);
+  ss = make_vec3ui(r1234.y, r1234.z, r1234.w);
+  return res;
+}
+
+inline vec2f LDSampler_finalizeDim23(
+    const LDSampler &self, const vec3ui &revRes)
+{
+  vec2f res;
+  res.x = LDSamplerScramble(revRes.x, self.scramble ^ SCRAMBLE2);
+  res.y = LDSamplerScramble(revRes.y, self.scramble ^ SCRAMBLE3);
+  return res;
+}
+
+inline float LDSampler_finalizeDim4(const LDSampler &self, const vec3ui &revRes)
+{
+  return LDSamplerScramble(revRes.z, self.scramble ^ SCRAMBLE4);
+}
+
+#undef SCRAMBLE0
+#undef SCRAMBLE1
+#undef SCRAMBLE2
+#undef SCRAMBLE3
+#undef SCRAMBLE4
+
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
-// Hammersley - low discrepancy random numbers; only two dimensions; no state
+// Halton - low discrepancy halton sequence; first two dimensions; no state
 
-inline varying vec2f RandomHammersley2_getFloats(varying uint32 idx)
+inline varying vec2f HaltonSequence_get2D(varying uint32 idx)
 {
-  return make_vec2f(rcp((float)idx), Halton_sample2(idx));
+  return make_vec2f(Halton_sample2(idx), Halton_sample3(idx));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// halton - low discrepancy halton sequence; first two dimensions; no state
-
-inline varying vec2f HaltonSequence_get2D(
-    const MathConstants *uniform mathConstants, varying uint32 idx)
-{
-  return make_vec2f(Halton_sample2(idx), Halton_sample3(mathConstants, idx));
-}
 OSPRAY_END_ISPC_NAMESPACE

@@ -17,7 +17,7 @@ namespace ospray {
 Ref<MicrofacetAlbedoTables> Material::microfacetAlbedoTables;
 
 Material::Material(api::ISPCDevice &device, const FeatureFlagsOther ffo)
-    : AddStructShared(device.getIspcrtContext(), device), featureFlags(ffo)
+    : AddStructShared(device.getDRTDevice(), device), featureFlags(ffo)
 {
   managedObjectType = OSP_MATERIAL;
 #ifndef OSPRAY_TARGET_SYCL
@@ -27,6 +27,8 @@ Material::Material(api::ISPCDevice &device, const FeatureFlagsOther ffo)
   getSh()->selectNextMedium =
       reinterpret_cast<ispc::Material_SelectNextMediumFunc>(
           ispc::Material_selectNextMedium_addr());
+  getSh()->getEmission = reinterpret_cast<ispc::Material_GetEmissionFunc>(
+      ispc::Material_getEmission_addr());
 #endif
 
   if (!microfacetAlbedoTables) {
@@ -62,11 +64,10 @@ std::string Material::toString() const
 
 void Material::commit() {}
 
-ispc::TextureParam Material::getTextureParam(const char *texture_name)
+ispc::TextureParam Material::getTextureParam(
+    const char *texture_name, const Ref<Texture> &ref_tex)
 {
-  // Get texture pointer
-  Texture *ptr = getParamObject<Texture>(texture_name);
-  if (ptr)
+  if (ref_tex)
     featureFlags |= FFO_TEXTURE_IN_MATERIAL;
 
   // Get 2D transformation if exists
@@ -89,9 +90,10 @@ ispc::TextureParam Material::getTextureParam(const char *texture_name)
 
   // Initialize ISPC structure
   ispc::TextureParam param;
-  param.ptr = ptr ? ptr->getSh() : nullptr;
+  param.ptr = ref_tex ? ref_tex->getSh() : nullptr;
   param.transformFlags = (ispc::TransformFlags)transformFlags;
   param.xform2f = xfm2f;
+  param.scale2f = sqrt(xfm2f.l.det());
   param.xform3f = xfm3f;
 
   // Done
@@ -103,7 +105,8 @@ MaterialParam1f Material::getMaterialParam1f(
 {
   const std::string mapName = "map_" + std::string(name);
   MaterialParam1f param;
-  param.tex = getTextureParam(mapName.c_str());
+  param.ref_tex = getParamObject<Texture>(mapName.c_str());
+  param.tex = getTextureParam(mapName.c_str(), param.ref_tex);
   param.rot = ((linear2f *)(&param.tex.xform2f.l))->orthogonal().transposed();
   param.factor = getParam<float>(name, param.tex.ptr ? 1.f : valIfNotFound);
   return param;
@@ -114,7 +117,8 @@ MaterialParam3f Material::getMaterialParam3f(
 {
   const std::string mapName = "map_" + std::string(name);
   MaterialParam3f param;
-  param.tex = getTextureParam(mapName.c_str());
+  param.ref_tex = getParamObject<Texture>(mapName.c_str());
+  param.tex = getTextureParam(mapName.c_str(), param.ref_tex);
   param.rot = ((linear2f *)(&param.tex.xform2f.l))->orthogonal().transposed();
   param.factor =
       getParam<vec3f>(name, param.tex.ptr ? vec3f(1.f) : valIfNotFound);

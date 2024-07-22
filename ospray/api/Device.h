@@ -7,6 +7,7 @@
 #include "rkcommon/utility/Optional.h"
 #include "rkcommon/utility/ParameterizedObject.h"
 // ospray
+#include "common/DeviceRT.h"
 #include "common/OSPCommon.h"
 #include "ospray/version.h"
 // std
@@ -138,10 +139,6 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
   virtual float getProgress(OSPFuture) = 0;
   virtual float getTaskDuration(OSPFuture) = 0;
 
-  // Return pointer to command queue that is goint to be used by external
-  // post-processing kernels (e.g. OIDN)
-  virtual void *getPostProcessingCommandQueuePtr() = 0;
-
   virtual OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &)
   {
@@ -159,7 +156,7 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
 
   int numThreads{-1};
   bool debugMode{false};
-  bool apiTraceEnabled{false};
+  bool disableMipMapGeneration{false};
 
   enum OSP_THREAD_AFFINITY
   {
@@ -191,9 +188,10 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
 
  private:
   bool committed{false};
+  bool apiTraceEnabled{false};
+
   using FactoryFcn = Device *(*)();
   using FactoryMap = std::map<std::string, FactoryFcn>;
-
   static FactoryMap dfcns;
 
   template <typename D>

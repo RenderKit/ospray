@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 Glass::Glass(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_GLASS)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_GLASS)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =

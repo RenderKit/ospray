@@ -115,8 +115,6 @@ struct MPIDistributedDevice : public api::Device
 
   float getVariance(OSPFrameBuffer) override;
 
-  void *getPostProcessingCommandQueuePtr() override;
-
   /*! load module */
   int loadModule(const char *name) override;
 

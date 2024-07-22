@@ -40,9 +40,4 @@ struct DebugRenderer
 #ifdef __cplusplus
 }
 
-#ifdef OSPRAY_TARGET_SYCL
-inline constexpr sycl::specialization_id<ispc::DebugRendererType>
-    debugRendererType;
-#endif
-
 #endif

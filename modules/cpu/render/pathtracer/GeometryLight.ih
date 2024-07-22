@@ -20,7 +20,8 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
-    const Ray &ray);
+    const Ray &ray,
+    const uniform FeatureFlagsHandler &ffh);
 
 SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,

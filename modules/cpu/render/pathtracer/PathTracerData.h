@@ -26,20 +26,22 @@ struct PathTracerData
   bool scannedForGeometryLights{false};
 
  private:
-  ISPCRTMemoryView createGeometryLight(const Instance *instance,
+  ispc::Light *createGeometryLight(const Instance *instance,
       const GeometricModel *model,
+      const int32 numPrimIDs,
       const std::vector<int> &primIDs,
       const std::vector<float> &distribution,
       float pdf);
 
-  void generateGeometryLights(const World &world, const Renderer &renderer);
+  void generateGeometryLights(const World &world,
+      const Renderer &renderer,
+      std::vector<ispc::Light *> &lightShs);
 
-  std::vector<ISPCRTMemoryView> lightViews;
-  std::unique_ptr<BufferShared<ispc::Light *>> lightArray;
-  std::unique_ptr<BufferShared<float>> lightCDFArray;
+  BufferSharedUq<ispc::Light *> lightArray;
+  BufferSharedUq<float> lightCDFArray;
 
-  std::vector<BufferShared<int>> geoLightPrimIDArray;
-  std::vector<BufferShared<float>> geoLightDistrArray;
+  std::vector<devicert::BufferShared<int>> geoLightPrimIDArray;
+  std::vector<devicert::BufferShared<float>> geoLightDistrArray;
 };
 
 } // namespace ospray

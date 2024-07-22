@@ -29,8 +29,7 @@ task
       &fb->super, taskIDs[taskIndex0], ffh);
 
   const uniform int startSampleID =
-      (fb->super.doAccumulation ? max(fb->super.frameID, 0) * spp : 0)
-      + 1; // Halton Sequence starts with 1
+      fb->super.frameID * spp + 1; // Halton Sequence starts with 1
 
 #ifdef OSPRAY_TARGET_SYCL
 #if 0
@@ -67,10 +66,10 @@ task
       vec3f albedo = make_vec3f(0.f);
 
       // TODO: same note on spp > 1 issues
-      for (uniform uint32 s = 0; s < spp; s++) {
+      for (uniform int32 s = 0; s < spp; s++) {
         const float pixel_du = Halton_sample2(startSampleID + s);
         const float pixel_dv = CranleyPattersonRotation(
-            Halton_sample3(self->mathConstants, startSampleID + s), 1.f / 6.f);
+            Halton_sample3(startSampleID + s), 1.f / 6.f);
         screenSample.sampleID.z = startSampleID + s;
 
         cameraSample.screen.x =
@@ -83,7 +82,13 @@ task
         cameraSample.lens.y = 0.0f;
         cameraSample.time = 0.5f;
 
-        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample, ffh);
+        Camera_dispatch_initRay(
+            camera, screenSample.ray, screenSample.rayCone, cameraSample, ffh);
+        // take screen resolution (unnormalized coordinates), i.e., pixel size
+        // into account
+        screenSample.rayCone.dwdt *= fb->super.rcpSize.y;
+        screenSample.rayCone.width *= fb->super.rcpSize.y;
+
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         // TODO: We could store and use the region t intervals from when

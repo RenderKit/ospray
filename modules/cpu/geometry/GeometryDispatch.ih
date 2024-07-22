@@ -4,7 +4,6 @@
 #pragma once
 
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

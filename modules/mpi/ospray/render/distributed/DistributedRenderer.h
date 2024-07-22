@@ -35,14 +35,13 @@ struct DistributedRenderer : public AddStructShared<Renderer, ispc::Renderer>
       const utility::ArrayView<uint32_t> &taskIDs) const;
 
   // Not used by distributed renderers
-  AsyncEvent renderTasks(FrameBuffer *,
+  devicert::AsyncEvent renderTasks(FrameBuffer *,
       Camera *,
       World *,
       void * /*perFrameData*/,
-      const utility::ArrayView<uint32_t> & /*taskIDs*/,
-      bool /*wait*/) const override
+      const utility::ArrayView<uint32_t> & /*taskIDs*/) const override
   {
-    return AsyncEvent();
+    return devicert::AsyncEvent();
   }
 
 #ifndef OSPRAY_TARGET_SYCL

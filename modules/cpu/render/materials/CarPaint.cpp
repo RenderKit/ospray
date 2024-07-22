@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 CarPaint::CarPaint(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_CARPAINT)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_CARPAINT)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(
@@ -26,27 +26,26 @@ std::string CarPaint::toString() const
 
 void CarPaint::commit()
 {
-  MaterialParam3f baseColor = getMaterialParam3f("baseColor", vec3f(0.8f));
-  MaterialParam1f roughness = getMaterialParam1f("roughness", 0.f);
-  MaterialParam1f normal = getMaterialParam1f("normal", 1.f);
+  baseColor = getMaterialParam3f("baseColor", vec3f(0.8f));
+  roughness = getMaterialParam1f("roughness", 0.f);
+  normal = getMaterialParam1f("normal", 1.f);
   bool useFlakeColor = findParam("flakeColor") != nullptr;
-  MaterialParam3f flakeColor = getMaterialParam3f("flakeColor", vec3f(0.f));
-  MaterialParam1f flakeScale = getMaterialParam1f("flakeScale", 100.f);
-  MaterialParam1f flakeDensity = getMaterialParam1f("flakeDensity", 0.f);
-  MaterialParam1f flakeSpread = getMaterialParam1f("flakeSpread", 0.3f);
-  MaterialParam1f flakeJitter = getMaterialParam1f("flakeJitter", 0.75f);
-  MaterialParam1f flakeRoughness = getMaterialParam1f("flakeRoughness", 0.3f);
+  flakeColor = getMaterialParam3f("flakeColor", vec3f(0.f));
+  flakeScale = getMaterialParam1f("flakeScale", 100.f);
+  flakeDensity = getMaterialParam1f("flakeDensity", 0.f);
+  flakeSpread = getMaterialParam1f("flakeSpread", 0.3f);
+  flakeJitter = getMaterialParam1f("flakeJitter", 0.75f);
+  flakeRoughness = getMaterialParam1f("flakeRoughness", 0.3f);
 
-  MaterialParam1f coat = getMaterialParam1f("coat", 1.f);
-  MaterialParam1f coatIor = getMaterialParam1f("coatIor", 1.5f);
-  MaterialParam3f coatColor = getMaterialParam3f("coatColor", vec3f(1.f));
-  MaterialParam1f coatThickness = getMaterialParam1f("coatThickness", 1.f);
-  MaterialParam1f coatRoughness = getMaterialParam1f("coatRoughness", 0.f);
-  MaterialParam1f coatNormal = getMaterialParam1f("coatNormal", 1.f);
+  coat = getMaterialParam1f("coat", 1.f);
+  coatIor = getMaterialParam1f("coatIor", 1.5f);
+  coatColor = getMaterialParam3f("coatColor", vec3f(1.f));
+  coatThickness = getMaterialParam1f("coatThickness", 1.f);
+  coatRoughness = getMaterialParam1f("coatRoughness", 0.f);
+  coatNormal = getMaterialParam1f("coatNormal", 1.f);
 
-  MaterialParam3f flipflopColor =
-      getMaterialParam3f("flipflopColor", vec3f(1.f));
-  MaterialParam1f flipflopFalloff = getMaterialParam1f("flipflopFalloff", 1.f);
+  flipflopColor = getMaterialParam3f("flipflopColor", vec3f(1.f));
+  flipflopFalloff = getMaterialParam1f("flipflopFalloff", 1.f);
 
   getSh()->baseColor = baseColor.factor;
   getSh()->baseColorMap = baseColor.tex;

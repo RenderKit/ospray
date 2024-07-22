@@ -10,7 +10,6 @@
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "TileShared.h"
-#include "common/ISPCRTBuffers.h"
 #include "fb/SparseFBShared.h"
 
 namespace ospray {
@@ -63,11 +62,10 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   void beginFrame() override;
 
-  AsyncEvent postProcess(bool) override
+  devicert::AsyncEvent postProcess() override
   {
-    AsyncEvent e;
     // Do not run post-processing on sparse frame buffer
-    return e;
+    return devicert::AsyncEvent();
   }
 
   // Mapping sparse framebuffers is not supported, will return null
@@ -109,13 +107,13 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   api::ISPCDevice &device;
 
   // The tiles in this framebuffer
-  std::unique_ptr<BufferDeviceShadowed<Tile>> tiles;
+  BufferDeviceShadowedUq<Tile> tiles;
   // Track if we need to read back tiles to the host
   bool tilesDirty = false;
 
   // Variance data for the image, stored in tiled order with one RGBA value per
   // pixel, accumulates every other sample, for variance estimation
-  std::unique_ptr<BufferDevice<vec4f>> varianceBuffer;
+  BufferDeviceUq<vec4f> varianceBuffer;
 
   // Does this need to be USM at all?
   std::vector<uint32_t> tileIDs;
@@ -131,9 +129,9 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   // holds error per task for each tile, stored in tiled order.
   // The SparseFB doesn't do its own error refinement since it doesn't have
   // access to error data for the entire framebuffer
-  std::unique_ptr<BufferShared<float>> taskErrorBuffer;
+  BufferSharedUq<float> taskErrorBuffer;
 
-  std::unique_ptr<BufferDeviceShadowed<uint32_t>> renderTaskIDs;
-  std::unique_ptr<BufferDeviceShadowed<uint32_t>> activeTaskIDs;
+  BufferDeviceShadowedUq<uint32_t> renderTaskIDs;
+  BufferDeviceShadowedUq<uint32_t> activeTaskIDs;
 };
 } // namespace ospray

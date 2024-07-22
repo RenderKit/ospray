@@ -78,7 +78,7 @@ struct Principled_BSDF
   Principled_SheenLayer_BSDF sheen;
 };
 
-SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
+SYCL_EXTERNAL const varying BSDF *uniform Principled_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -171,8 +171,9 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
             clamp(self->diffuse * get1f(self->diffuseMap, dg, 1.f));
         const vec3f diffuseColor = baseColor * diffuse;
         const float backlight = self->thin
-            ? clamp(
-                self->backlight * get1f(self->backlightMap, dg, 1.f), 0.f, 2.f)
+            ? clamp(self->backlight * get1f(self->backlightMap, dg, 1.f),
+                  0.f,
+                  2.f)
             : 0.f;
         const float diffuseTransmission = backlight * 0.5f;
         const float diffuseReflection = 1.f - diffuseTransmission;
@@ -415,8 +416,9 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
   }
 
   // cut-out transparency
-  const float transparency = 1.f - opacity;
-  if (transparency > EPS) {
+  if (1.f - self->opacity > EPS || valid(self->opacityMap)
+      || hasAlpha(self->baseColorMap)) {
+    const float transparency = 1.f - opacity;
     Transmission_Constructor(
         &bsdf->transmission, frame, make_vec3f(transparency));
     MultiBSDF_add(multiRoot, 0, &bsdf->transmission, 1.f, transparency);
@@ -425,7 +427,7 @@ SYCL_EXTERNAL __noinline const varying BSDF *uniform Principled_getBSDF(
   return &bsdf->super;
 }
 
-SYCL_EXTERNAL __noinline vec3f Principled_getTransparency(
+SYCL_EXTERNAL vec3f Principled_getTransparency(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -576,7 +578,7 @@ SYCL_EXTERNAL __noinline vec3f Principled_getTransparency(
   return T;
 }
 
-SYCL_EXTERNAL __noinline void Principled_selectNextMedium(
+SYCL_EXTERNAL void Principled_selectNextMedium(
     const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium)
@@ -606,7 +608,7 @@ SYCL_EXTERNAL __noinline void Principled_selectNextMedium(
 
 // Lambert BSDF
 
-__noinline BSDF_EvalRes LambertBSDF_eval(
+inline BSDF_EvalRes LambertBSDF_eval(
     const varying OrenNayar *uniform self, const vec3f &wo, const vec3f &wi)
 {
   if (self->super.bsdfType == BSDF_TYPE_OREN_NAYAR)
@@ -615,8 +617,7 @@ __noinline BSDF_EvalRes LambertBSDF_eval(
     return Lambert_eval(&self->super, wo, wi);
 }
 
-__noinline BSDF_SampleRes LambertBSDF_sample(
-    const varying OrenNayar *uniform self,
+inline BSDF_SampleRes LambertBSDF_sample(const varying OrenNayar *uniform self,
     const vec3f &wo,
     const vec2f &s,
     float ss)
@@ -731,7 +732,7 @@ __noinline BSDF_EvalRes PlasticBSDF_eval(
     return Plastic_DielectricLayerBSDF_eval(self, wo, wi);
 }
 
-__noinline BSDF_SampleRes PlasticBSDF_sample(
+inline BSDF_SampleRes PlasticBSDF_sample(
     const varying Principled_Plastic_BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,
@@ -813,7 +814,7 @@ __noinline BSDF_EvalRes GlassBSDF_eval(
     return make_BSDF_EvalRes_zero();
 }
 
-__noinline BSDF_SampleRes GlassBSDF_sample(
+inline BSDF_SampleRes GlassBSDF_sample(
     const varying Principled_Glass_BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,
@@ -840,7 +841,7 @@ __noinline BSDF_EvalRes MetalBSDF_eval(
     return make_BSDF_EvalRes_zero();
 }
 
-__noinline BSDF_SampleRes MetalBSDF_sample(
+inline BSDF_SampleRes MetalBSDF_sample(
     const varying MicrofacetConductor *uniform self,
     const vec3f &wo,
     const vec2f &s,
@@ -991,7 +992,7 @@ __noinline BSDF_EvalRes SheenLayerBSDF_eval(
   return MICROFACETSHEENLAYER_EVAL_GET();
 }
 
-__noinline BSDF_SampleRes SheenLayerBSDF_sample(
+inline BSDF_SampleRes SheenLayerBSDF_sample(
     const varying Principled_SheenLayer_BSDF *uniform self,
     const vec3f &wo,
     const vec2f &s,
@@ -1010,7 +1011,7 @@ __noinline BSDF_SampleRes SheenLayerBSDF_sample(
 
 // Principled BSDF
 
-SYCL_EXTERNAL __noinline BSDF_EvalRes Principled_BSDF_eval(
+SYCL_EXTERNAL BSDF_EvalRes Principled_BSDF_eval(
     const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   const varying Principled_BSDF *uniform self =
@@ -1023,7 +1024,7 @@ SYCL_EXTERNAL __noinline BSDF_EvalRes Principled_BSDF_eval(
   return MULTIBSDF_EVAL_GET();
 }
 
-SYCL_EXTERNAL __noinline BSDF_SampleRes Principled_BSDF_sample(
+SYCL_EXTERNAL BSDF_SampleRes Principled_BSDF_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
@@ -1042,6 +1043,15 @@ SYCL_EXTERNAL __noinline BSDF_SampleRes Principled_BSDF_sample(
   return MULTIBSDF_SAMPLE_GET();
 }
 
+SYCL_EXTERNAL vec3f Principled_getEmission(const Material *uniform _self,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &)
+{
+  const Principled *uniform self = (Principled * uniform) _self;
+
+  return self->emission * get3f(self->emissionMap, dg, make_vec3f(1.f));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
@@ -1058,6 +1068,11 @@ export void *uniform Principled_getTransparency_addr()
 export void *uniform Principled_selectNextMedium_addr()
 {
   return (void *uniform)Principled_selectNextMedium;
+}
+
+export void *uniform Principled_getEmission_addr()
+{
+  return (void *uniform)Principled_getEmission;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

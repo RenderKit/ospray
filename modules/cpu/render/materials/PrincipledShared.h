@@ -122,6 +122,9 @@ struct Principled
 
   Medium outsideMedium;
 
+  vec3f emission;
+  TextureParam emissionMap;
+
 #ifdef __cplusplus
   Principled()
       : baseColor(0.8f),
@@ -154,7 +157,8 @@ struct Principled
         opacity(1.f),
         thin(false),
         backlight(0.f),
-        thickness(1.f)
+        thickness(1.f),
+        emission(0.f)
   {
     super.type = ispc::MATERIAL_TYPE_PRINCIPLED;
   }

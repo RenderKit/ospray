@@ -12,10 +12,10 @@ index 708975d1..d916b922 100644
   #define _glfw_dlsym(handle, name) GetProcAddress((HMODULE) handle, name)
  #else
 diff --git a/src/wgl_context.c b/src/wgl_context.c
-index eebf6cd5..8a72d676 100644
+index b245b292..042e0f25 100644
 --- a/src/wgl_context.c
 +++ b/src/wgl_context.c
-@@ -405,7 +405,7 @@ GLFWbool _glfwInitWGL(void)
+@@ -422,7 +422,7 @@ GLFWbool _glfwInitWGL(void)
      if (_glfw.wgl.instance)
          return GLFW_TRUE;
  

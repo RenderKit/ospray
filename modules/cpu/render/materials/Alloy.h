@@ -15,6 +15,11 @@ struct Alloy : public AddStructShared<Material, ispc::Alloy>
   virtual std::string toString() const override;
 
   virtual void commit() override;
+
+ private:
+  MaterialParam3f color;
+  MaterialParam3f edgeColor;
+  MaterialParam1f roughness;
 };
 
 } // namespace pathtracer

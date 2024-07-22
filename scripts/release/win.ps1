@@ -15,6 +15,8 @@ cd deps_build
 
 cmake --version
 
+$exitCode = 0
+
 cmake -L `
   -G $G `
   $args `
@@ -27,8 +29,10 @@ cmake -L `
   -D BUILD_GPU_SUPPORT=ON `
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF `
   ../scripts/superbuild
+if ($LastExitCode) { $exitCode++ }
 
 cmake --build . --config Release
+if ($LastExitCode) { $exitCode++ }
 
 cd $ROOT_DIR
 
@@ -76,16 +80,22 @@ cmake -L `
   -D CMAKE_INSTALL_DATAROOTDIR= `
   -D OSPRAY_SIGN_FILE=$env:SIGN_FILE_WINDOWS `
   ..
+if ($LastExitCode) { $exitCode++ }
 
 # compile and create installers
 cmake --build . --config Release --target sign_files
+if ($LastExitCode) { $exitCode++ }
+
 cmake --build . --config Release --target $package
+if ($LastExitCode) { $exitCode++ }
 
 # create ZIP files
 cmake -L `
   -D OSPRAY_ZIP_MODE=ON `
   ..
+if ($LastExitCode) { $exitCode++ }
 
 cmake --build . --config Release --target $package
+if ($LastExitCode) { $exitCode++ }
 
-exit $LASTEXITCODE
+exit $exitCode

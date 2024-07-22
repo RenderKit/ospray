@@ -15,6 +15,14 @@ struct OBJMaterial : public AddStructShared<Material, ispc::OBJ>
   virtual std::string toString() const override;
 
   virtual void commit() override;
+
+ private:
+  Ref<Texture> ref_bumpTex;
+
+  MaterialParam1f d;
+  MaterialParam3f Kd;
+  MaterialParam3f Ks;
+  MaterialParam1f Ns;
 };
 
 } // namespace pathtracer

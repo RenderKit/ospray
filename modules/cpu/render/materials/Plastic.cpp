@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 Plastic::Plastic(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_PLASTIC)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_PLASTIC)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(

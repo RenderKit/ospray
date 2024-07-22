@@ -4,6 +4,7 @@
 #include "SciVis.ih"
 #include "camera/Camera.ih"
 #include "camera/CameraDispatch.ih"
+#include "common/DeviceRT.ih"
 #include "common/FeatureFlagsEnum.h"
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
@@ -30,10 +31,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
 
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
-  LDSampler ldSamplerObj;
-  varying LDSampler *uniform ldSampler = &ldSamplerObj;
-  LDSampler_init(ldSampler,
-      self->super.mathConstants,
+  RandomSampler randomSampler;
+  RandomSampler_init(&randomSampler,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -58,6 +57,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
 
   // This is our main ray
   Ray &ray = sample.ray;
+  RayCone &rayCone = sample.rayCone;
 
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
@@ -87,13 +87,13 @@ static void SciVis_renderSample(Renderer *uniform _self,
         rc.fb = fb;
         rc.world = world;
         rc.sample = sample;
-        rc.ldSampler = ldSampler;
+        rc.randomSampler = &randomSampler;
         volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
         vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
             volumeIntervals,
             rayIntervals,
             volumeRay,
-            ldSampler,
+            randomSampler,
             self->volumeSamplingRate,
             ffh);
 
@@ -141,14 +141,15 @@ static void SciVis_renderSample(Renderer *uniform _self,
           &self->super,
           dg,
           ray,
-          DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
+          rayCone,
+          DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TANGENTS
               | DG_TEXCOORD,
           ffh);
 
       // Shade geometry
       SSI surfaceShading;
       surfaceShading = SciVis_computeShading(
-          self, world, dg, sample, ldSampler, ray.dir, ffh);
+          self, world, dg, sample, randomSampler, ray.dir, rayCone.width, ffh);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully
@@ -222,8 +223,9 @@ static void SciVis_renderSample(Renderer *uniform _self,
 
 SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const World *uniform world,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const varying DifferentialGeometry &dg,
+    const float coneWidth,
     const uniform int sampleCnt,
     const uniform float aoRadius,
     const varying vec3i &sampleID,
@@ -243,9 +245,8 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
 
   for (uniform int i = 0; i < sampleCnt; i++) {
     // Use base-5 and base-7 Halton to avoid correlation with sample position
-    const vec2f halton =
-        make_vec2f(PermHalton_sample5(self->super.mathConstants, accumID + i),
-            PermHalton_sample7(self->super.mathConstants, accumID + i));
+    const vec2f halton = make_vec2f(
+        PermHalton_sample5(accumID + i), PermHalton_sample7(accumID + i));
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -258,10 +259,20 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     Ray ao_ray;
     setRay(ao_ray, dg.P, ao_dir, dg.epsilon, aoRadius);
 
+    RayCone shadowCone;
+    shadowCone.width = coneWidth;
+    shadowCone.dwdt = 0.0f; // constant for AO
+
     hits = hits
         + (1.f
-            - lightAlpha(
-                self, ao_ray, world, ldSampler, make_vec3f(1.f), 0.1f, ffh));
+            - lightAlpha(self,
+                ao_ray,
+                shadowCone,
+                world,
+                randomSampler,
+                make_vec3f(1.f),
+                0.1f,
+                ffh));
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
@@ -273,35 +284,17 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
 #include "render/RendererRenderTaskFn.inl"
 #undef renderSampleFn
 
-#ifdef OSPRAY_TARGET_SYCL
-SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
+inline void SciVis_renderTask(const uniform vec3ui itemIndex,
+    Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
     const uint32 *uniform taskIDs,
-    const sycl::nd_item<3> taskIndex,
     const uniform FeatureFlagsHandler &ffh)
 {
-  Renderer_default_renderTask(self, fb, camera, world, taskIDs, taskIndex, ffh);
+  Renderer_default_renderTask(itemIndex, self, fb, camera, world, taskIDs, ffh);
 }
-#else
-export void SciVis_renderTasks(void *uniform _self,
-    void *uniform _fb,
-    void *uniform _camera,
-    void *uniform _world,
-    void *uniform _taskIDs,
-    uniform uint32 numTasks)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
-  Camera *uniform camera = (Camera * uniform) _camera;
-  World *uniform world = (World * uniform) _world;
-  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
-  uniform FeatureFlagsHandler ffh;
-  launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, taskIDs, ffh);
-  sync;
-}
-#endif
+
+DEFINE_RENDERER_KERNEL_LAUNCHER(SciVis_renderTask);
 
 OSPRAY_END_ISPC_NAMESPACE

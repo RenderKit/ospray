@@ -10,7 +10,6 @@ namespace ispc {
 struct Texture2D;
 struct Material;
 struct PixelFilter;
-struct MathConstants;
 
 struct Renderer
 {
@@ -26,7 +25,8 @@ struct Renderer
   Material **material;
 
   PixelFilter *pixelFilter;
-  MathConstants *mathConstants;
+
+  float mipBiasFactor;
 
 #ifdef __cplusplus
   Renderer()
@@ -39,7 +39,7 @@ struct Renderer
         numMaterials(0),
         material(nullptr),
         pixelFilter(nullptr),
-        mathConstants(nullptr)
+        mipBiasFactor(1.f)
   {}
 };
 } // namespace ispc

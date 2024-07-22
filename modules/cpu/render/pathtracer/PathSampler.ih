@@ -5,6 +5,7 @@
 
 #include "common/FeatureFlags.ih"
 #include "common/OSPCommon.ih"
+#include "common/RayCone.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -16,6 +17,7 @@ struct ScreenSample;
 SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     PathState &pathState,
     Ray &ray,
+    RayCone &rayCone,
     ScreenSample &sample,
     const uniform FeatureFlagsHandler &ffh);
 

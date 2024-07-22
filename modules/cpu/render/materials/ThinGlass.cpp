@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 ThinGlass::ThinGlass(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_THINGLASS)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_THINGLASS)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(
@@ -30,8 +30,7 @@ std::string ThinGlass::toString() const
 void ThinGlass::commit()
 {
   const float eta = getParam<float>("eta", 1.5f);
-  MaterialParam3f attenuationColor =
-      getMaterialParam3f("attenuationColor", vec3f(1.f));
+  attenuationColor = getMaterialParam3f("attenuationColor", vec3f(1.f));
   const float attenuationDistance = getParam<float>("attenuationDistance", 1.f);
   const float thickness = getParam<float>("thickness", 1.f);
 

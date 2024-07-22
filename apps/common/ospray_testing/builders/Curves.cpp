@@ -75,6 +75,8 @@ cpp::Group Curves::buildGroup() const
         cpp::CopiedData((vec3f *)points.data(), points.size(), sizeof(vec4f)));
   } else if (curveVariant == "bspline") {
     geom.setParam("basis", OSP_BSPLINE);
+  } else if (curveVariant == "bezier") {
+    geom.setParam("basis", OSP_BEZIER);
   }
 
   for (auto &c : s_colors) {

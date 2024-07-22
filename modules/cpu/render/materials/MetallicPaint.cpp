@@ -11,8 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 MetallicPaint::MetallicPaint(api::ISPCDevice &device)
-    : AddStructShared(
-        device.getIspcrtContext(), device, FFO_MATERIAL_METALLICPAINT)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_METALLICPAINT)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(
@@ -27,7 +26,7 @@ std::string MetallicPaint::toString() const
 
 void MetallicPaint::commit()
 {
-  MaterialParam3f color = getMaterialParam3f("baseColor", vec3f(0.8f));
+  color = getMaterialParam3f("baseColor", vec3f(0.8f));
   const float flakeAmount = getParam<float>("flakeAmount", 0.3f);
   const vec3f &flakeColor = getParam<vec3f>("flakeColor", vec3f(RGB_AL_COLOR));
   const float flakeSpread = getParam<float>("flakeSpread", 0.5f);

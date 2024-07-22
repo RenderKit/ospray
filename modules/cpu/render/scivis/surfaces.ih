@@ -26,8 +26,9 @@ SYCL_EXTERNAL __noinline SSI SciVis_computeShading(const SciVis *uniform self,
     const World *uniform world,
     const DifferentialGeometry &dg,
     ScreenSample &sample,
-    varying LDSampler *uniform ldSampler,
+    RandomSampler &randomSampler,
     const varying vec3f &inDir,
+    const float coneWidth,
     const uniform FeatureFlagsHandler &ff);
 
 SYCL_EXTERNAL vec3f evaluateLights(const World *uniform world,

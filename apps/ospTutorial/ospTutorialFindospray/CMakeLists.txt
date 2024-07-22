@@ -12,7 +12,7 @@
 #       should build the ospTutorial app from that install and NOT use your
 #       local build.
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 project(ospTutorialFindospray LANGUAGES C)
 

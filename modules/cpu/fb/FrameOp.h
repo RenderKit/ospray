@@ -10,27 +10,23 @@
 
 namespace ospray {
 
-namespace api {
-struct ISPCDevice;
-}
-
 struct OSPRAY_SDK_INTERFACE FrameOp : public FrameOpInterface
 {
-  FrameOp(api::ISPCDevice &device) : device(device) {}
+  FrameOp(devicert::Device &device) : device(device) {}
   ~FrameOp() override = default;
 
  protected:
-  api::ISPCDevice &device;
+  devicert::Device &device;
 };
 
 struct OSPRAY_SDK_INTERFACE LiveFrameOp
     : public AddStructShared<LiveFrameOpInterface, ispc::FrameBufferView>
 {
-  LiveFrameOp(api::ISPCDevice &device, FrameBufferView &fbView);
+  LiveFrameOp(devicert::Device &device, FrameBufferView &fbView);
   ~LiveFrameOp() override = default;
 
  protected:
-  api::ISPCDevice &device;
+  devicert::Device &device;
 };
 
 } // namespace ospray

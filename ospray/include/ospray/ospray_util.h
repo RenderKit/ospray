@@ -86,7 +86,7 @@ OSPRAY_INTERFACE void ospSetObjectAsData(OSPObject target,
 
 // Rendering helpers //////////////////////////////////////////////////////////
 
-// Start a frame task and immediately wait on it, return frame buffer varaince
+// Start a frame task and immediately wait on it, return frame buffer variance
 OSPRAY_INTERFACE float ospRenderFrameBlocking(
     OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 

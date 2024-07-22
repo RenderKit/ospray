@@ -16,6 +16,9 @@ struct MetallicPaint : public AddStructShared<Material, ispc::MetallicPaint>
   virtual std::string toString() const override;
 
   virtual void commit() override;
+
+ private:
+  MaterialParam3f color;
 };
 
 } // namespace pathtracer

@@ -11,7 +11,7 @@ namespace ospray {
 namespace pathtracer {
 
 Luminous::Luminous(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_LUMINOUS)
+    : AddStructShared(device.getDRTDevice(), device, FFO_MATERIAL_LUMINOUS)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(
@@ -19,6 +19,8 @@ Luminous::Luminous(api::ISPCDevice &device)
   getSh()->super.getTransparency =
       reinterpret_cast<ispc::Material_GetTransparencyFunc>(
           ispc::Luminous_getTransparency_addr());
+  getSh()->super.getEmission = reinterpret_cast<ispc::Material_GetEmissionFunc>(
+      ispc::Luminous_getEmission_addr());
 #endif
 }
 
@@ -29,14 +31,15 @@ std::string Luminous::toString() const
 
 void Luminous::commit()
 {
-  MaterialParam3f emissiveColor = getMaterialParam3f("color", vec3f(1.f));
+  emissiveColor = getMaterialParam3f("color", vec3f(1.f));
   const vec3f radiance =
       emissiveColor.factor * getParam<float>("intensity", 1.f);
   const float transparency = getParam<float>("transparency", 0.f);
 
-  getSh()->super.emission = radiance;
-  getSh()->super.emissionMap = emissiveColor.tex;
+  getSh()->radiance = radiance;
+  getSh()->emissionMap = emissiveColor.tex;
   getSh()->transparency = transparency;
+  getSh()->super.isEmissive = isEmissive();
 }
 
 } // namespace pathtracer

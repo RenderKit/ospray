@@ -45,9 +45,8 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   const vec4f sampleValue = make_vec4f(screenSample.rgb, screenSample.alpha);
   uniform Tile *uniform tile = fb->tiles + tileIdx;
 
-  const uniform int accumID = fb->super.frameID;
-  const uniform float accScale =
-      (fb->super.doAccumulation) ? rcpf(accumID + 1) : 1.f;
+  const uniform int accumID = fb->accumulate ? fb->super.frameID : 0;
+  const uniform float accScale = rcpf(accumID + 1);
 
   // Accumulate color
   vec4f color = make_vec4f(tile->r[tilePixelIdx],
@@ -62,7 +61,7 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
 
   // Accumulate depth
   float depth = screenSample.z;
-  if (fb->super.doAccumulation)
+  if (accumID > 0)
     depth = min(tile->z[tilePixelIdx], screenSample.z);
   tile->z[tilePixelIdx] = depth;
 

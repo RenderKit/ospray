@@ -12,6 +12,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void Camera_dispatch_initRay(const Camera *uniform self,
     varying Ray &ray,
+    varying RayCone &rayCone,
     const varying CameraSample &sample,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -19,18 +20,18 @@ SYCL_EXTERNAL void Camera_dispatch_initRay(const Camera *uniform self,
   if ((self->type == CAMERA_TYPE_PERSPECTIVE)
       && (ffo & FFO_CAMERA_PERSPECTIVE)) {
     if (self->motionBlur && (ffo & FFO_CAMERA_MOTION_BLUR))
-      PerspectiveCamera_initRayMB(self, ray, sample, ffh);
+      PerspectiveCamera_initRayMB(self, ray, rayCone, sample, ffh);
     else
-      PerspectiveCamera_initRay(self, ray, sample, ffh);
+      PerspectiveCamera_initRay(self, ray, rayCone, sample, ffh);
   } else if ((self->type == CAMERA_TYPE_ORTHOGRAPHIC)
       && (ffo & FFO_CAMERA_ORTHOGRAPHIC)) {
-    OrthographicCamera_initRay(self, ray, sample, ffh);
+    OrthographicCamera_initRay(self, ray, rayCone, sample, ffh);
   } else if ((self->type == CAMERA_TYPE_PANORAMIC)
       && (ffo & FFO_CAMERA_PANORAMIC)) {
-    PanoramicCamera_initRay(self, ray, sample, ffh);
+    PanoramicCamera_initRay(self, ray, rayCone, sample, ffh);
   } else {
 #ifndef OSPRAY_TARGET_SYCL
-    self->initRay(self, ray, sample);
+    self->initRay(self, ray, rayCone, sample);
 #endif
   }
 }

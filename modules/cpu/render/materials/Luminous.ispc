@@ -54,6 +54,16 @@ SYCL_EXTERNAL BSDF_SampleRes Luminous_BSDF_sample(
   return Transmission_sample(super, wo, s, ss);
 }
 
+SYCL_EXTERNAL vec3f Luminous_getEmission(const Material *uniform _self,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &)
+{
+  const Luminous *uniform self = (Luminous * uniform) _self;
+
+  return make_vec3f(self->radiance)
+      * get3f(self->emissionMap, dg, make_vec3f(1.f));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
@@ -65,6 +75,11 @@ export void *uniform Luminous_getBSDF_addr()
 export void *uniform Luminous_getTransparency_addr()
 {
   return (void *uniform)Luminous_getTransparency;
+}
+
+export void *uniform Luminous_getEmission_addr()
+{
+  return (void *uniform)Luminous_getEmission;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

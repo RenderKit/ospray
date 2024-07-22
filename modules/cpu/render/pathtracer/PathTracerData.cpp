@@ -31,20 +31,21 @@ namespace ospray {
 
 PathTracerData::PathTracerData(
     const World &world, bool scanForGeometryLights, const Renderer &renderer)
-    : AddStructShared(world.getISPCDevice().getIspcrtContext())
+    : AddStructShared(world.getISPCDevice().getDRTDevice())
 {
+  std::vector<ispc::Light *> lightShs;
   size_t geometryLights{0};
 
   if (scanForGeometryLights) {
-    generateGeometryLights(world, renderer);
+    generateGeometryLights(world, renderer, lightShs);
     scannedForGeometryLights = true;
-    geometryLights = lightViews.size();
+    geometryLights = lightShs.size();
   }
 
   if (world.lights) {
     for (auto &&obj : *world.lights) {
       for (uint32_t id = 0; id < obj->getShCount(); id++)
-        lightViews.push_back(obj->createSh(id));
+        lightShs.push_back(obj->createSh(id));
     }
   }
 
@@ -58,50 +59,45 @@ PathTracerData::PathTracerData(
       // Add instance lights to array
       for (auto &&obj : *inst->group->lights) {
         for (uint32_t id = 0; id < obj->getShCount(); id++)
-          lightViews.push_back(obj->createSh(id, inst->getSh()));
+          lightShs.push_back(obj->createSh(id, inst->getSh()));
       }
     }
   }
 
   // Prepare light cumulative distribution function
-  std::vector<float> lightsCDF(lightViews.size(), 1.f);
+  std::vector<float> lightsCDF(lightShs.size(), 1.f);
   if (lightsCDF.size()) {
     ispc::Distribution1D_create(lightsCDF.size(), lightsCDF.data());
   }
 
-  // Retrieve shared memory pointer from each light view and store them
-  // in a temporary local std::vector
-  std::vector<ispc::Light *> lights(lightViews.size());
-  for (uint32_t i = 0; i < lightViews.size(); i++)
-    lights[i] = (ispc::Light *)ispcrtSharedPtr(lightViews[i]);
-
   // Then create shared buffer from the temporary std::vector
-  ispcrt::Context &context = world.getISPCDevice().getIspcrtContext();
-  lightArray = make_buffer_shared_unique<ispc::Light *>(context, lights);
-  lightCDFArray = make_buffer_shared_unique<float>(context, lightsCDF);
+  devicert::Device &device = world.getISPCDevice().getDRTDevice();
+  lightArray =
+      devicert::make_buffer_shared_unique<ispc::Light *>(device, lightShs);
+  lightCDFArray = devicert::make_buffer_shared_unique<float>(device, lightsCDF);
   getSh()->lights = lightArray->sharedPtr();
   getSh()->lightsCDF = lightCDFArray->sharedPtr();
-  getSh()->numLights = lights.size();
+  getSh()->numLights = lightArray->size();
   getSh()->numGeoLights = geometryLights;
 }
 
 PathTracerData::~PathTracerData()
 {
   // Delete all lights structures
-  for (ISPCRTMemoryView lv : lightViews)
-    BufferSharedDelete(lv);
+  devicert::Device &device = lightArray->getDevice();
+  for (ispc::Light *lptr : *lightArray)
+    device.free(lptr);
 }
 
-ISPCRTMemoryView PathTracerData::createGeometryLight(const Instance *instance,
+ispc::Light *PathTracerData::createGeometryLight(const Instance *instance,
     const GeometricModel *model,
+    const int32 numPrimIDs,
     const std::vector<int> &primIDs,
     const std::vector<float> &distribution,
     float pdf)
 {
-  ispcrt::Context &context = instance->getISPCDevice().getIspcrtContext();
-  ISPCRTMemoryView view =
-      StructSharedCreate<ispc::GeometryLight>(context.handle());
-  ispc::GeometryLight *sh = (ispc::GeometryLight *)ispcrtSharedPtr(view);
+  devicert::Device &device = instance->getISPCDevice().getDRTDevice();
+  ispc::GeometryLight *sh = StructSharedCreate<ispc::GeometryLight>(device);
 
   sh->super.instance = instance->getSh();
 #ifndef OSPRAY_TARGET_SYCL
@@ -111,18 +107,19 @@ ISPCRTMemoryView PathTracerData::createGeometryLight(const Instance *instance,
   sh->super.eval = nullptr; // geometry lights are hit and explicitly handled
 
   sh->model = model->getSh();
-  sh->numPrimitives = primIDs.size();
+  sh->numPrimitives = numPrimIDs;
   sh->pdf = pdf;
 
-  geoLightPrimIDArray.emplace_back(context, primIDs);
+  geoLightPrimIDArray.emplace_back(device, primIDs);
   sh->primIDs = geoLightPrimIDArray.back().sharedPtr();
-  geoLightDistrArray.emplace_back(context, distribution);
+  geoLightDistrArray.emplace_back(device, distribution);
   sh->distribution = geoLightDistrArray.back().sharedPtr();
-  return view;
+  return &sh->super;
 }
 
-void PathTracerData::generateGeometryLights(
-    const World &world, const Renderer &renderer)
+void PathTracerData::generateGeometryLights(const World &world,
+    const Renderer &renderer,
+    std::vector<ispc::Light *> &lightShs)
 {
   if (!world.instances)
     return;
@@ -139,7 +136,7 @@ void PathTracerData::generateGeometryLights(
           std::vector<int> primIDs(model->geometry().numPrimitives());
           std::vector<float> distribution(model->geometry().numPrimitives());
           float pdf = 0.f;
-          unsigned int numPrimIDs =
+          int32 numPrimIDs =
               ispc::GeometricModel_gatherEmissivePrimIDs(model->getSh(),
                   renderer.getSh(),
                   instance->getSh(),
@@ -149,8 +146,8 @@ void PathTracerData::generateGeometryLights(
 
           // check whether the geometry has any emissive primitives
           if (numPrimIDs) {
-            lightViews.push_back(createGeometryLight(
-                instance, model, primIDs, distribution, pdf));
+            lightShs.push_back(createGeometryLight(
+                instance, model, numPrimIDs, primIDs, distribution, pdf));
           }
         } else {
           postStatusMsg(OSP_LOG_WARNING)

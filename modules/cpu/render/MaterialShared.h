@@ -16,6 +16,7 @@ namespace ispc {
 typedef void *Material_GetBSDFFunc;
 typedef void *Material_GetTransparencyFunc;
 typedef void *Material_SelectNextMediumFunc;
+typedef void *Material_GetEmissionFunc;
 #else
 struct BSDF;
 struct ShadingContext;
@@ -52,6 +53,11 @@ typedef void (*Material_SelectNextMediumFunc)(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     Medium &currentMedium);
+
+typedef vec3f (*Material_GetEmissionFunc)(const Material *uniform self,
+    // The point to shade on a surface.
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh);
 #endif
 
 enum MaterialType
@@ -78,18 +84,20 @@ struct Material
   Material_GetBSDFFunc getBSDF;
   Material_GetTransparencyFunc getTransparency;
   Material_SelectNextMediumFunc selectNextMedium;
-  vec3f emission; // angular constant, returns radiance
-  TextureParam emissionMap; // spatially varying emission (SV-EDF)
+  Material_GetEmissionFunc getEmission;
+
+  bool isEmissive;
 
   MicrofacetAlbedoTables *microfacetAlbedoTables;
 
 #ifdef __cplusplus
-  Material(const vec3f &emission = vec3f(0.f))
+  Material()
       : type(MATERIAL_TYPE_UNKNOWN),
         getBSDF(nullptr),
         getTransparency(nullptr),
         selectNextMedium(nullptr),
-        emission(emission),
+        getEmission(nullptr),
+        isEmissive(false),
         microfacetAlbedoTables(nullptr)
   {}
 };

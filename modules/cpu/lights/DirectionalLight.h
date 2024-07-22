@@ -15,7 +15,7 @@ struct OSPRAY_SDK_INTERFACE DirectionalLight : public Light
       : Light(device, FFO_LIGHT_DIRECTIONAL)
   {}
   virtual ~DirectionalLight() override = default;
-  virtual ISPCRTMemoryView createSh(
+  virtual ispc::Light *createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;

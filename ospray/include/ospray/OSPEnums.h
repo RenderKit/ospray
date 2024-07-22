@@ -184,6 +184,11 @@ typedef enum
   OSP_TEXTURE_RGB16,
   OSP_TEXTURE_RA16,
   OSP_TEXTURE_R16,
+  OSP_TEXTURE_RA32F,
+  OSP_TEXTURE_RGBA16F,
+  OSP_TEXTURE_RGB16F,
+  OSP_TEXTURE_RA16F,
+  OSP_TEXTURE_R16F,
   // Denotes an unknown texture format, so we can properly initialize parameters
   OSP_TEXTURE_FORMAT_INVALID = 255,
 } OSPTextureFormat;
@@ -195,7 +200,7 @@ typedef enum
 #endif
 {
   OSP_TEXTURE_FILTER_LINEAR = 0, // default bilinear interpolation
-  OSP_TEXTURE_FILTER_NEAREST // use nearest-neighbor interpolation
+  OSP_TEXTURE_FILTER_NEAREST = 1 // use nearest-neighbor interpolation
 } OSPTextureFilter;
 
 // Wrap modes that can be set on 'texture2d' type OSPTexture
@@ -418,3 +423,14 @@ typedef enum
   OSP_INTENSITY_QUANTITY_SCALE, // linear scaling factor for the built-in type
   OSP_INTENSITY_QUANTITY_UNKNOWN
 } OSPIntensityQuantity;
+
+// OSPRay quality levels (used for denoiser), same values as OIDN
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
+  OSP_DENOISER_QUALITY_LOW = 4,
+  OSP_DENOISER_QUALITY_MEDIUM = 5,
+  OSP_DENOISER_QUALITY_HIGH = 6
+} OSPDenoiserQuality;

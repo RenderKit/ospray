@@ -14,8 +14,12 @@ extern "C" uint32 *uniform getThreadNumPixelsRendered();
 extern "C" int *uniform getThreadLastFrameID();
 #endif
 
+// factor = rcp(accumID + 1), i.e. 1.0, 0.5, ...
+// but rcp is not always accurate: rcp(1) can be < 1.0
+// thus to be on the safe side we avoid the lerp for the first frame (to not
+// mix-in stale data) and compare with a value in (0.5, 1.0], the magic 0.8
 #define FRAMEBUFFER_ACCUMULATE_VALUE(value, new_value, factor)                 \
-  value = (factor >= 1.f) ? new_value : lerp(factor, value, new_value)
+  value = (factor > 0.8f) ? new_value : lerp(factor, value, new_value)
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

@@ -2,25 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Blur.h"
-#include "ISPCDevice.h"
 #include "fb/FrameBufferView.h"
 
-#ifndef OSPRAY_TARGET_SYCL
-extern "C" {
-#endif
-namespace ispc {
-void BlurHorizontal_kernelLauncher(const FrameBufferView *, void *, void *);
-void BlurVertical_kernelLauncher(const FrameBufferView *, void *, void *);
-} // namespace ispc
-#ifndef OSPRAY_TARGET_SYCL
-}
-#endif
+DECLARE_FRAMEOP_KERNEL_LAUNCHER(BlurHorizontal_kernelLauncher);
+DECLARE_FRAMEOP_KERNEL_LAUNCHER(BlurVertical_kernelLauncher);
 
 namespace ospray {
 
-BlurFrameOp::BlurFrameOp(api::Device &device)
-    : FrameOp(static_cast<api::ISPCDevice &>(device))
-{}
+BlurFrameOp::BlurFrameOp(devicert::Device &device) : FrameOp(device) {}
 
 std::unique_ptr<LiveFrameOpInterface> BlurFrameOp::attach(
     FrameBufferView &fbView)
@@ -34,9 +23,9 @@ std::string BlurFrameOp::toString() const
 }
 
 LiveBlurFrameOp::LiveBlurFrameOp(
-    api::ISPCDevice &device, FrameBufferView &fbView)
-    : AddStructShared(device.getIspcrtContext(), device, fbView),
-      scratch(device.getIspcrtDevice(), fbView.viewDims.long_product())
+    devicert::Device &device, FrameBufferView &fbView)
+    : AddStructShared(device, device, fbView),
+      scratch(device, fbView.viewDims.long_product())
 {
   // Set pointer to scratch buffer
   getSh()->scratchBuffer = scratch.devicePtr();
@@ -54,17 +43,16 @@ LiveBlurFrameOp::LiveBlurFrameOp(
     getSh()->weights[i] /= weightSum;
 }
 
-void LiveBlurFrameOp::process(void *waitEvent)
+devicert::AsyncEvent LiveBlurFrameOp::process()
 {
-  void *cmdQueue = nullptr;
-#ifdef OSPRAY_TARGET_SYCL
-  cmdQueue = &device.getSyclQueue();
-#endif
   // Horizontal copying pass
-  ispc::BlurHorizontal_kernelLauncher(&getSh()->super, cmdQueue, waitEvent);
+  const vec2ui &itemDims = getSh()->super.viewDims;
+  device.launchFrameOpKernel(
+      itemDims, ispc::BlurHorizontal_kernelLauncher, &getSh()->super);
 
   // Vertical in-place pass
-  ispc::BlurVertical_kernelLauncher(&getSh()->super, cmdQueue, waitEvent);
+  return device.launchFrameOpKernel(
+      itemDims, ispc::BlurVertical_kernelLauncher, &getSh()->super);
 }
 
 } // namespace ospray

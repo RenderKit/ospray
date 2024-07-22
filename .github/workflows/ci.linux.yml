@@ -21,8 +21,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         export CC=clang
         export CXX=clang++
@@ -32,8 +31,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         export CC=clang
         export CXX=clang++
@@ -43,65 +41,33 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF
 
-  build-arch-gcc-extras:
+  build-ubuntu2404-gcc-extras:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ospray/docker-images:arch
+      image: ubuntu:24.04
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
 
-  build-centos7-gcc:
+  build-rocky8-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: centos:7
+      image: rockylinux:8
       cmd: |
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
-      artifact-out: build-centos7-gcc
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
+      artifact-out: build-rocky8-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-#  TODO: Update to newer ICC compiler?
-#  build-centos7-icc:
-#    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-#    secrets: inherit
-#    with:
-#      force-delete: true    # guarantees .gitattributes are respected in working dir
-#      image: centos:7-devenv
-#      cmd: |
-#        module load cmake
-#        module load intel
-#        export CC=icc
-#        export CXX=icpc
-#        scripts/build/linux.sh
-
-#  TODO: Update to newer ICC compiler?
-#  build-centos7-icc15:
-#    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-#    secrets: inherit
-#    with:
-#      force-delete: true    # guarantees .gitattributes are respected in working dir
-#      image: centos:7-devenv
-#      cmd: |
-#        module load cmake
-#        module load intel/2015
-#        export CC=icc
-#        export CXX=icpc
-#        scripts/build/linux.sh
-
-  build-centos7-icx:
+  build-rocky8-icx:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: centos:7
+      image: rockylinux:8
       cmd: |
         module load cmake
         module load intel/2022.1
@@ -110,50 +76,46 @@ jobs:
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
         export CFLAGS=$CXXFLAGS
         export LDFLAGS="-static-intel"
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DTBB_VERSION=2021.9.0
-      artifact-out: build-centos7-icx
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DTBB_VERSION=2021.9.0
+      artifact-out: build-rocky8-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  build-centos7-mpi-impi:
+  build-rocky8-mpi-impi:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: centos:7
+      image: rockylinux:8
       cmd: |
         module load cmake
         module load impi/2021.6
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
-  build-centos7-mpi-mpich:
+  build-rocky8-mpi-mpich:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: centos:7
+      image: rockylinux:8
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
-      artifact-out: build-centos7-mpi-mpich
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
+      artifact-out: build-rocky8-mpi-mpich
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  build-centos7-mpi-openmpi:
+  build-rocky8-mpi-openmpi:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: centos:7
+      image: rockylinux:8
       cmd: |
         module load cmake
         module load mpi/openmpi-x86_64
-        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
+        scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
   build-centos8:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:8
       cmd: |
         scripts/build/linux.sh -G Ninja
@@ -164,7 +126,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:8
       cmd: |
         module load mpi/mpich-x86_64
@@ -174,7 +135,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:8
       cmd: |
         module load mpi/openmpi-x86_64
@@ -184,8 +144,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: rockylinux:8.7
+      image: rockylinux:8
       cmd: |
         module load cmake/3.15.2
         module load mpi/mpich-x86_64
@@ -197,32 +156,31 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
+        export CC=clang
+        export CXX=clang++
         export CFLAGS=-fsanitize=address
         export CXXFLAGS=-fsanitize=address
         export LDFLAGS=-fsanitize=address
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_OIDN=OFF
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_OSPRAY_MODULE_MPI=ON
       artifact-out: build-linux-debug
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt build/install/embree
 
-  build-ubuntu1804-gcc:
+  build-ubuntu2404-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      image: ubuntu:18.04
+      image: ubuntu:24.04
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF
-      artifact-out: build-ubuntu1804-gcc
+      artifact-out: build-ubuntu2404-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   build-ubuntu2004-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:20.04
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
@@ -233,7 +191,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:22.04
       cmd: |
         scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
@@ -246,61 +203,61 @@ jobs:
     with:
       runs-on: '[ "Linux", "ARM64" ]'
       cmd: |
-        scripts/build/linux.sh -DBUILD_GLFW=OFF -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
+        scripts/build/linux.sh -DBUILD_GLFW=OFF -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-arm
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 ### TEST JOBS ###
 
-  test-centos7-gcc-avx2:
-    needs: build-centos7-gcc
+  test-rocky8-gcc-avx2:
+    needs: build-rocky8-gcc
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: centos:7
+      image: rockylinux:8
       cmd: |
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
-      artifact-in: build-centos7-gcc
-      artifact-out: test-centos7-gcc-avx2
+      artifact-in: build-rocky8-gcc
+      artifact-out: test-rocky8-gcc-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
-  test-centos7-gcc-mpi-mpich-avx2:
-    needs: build-centos7-mpi-mpich
+  test-rocky8-gcc-mpi-mpich-avx2:
+    needs: build-rocky8-mpi-mpich
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: centos:7
+      image: rockylinux:8
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
-      artifact-in: build-centos7-mpi-mpich
-      artifact-out: test-centos7-gcc-mpi-mpich-avx2
+      artifact-in: build-rocky8-mpi-mpich
+      artifact-out: test-rocky8-gcc-mpi-mpich-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
-  test-centos7-icx-avx2:
-    needs: build-centos7-icx
+  test-rocky8-icx-avx2:
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: centos:7
+      image: rockylinux:8
       runs-on: '"avx2"'
       cmd: |
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
-      artifact-in: build-centos7-icx
-      artifact-out: test-centos7-icx-avx2
+      artifact-in: build-rocky8-icx
+      artifact-out: test-rocky8-icx-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
-  test-centos7-icx-avx512skx:
-    needs: build-centos7-icx
+  test-rocky8-icx-avx512skx:
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: centos:7
+      image: rockylinux:8
       runs-on: '"avx512"'
       cmd: |
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
-      artifact-in: build-centos7-icx
-      artifact-out: test-centos7-icx-avx512skx
+      artifact-in: build-rocky8-icx
+      artifact-out: test-rocky8-icx-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
@@ -321,7 +278,7 @@ jobs:
     needs: build-rocky8-oidn-mpi
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: rockylinux:8.7
+      image: rockylinux:8
       runs-on: '"avx512"'
       cmd: |
         module load cmake/3.15.2
@@ -334,28 +291,28 @@ jobs:
       artifact-on-failure: true
 
   test-find-ospray:
-    needs: build-centos7-gcc
+    needs: build-centos8
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: centos:7
+      image: centos:8
       cmd: |
         module load cmake
         mkdir buildtut
         cd buildtut
         cmake -D ospray_DIR=`echo $GITHUB_WORKSPACE/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray
         cmake --build .
-      artifact-in: build-centos7-gcc
+      artifact-in: build-centos8
 
-  test-ubuntu1804-gcc-avx512skx:
-    needs: build-ubuntu1804-gcc
+  test-ubuntu2404-gcc-avx512skx:
+    needs: build-ubuntu2404-gcc
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: ubuntu:18.04
+      image: ubuntu:24.04
       runs-on: '"avx512"'
       cmd: |
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
-      artifact-in: build-ubuntu1804-gcc
-      artifact-out: test-ubuntu1804-gcc-avx512skx
+      artifact-in: build-ubuntu2404-gcc
+      artifact-out: test-ubuntu2404-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
@@ -387,7 +344,7 @@ jobs:
 
   test-ubuntu2204-oidn-mpi-avx2-dg2:
     needs: build-ubuntu2204-oidn-mpi
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       image: ubuntu:22.04
@@ -420,26 +377,56 @@ jobs:
       #artifact-on-failure: true
 
   test-tutorials:
-    needs: build-centos7-gcc
+    needs: build-centos8
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: centos:7
+      image: centos:8
       cmd: scripts/tests/run_tutorials.sh
-      artifact-in: build-centos7-gcc
+      artifact-in: build-centos8
 
-  sanitize-linux-debug:
+  test-mpi-tutorials:
+    needs: build-rocky8-oidn-mpi
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: rockylinux:8
+      cmd: |
+        module load cmake/3.15.2
+        module load mpi/mpich-x86_64
+        scripts/tests/run_tutorials.sh TEST_MPI
+      artifact-in: build-rocky8-oidn-mpi
+
+  sanitize-cpu:
     needs: build-linux-debug
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
-        export LSAN_OPTIONS="suppressions=$GITHUB_WORKSPACE/scripts/tests/sanitize_ignore.txt"
         export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/embree/lib:$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
         export TBB_ENABLE_SANITIZERS=1
-        export ASAN_OPTIONS=intercept_tls_get_addr=0 # WA https://github.com/google/sanitizers/issues/1322
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+      artifact-in: build-linux-debug
+
+  sanitize-bench:
+    needs: build-linux-debug
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: archlinux:latest
+      cmd: |
+        export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/embree/lib:$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
+        export TBB_ENABLE_SANITIZERS=1
         build/install/ospray/bin/ospBenchmark --benchmark_min_time=0s
       artifact-in: build-linux-debug
 
-
+  sanitize-mpi:
+    needs: build-linux-debug
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: archlinux:latest
+      cmd: |
+        export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/embree/lib:$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
+        export TBB_ENABLE_SANITIZERS=1
+        OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX SKIP_CPU TEST_MPI
+      artifact-in: build-linux-debug

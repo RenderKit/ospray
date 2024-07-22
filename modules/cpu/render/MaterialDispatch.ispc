@@ -127,4 +127,29 @@ SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
   }
 }
 
+SYCL_EXTERNAL __noinline vec3f Material_dispatch_getEmission(
+    const Material *uniform self,
+    const varying DifferentialGeometry &dg,
+    const uniform FeatureFlagsHandler &ffh)
+{
+  const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
+  if ((self->type == MATERIAL_TYPE_LUMINOUS) && (ffo & FFO_MATERIAL_LUMINOUS)) {
+    return Luminous_getEmission(self, dg, ffh);
+  } else if ((self->type == MATERIAL_TYPE_PRINCIPLED)
+      && (ffo & FFO_MATERIAL_PRINCIPLED)) {
+    return Principled_getEmission(self, dg, ffh);
+  }
+#ifndef OSPRAY_TARGET_SYCL
+  else if ((self->type == MATERIAL_TYPE_MIX) && (ffo & FFO_MATERIAL_MIX)) {
+    return Mix_getEmission(self, dg, ffh);
+  } else {
+    return self->getEmission(self, dg, ffh);
+  }
+#else
+  else {
+    return Material_getEmission(self, dg, ffh);
+  }
+#endif
+}
+
 OSPRAY_END_ISPC_NAMESPACE

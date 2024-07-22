@@ -19,7 +19,8 @@ SYCL_EXTERNAL vec3f Texture2D_getNormal(
 // coords needed then
 inline vec2f clamp2edge(const uniform Texture2D *uniform self, const vec2f p)
 {
-  return clamp(p, self->halfTexel, 1.0f - self->halfTexel);
+  const vec2f halfTexel = rcp(make_vec2f(self->size.x, self->size.y)) * 0.5f;
+  return clamp(p, halfTexel, 1.0f - halfTexel);
 }
 
 inline float get1f(const uniform Texture2D *uniform self,
@@ -80,6 +81,7 @@ inline void initDgFromTexCoord(DifferentialGeometry &dg, const varying vec2f &c)
 {
   dg.primID = -1;
   dg.st = c;
+  dg.pixelFootprint = flt_min;
 }
 #endif
 OSPRAY_END_ISPC_NAMESPACE

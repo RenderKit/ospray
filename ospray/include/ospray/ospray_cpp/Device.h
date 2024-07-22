@@ -4,6 +4,8 @@
 #pragma once
 
 #include "ospray/ospray.h"
+// ospray::cpp
+#include "Traits.h"
 
 #include <stdexcept>
 #include <string>
@@ -29,8 +31,9 @@ class Device
   template <typename FCN_T>
   void setStatusCallback(FCN_T &&fcn);
 
-  template <typename T>
-  void setParam(const std::string &name, const T &v) const;
+  void setParam(const std::string &name, const int v) const;
+  void setParam(const std::string &name, const unsigned int v) const;
+  void setParam(const std::string &name, const bool v) const;
 
   void setParam(const std::string &name, const char *v) const;
   void setParam(const std::string &name, const std::string &v) const;
@@ -104,15 +107,20 @@ inline void Device::setStatusCallback(FCN_T &&fcn)
   ospDeviceSetStatusCallback(ospHandle, std::forward<FCN_T>(fcn), nullptr);
 }
 
-template <typename T>
-inline void Device::setParam(const std::string &name, const T &v) const
+inline void Device::setParam(const std::string &name, const int v) const
 {
-  static_assert(OSPTypeFor<T>::value != OSP_UNKNOWN,
-      "Only types corresponding to OSPDataType values can be set "
-      "as parameters on OSPRay objects. NOTE: Math types (vec, "
-      "box, linear, affine) are "
-      "expected to come from rkcommon::math.");
-  ospDeviceSetParam(ospHandle, name.c_str(), OSPTypeFor<T>::value, &v);
+  ospDeviceSetParam(ospHandle, name.c_str(), OSP_INT, &v);
+}
+
+inline void Device::setParam(
+    const std::string &name, const unsigned int v) const
+{
+  ospDeviceSetParam(ospHandle, name.c_str(), OSP_UINT, &v);
+}
+
+inline void Device::setParam(const std::string &name, const bool v) const
+{
+  ospDeviceSetParam(ospHandle, name.c_str(), OSP_BOOL, &v);
 }
 
 inline void Device::setParam(const std::string &name, const char *v) const

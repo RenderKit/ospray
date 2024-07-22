@@ -182,6 +182,9 @@ void FromOsprayTesting::SetUp()
   camera.setParam("position", arcballCamera.eyePos());
   camera.setParam("direction", arcballCamera.lookDir());
   camera.setParam("up", arcballCamera.upDir());
+
+  if (rendererType == "pathtracer")
+    renderer.setParam("limitIndirectLightSamples", false);
 }
 
 void FromOsprayTestingMaxDepth::SetUp()

@@ -17,6 +17,7 @@ add_library(ospray_testing SHARED
   builders/GravitySpheresVolume.cpp
   builders/Instancing.cpp
   builders/Interpolation.cpp
+  builders/MipMapTextures.cpp
   builders/Noise.cpp
   builders/ParticleVolume.cpp
   builders/PerlinNoiseVolumes.cpp

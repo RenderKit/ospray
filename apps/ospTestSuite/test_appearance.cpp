@@ -3,6 +3,7 @@
 
 #include "test_appearance.h"
 #include "ArcballCamera.h"
+#include "ospray_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
 namespace OSPRayTestScenes {
@@ -10,7 +11,7 @@ namespace OSPRayTestScenes {
 Texture2D::Texture2D()
 {
   rendererType = "pathtracer";
-  samplesPerPixel = 64;
+  samplesPerPixel = 8;
 }
 
 void Texture2D::SetUp()
@@ -23,40 +24,37 @@ void Texture2D::SetUp()
   auto params = GetParam();
   OSPTextureFilter filter = std::get<0>(params);
 
-  // create (4*2) x 4 grid
+  // create (4*2) x 5 grid
   constexpr int cols = 8;
-  constexpr int rows = 4;
+  constexpr int rows = 5;
   std::vector<vec3f> vertex;
   std::vector<vec2f> texcoord;
-  std::vector<vec4ui> index;
   rkcommon::index_sequence_2D iidx(vec2i(cols, rows));
   // Generate each quad, each needs its own vertex coordinates w/ unique
   // texcoords when we're testing w/ texture coordinates on
   for (auto i : iidx) {
     const int idx_start = vertex.size();
-    vertex.push_back(vec3f(i.x, i.y * 1.5f, 5.3f));
-    vertex.push_back(vec3f(i.x + 1.f, i.y * 1.5f, 5.3f));
-    vertex.push_back(vec3f(i.x + 1.f, (i.y + 1.f) * 1.5f, 5.3f));
-    vertex.push_back(vec3f(i.x, (i.y + 1.f) * 1.5f, 5.3f));
+    vertex.push_back(vec3f(i.x, i.y * 1.2f, 5.3f));
+    vertex.push_back(vec3f(i.x + 1.f, i.y * 1.2f, 5.3f));
+    vertex.push_back(vec3f(i.x + 1.f, (i.y + 1.f) * 1.2f, 5.3f));
+    vertex.push_back(vec3f(i.x, (i.y + 1.f) * 1.2f, 5.3f));
 
     texcoord.push_back(vec2f(0.f, 0.f));
     texcoord.push_back(vec2f(1.f, 0.f));
     texcoord.push_back(vec2f(1.f, 1.f));
     texcoord.push_back(vec2f(0.f, 1.f));
-
-    index.push_back(
-        vec4ui(idx_start, idx_start + 1, idx_start + 2, idx_start + 3));
   }
   cpp::Geometry mesh("mesh");
   mesh.setParam("vertex.position", cpp::CopiedData(vertex));
-  if (std::get<2>(params)) {
+  if (std::get<3>(params)) {
     mesh.setParam("vertex.texcoord", cpp::CopiedData(texcoord));
   }
-  mesh.setParam("index", cpp::CopiedData(index));
+  mesh.setParam("quadSoup", true);
   mesh.commit();
 
-  // create textures: columns=#channels, rows=type=[byte, byte, float, short]
-  std::array<OSPTextureFormat, 4 * 4> format = {OSP_TEXTURE_R8,
+  // create textures:
+  // columns=#channels, rows=type=[byte, byte, float, short, half]
+  std::array<OSPTextureFormat, 4 *rows> format = {OSP_TEXTURE_R8,
       OSP_TEXTURE_RA8,
       OSP_TEXTURE_RGB8,
       OSP_TEXTURE_RGBA8,
@@ -67,16 +65,21 @@ void Texture2D::SetUp()
       OSP_TEXTURE_SRGBA,
 
       OSP_TEXTURE_R32F,
-      OSP_TEXTURE_R32F,
+      OSP_TEXTURE_RA32F,
       OSP_TEXTURE_RGB32F,
       OSP_TEXTURE_RGBA32F,
 
       OSP_TEXTURE_R16,
       OSP_TEXTURE_RA16,
       OSP_TEXTURE_RGB16,
-      OSP_TEXTURE_RGBA16};
+      OSP_TEXTURE_RGBA16,
 
-  std::array<OSPDataType, 4 * 4> eltype = {OSP_UCHAR,
+      OSP_TEXTURE_R16F,
+      OSP_TEXTURE_RA16F,
+      OSP_TEXTURE_RGB16F,
+      OSP_TEXTURE_RGBA16F};
+
+  std::array<OSPDataType, 4 *rows> eltype = {OSP_UCHAR,
       OSP_VEC2UC,
       OSP_VEC3UC,
       OSP_VEC4UC,
@@ -87,9 +90,14 @@ void Texture2D::SetUp()
       OSP_VEC4UC,
 
       OSP_FLOAT,
-      OSP_FLOAT,
+      OSP_VEC2F,
       OSP_VEC3F,
       OSP_VEC4F,
+
+      OSP_USHORT,
+      OSP_VEC2US,
+      OSP_VEC3US,
+      OSP_VEC4US,
 
       OSP_USHORT,
       OSP_VEC2US,
@@ -99,22 +107,28 @@ void Texture2D::SetUp()
   std::array<vec4uc, 15> dbyte;
   std::array<vec4us, 15> dshort;
   std::array<vec4f, 15> dfloat;
+  std::array<vec4us, 15> dhalf;
   rkcommon::index_sequence_2D didx(vec2i(3, 5));
   for (auto idx : didx) {
     auto i = didx.flatten(idx);
     // the center texel should be 127 / 32767 / 0.5, to test normal maps
-    dbyte[i] = vec4uc(idx.x * 85 + 42, idx.y * 50 + 27, 155, i * 17 + 8);
+    dbyte[i] = vec4uc(idx.x * 80 + 47, idx.y * 56 + 15, 204, i * 15 + 40);
     dshort[i] = vec4us(
-        idx.x * 22768 + 9999, idx.y * 13000 + 6767, 33000, i * 4400 + 2200);
+        idx.x * 20480 + 12287, idx.y * 14336 + 4095, 52428, i * 3932 + 9830);
     dfloat[i] = vec4f(idx.x * 0.3125f + 0.1875f,
         idx.y * 0.21875f + 0.0625f,
         0.8f,
         i * 0.06f + 0.15f);
   }
+  // float to half conversion
+  uint32_t *pf = (uint32_t *)dfloat.data();
+  uint16_t *ph = (uint16_t *)dhalf.data();
+  for (int i = 0; i < 4 * 15; i++, pf++, ph++)
+    *ph = (((*pf >> 23) - 112) << 10) | ((*pf >> 13) & 0x3ff);
 
-  std::array<void *, 4> addr = {
-      dbyte.data(), dbyte.data(), dfloat.data(), dshort.data()};
-  std::array<int, 4> stride = {4, 4, 16, 8};
+  std::array<void *, rows> addr = {
+      dbyte.data(), dbyte.data(), dfloat.data(), dshort.data(), dhalf.data()};
+  std::array<int, rows> stride = {4, 4, 16, 8, 8};
 
   cpp::GeometricModel model(mesh);
   std::array<cpp::Material, cols * rows> material;
@@ -163,11 +177,12 @@ void Texture2D::SetUp()
   cpp::Light light2("distant");
 
   // two light sets
-  if (std::get<1>(params)) {
+  if (std::get<2>(params)) {
     // default light
     light1.setParam("intensity", 3.f);
     // highlighting normal direction
     light2.setParam("direction", vec3f(0.7f, 0.2f, 0.f));
+    light2.setParam("intensity", 5.f);
     light2.setParam("color", vec3f(0.f, 0.f, 0.5f));
   } else {
     // perpendicular bright lights, testing center normal
@@ -179,6 +194,8 @@ void Texture2D::SetUp()
 
   AddLight(light1);
   AddLight(light2);
+
+  renderer.setParam("mipMapBias", std::get<1>(params));
 }
 
 static cpp::Texture createTexture2D(uint32_t width = 32,
@@ -300,12 +317,14 @@ void Texture2DTransform::SetUp()
 Texture2DWrapMode::Texture2DWrapMode()
 {
   rendererType = "scivis";
-  filter = GetParam();
 }
 
 void Texture2DWrapMode::SetUp()
 {
   Base::SetUp();
+
+  auto params = GetParam();
+  OSPTextureFilter filter = std::get<1>(params);
 
   camera.setParam("position", vec3f(4.f, 4.f, -8.f));
   camera.setParam("direction", vec3f(0.f, 0.f, 1.f));
@@ -337,6 +356,54 @@ void Texture2DWrapMode::SetUp()
   cpp::Light ambient("ambient");
   ambient.setParam("intensity", 0.5f);
   AddLight(ambient);
+
+  renderer.setParam("mipMapBias", std::get<0>(params));
+}
+
+Texture2DMipMapping::Texture2DMipMapping()
+{
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  samplesPerPixel = 4;
+}
+
+void Texture2DMipMapping::SetUp()
+{
+  Base::SetUp();
+
+  auto params = GetParam();
+
+  auto builder = ospray::testing::newBuilder("mip_map_textures");
+  ospray::testing::setParam(builder, "filter", (uint32_t)std::get<2>(params));
+  ospray::testing::setParam(builder, "tcScale", std::get<4>(params));
+  ospray::testing::commit(builder);
+
+  world = ospray::testing::buildWorld(builder);
+  ospray::testing::release(builder);
+
+  std::string cameraType = std::get<1>(params);
+  camera = cpp::Camera(cameraType);
+  if (cameraType == "perspective")
+    camera.setParam("aspect", imgSize.x / (float)imgSize.y);
+  if (cameraType == "orthographic")
+    camera.setParam("height", 10.0f);
+  camera.setParam(
+      "position", vec3f(0.f, 0.f, cameraType == "panoramic" ? -4.f : -6.f));
+
+  OSPStereoMode stereoMode = std::get<5>(params);
+  if (cameraType == "perspective" || cameraType == "panoramic")
+    camera.setParam("stereoMode", stereoMode);
+  if (stereoMode == OSP_STEREO_TOP_BOTTOM) {
+    camera.setParam("imageStart", vec2f(0.25f));
+    camera.setParam("imageEnd", vec2f(0.75f));
+  }
+
+  renderer.setParam("mipMapBias", std::get<3>(params));
+
+  cpp::Light distant("distant");
+  distant.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  distant.setParam("intensity", 3.f);
+  AddLight(distant);
 }
 
 RendererMaterialList::RendererMaterialList()
@@ -536,8 +603,17 @@ INSTANTIATE_TEST_SUITE_P(Appearance,
     Texture2D,
     ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_LINEAR,
                            OSP_TEXTURE_FILTER_NEAREST),
+        ::testing::Values(0.0f),
         ::testing::Bool(),
         ::testing::Bool()));
+
+INSTANTIATE_TEST_SUITE_P(AppearanceMipMap,
+    Texture2D,
+    ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_LINEAR,
+                           OSP_TEXTURE_FILTER_NEAREST),
+        ::testing::Values(6.0f),
+        ::testing::Bool(),
+        ::testing::Values(false)));
 
 TEST_P(Texture2DTransform, simple)
 {
@@ -554,7 +630,42 @@ TEST_P(Texture2DWrapMode, wrap)
 
 INSTANTIATE_TEST_SUITE_P(Appearance,
     Texture2DWrapMode,
-    ::testing::Values(OSP_TEXTURE_FILTER_NEAREST, OSP_TEXTURE_FILTER_LINEAR));
+    ::testing::Combine(::testing::Values(0.0f, 5.0f),
+        ::testing::Values(
+            OSP_TEXTURE_FILTER_NEAREST, OSP_TEXTURE_FILTER_LINEAR)));
+
+TEST_P(Texture2DMipMapping, mipMapping)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(MipMap,
+    Texture2DMipMapping,
+    ::testing::Combine(::testing::Values("scivis", "pathtracer", "ao"),
+        ::testing::Values("perspective"),
+        ::testing::Values(
+            OSP_TEXTURE_FILTER_NEAREST, OSP_TEXTURE_FILTER_LINEAR),
+        ::testing::Values(0.0f, 1.0f),
+        ::testing::Values(1.0f),
+        ::testing::Values(OSP_STEREO_NONE)));
+
+INSTANTIATE_TEST_SUITE_P(MipMapScale,
+    Texture2DMipMapping,
+    ::testing::Combine(::testing::Values("pathtracer"),
+        ::testing::Values("perspective"),
+        ::testing::Values(OSP_TEXTURE_FILTER_LINEAR),
+        ::testing::Values(1.0f),
+        ::testing::Values(0.3f, 3.1f),
+        ::testing::Values(OSP_STEREO_NONE)));
+
+INSTANTIATE_TEST_SUITE_P(MipMapCamera,
+    Texture2DMipMapping,
+    ::testing::Combine(::testing::Values("pathtracer"),
+        ::testing::Values("perspective", "orthographic", "panoramic"),
+        ::testing::Values(OSP_TEXTURE_FILTER_LINEAR),
+        ::testing::Values(1.0f),
+        ::testing::Values(1.0f),
+        ::testing::Values(OSP_STEREO_NONE, OSP_STEREO_TOP_BOTTOM)));
 
 TEST_P(PTBackgroundRefraction, backgroundRefraction)
 {

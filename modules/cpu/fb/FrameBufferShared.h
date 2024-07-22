@@ -75,6 +75,8 @@ struct FrameBuffer
   // Rendered frame index
   int32 frameID;
 
+  int32 targetFrames;
+
   // The channels stored in the framebuffer
   uint32 channels;
 
@@ -86,9 +88,6 @@ struct FrameBuffer
   // The number of pixels rendered this frame, for tracking rendering progress
   // Not used on GPU to avoid USM thrashing
   uint32 numPixelsRendered;
-
-  // Accumulate frames if true
-  bool doAccumulation;
 
   // Variance accumulation
   bool accumulateVariance; // do frame accumulation in this frame
@@ -103,10 +102,10 @@ struct FrameBuffer
         rcpSize(0.f),
         renderTaskSize(4),
         frameID(-1),
+        targetFrames(0),
         channels(0),
         cancelRender(0),
         numPixelsRendered(0),
-        doAccumulation(false),
         accumulateVariance(false)
   {}
 };

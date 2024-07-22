@@ -55,8 +55,6 @@ struct DistributedRaycastRenderer : public AddStructShared<DistributedRenderer,
  private:
   // The communicator to use for collectives in the renderer
   mpicommon::Group mpiGroup;
-
-  std::unique_ptr<std::ofstream> statsLog;
 };
 
 } // namespace mpi

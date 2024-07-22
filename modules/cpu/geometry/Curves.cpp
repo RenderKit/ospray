@@ -14,62 +14,59 @@
 
 namespace ospray {
 
-static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
-    curveMap = {{{OSP_ROUND, OSP_LINEAR}, RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE},
-        {{OSP_FLAT, OSP_LINEAR}, RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE},
-        {{OSP_RIBBON, OSP_LINEAR}, (RTCGeometryType)-1},
-        {{OSP_DISJOINT, OSP_LINEAR}, RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE},
+static std::map<std::pair<OSPCurveType, OSPCurveBasis>,
+    std::pair<RTCGeometryType, FeatureFlagsGeometry>>
+    curveMap = {
+        {{OSP_ROUND, OSP_LINEAR},
+            {RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE, FFG_ROUND_LINEAR_CURVE}},
+        {{OSP_FLAT, OSP_LINEAR},
+            {RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE, FFG_FLAT_LINEAR_CURVE}},
+        {{OSP_RIBBON, OSP_LINEAR}, {(RTCGeometryType)-1, FFG_NONE}},
+        {{OSP_DISJOINT, OSP_LINEAR},
+            {RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE, FFG_CONE_LINEAR_CURVE}},
 
-        {{OSP_ROUND, OSP_BEZIER}, RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE},
-        {{OSP_FLAT, OSP_BEZIER}, RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE},
+        {{OSP_ROUND, OSP_BEZIER},
+            {RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE, FFG_ROUND_BEZIER_CURVE}},
+        {{OSP_FLAT, OSP_BEZIER},
+            {RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE, FFG_FLAT_BEZIER_CURVE}},
         {{OSP_RIBBON, OSP_BEZIER},
-            RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE},
-        {{OSP_DISJOINT, OSP_BEZIER}, (RTCGeometryType)-1},
+            {RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
+                FFG_NORMAL_ORIENTED_BEZIER_CURVE}},
+        {{OSP_DISJOINT, OSP_BEZIER}, {(RTCGeometryType)-1, FFG_NONE}},
 
-        {{OSP_ROUND, OSP_BSPLINE}, RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE},
-        {{OSP_FLAT, OSP_BSPLINE}, RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE},
+        {{OSP_ROUND, OSP_BSPLINE},
+            {RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE, FFG_ROUND_BSPLINE_CURVE}},
+        {{OSP_FLAT, OSP_BSPLINE},
+            {RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE, FFG_FLAT_BSPLINE_CURVE}},
         {{OSP_RIBBON, OSP_BSPLINE},
-            RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE},
-        {{OSP_DISJOINT, OSP_BSPLINE}, (RTCGeometryType)-1},
+            {RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
+                FFG_NORMAL_ORIENTED_BSPLINE_CURVE}},
+        {{OSP_DISJOINT, OSP_BSPLINE}, {(RTCGeometryType)-1, FFG_NONE}},
 
-        {{OSP_ROUND, OSP_HERMITE}, RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE},
-        {{OSP_FLAT, OSP_HERMITE}, RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE},
+        {{OSP_ROUND, OSP_HERMITE},
+            {RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE, FFG_ROUND_HERMITE_CURVE}},
+        {{OSP_FLAT, OSP_HERMITE},
+            {RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE, FFG_FLAT_HERMITE_CURVE}},
         {{OSP_RIBBON, OSP_HERMITE},
-            RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE},
-        {{OSP_DISJOINT, OSP_HERMITE}, (RTCGeometryType)-1},
+            {RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE,
+                FFG_NORMAL_ORIENTED_HERMITE_CURVE}},
+        {{OSP_DISJOINT, OSP_HERMITE}, {(RTCGeometryType)-1, FFG_NONE}},
 
         {{OSP_ROUND, OSP_CATMULL_ROM},
-            RTC_GEOMETRY_TYPE_ROUND_CATMULL_ROM_CURVE},
-        {{OSP_FLAT, OSP_CATMULL_ROM}, RTC_GEOMETRY_TYPE_FLAT_CATMULL_ROM_CURVE},
+            {RTC_GEOMETRY_TYPE_ROUND_CATMULL_ROM_CURVE,
+                FFG_ROUND_CATMULL_ROM_CURVE}},
+        {{OSP_FLAT, OSP_CATMULL_ROM},
+            {RTC_GEOMETRY_TYPE_FLAT_CATMULL_ROM_CURVE,
+                FFG_FLAT_CATMULL_ROM_CURVE}},
         {{OSP_RIBBON, OSP_CATMULL_ROM},
-            RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE},
-        {{OSP_DISJOINT, OSP_CATMULL_ROM}, (RTCGeometryType)-1}};
-
-static std::map<RTCGeometryType, FeatureFlagsGeometry> curveFeatureFlags = {
-    {RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE, FFG_CONE_LINEAR_CURVE},
-    {RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE, FFG_ROUND_LINEAR_CURVE},
-    {RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE, FFG_FLAT_LINEAR_CURVE},
-    {RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE, FFG_ROUND_BEZIER_CURVE},
-    {RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE, FFG_FLAT_BEZIER_CURVE},
-    {RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
-        FFG_NORMAL_ORIENTED_BEZIER_CURVE},
-    {RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE, FFG_ROUND_BSPLINE_CURVE},
-    {RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE, FFG_FLAT_BSPLINE_CURVE},
-    {RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
-        FFG_NORMAL_ORIENTED_BSPLINE_CURVE},
-    {RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE, FFG_ROUND_HERMITE_CURVE},
-    {RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE, FFG_FLAT_HERMITE_CURVE},
-    {RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE,
-        FFG_NORMAL_ORIENTED_HERMITE_CURVE},
-    {RTC_GEOMETRY_TYPE_ROUND_CATMULL_ROM_CURVE, FFG_ROUND_CATMULL_ROM_CURVE},
-    {RTC_GEOMETRY_TYPE_FLAT_CATMULL_ROM_CURVE, FFG_FLAT_CATMULL_ROM_CURVE},
-    {RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE,
-        FFG_NORMAL_ORIENTED_CATMULL_ROM_CURVE}};
+            {RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE,
+                FFG_NORMAL_ORIENTED_CATMULL_ROM_CURVE}},
+        {{OSP_DISJOINT, OSP_CATMULL_ROM}, {(RTCGeometryType)-1, FFG_NONE}}};
 
 // Curves definitions ///////////////////////////////////////////////////////
 
 Curves::Curves(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE)
+    : AddStructShared(device.getDRTDevice(), device, FFG_NONE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =
@@ -97,7 +94,7 @@ void Curves::commit()
     float radius = getParam<float>("radius", 0.01f);
     curveType = (OSPCurveType)getParam<uint32_t>("type", OSP_ROUND);
     curveBasis = (OSPCurveBasis)getParam<uint32_t>("basis", OSP_LINEAR);
-    if (curveMap[std::make_pair(curveType, curveBasis)]
+    if (curveMap[std::make_pair(curveType, curveBasis)].first
         != RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE)
       throw std::runtime_error(
           "constant-radius curves need to be of type OSP_ROUND and have "
@@ -137,7 +134,9 @@ void Curves::commit()
 
   colorData = getParamDataT<vec4f>("vertex.color");
 
-  embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
+  auto curveEnums = curveMap[std::make_pair(curveType, curveBasis)];
+  embreeCurveType = curveEnums.first;
+
   if (embreeCurveType == (RTCGeometryType)-1)
     throw std::runtime_error("unsupported combination of 'type' and 'basis'");
 
@@ -163,7 +162,7 @@ void Curves::commit()
   }
 
   postCreationInfo(vertexData->size());
-  featureFlagsGeometry = curveFeatureFlags[embreeCurveType];
+  featureFlagsGeometry = curveEnums.second;
 }
 
 size_t Curves::numPrimitives() const

@@ -7,6 +7,7 @@
 #include "common/World.ih"
 // c++ shared
 #include "AORendererShared.h"
+#include "common/RayCone.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -25,6 +26,7 @@ typedef SurfaceShadingInfo SSI;
 inline void computeDG(const World *uniform world,
     const AORenderer *uniform renderer,
     const Ray &ray,
+    RayCone &rayCone,
     DifferentialGeometry &dg,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -32,7 +34,9 @@ inline void computeDG(const World *uniform world,
       &renderer->super,
       dg,
       ray,
-      DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD,
+      rayCone,
+      DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD
+          | DG_TANGENTS,
       ffh);
 }
 

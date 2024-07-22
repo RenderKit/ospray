@@ -4,7 +4,6 @@
 #include "Camera.ih"
 #include "common/Embree.h"
 #include "common/FeatureFlags.ih"
-#include "common/FeatureFlagsEnum.h"
 // c++ shared
 #include "OrthographicCameraShared.h"
 
@@ -14,6 +13,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
+    varying RayCone &rayCone,
     const varying CameraSample &sample,
     const uniform FeatureFlagsHandler &ffh)
 {
@@ -48,6 +48,9 @@ SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
   }
 
   setRay(ray, org, dir, self->super.nearClip, inf, time);
+  const uniform vec2f subImageSize = box_size(self->super.subImage);
+  rayCone.width = self->height * abs(subImageSize.y);
+  rayCone.dwdt = 0.f;
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////

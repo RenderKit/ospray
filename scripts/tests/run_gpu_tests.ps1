@@ -70,27 +70,14 @@ $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/26"
 $test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/8"
 # Crashing FIXME
 $test_filters+=":Primitive/IDBuffer.*"
-
 # Different noise
 $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/1"
 
-# Artifacts
-$test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/5"
-
-## Windows only (driver?)
-
-# Artifacts
+# Artifacts, Windows only (driver?)
 $test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/4"
-
-# Artifacts with dpcpp (icx is fine)
-$test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/23"
-$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/7"
-
-# Artifacts with icx (dpcpp is fine)
-$test_filters+=":Light/GeometricLight.parameter/2"
-$test_filters+=":LightTexture/GeometricLight.parameter/0"
-$test_filters+=":LightTexture/GeometricLight.parameter/1"
-
+$test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/5"
+$test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/2"
+$test_filters+=":TestScenesVolumes/UnstructuredVolume.simple/3"
 
 $env:ONEAPI_DEVICE_SELECTOR="level_zero:*"
 $env:SYCL_CACHE_PERSISTENT="1"

@@ -20,8 +20,7 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
 
   // Calculate accumulation scale
   const uniform int accumID = fb->super.frameID;
-  const uniform float accScale =
-      (fb->super.doAccumulation) ? rcpf(accumID + 1) : 1.f;
+  const uniform float accScale = rcpf(accumID + 1);
 
   // Accumulate color
   const vec4f colorSample = make_vec4f(screenSample.rgb, screenSample.alpha);
@@ -38,12 +37,10 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
 
   // Accumulate depth buffer
   if (fb->depthBuffer) {
-    if (fb->super.doAccumulation) {
-      float acc = accumID > 0 ? fb->depthBuffer[pixelID] : inf;
-      fb->depthBuffer[pixelID] = min(acc, screenSample.z);
-    } else {
-      fb->depthBuffer[pixelID] = screenSample.z;
-    }
+    float depth = screenSample.z;
+    if (accumID > 0)
+      depth = min(fb->depthBuffer[pixelID], screenSample.z);
+    fb->depthBuffer[pixelID] = depth;
   }
 
   // Accumulate normal buffer

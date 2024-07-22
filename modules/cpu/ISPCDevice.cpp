@@ -1,14 +1,11 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <sycl/ext/oneapi/backend/level_zero.hpp>
-#endif
-
 // ospray
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
+#include "common/DeviceRTImpl.h"
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/Library.h"
@@ -16,16 +13,12 @@
 #include "fb/ImageOp.h"
 #include "fb/LocalFB.h"
 #include "geometry/GeometricModel.h"
-#include "ispc_tasksys.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
-#ifdef OSPRAY_TARGET_SYCL
-#include "render/RenderTaskSycl.h"
-#else
-#include "render/RenderTask.h"
-#endif
 #include "render/Renderer.h"
+#include "render/RenderingFuture.h"
+#include "texture/MipMapCache.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -37,8 +30,6 @@
 #include <algorithm>
 #include <functional>
 #include <map>
-#include "rkcommon/tasking/tasking_system_init.h"
-#include "rkcommon/utility/CodeTimer.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
@@ -171,6 +162,11 @@ ISPCDevice::ISPCDevice()
 #endif
 }
 
+ISPCDevice::ISPCDevice(std::unique_ptr<devicert::Device> device) : ISPCDevice()
+{
+  drtDevice = std::move(device);
+}
+
 ISPCDevice::~ISPCDevice()
 {
   try {
@@ -190,10 +186,12 @@ ISPCDevice::~ISPCDevice()
 
 static void embreeErrorFunc(void *, const RTCError code, const char *str)
 {
-  postStatusMsg() << "#osp: Embree internal error " << code << " : " << str;
+  const std::string msg = std::string("Embree internal error ")
+      + rtcGetErrorString(code) + " : " + str;
+  postStatusMsg() << "#osp: Embree internal error " << msg;
   OSPError e =
       (code > RTC_ERROR_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
-  handleError(e, "Embree internal error '" + std::string(str) + "'");
+  handleError(e, msg);
 }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -210,121 +208,64 @@ void ISPCDevice::commit()
 {
   Device::commit();
 
-  if (!userContext) {
-#ifdef OSPRAY_TARGET_SYCL
-    sycl::context *appSyclCtx =
-        static_cast<sycl::context *>(getParam<void *>("syclContext", nullptr));
-    sycl::device *appSyclDevice =
-        static_cast<sycl::device *>(getParam<void *>("syclDevice", nullptr));
-    if ((appSyclCtx && !appSyclDevice) || (!appSyclCtx && appSyclDevice)) {
-      handleError(OSP_INVALID_OPERATION,
-          "OSPRay ISPCDevice invalid configuration: if providing a syclContext and syclDevice both must be provided");
-      return;
-    }
-
-    ze_context_handle_t appZeCtx = static_cast<ze_context_handle_t>(
-        getParam<void *>("zeContext", nullptr));
-    ze_device_handle_t appZeDevice =
-        static_cast<ze_device_handle_t>(getParam<void *>("zeDevice", nullptr));
-    if ((appZeCtx && !appZeDevice) || (!appZeCtx && appZeDevice)) {
-      handleError(OSP_INVALID_OPERATION,
-          "OSPRay ISPCDevice invalid configuration: if providing a zeContext and zeDevice both must be provided");
-      return;
-    }
-
-    if (appSyclCtx && appZeCtx) {
-      handleError(OSP_INVALID_OPERATION,
-          "OSPRay ISPCDevice invalid configuration: For SYCL or Level Zero context interopability only a SYCL or Level Zero context & device can be provided, not both.");
-      return;
-    }
-
-    // If we got a SYCL context just get the native handles and set the "app" L0
-    // context/device to them, since we can take the same code path from there
-    if (appSyclCtx) {
-      appZeCtx =
-          sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*appSyclCtx);
-      appZeDevice = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(
-          *appSyclDevice);
-    }
-
-    const bool newContext = appZeCtx || !ispcrtContext;
-
-    if (appZeCtx) {
-      userContext = true;
-      ispcrtContext = ispcrt::Context(
-          ISPCRT_DEVICE_TYPE_GPU, (ISPCRTGenericHandle)appZeCtx);
-      ispcrtDevice =
-          ispcrt::Device(ispcrtContext, (ISPCRTGenericHandle)appZeDevice);
-    } else if (!ispcrtContext) {
-      // internally, from Multidevice GPU
-      ispcrt::Context *ispcrtContextPtr = static_cast<ispcrt::Context *>(
-          getParam<void *>("ispcrtContext", nullptr));
-      ispcrt::Device *ispcrtDevicePtr = static_cast<ispcrt::Device *>(
-          getParam<void *>("ispcrtDevice", nullptr));
-
-      if (ispcrtContextPtr != nullptr && ispcrtDevicePtr != nullptr) {
-        ispcrtContext = *ispcrtContextPtr;
-        ispcrtDevice = *ispcrtDevicePtr;
-      } else {
-        ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU);
-        ispcrtDevice = ispcrt::Device(ispcrtContext);
-      }
-    }
-
-    if (newContext) {
-      syclPlatform = appSyclCtx ? appSyclCtx->get_platform()
-                                : sycl::ext::oneapi::level_zero::make_platform(
-                                    reinterpret_cast<pi_native_handle>(
-                                        ispcrtDevice.nativePlatformHandle()));
-      syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
-          reinterpret_cast<pi_native_handle>(
-              ispcrtDevice.nativeDeviceHandle()));
-
-      syclContext = sycl::ext::oneapi::level_zero::make_context(
-          std::vector<sycl::device>{syclDevice},
-          reinterpret_cast<pi_native_handle>(
-              ispcrtDevice.nativeContextHandle()),
-          true);
-
-      syclQueue = sycl::queue(syclContext,
-          syclDevice,
-          {sycl::property::queue::enable_profiling(),
-              sycl::property::queue::in_order()});
-
-      if (embreeDevice) {
-        rtcReleaseDevice(embreeDevice);
-        embreeDevice = nullptr;
-      }
-#ifdef OSPRAY_ENABLE_VOLUMES
-      if (vklDevice) {
-        vklReleaseDevice(vklDevice);
-        vklDevice = nullptr;
-      }
-#endif
-    }
-#else
-    userContext = true; // on CPU there is no other choice
-    ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
-    ispcrtDevice = ispcrt::Device(ispcrtContext);
-#endif
-    ispcrtQueue = ispcrt::TaskQueue(ispcrtDevice);
+  // Check if SYCL context and device have been provided externally
+  void *appSyclCtxNew = getParam<void *>("syclContext", nullptr);
+  void *appSyclDeviceNew = getParam<void *>("syclDevice", nullptr);
+  if ((appSyclCtxNew && !appSyclDeviceNew)
+      || (!appSyclCtxNew && appSyclDeviceNew)) {
+    handleError(OSP_INVALID_OPERATION,
+        "OSPRay ISPCDevice invalid configuration: if providing a syclContext and syclDevice both must be provided");
+    return;
   }
 
-  setIspcrtTaskingCallbacks();
+  // Release all devices if user-provided parameters has changed
+  if ((appSyclCtxNew != appSyclCtx) || (appSyclDeviceNew != appSyclDevice)) {
+    // Release DRT device
+    drtDevice.reset();
+
+    // Release Embree device
+    if (embreeDevice) {
+      rtcReleaseDevice(embreeDevice);
+      embreeDevice = nullptr;
+    }
+#ifdef OSPRAY_ENABLE_VOLUMES
+    // Release VKL device
+    if (vklDevice) {
+      vklReleaseDevice(vklDevice);
+      vklDevice = nullptr;
+    }
+#endif
+  }
+
+  // Save user-provided parameters
+  appSyclCtx = appSyclCtxNew;
+  appSyclDevice = appSyclDeviceNew;
+
+  // We will create run-time device once only
+  if (!drtDevice) {
+    // Create DRT device
+    if (appSyclCtx && appSyclDevice)
+      drtDevice =
+          devicert::make_device_unique(appSyclDevice, appSyclCtx, debugMode);
+    else
+      drtDevice = devicert::make_device_unique(debugMode);
+  }
 
   if (!embreeDevice) {
 #ifdef OSPRAY_TARGET_SYCL
-    embreeDevice =
-        rtcNewSYCLDevice(syclContext, generateEmbreeDeviceCfg(*this).c_str());
-    rtcSetDeviceSYCLDevice(embreeDevice, syclDevice);
+    embreeDevice = rtcNewSYCLDevice(
+        *static_cast<sycl::context *>(drtDevice->getSyclContextPtr()),
+        generateEmbreeDeviceCfg(*this).c_str());
+    rtcSetDeviceSYCLDevice(embreeDevice,
+        *static_cast<sycl::device *>(drtDevice->getSyclDevicePtr()));
 #else
     embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 #endif
     rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
     RTCError erc = rtcGetDeviceError(embreeDevice);
     if (erc != RTC_ERROR_NONE) {
-      // why did the error function not get called !?
-      postStatusMsg() << "#osp:init: embree internal error number " << erc;
+      postStatusMsg() << "#osp:init: embree internal error: "
+                      << rtcGetDeviceLastErrorMessage(embreeDevice);
       throw std::runtime_error("failed to initialize Embree");
     }
   }
@@ -336,7 +277,7 @@ void ISPCDevice::commit()
 #ifdef OSPRAY_TARGET_SYCL
     vklDevice = vklNewDevice("gpu");
     vklDeviceSetVoidPtr(
-        vklDevice, "syclContext", static_cast<void *>(&syclContext));
+        vklDevice, "syclContext", drtDevice->getSyclContextPtr());
 #else
     int cpu_width = ispc::ISPCDevice_programCount();
     switch (cpu_width) {
@@ -370,6 +311,10 @@ void ISPCDevice::commit()
   }
 #endif
 
+  // Create MIP map cache if needed
+  if (!disableMipMapGeneration)
+    mipMapCache = rkcommon::make_unique<MipMapCache>();
+
 #ifndef OSPRAY_TARGET_SYCL
   // Output device info string
   const char *isaNames[] = {
@@ -377,10 +322,6 @@ void ISPCDevice::commit()
   postStatusMsg(OSP_LOG_INFO)
       << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
       << " instruction set";
-#else
-  postStatusMsg(OSP_LOG_INFO)
-      << "Using SYCL GPU device on "
-      << syclDevice.get_info<sycl::info::device::name>() << " device";
 #endif
 }
 
@@ -586,7 +527,7 @@ OSPFrameBuffer ISPCDevice::frameBufferCreate(
 
 OSPImageOperation ISPCDevice::newImageOp(const char *type)
 {
-  ospray::ImageOp *ret = ImageOp::createImageOp(type, *this);
+  ospray::ImageOp *ret = ImageOp::createImageOp(type, getDRTDevice());
   return (OSPImageOperation)ret;
 }
 
@@ -634,32 +575,28 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   Camera *camera = (Camera *)_camera;
   World *world = (World *)_world;
 
-#ifndef OSPRAY_TARGET_SYCL
-  fb->setCompletedEvent(OSP_NONE_FINISHED);
-
+  // Increase reference counters so the passed objects will not be released
+  // during frame rendering
   fb->refInc();
   renderer->refInc();
   camera->refInc();
   world->refInc();
 
-  return (OSPFuture) new RenderTask(fb, [=]() {
-    utility::CodeTimer timer;
-    timer.start();
-    loadBalancer->renderFrame(fb, renderer, camera, world);
-    timer.stop();
+  // Schedule frame rendering
+  std::pair<devicert::AsyncEvent, devicert::AsyncEvent> events =
+      loadBalancer->renderFrame(fb, renderer, camera, world);
 
+  // Schedule reference counters decrease to be done after the rendering
+  devicert::AsyncEvent event = getDRTDevice().launchHostTask([=]() {
     fb->refDec();
     renderer->refDec();
     camera->refDec();
     world->refDec();
-
-    return timer.seconds();
   });
-#else
-  std::pair<AsyncEvent, AsyncEvent> events =
-      loadBalancer->renderFrame(fb, renderer, camera, world, false);
-  return (OSPFuture) new RenderTask(events.first, events.second);
-#endif
+
+  // Return rendering future object
+  return (OSPFuture) new RenderingFuture(
+      fb, events.first, events.second, event);
 }
 
 int ISPCDevice::isReady(OSPFuture _task, OSPSyncEvent event)

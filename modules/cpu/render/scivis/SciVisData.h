@@ -18,8 +18,7 @@ struct SciVisData : public AddStructShared<RendererData, ispc::SciVisData>
   ~SciVisData() override;
 
  private:
-  std::vector<ISPCRTMemoryView> lightViews;
-  std::unique_ptr<BufferShared<ispc::Light *>> lightArray;
+  BufferSharedUq<ispc::Light *> lightArray;
 };
 
 } // namespace ospray
