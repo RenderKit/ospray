@@ -1,0 +1,162 @@
+## Copyright 2024 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: public CI Linux
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  generate-baseline-images:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+
+    steps:
+    - name: Install packages
+      run: |
+        echo "Installing build dependencies..."
+        apt update
+        apt upgrade -y
+        apt install -y build-essential cmake ninja-build libglfw3-dev libgl1-mesa-dev libxinerama-dev libxcursor-dev libxi-dev git
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Generate baseline images
+      run: |
+        git config --global --add safe.directory `pwd`
+        mkdir build_regression_tests
+        cd build_regression_tests
+        cmake ../test_image_data
+        cmake --build . --target ospray_test_data --parallel 8
+        
+    - name: Upload baseline images
+      uses: actions/upload-artifact@v4
+      with:
+        name: baseline-images
+        path: |
+          build_regression_tests/regression_test_baseline/*.png
+          build_regression_tests/regression_test_baseline/*.exr
+          build_regression_tests/regression_test_baseline/*.jpg
+        compression-level: 1
+        
+  build-rocky-8:
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:8
+
+    steps:
+    - name: Install packages
+      run: |
+        echo "Installing build dependencies..."
+        dnf update -y
+        dnf install -y git cmake mesa-libGL-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel
+        dnf group install -y "Development Tools"
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Build
+      run: |
+        git config --global --add safe.directory `pwd`
+        mkdir build
+        cd build
+        cmake ../scripts/superbuild
+        cmake --build . --parallel 8
+
+    - name: Upload build
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-rocky-8
+        path: build/install/ospray
+
+
+  test-rocky-8:
+    needs: [build-rocky-8, generate-baseline-images]
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:8
+
+    steps:
+    - name: Download build
+      uses: actions/download-artifact@v4
+      with:
+        name: build-rocky-8
+
+    - name: Download baseline images
+      uses: actions/download-artifact@v4
+      with:
+        name: baseline-images
+        path: regression_test_baseline
+
+    - name: Run tests
+      run: |
+        chmod +x ./bin/*
+        ./bin/ospTutorial
+        ./bin/ospTestSuite
+
+
+  build-ubuntu-2204:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+
+    steps:
+    - name: Install packages
+      run: |
+        echo "Installing build dependencies..."
+        apt update
+        apt upgrade -y
+        apt install -y build-essential cmake ninja-build libglfw3-dev libgl1-mesa-dev libxinerama-dev libxcursor-dev libxi-dev git
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Build
+      run: |
+        git config --global --add safe.directory `pwd`
+        mkdir build
+        cd build
+        cmake ../scripts/superbuild
+        cmake --build . --parallel 8
+
+    - name: Upload build
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-ubuntu-2204
+        path: build/install/ospray
+
+
+  test-ubuntu-2204:
+    needs: [build-ubuntu-2204, generate-baseline-images]
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+
+    steps:
+    - name: Download build
+      uses: actions/download-artifact@v4
+      with:
+        name: build-ubuntu-2204
+
+    - name: Download baseline images
+      uses: actions/download-artifact@v4
+      with:
+        name: baseline-images
+        path: regression_test_baseline
+
+    - name: Run tests
+      run: |
+        chmod +x ./bin/*
+        ./bin/ospTutorial
+        ./bin/ospTestSuite
