@@ -91,7 +91,11 @@ export ONEAPI_DEVICE_SELECTOR=level_zero:*
 export SYCL_CACHE_PERSISTENT=1
 export OIDN_VERBOSE=2
 
-export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE # WA for PVC
+# WAs for PVC
+export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+export NEOReadDebugKeys=1
+export UseKmdMigration=0
+
 
 if [ $TEST_GPU ]; then
   mkdir failed-gpu
