@@ -1,17 +1,17 @@
 OSPRay
 ======
 
-This is release v3.2.0 of Intel® OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
-information.
+This is release v3.3.0 (devel) of Intel® OSPRay. For changes and new
+features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
+for more information.
 
 OSPRay Overview
 ===============
 
 Intel® OSPRay is an **o**pen source, **s**calable, and **p**ortable
 **ray** tracing engine for high-performance, high-fidelity visualization
-on Intel Architecture CPUs, Intel Xe GPUs, and ARM64 CPUs. OSPRay is
-part of the [Intel Rendering Toolkit (Render
+on Intel Architecture CPUs, Intel Xe GPUs, and Aarch64/ARM64 CPUs.
+OSPRay is part of the [Intel Rendering Toolkit (Render
 Kit)](https://software.intel.com/en-us/rendering-framework) and is
 released under the permissive [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
@@ -412,9 +412,9 @@ Documentation
 =============
 
 The following [API
-documentation](https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](https://www.ospray.org/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation").
+document](https://www.ospray.org/OSPRay_readme_devel.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
