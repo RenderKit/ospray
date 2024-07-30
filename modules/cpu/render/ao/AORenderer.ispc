@@ -22,6 +22,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 static void AORenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
+    const Camera *uniform camera,
     World *uniform world,
     varying ScreenSample &sample,
     const uniform FeatureFlagsHandler &ffh)
@@ -108,11 +109,15 @@ static void AORenderer_renderSample(Renderer *uniform _self,
       // Initialize other per sample data with first hit values
       if (firstHit) {
         sample.z = ray.t;
+        if (fb->projectedDepth)
+          sample.z *= dot(ray.dir, camera->direction);
         sample.albedo = surfaceShading.albedo;
+        sample.position = dg.P;
+        sample.firstNormal = dg.Ns;
         sample.normal = dg.Ns;
         sample.instID = dg.instID;
         sample.geomID = dg.objID;
-        sample.primID = ray.primID;
+        sample.primID = dg.primID;
       }
 
       // Prepare ray for next loop iteration,

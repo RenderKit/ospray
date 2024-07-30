@@ -19,6 +19,8 @@ struct LocalFB
                          // estimation / stopping
   float *depthBuffer;
   vec3f *normalBuffer;
+  vec3f *firstNormalBuffer;
+  vec3f *positionBuffer;
   vec3f *albedoBuffer;
   vec2i numRenderTasks;
   uint32 *primitiveIDBuffer;
@@ -31,6 +33,8 @@ struct LocalFB
         varianceBuffer(nullptr),
         depthBuffer(nullptr),
         normalBuffer(nullptr),
+        firstNormalBuffer(nullptr),
+        positionBuffer(nullptr),
         albedoBuffer(nullptr),
         numRenderTasks(0),
         primitiveIDBuffer(nullptr),

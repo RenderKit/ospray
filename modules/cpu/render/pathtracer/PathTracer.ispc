@@ -40,14 +40,7 @@ static ScreenSample PathTraceIntegrator_Li(PathContext &pathContext,
     RayCone &rayCone,
     const uniform FeatureFlagsHandler &ffh)
 {
-  ScreenSample sample;
-  sample.rgb = make_vec3f(0.f);
-  sample.alpha = 1.f;
-  sample.normal = make_vec3f(0.0f);
-  sample.albedo = make_vec3f(0.0f);
-  sample.primID = RTC_INVALID_GEOMETRY_ID;
-  sample.geomID = RTC_INVALID_GEOMETRY_ID;
-  sample.instID = RTC_INVALID_GEOMETRY_ID;
+  ScreenSample sample = make_ScreenSample_zero();
 
   pathState.straightPath = true; // path from camera did not change direction,
                                  // for alpha and backplate
@@ -86,23 +79,15 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     const uniform uint32 accumID,
     const uniform FeatureFlagsHandler &ffh)
 {
-  ScreenSample screenSample;
-  screenSample.rgb = make_vec3f(0.f);
-  screenSample.alpha = 0.f;
-  screenSample.z = inf;
-  screenSample.normal = make_vec3f(0.f);
-  screenSample.albedo = make_vec3f(0.f);
-
+  ScreenSample screenSample = make_ScreenSample_zero();
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
-
-  screenSample.primID = RTC_INVALID_GEOMETRY_ID;
-  screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
-  screenSample.instID = RTC_INVALID_GEOMETRY_ID;
 
   PathContext pathContext;
   pathContext.context = self;
   pathContext.world = world;
+  pathContext.projectedDepth = fb->projectedDepth;
+  pathContext.cameraDir = camera->direction;
 
   uniform PathTracerData *uniform ptData = world->pathtracerData;
   const uniform uint32 numLights = ptData->lights ? ptData->numLights : 0;
@@ -208,24 +193,11 @@ static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     ScreenSample sample = PathTraceIntegrator_Li(
         pathContext, pathState, screenSample.ray, screenSample.rayCone, ffh);
 
-    screenSample.rgb =
-        screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
-    screenSample.alpha = screenSample.alpha + sample.alpha;
-    screenSample.normal = screenSample.normal + sample.normal;
-    screenSample.albedo = screenSample.albedo + sample.albedo;
-    if (sample.z < screenSample.z) {
-      screenSample.z = sample.z;
-      screenSample.primID = sample.primID;
-      screenSample.geomID = sample.geomID;
-      screenSample.instID = sample.instID;
-    }
+    sample.rgb = min(sample.rgb, make_vec3f(self->maxRadiance));
+    ScreenSample_accumulate(screenSample, sample);
   }
 
-  const float rspp = rcpf(spp);
-  screenSample.rgb = screenSample.rgb * rspp;
-  screenSample.alpha = screenSample.alpha * rspp;
-  screenSample.normal = screenSample.normal * rspp;
-  screenSample.albedo = screenSample.albedo * rspp;
+  ScreenSample_normalize(screenSample, spp);
 
   return screenSample;
 }

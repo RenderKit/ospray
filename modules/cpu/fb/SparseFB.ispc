@@ -4,7 +4,6 @@
 #include "SparseFB.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/RenderTaskDesc.ih"
-#include "fb/Tile.ih"
 #include "ospray/OSPEnums.h"
 #include "render/Renderer.ih"
 #include "render/ScreenSample.ih"
@@ -59,11 +58,13 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   tile->b[tilePixelIdx] = color.z;
   tile->a[tilePixelIdx] = color.w;
 
-  // Accumulate depth
-  float depth = screenSample.z;
-  if (accumID > 0)
-    depth = min(tile->z[tilePixelIdx], screenSample.z);
-  tile->z[tilePixelIdx] = depth;
+  // Accumulate depth and IDs
+  if (accumID == 0 || abs(screenSample.z) < abs(tile->z[tilePixelIdx])) {
+    tile->z[tilePixelIdx] = screenSample.z;
+    tile->pid[tilePixelIdx] = screenSample.primID;
+    tile->gid[tilePixelIdx] = screenSample.geomID;
+    tile->iid[tilePixelIdx] = screenSample.instID;
+  }
 
   // Accumulate normal
   vec3f normal = make_vec3f(
@@ -72,6 +73,13 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   tile->nx[tilePixelIdx] = normal.x;
   tile->ny[tilePixelIdx] = normal.y;
   tile->nz[tilePixelIdx] = normal.z;
+  normal = make_vec3f(tile->n1x[tilePixelIdx],
+      tile->n1y[tilePixelIdx],
+      tile->n1z[tilePixelIdx]);
+  FRAMEBUFFER_ACCUMULATE_VALUE(normal, screenSample.firstNormal, accScale);
+  tile->n1x[tilePixelIdx] = normal.x;
+  tile->n1y[tilePixelIdx] = normal.y;
+  tile->n1z[tilePixelIdx] = normal.z;
 
   // Accumulate albedo
   vec3f albedo = make_vec3f(
@@ -81,9 +89,13 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   tile->ag[tilePixelIdx] = albedo.y;
   tile->ab[tilePixelIdx] = albedo.z;
 
-  tile->pid[tilePixelIdx] = screenSample.primID;
-  tile->gid[tilePixelIdx] = screenSample.geomID;
-  tile->iid[tilePixelIdx] = screenSample.instID;
+  // Accumulate position
+  vec3f pos = make_vec3f(
+      tile->px[tilePixelIdx], tile->py[tilePixelIdx], tile->pz[tilePixelIdx]);
+  FRAMEBUFFER_ACCUMULATE_VALUE(pos, screenSample.position, accScale);
+  tile->px[tilePixelIdx] = pos.x;
+  tile->py[tilePixelIdx] = pos.y;
+  tile->pz[tilePixelIdx] = pos.z;
 
   uniform vec4f *uniform variance = fb->varianceBuffer;
   if (fb->super.accumulateVariance) {

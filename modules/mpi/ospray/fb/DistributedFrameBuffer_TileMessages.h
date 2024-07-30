@@ -24,16 +24,10 @@ enum COMMANDTAG
       does not actually care about the pixel data - we still have
       to let the master know when we're done. */
   MASTER_WRITE_TILE = 1 << 2,
-  // Modifier to indicate the tile has depth values
-  MASTER_TILE_HAS_DEPTH = 1 << 3,
-  // Indicates that the tile has normal and/or albedo values
-  MASTER_TILE_HAS_AUX = 1 << 4,
-  // Indicates that the tile has ID buffer values
-  MASTER_TILE_HAS_ID = 1 << 5,
   // abort rendering the current frame
-  CANCEL_RENDERING = 1 << 6,
+  CANCEL_RENDERING = 1 << 3,
   // Worker updating us on tiles completed
-  PROGRESS_MESSAGE = 1 << 7
+  PROGRESS_MESSAGE = 1 << 4
 };
 
 struct TileMessage
@@ -53,51 +47,24 @@ struct MasterTileMessage : public TileMessage
   float error;
 };
 
-/*! message sent to the master when a tile is finished. TODO:
-    compress the color data */
+// message sent to the master when a tile is finished.
 struct MasterTileMessage_FB : public MasterTileMessage
 {
   vec4f color[TILE_SIZE * TILE_SIZE];
-};
-
-struct MasterTileMessage_FB_Depth : public MasterTileMessage_FB
-{
-  float depth[TILE_SIZE * TILE_SIZE];
-};
-
-struct MasterTileMessage_FB_Depth_Aux : public MasterTileMessage_FB_Depth
-{
-  vec3f normal[TILE_SIZE * TILE_SIZE];
-  vec3f albedo[TILE_SIZE * TILE_SIZE];
+  ispc::Tile tile;
 };
 
 /*! message sent from one node's instance to another, to tell that
     instance to write that tile */
 struct WriteTileMessage : public TileMessage
 {
-  region2i region; // screen region that this corresponds to
-  vec2i fbSize; // total frame buffer size, for the camera
-  vec2f rcp_fbSize;
-  int32 generation;
-  int32 children;
-  int32 sortOrder;
-  int32 accumID; //!< how often has been accumulated into this tile
-  float pad[4]; //!< padding to match the ISPC-side layout
-  float r[TILE_SIZE * TILE_SIZE]; // 'red' component
-  float g[TILE_SIZE * TILE_SIZE]; // 'green' component
-  float b[TILE_SIZE * TILE_SIZE]; // 'blue' component
-  float a[TILE_SIZE * TILE_SIZE]; // 'alpha' component
-  float z[TILE_SIZE * TILE_SIZE]; // 'depth' component
+  ispc::Tile tile;
 };
 
 std::shared_ptr<mpicommon::Message> makeWriteTileMessage(
-    const ispc::Tile &tile, bool hasAux);
+    const ispc::Tile &tile);
 
-void unpackWriteTileMessage(
-    WriteTileMessage *msg, ispc::Tile &tile, bool hasAux);
-
-size_t masterMsgSize(
-    bool hasDepth, bool hasNormal, bool hasAlbedo, bool hasIDBuffers);
+void unpackWriteTileMessage(WriteTileMessage *msg, ispc::Tile &tile);
 
 /*! The message builder lets us abstractly fill messages of different
  * types, while keeping the underlying message structs POD so they're
@@ -105,54 +72,14 @@ size_t masterMsgSize(
  */
 class MasterTileMessageBuilder
 {
-  bool hasDepth;
-  bool hasNormal;
-  bool hasAlbedo;
-  bool hasIDBuffers;
   MasterTileMessage *header;
 
  public:
   std::shared_ptr<mpicommon::Message> message;
 
-  MasterTileMessageBuilder(bool hasDepth,
-      bool hasNormal,
-      bool hasAlbedo,
-      bool hasIDBuffers,
-      vec2i coords,
-      float error);
+  MasterTileMessageBuilder(vec2i coords, float error);
 
   void setColor(const vec4f *color);
-
-  void setDepth(const float *depth);
-
-  void setNormal(const vec3f *normal);
-
-  void setAlbedo(const vec3f *albedo);
-
-  void setPrimitiveID(const uint32 *primID);
-
-  void setObjectID(const uint32 *geomID);
-
-  void setInstanceID(const uint32 *instID);
-
- private:
-  // Return the size in bytes of the color data in the message
-  size_t colorBufferSize() const;
-
-  // Return the size in bytes of the depth data in the message. Returns 0 if
-  // depth is not being sent
-  size_t depthBufferSize() const;
-
-  // Return the size in bytes of the normal data in the message. Returns 0 if
-  // normals are not being sent
-  size_t normalBufferSize() const;
-
-  // Return the size in bytes of the albedo data in the message. Returns 0 if
-  // albedo is not being sent
-  size_t albedoBufferSize() const;
-
-  // Return the size in bytes of the ID data in the message. Returns 0 if
-  // IDs are not being sent
-  size_t idBufferSize() const;
+  void setTile(const ispc::Tile *);
 };
 } // namespace ospray

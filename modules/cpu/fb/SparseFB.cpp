@@ -49,6 +49,7 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
         "0");
   }
 
+  getSh()->accumulate = doAccum;
   setTiles(_tileIDs);
 }
 
@@ -70,6 +71,7 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
         "local framebuffer has invalid size. Dimensions must be greater than "
         "0");
   }
+  getSh()->accumulate = doAccum;
 }
 
 vec2i SparseFrameBuffer::getNumRenderTasks() const

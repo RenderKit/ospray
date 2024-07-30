@@ -140,6 +140,9 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
 
   float getCurrentProgress() const override;
 
+  bool hasAuxBuf() const;
+  bool hasAOVBuf() const;
+
  private:
   friend struct LiveTileOperation;
 
@@ -299,5 +302,15 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   std::vector<vec2i> tileIDs;
   std::vector<float> tileErrors;
 };
+
+inline bool DistributedFrameBuffer::hasAuxBuf() const
+{
+  return hasNormalBuffer || hasAlbedoBuffer;
+}
+
+inline bool DistributedFrameBuffer::hasAOVBuf() const
+{
+  return hasFirstNormalBuffer || hasPositionBuffer;
+}
 
 } // namespace ospray

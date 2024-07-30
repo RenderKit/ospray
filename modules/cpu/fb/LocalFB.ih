@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "fb/FrameBuffer.ih"
-#include "fb/Tile.ih"
+#include "rkcommon/math/box.ih"
 // c++ shared
 #include "LocalFBShared.h"
+#include "TileShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

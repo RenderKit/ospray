@@ -21,6 +21,8 @@ struct ScreenSample
   vec3f rgb;
   float alpha;
   float z;
+  vec3f position;
+  vec3f firstNormal;
   vec3f normal;
   vec3f albedo;
 
@@ -29,5 +31,49 @@ struct ScreenSample
   unsigned int geomID;
   unsigned int instID;
 };
+
+inline ScreenSample make_ScreenSample_zero()
+{
+  ScreenSample screenSample;
+  screenSample.rgb = make_vec3f(0.f);
+  screenSample.alpha = 0.f;
+  screenSample.z = inf;
+  screenSample.position = make_vec3f(0.0f);
+  screenSample.firstNormal = make_vec3f(0.0f);
+  screenSample.normal = make_vec3f(0.0f);
+  screenSample.albedo = make_vec3f(0.0f);
+  screenSample.primID = RTC_INVALID_GEOMETRY_ID;
+  screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
+  screenSample.instID = RTC_INVALID_GEOMETRY_ID;
+  return screenSample;
+}
+
+inline void ScreenSample_accumulate(
+    ScreenSample &accum, const ScreenSample &sample)
+{
+  accum.rgb = accum.rgb + sample.rgb;
+  accum.alpha = accum.alpha + sample.alpha;
+  accum.position = accum.position + sample.position;
+  accum.firstNormal = accum.firstNormal + sample.firstNormal;
+  accum.normal = accum.normal + sample.normal;
+  accum.albedo = accum.albedo + sample.albedo;
+  if (absf(sample.z) < absf(accum.z)) {
+    accum.z = sample.z;
+    accum.primID = sample.primID;
+    accum.geomID = sample.geomID;
+    accum.instID = sample.instID;
+  }
+}
+
+inline void ScreenSample_normalize(ScreenSample &sample, uniform int32 spp)
+{
+  const uniform float rspp = rcpf(spp);
+  sample.rgb = sample.rgb * rspp;
+  sample.alpha = sample.alpha * rspp;
+  sample.position = sample.position * rspp;
+  sample.firstNormal = sample.firstNormal * rspp;
+  sample.normal = sample.normal * rspp;
+  sample.albedo = sample.albedo * rspp;
+}
 
 OSPRAY_END_ISPC_NAMESPACE

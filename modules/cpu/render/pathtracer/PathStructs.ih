@@ -60,6 +60,8 @@ struct PathContext
   uniform uint32 numIndirectBounceLightSamples;
   Light **uniform lights;
   float *uniform lightsCDF;
+  vec3f cameraDir;
+  bool projectedDepth;
 #ifdef OSPRAY_PATHTRACER_DEBUG
   uniform bool disableNEE; // turn off NEE contribution for debugging purposes
   uniform bool disableFWD; // turn off FWD contribution for debugging purposes

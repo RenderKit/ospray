@@ -227,6 +227,78 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
   }
 }
 
+// accumulate first normal and position
+export void DFB_accumulateAOVTile(const VaryingTile *uniform tile,
+    void *uniform _final,
+    VaryingTile *uniform accum)
+{
+  Tile *uniform final = (Tile * uniform) _final;
+  const uniform vec2i size = box_size(tile->region);
+  const uniform int maxi = size.y * (TILE_SIZE / programCount);
+  if (tile->accumID < 1) {
+    for (uniform int i = 0; i < maxi; i++) {
+      const float fnx = tile->n1x[i];
+      const float fny = tile->n1y[i];
+      const float fnz = tile->n1z[i];
+      accum->n1x[i] = fnx;
+      accum->n1y[i] = fny;
+      accum->n1z[i] = fnz;
+#ifdef OSPRAY_TARGET_SYCL
+      final->n1x[3 * i] = fnx;
+      final->n1x[3 * i + 1] = fny;
+      final->n1x[3 * i + 2] = fnz;
+#else
+      soa_to_aos3(fnx, fny, fnz, final->n1x + 3 * programCount * i);
+#endif
+
+      const float fpx = tile->px[i];
+      const float fpy = tile->py[i];
+      const float fpz = tile->pz[i];
+      accum->px[i] = fpx;
+      accum->py[i] = fpy;
+      accum->pz[i] = fpz;
+#ifdef OSPRAY_TARGET_SYCL
+      final->px[3 * i] = fpx;
+      final->px[3 * i + 1] = fpy;
+      final->px[3 * i + 2] = fpz;
+#else
+      soa_to_aos3(fpx, fpy, fpz, final->px + 3 * programCount * i);
+#endif
+    }
+  } else {
+    const uniform float rcpAccumID = rcpf(tile->accumID + 1);
+    for (uniform int i = 0; i < maxi; i++) {
+      accum->n1x[i] += tile->n1x[i];
+      accum->n1y[i] += tile->n1y[i];
+      accum->n1z[i] += tile->n1z[i];
+      const float fnx = accum->n1x[i] * rcpAccumID;
+      const float fny = accum->n1y[i] * rcpAccumID;
+      const float fnz = accum->n1z[i] * rcpAccumID;
+#ifdef OSPRAY_TARGET_SYCL
+      final->n1x[3 * i] = fnx;
+      final->n1x[3 * i + 1] = fny;
+      final->n1x[3 * i + 2] = fnz;
+#else
+      soa_to_aos3(fnx, fny, fnz, final->nx + 3 * programCount * i);
+#endif
+
+      accum->px[i] += tile->px[i];
+      accum->py[i] += tile->py[i];
+      accum->pz[i] += tile->pz[i];
+      const float fpx = accum->px[i] * rcpAccumID;
+      const float fpy = accum->py[i] * rcpAccumID;
+      const float fpz = accum->pz[i] * rcpAccumID;
+#ifdef OSPRAY_TARGET_SYCL
+      final->px[3 * i] = fpx;
+      final->px[3 * i + 1] = fpy;
+      final->px[3 * i + 2] = fpz;
+#else
+      soa_to_aos3(fpx, fpy, fpz, final->px + 3 * programCount * i);
+#endif
+    }
+  }
+}
+
 // computes the error for a tile
 export uniform float DFB_computeErrorForTile(
     const uniform int *uniform const size_, // vec2i

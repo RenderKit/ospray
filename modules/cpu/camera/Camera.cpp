@@ -73,7 +73,16 @@ void Camera::commit()
     }
   }
 
-  if (!motionTransform.motionBlur) {
+  if (motionTransform.motionBlur) {
+    // use main direction at center of shutter time
+    affine3f middleTransform;
+    rtcGetGeometryTransformFromScene(embreeScene,
+        0,
+        shutter.center(),
+        RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+        &middleTransform);
+    getSh()->direction = normalize(xfmVector(middleTransform, dir));
+  } else {
     if (embreeGeometry) {
       rtcReleaseGeometry(embreeGeometry);
       embreeGeometry = nullptr;
@@ -84,6 +93,7 @@ void Camera::commit()
     // apply transform right away
     pos = xfmPoint(motionTransform.transform, pos);
     dir = normalize(xfmVector(motionTransform.transform, dir));
+    getSh()->direction = dir;
     up = normalize(xfmVector(motionTransform.transform, up));
   }
 

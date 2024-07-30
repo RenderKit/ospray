@@ -362,6 +362,7 @@ static void DebugRenderer_volume(Renderer *uniform self,
 
 static void DebugRenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
+    const Camera *uniform camera,
     World *uniform world,
     varying ScreenSample &sample,
     const uniform FeatureFlagsHandler &ffh)
@@ -418,6 +419,8 @@ static void DebugRenderer_renderSample(Renderer *uniform _self,
     DebugRenderer_testFrame(_self, world, sample);
     break;
   };
+  if (fb->projectedDepth)
+    sample.z *= dot(sample.ray.dir, camera->direction);
 }
 
 #define renderSampleFn DebugRenderer_renderSample

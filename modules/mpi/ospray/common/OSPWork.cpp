@@ -41,8 +41,12 @@ size_t FrameBufferInfo::pixelSize(uint32_t channel) const
     return channels & OSP_FB_DEPTH ? sizeof(float) : 0;
   case OSP_FB_NORMAL:
     return channels & OSP_FB_NORMAL ? sizeof(vec3f) : 0;
+  case OSP_FB_FIRST_NORMAL:
+    return channels & OSP_FB_FIRST_NORMAL ? sizeof(vec3f) : 0;
   case OSP_FB_ALBEDO:
     return channels & OSP_FB_ALBEDO ? sizeof(vec3f) : 0;
+  case OSP_FB_POSITION:
+    return channels & OSP_FB_POSITION ? sizeof(vec3f) : 0;
   case OSP_FB_ID_PRIMITIVE:
     return channels & OSP_FB_ID_PRIMITIVE ? sizeof(uint32) : 0;
   case OSP_FB_ID_OBJECT:

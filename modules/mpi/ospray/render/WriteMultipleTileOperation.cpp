@@ -87,12 +87,14 @@ void LiveWriteMultipleTile::process(const ispc::Tile &tile)
       ispc::DFB_accumulateTileSimple((const ispc::VaryingTile *)&tile,
           (ispc::VaryingTile *)&accum,
           (ispc::VaryingTile *)&variance);
-
-      if (dfb->hasNormalBuf() || dfb->hasAlbedoBuf()) {
+      if (dfb->hasAuxBuf())
         ispc::DFB_accumulateAuxTile((const ispc::VaryingTile *)&tile,
             (ispc::Tile *)&finished,
             (ispc::VaryingTile *)&accum);
-      }
+      if (dfb->hasAOVBuf())
+        ispc::DFB_accumulateAOVTile((const ispc::VaryingTile *)&tile,
+            (ispc::Tile *)&finished,
+            (ispc::VaryingTile *)&accum);
     }
     done = --instances == 0;
   }
@@ -125,11 +127,14 @@ void LiveWriteMultipleTile::process(const ispc::Tile &tile)
           dfb->doAccumulation(),
           // disable accumulation of variance
           false);
-      if (dfb->hasNormalBuf() || dfb->hasAlbedoBuf()) {
+      if (dfb->hasAuxBuf())
         ispc::DFB_accumulateAuxTile((const ispc::VaryingTile *)&bufferedTile,
             (ispc::Tile *)&finished,
             (ispc::VaryingTile *)&accum);
-      }
+      if (dfb->hasAOVBuf())
+        ispc::DFB_accumulateAOVTile((const ispc::VaryingTile *)&bufferedTile,
+            (ispc::Tile *)&finished,
+            (ispc::VaryingTile *)&accum);
       // but still need to update the error
       error = DFB_computeErrorForTile(sz,
           (ispc::VaryingTile *)&accum,

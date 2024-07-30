@@ -3029,11 +3029,13 @@ values of `OSPFrameBufferChannel` listed in the table below.
   Name                Description
   ------------------- ----------------------------------------------------------
   OSP_FB_COLOR        RGB color including alpha
-  OSP_FB_DEPTH        euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float; for multiple samples per pixel their minimum is taken
+  OSP_FB_DEPTH        distance to the camera, as linear 32\ bit float; euclidean or projected distance is selected via parameter `projectedDepth`; for multiple samples per pixel the closest is taken
   OSP_FB_ACCUM        accumulation buffer for progressive refinement
-  OSP_FB_VARIANCE     for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
-  OSP_FB_NORMAL       accumulated world-space normal of the first non-specular hit, as vec3f
-  OSP_FB_ALBEDO       accumulated material albedo (color without illumination) at the first non-specular hit, as vec3f
+  OSP_FB_VARIANCE     for estimation of the current noise level if `OSP_FB_ACCUM` is also present, see [rendering]
+  OSP_FB_FIRST_NORMAL accumulated world-space normal of the *first* hit, as vec3f
+  OSP_FB_NORMAL       accumulated world-space normal of the first *non-specular* hit (for denoising), as vec3f
+  OSP_FB_ALBEDO       accumulated material albedo (color without illumination) at the first non-specular hit (for denoising), as vec3f
+  OSP_FB_POSITION     accumulated world-space position of the first hit, as vec3f
   OSP_FB_ID_PRIMITIVE primitive index of the first hit, as uint32
   OSP_FB_ID_OBJECT    geometric/volumetric model `id`, if specified, or index in [group] of first hit, as uint32
   OSP_FB_ID_INSTANCE  user defined [instance] `id`, if specified, or instance index of first hit, as uint32
@@ -3109,6 +3111,16 @@ they are in the array.
                                        sampling pattern; should be a power of 2,
                                        is always 1 without `OSP_FB_ACCUM`;
                                        default 0 (disabled)
+
+  bool                 projectedDepth  whether channel `OSP_FB_DEPTH` should
+                                       hold the projected distance onto the main
+                                       camera direction (which is the distance
+                                       to the image plane for
+                                       [perspective camera] and
+                                       [orthographic camera], can be
+                                       negative for [panoramic camera]),
+                                       default false (euclidean
+                                       distance)
   -------------------- --------------- -----------------------------------------
   : Parameters accepted by the framebuffer.
 

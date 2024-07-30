@@ -85,14 +85,6 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual void cancelFrame();
   bool frameCancelled() const;
 
-  bool hasColorBuf() const;
-  bool hasVarianceBuf() const;
-  bool hasNormalBuf() const;
-  bool hasAlbedoBuf() const;
-  bool hasPrimitiveIDBuf() const;
-  bool hasObjectIDBuf() const;
-  bool hasInstanceIDBuf() const;
-
   bool doAccumulation() const;
 
   uint32 getChannelFlags() const;
@@ -115,6 +107,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   bool hasDepthBuffer;
   bool hasVarianceBuffer;
   bool hasNormalBuffer;
+  bool hasFirstNormalBuffer;
+  bool hasPositionBuffer;
   bool hasAlbedoBuffer;
   bool hasPrimitiveIDBuffer;
   bool hasObjectIDBuffer;
@@ -153,41 +147,6 @@ inline vec2i FrameBuffer::getNumPixels() const
 inline FrameBuffer::ColorBufferFormat FrameBuffer::getColorBufferFormat() const
 {
   return colorBufferFormat;
-}
-
-inline bool FrameBuffer::hasColorBuf() const
-{
-  return hasColorBuffer;
-}
-
-inline bool FrameBuffer::hasVarianceBuf() const
-{
-  return hasVarianceBuffer;
-}
-
-inline bool FrameBuffer::hasNormalBuf() const
-{
-  return hasNormalBuffer;
-}
-
-inline bool FrameBuffer::hasAlbedoBuf() const
-{
-  return hasAlbedoBuffer;
-}
-
-inline bool FrameBuffer::hasPrimitiveIDBuf() const
-{
-  return hasPrimitiveIDBuffer;
-}
-
-inline bool FrameBuffer::hasObjectIDBuf() const
-{
-  return hasObjectIDBuffer;
-}
-
-inline bool FrameBuffer::hasInstanceIDBuf() const
-{
-  return hasInstanceIDBuffer;
 }
 
 inline bool FrameBuffer::doAccumulation() const

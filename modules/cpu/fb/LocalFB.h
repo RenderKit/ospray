@@ -81,8 +81,10 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   BufferDeviceUq<vec4f> varianceBuffer;
   // one float per pixel
   BufferDeviceShadowedUq<float> depthBuffer;
+  BufferDeviceShadowedUq<vec3f> positionBuffer;
   // accumulated world-space normal per pixel
   BufferDeviceShadowedUq<vec3f> normalBuffer;
+  BufferDeviceShadowedUq<vec3f> firstNormalBuffer;
   // accumulated, one RGB per pixel
   BufferDeviceShadowedUq<vec3f> albedoBuffer;
   // primitive ID, object ID, and instance ID

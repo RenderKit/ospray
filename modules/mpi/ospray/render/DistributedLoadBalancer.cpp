@@ -472,6 +472,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
 
   sparseFb->setFrameID(dfb->getFrameID());
   sparseFb->getSh()->super.targetFrames = dfb->getSh()->targetFrames;
+  sparseFb->getSh()->super.projectedDepth = dfb->getSh()->projectedDepth;
   sparseFb->getSh()->accumulate = false; // accumulation happens later
 
   while (0 < totalActiveTiles) {
@@ -586,6 +587,7 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
   SparseFrameBuffer *ownedTilesFb = dfb->getSparseFBLayer(0);
   ownedTilesFb->setFrameID(dfb->getFrameID());
   ownedTilesFb->getSh()->super.targetFrames = dfb->getSh()->targetFrames;
+  ownedTilesFb->getSh()->super.projectedDepth = dfb->getSh()->projectedDepth;
   // frame 0 is not accumulated
   ownedTilesFb->getSh()->accumulate = dfb->getFrameID();
 

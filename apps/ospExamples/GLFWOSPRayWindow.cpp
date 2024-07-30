@@ -97,8 +97,27 @@ static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
 static const std::vector<std::string> g_pixelFilterTypes = {
     "point", "box", "gaussian", "mitchell", "blackmanHarris"};
 
-static const std::vector<std::string> g_AOVs = {
-    "color", "depth", "albedo", "normal", "primID", "objID", "instID"};
+static const std::vector<std::string> g_AOVs = {"color",
+    "depth",
+    "projectedDepth",
+    "position",
+    "albedo",
+    "normal",
+    "firstNormal",
+    "primID",
+    "objID",
+    "instID"};
+
+static const std::vector<OSPFrameBufferChannel> g_AOVs_FB = {OSP_FB_COLOR,
+    OSP_FB_DEPTH,
+    OSP_FB_DEPTH,
+    OSP_FB_POSITION,
+    OSP_FB_ALBEDO,
+    OSP_FB_NORMAL,
+    OSP_FB_FIRST_NORMAL,
+    OSP_FB_ID_PRIMITIVE,
+    OSP_FB_ID_OBJECT,
+    OSP_FB_ID_INSTANCE};
 
 static const std::vector<std::string> g_denoiserQuality = {
     "low", "medium", "high"};
@@ -302,8 +321,8 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
 
   // create new frame buffer
   auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_VARIANCE
-      | OSP_FB_ALBEDO | OSP_FB_NORMAL | OSP_FB_ID_PRIMITIVE | OSP_FB_ID_OBJECT
-      | OSP_FB_ID_INSTANCE;
+      | OSP_FB_ALBEDO | OSP_FB_POSITION | OSP_FB_NORMAL | OSP_FB_FIRST_NORMAL
+      | OSP_FB_ID_PRIMITIVE | OSP_FB_ID_OBJECT | OSP_FB_ID_INSTANCE;
   framebuffer =
       cpp::FrameBuffer(windowSize.x, windowSize.y, OSP_FB_RGBA32F, buffers);
 
@@ -416,83 +435,65 @@ void GLFWOSPRayWindow::display()
 
     waitOnOSPRayFrame();
 
-    auto fbChannel = OSP_FB_COLOR;
-    if (showDepth)
-      fbChannel = OSP_FB_DEPTH;
-    if (showAlbedo)
-      fbChannel = OSP_FB_ALBEDO;
-    if (showNormal)
-      fbChannel = OSP_FB_NORMAL;
-    if (showPrimID)
-      fbChannel = OSP_FB_ID_PRIMITIVE;
-    if (showGeomID)
-      fbChannel = OSP_FB_ID_OBJECT;
-    if (showInstID)
-      fbChannel = OSP_FB_ID_INSTANCE;
-    auto *fb = framebuffer.map(fbChannel);
+    // make a copy to prevent race condition (can be changed asynchronously)
+    const auto fbChannel = showFBChannel;
+    float *fb = (float *)framebuffer.map(fbChannel);
 
-    // Copy and normalize depth layer if showDepth is on
-    float *depthFb = static_cast<float *>(fb);
-    std::vector<float> depthCopy;
-    if (showDepth) {
-      depthCopy.assign(depthFb, depthFb + (windowSize.x * windowSize.y));
-      depthFb = depthCopy.data();
+    if (fb) {
+      std::vector<float> depthFb;
+      if (fbChannel == OSP_FB_DEPTH) {
+        // Copy and normalize depth layer
+        depthFb.assign(fb, fb + windowSize.x * windowSize.y);
 
-      float minDepth = rkcommon::math::inf;
-      float maxDepth = rkcommon::math::neg_inf;
-
-      for (int i = 0; i < windowSize.x * windowSize.y; i++) {
-        if (std::isinf(depthFb[i]))
-          continue;
-        minDepth = std::min(minDepth, depthFb[i]);
-        maxDepth = std::max(maxDepth, depthFb[i]);
+        float minDepth = rkcommon::math::inf;
+        float maxDepth = rkcommon::math::neg_inf;
+        for (float d : depthFb) {
+          if (std::isinf(d))
+            continue;
+          minDepth = std::min(minDepth, d);
+          maxDepth = std::max(maxDepth, d);
+        }
+        const float rcpDepthRange = 1.f / (maxDepth - minDepth);
+        for (float &d : depthFb)
+          d = (d - minDepth) * rcpDepthRange;
       }
-      const float rcpDepthRange = 1.f / (maxDepth - minDepth);
-
-      for (int i = 0; i < windowSize.x * windowSize.y; i++) {
-        depthFb[i] = (depthFb[i] - minDepth) * rcpDepthRange;
+      std::vector<vec3f> rgbFB(windowSize.x * windowSize.y);
+      float *fFb = reinterpret_cast<float *>(rgbFB.data());
+      if (fbChannel
+          & (OSP_FB_ID_PRIMITIVE | OSP_FB_ID_OBJECT | OSP_FB_ID_INSTANCE)) {
+        unsigned int *ids = (unsigned int *)fb;
+        for (int i = 0; i < windowSize.x * windowSize.y; i++) {
+          const unsigned int id = ids[i];
+          rgbFB[i] =
+              id == -1u ? vec3f(0.f) : rkcommon::utility::makeRandomColor(id);
+        }
       }
-    }
-    unsigned int *ids = static_cast<unsigned int *>(fb);
-    std::vector<vec3f> idFbArray(windowSize.x * windowSize.y);
-    float *idFb = reinterpret_cast<float *>(idFbArray.data());
-    if (showPrimID || showGeomID || showInstID) {
-      for (int i = 0; i < windowSize.x * windowSize.y; i++) {
-        const unsigned int id = ids[i];
-        idFbArray[i] =
-            id == -1u ? vec3f(0.f) : rkcommon::utility::makeRandomColor(id);
+      if (fbChannel & (OSP_FB_NORMAL | OSP_FB_FIRST_NORMAL | OSP_FB_POSITION)) {
+        for (int i = 0; i < windowSize.x * windowSize.y * 3; i++)
+          fFb[i] = std::abs(fb[i]);
       }
-    }
-    if (showNormal) {
-      float *nFb = static_cast<float *>(fb);
-      float *iFb = reinterpret_cast<float *>(idFbArray.data());
-      for (int i = 0; i < windowSize.x * windowSize.y * 3; i++)
-        iFb[i] = std::abs(nFb[i]);
-    }
+      if (fbChannel == OSP_FB_ALBEDO)
+        fFb = fb;
 
-    glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-    glTexImage2D(GL_TEXTURE_2D,
-        0,
-        showDepth ? GL_DEPTH_COMPONENT
-                  : ((showAlbedo || showNormal || showPrimID || showGeomID
-                         || showInstID)
-                          ? GL_RGB32F
-                          : GL_RGBA32F),
-        windowSize.x,
-        windowSize.y,
-        0,
-        showDepth ? GL_DEPTH_COMPONENT
-                  : ((showAlbedo || showNormal || showPrimID || showGeomID
-                         || showInstID)
-                          ? GL_RGB
-                          : GL_RGBA),
-        GL_FLOAT,
-        showDepth
-            ? depthFb
-            : ((showNormal || showPrimID || showGeomID || showInstID) ? idFb
-                                                                      : fb));
+      glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+      glTexImage2D(GL_TEXTURE_2D,
+          0,
+          fbChannel == OSP_FB_DEPTH
+              ? GL_DEPTH_COMPONENT
+              : (fbChannel == OSP_FB_COLOR ? GL_RGBA32F : GL_RGB32F),
+          windowSize.x,
+          windowSize.y,
+          0,
+          fbChannel == OSP_FB_DEPTH
+              ? GL_DEPTH_COMPONENT
+              : (fbChannel == OSP_FB_COLOR ? GL_RGBA : GL_RGB),
+          GL_FLOAT,
+          fbChannel == OSP_FB_DEPTH ? depthFb.data()
+                                    : (fbChannel == OSP_FB_COLOR ? fb : fFb));
 
-    framebuffer.unmap(fb);
+      framebuffer.unmap(fb);
+    } else
+      std::cerr << "Failed to map requested framebuffer channel!" << std::endl;
 
     commitOutstandingHandles();
 
@@ -627,16 +628,7 @@ void GLFWOSPRayWindow::buildUI()
     if (rendererType == OSPRayRendererType::DEBUGGER)
       whichDebuggerType = 0; // reset UI if switching away from debug renderer
 
-    if (rendererTypeStr == "scivis")
-      rendererType = OSPRayRendererType::SCIVIS;
-    else if (rendererTypeStr == "pathtracer")
-      rendererType = OSPRayRendererType::PATHTRACER;
-    else if (rendererTypeStr == "ao")
-      rendererType = OSPRayRendererType::AO;
-    else if (rendererTypeStr == "debug")
-      rendererType = OSPRayRendererType::DEBUGGER;
-    else
-      rendererType = OSPRayRendererType::OTHER;
+    rendererType = (OSPRayRendererType)whichRenderer;
 
     refreshScene();
     updateTargetFrames();
@@ -664,20 +656,11 @@ void GLFWOSPRayWindow::buildUI()
           (void *)&g_AOVs,
           g_AOVs.size())) {
     const auto &aovStr = g_AOVs[whichAOV];
-    showDepth = showAlbedo = showNormal = showPrimID = showGeomID = showInstID =
-        false;
-    if (aovStr == "depth")
-      showDepth = true;
-    if (aovStr == "albedo")
-      showAlbedo = true;
-    if (aovStr == "normal")
-      showNormal = true;
-    if (aovStr == "primID")
-      showPrimID = true;
-    if (aovStr == "objID")
-      showGeomID = true;
-    if (aovStr == "instID")
-      showInstID = true;
+    showFBChannel = g_AOVs_FB[whichAOV];
+    if (showFBChannel == OSP_FB_DEPTH) {
+      framebuffer.setParam("projectedDepth", aovStr == "projectedDepth");
+      addObjectToCommit(framebuffer.handle());
+    }
   }
 
   ImGui::Separator();

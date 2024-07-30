@@ -23,6 +23,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 static void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
+    const Camera *uniform camera,
     World *uniform world,
     varying ScreenSample &sample,
     const uniform FeatureFlagsHandler &ffh)
@@ -133,6 +134,17 @@ static void SciVis_renderSample(Renderer *uniform _self,
           outColor + outTransmission * evaluateLights(world, dg, ray, ffh);
     }
 
+    // Write first hit depth
+    if (firstHit || allHitsFullyTransmissive) {
+#ifdef OSPRAY_ENABLE_VOLUMES
+      sample.z = min(ray.t, volumeRay.t);
+#else
+      sample.z = ray.t;
+#endif
+      if (fb->projectedDepth)
+        sample.z *= dot(ray.dir, camera->direction);
+    }
+
     // If any geometry has been hit
     const bool rayHadHit = hadHit(ray);
     if (ff.geometry && rayHadHit) {
@@ -156,15 +168,14 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // transmissive hits will lead the normal/albedo to be replaced by the
       // current hit
       if (firstHit || allHitsFullyTransmissive) {
-#ifdef OSPRAY_ENABLE_VOLUMES
-        sample.z = min(ray.t, volumeRay.t);
-#endif
-        sample.albedo = surfaceShading.albedo;
+        sample.position = dg.P;
+        sample.firstNormal = dg.Ns;
         sample.normal = dg.Ns;
+        sample.albedo = surfaceShading.albedo;
         if (sample.geomID == RTC_INVALID_GEOMETRY_ID) {
           sample.instID = dg.instID;
           sample.geomID = dg.objID;
-          sample.primID = ray.primID;
+          sample.primID = dg.primID;
         }
         firstHit = false;
       }
@@ -195,17 +206,6 @@ static void SciVis_renderSample(Renderer *uniform _self,
           Renderer_getBackground(&self->super, sample.pos, ffh);
       outColor = outColor + outTransmission * make_vec3f(backgroundColor);
       outTransmission = outTransmission * (1.f - backgroundColor.w);
-
-      // Initialize other per sample data with first hit values
-      // If the ray hits the background and comes from a fully transmissive
-      // path, we overwrite normals/albedo by background values
-      if (firstHit || allHitsFullyTransmissive) {
-#ifdef OSPRAY_ENABLE_VOLUMES
-        sample.z = min(ray.t, volumeRay.t);
-#endif
-        sample.albedo = make_vec3f(backgroundColor); // TODO volume albedo
-        sample.normal = make_vec3f(0.f);
-      }
 
       // No more intersections
       break;

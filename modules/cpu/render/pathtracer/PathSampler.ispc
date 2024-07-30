@@ -130,6 +130,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
   ShadingContext_Constructor(&ctx);
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
+  sample.alpha = 1.0f;
+
   if (pathContext.context->shadowCatcher) {
     const Hit hit = intersectPlane(
         ray.org, ray.dir, pathContext.context->shadowCatcherPlane);
@@ -184,7 +186,9 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     // record depth of primary rays
     if (pathState.depth == 0)
-      sample.z = ray.t;
+      sample.z = pathContext.projectedDepth
+          ? ray.t * dot(ray.dir, pathContext.cameraDir)
+          : ray.t;
 
     // background handling
     if (pathVertex.type == ENVIRONMENT
@@ -239,6 +243,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     // record IDs of primary rays
     if (pathState.depth == 0) {
+      sample.position = pathVertex.dg.P;
+      sample.firstNormal = pathVertex.dg.Ns;
       sample.primID = pathVertex.dg.primID;
       sample.geomID = pathVertex.dg.objID;
       sample.instID = pathVertex.dg.instID;

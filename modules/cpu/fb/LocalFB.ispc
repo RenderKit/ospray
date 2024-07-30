@@ -3,10 +3,11 @@
 
 #include "FrameBuffer.ih"
 #include "RenderTaskDesc.ih"
-#include "Tile.ih"
 #include "render/ScreenSample.ih"
+#include "rkcommon/math/box.ih"
 // c++ shared
 #include "LocalFBShared.h"
+#include "TileShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -35,38 +36,41 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
         fb->varianceBuffer[pixelID], colorSample, accVarScale);
   }
 
-  // Accumulate depth buffer
+  // Accumulate depth buffer and IDs
+  bool updateIDBufs = accumID == 0;
   if (fb->depthBuffer) {
-    float depth = screenSample.z;
-    if (accumID > 0)
-      depth = min(fb->depthBuffer[pixelID], screenSample.z);
-    fb->depthBuffer[pixelID] = depth;
+    if (accumID > 0 && abs(screenSample.z) < abs(fb->depthBuffer[pixelID]))
+      updateIDBufs = true;
+    if (updateIDBufs)
+      fb->depthBuffer[pixelID] = screenSample.z;
   }
 
-  // Accumulate normal buffer
+  if (updateIDBufs) {
+    if (fb->primitiveIDBuffer)
+      fb->primitiveIDBuffer[pixelID] = screenSample.primID;
+
+    if (fb->objectIDBuffer)
+      fb->objectIDBuffer[pixelID] = screenSample.geomID;
+
+    if (fb->instanceIDBuffer)
+      fb->instanceIDBuffer[pixelID] = screenSample.instID;
+  }
+
   if (fb->normalBuffer)
     FRAMEBUFFER_ACCUMULATE_VALUE(
         fb->normalBuffer[pixelID], screenSample.normal, accScale);
 
-  // Accumulate albedo buffer
+  if (fb->firstNormalBuffer)
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->firstNormalBuffer[pixelID], screenSample.firstNormal, accScale);
+
   if (fb->albedoBuffer)
     FRAMEBUFFER_ACCUMULATE_VALUE(
         fb->albedoBuffer[pixelID], screenSample.albedo, accScale);
 
-  if (fb->primitiveIDBuffer) {
-    if (accumID == 0)
-      fb->primitiveIDBuffer[pixelID] = screenSample.primID;
-  }
-
-  if (fb->objectIDBuffer) {
-    if (accumID == 0)
-      fb->objectIDBuffer[pixelID] = screenSample.geomID;
-  }
-
-  if (fb->instanceIDBuffer) {
-    if (accumID == 0)
-      fb->instanceIDBuffer[pixelID] = screenSample.instID;
-  }
+  if (fb->positionBuffer)
+    FRAMEBUFFER_ACCUMULATE_VALUE(
+        fb->positionBuffer[pixelID], screenSample.position, accScale);
 
 #ifndef OSPRAY_TARGET_SYCL
   FrameBuffer_updateProgress(&fb->super, popcnt(lanemask()));

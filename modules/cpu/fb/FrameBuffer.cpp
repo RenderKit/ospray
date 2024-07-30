@@ -41,6 +41,8 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
       hasVarianceBuffer((channels & OSP_FB_COLOR)
           && (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
       hasNormalBuffer(channels & OSP_FB_NORMAL),
+      hasFirstNormalBuffer(channels & OSP_FB_FIRST_NORMAL),
+      hasPositionBuffer(channels & OSP_FB_POSITION),
       hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
       hasPrimitiveIDBuffer(channels & OSP_FB_ID_PRIMITIVE),
       hasObjectIDBuffer(channels & OSP_FB_ID_OBJECT),
@@ -85,6 +87,7 @@ void FrameBuffer::commit()
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
   // always query `targetFrames` to clear query status
   getSh()->targetFrames = max(0, getParam<int>("targetFrames", 0));
+  getSh()->projectedDepth = getParam<bool>("projectedDepth", false);
   if (!doAccum)
     getSh()->targetFrames = 1;
 }

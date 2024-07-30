@@ -37,6 +37,7 @@ struct Camera
   CameraType type;
   Camera_initRay initRay; // the 'virtual' initRay() method
 
+  vec3f direction; // main direction, normalized, for FB projectedDepth channel
   float nearClip;
   box2f subImage; // viewable tile / subrange to compute, in [0..1]^2 x [0..1]^2
   range1f shutter; // camera shutter open start and end time, in [0..1]

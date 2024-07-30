@@ -66,6 +66,12 @@ struct OSPRAY_SDK_INTERFACE Tile
   uniform uint32 pid[TILE_SIZE * TILE_SIZE]; // primID
   uniform uint32 gid[TILE_SIZE * TILE_SIZE]; // objID
   uniform uint32 iid[TILE_SIZE * TILE_SIZE]; // instanceID
+  uniform float px[TILE_SIZE * TILE_SIZE]; // position x
+  uniform float py[TILE_SIZE * TILE_SIZE]; // position y
+  uniform float pz[TILE_SIZE * TILE_SIZE]; // position z
+  uniform float n1x[TILE_SIZE * TILE_SIZE]; // first normal x
+  uniform float n1y[TILE_SIZE * TILE_SIZE]; // first normal y
+  uniform float n1z[TILE_SIZE * TILE_SIZE]; // first normal z
 
 #ifdef __cplusplus
   Tile()
@@ -116,6 +122,12 @@ struct VaryingTile
   varying uint32 pid[TILE_SIZE * TILE_SIZE / programCount]; // primID
   varying uint32 gid[TILE_SIZE * TILE_SIZE / programCount]; // objID
   varying uint32 iid[TILE_SIZE * TILE_SIZE / programCount]; // instanceID
+  varying float px[TILE_SIZE * TILE_SIZE / programCount]; // position x
+  varying float py[TILE_SIZE * TILE_SIZE / programCount]; // position y
+  varying float pz[TILE_SIZE * TILE_SIZE / programCount]; // position z
+  varying float n1x[TILE_SIZE * TILE_SIZE / programCount]; // first normal x
+  varying float n1y[TILE_SIZE * TILE_SIZE / programCount]; // first normal y
+  varying float n1z[TILE_SIZE * TILE_SIZE / programCount]; // first normal z
 };
 #endif
 

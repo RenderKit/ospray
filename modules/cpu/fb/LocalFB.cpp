@@ -51,11 +51,11 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
     : AddStructShared(device.getDRTDevice(),
-        device,
-        _size,
-        _colorBufferFormat,
-        channels,
-        FFO_FB_LOCAL),
+          device,
+          _size,
+          _colorBufferFormat,
+          channels,
+          FFO_FB_LOCAL),
       device(device),
       numRenderTasks(divRoundUp(size, getRenderTaskSize()))
 {
@@ -84,6 +84,14 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     varianceFrameOp = rkcommon::make_unique<LiveVarianceFrameOp>(
         device.getDRTDevice(), fbv, varianceBuffer->devicePtr());
   }
+
+  if (hasPositionBuffer)
+    positionBuffer = devicert::make_buffer_device_shadowed_unique<vec3f>(
+        device.getDRTDevice(), numPixels);
+
+  if (hasFirstNormalBuffer)
+    firstNormalBuffer = devicert::make_buffer_device_shadowed_unique<vec3f>(
+        device.getDRTDevice(), numPixels);
 
   if (hasNormalBuffer)
     normalBuffer = devicert::make_buffer_device_shadowed_unique<vec3f>(
@@ -157,6 +165,10 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
       varianceBuffer ? varianceBuffer->devicePtr() : nullptr;
   getSh()->depthBuffer = depthBuffer ? depthBuffer->devicePtr() : nullptr;
   getSh()->normalBuffer = normalBuffer ? normalBuffer->devicePtr() : nullptr;
+  getSh()->firstNormalBuffer =
+      firstNormalBuffer ? firstNormalBuffer->devicePtr() : nullptr;
+  getSh()->positionBuffer =
+      positionBuffer ? positionBuffer->devicePtr() : nullptr;
   getSh()->albedoBuffer = albedoBuffer ? albedoBuffer->devicePtr() : nullptr;
   getSh()->numRenderTasks = numRenderTasks;
   getSh()->primitiveIDBuffer =
@@ -324,6 +336,24 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
           tile->ny,
           tile->nz);
     }
+
+    if (hasFirstNormalBuffer) {
+      ispc::LocalFrameBuffer_writeAuxTile(getSh(),
+          tile,
+          (ispc::vec3f *)firstNormalBuffer->data(),
+          tile->n1x,
+          tile->n1y,
+          tile->n1z);
+    }
+
+    if (hasPositionBuffer) {
+      ispc::LocalFrameBuffer_writeAuxTile(getSh(),
+          tile,
+          (ispc::vec3f *)positionBuffer->data(),
+          tile->px,
+          tile->py,
+          tile->pz);
+    }
   });
 
 #else
@@ -331,12 +361,6 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
   const size_t numTasks = tiles.size();
   const Tile *tilesPtr = tiles.data();
   const int colorFormat = getColorBufferFormat();
-  vec3f *albedoBufferPtr = fbSh->super.channels & OSP_FB_ALBEDO
-      ? albedoBuffer->devicePtr()
-      : nullptr;
-  vec3f *normalBufferPtr = fbSh->super.channels & OSP_FB_NORMAL
-      ? normalBuffer->devicePtr()
-      : nullptr;
   sycl::queue *queue =
       static_cast<sycl::queue *>(device.getDRTDevice().getSyclQueuePtr());
   queue
@@ -354,7 +378,7 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
             }
             if (fbSh->super.channels & OSP_FB_ALBEDO) {
               ispc::LocalFrameBuffer_writeAuxTile(
-                  fbSh, tile, albedoBufferPtr, tile->ar, tile->ag, tile->ab);
+                  fbSh, tile, fbSh->albedoBuffer, tile->ar, tile->ag, tile->ab);
             }
             if (fbSh->super.channels & OSP_FB_ID_PRIMITIVE) {
               ispc::LocalFrameBuffer_writeIDTile(
@@ -370,7 +394,23 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
             }
             if (fbSh->super.channels & OSP_FB_NORMAL) {
               ispc::LocalFrameBuffer_writeAuxTile(
-                  fbSh, tile, normalBufferPtr, tile->nx, tile->ny, tile->nz);
+                  fbSh, tile, fbSh->normalBuffer, tile->nx, tile->ny, tile->nz);
+            }
+            if (fbSh->super.channels & OSP_FB_FIRST_NORMAL) {
+              ispc::LocalFrameBuffer_writeAuxTile(fbSh,
+                  tile,
+                  fbSh->firstNormalBuffer,
+                  tile->n1x,
+                  tile->n1y,
+                  tile->n1z);
+            }
+            if (fbSh->super.channels & OSP_FB_POSITION) {
+              ispc::LocalFrameBuffer_writeAuxTile(fbSh,
+                  tile,
+                  fbSh->positionBuffer,
+                  tile->px,
+                  tile->py,
+                  tile->pz);
             }
           }
         });
@@ -465,6 +505,10 @@ const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
     buf = copyToHost(*depthBuffer);
   } else if ((channel == OSP_FB_NORMAL) && (normalBuffer)) {
     buf = copyToHost(*normalBuffer);
+  } else if ((channel == OSP_FB_FIRST_NORMAL) && (firstNormalBuffer)) {
+    buf = copyToHost(*firstNormalBuffer);
+  } else if ((channel == OSP_FB_POSITION) && (positionBuffer)) {
+    buf = copyToHost(*positionBuffer);
   } else if ((channel == OSP_FB_ALBEDO) && (albedoBuffer)) {
     buf = copyToHost(*albedoBuffer);
   } else if ((channel == OSP_FB_ID_PRIMITIVE) && (primitiveIDBuffer)) {

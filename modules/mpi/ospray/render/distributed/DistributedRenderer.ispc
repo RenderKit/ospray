@@ -19,7 +19,6 @@
 #include "geometry/BoxesShared.h"
 #include "geometry/GeometryDispatch.ih"
 #include "math/random.ih"
-#include "render/ScreenSample.ih"
 #include "rkcommon/utility/random.ih"
 #include "texture/Texture2D.ih"
 // c++ shared

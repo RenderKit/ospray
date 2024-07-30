@@ -15,12 +15,13 @@
 using namespace rkcommon::math;
 using namespace ospray;
 
+// matches index in g_renderers
 enum class OSPRayRendererType
 {
-  SCIVIS,
-  PATHTRACER,
-  AO,
-  DEBUGGER,
+  SCIVIS = 0,
+  PATHTRACER = 1,
+  AO = 2,
+  DEBUGGER = 3,
   OTHER
 };
 
@@ -62,15 +63,11 @@ class GLFWOSPRayWindow
   bool denoiserAvailable{false};
   bool updateFrameOpsNextFrame{false};
   bool denoiserEnabled{false};
-  bool showAlbedo{false};
-  bool showNormal{false};
-  bool showDepth{false};
-  bool showPrimID{false};
-  bool showGeomID{false};
-  bool showInstID{false};
   bool renderSunSky{false};
   bool cancelFrameOnInteraction{false};
   bool showUnstructuredCells{false};
+
+  OSPFrameBufferChannel showFBChannel{OSP_FB_COLOR};
 
   // GLFW window instance
   GLFWwindow *glfwWindow = nullptr;

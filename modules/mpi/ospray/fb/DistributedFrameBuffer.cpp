@@ -120,8 +120,7 @@ void DFB::startNewFrame(const float errorThreshold)
         "startFrame::reserveTileGatherBuf", "DFB"));
     // Allocate a conservative upper bound of space which we'd need to
     // store the compressed tiles
-    const size_t uncompressedSize = masterMsgSize(
-        hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer, hasIDBuf());
+    const size_t uncompressedSize = sizeof(MasterTileMessage_FB);
     const size_t compressedSize = snappy::MaxCompressedLength(uncompressedSize);
     tileGatherBuffer.resize(myTiles.size() * compressedSize, 0);
     RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
@@ -237,8 +236,10 @@ void DistributedFrameBuffer::setSparseFBLayerCount(size_t numLayers)
           getISPCDevice(), size, getColorBufferFormat(), channelFlags);
     }
   }
-  for (auto &l : layers)
+  for (auto &l : layers) {
     l->getSh()->super.targetFrames = getSh()->targetFrames;
+    l->getSh()->super.projectedDepth = getSh()->projectedDepth;
+  }
 }
 
 size_t DistributedFrameBuffer::getSparseLayerCount() const
@@ -295,12 +296,10 @@ void DFB::createTiles()
   // Allocate the sparse fb for the tiles we own
   uint32 channels = OSP_FB_DEPTH;
   // Accum and variance are not done in the sparse FB for the DFB
-  if (hasNormalBuf()) {
-    channels |= OSP_FB_NORMAL;
-  }
-  if (hasAlbedoBuf()) {
-    channels |= OSP_FB_ALBEDO;
-  }
+  channels |= hasNormalBuffer & OSP_FB_NORMAL;
+  channels |= hasAlbedoBuffer & OSP_FB_ALBEDO;
+  channels |= hasFirstNormalBuffer & OSP_FB_FIRST_NORMAL;
+  channels |= hasPositionBuffer & OSP_FB_POSITION;
 
   if (layers.empty()) {
     layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(
@@ -383,7 +382,7 @@ void DFB::waitUntilFinished()
       rkcommon::tracing::beginEvent("finalGather", "DFB"));
   if (colorBufferFormat != OSP_FB_NONE) {
     gatherFinalTiles();
-  } else if (hasVarianceBuf()) {
+  } else if (hasVarianceBuffer) {
     gatherFinalErrors();
   }
   RKCOMMON_IF_TRACING_ENABLED(rkcommon::tracing::endEvent());
@@ -392,8 +391,7 @@ void DFB::waitUntilFinished()
 void DFB::processMessage(WriteTileMessage *msg)
 {
   ispc::Tile tile;
-  unpackWriteTileMessage(
-      msg, tile, hasNormalBuffer || hasAlbedoBuffer || hasIDBuf());
+  unpackWriteTileMessage(msg, tile);
 
   auto *tileDesc = this->getTileDescFor(tile.region.lower);
   LiveTileOperation *td = (LiveTileOperation *)tileDesc;
@@ -410,48 +408,6 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB *msg)
   }
 
   vec2i numPixels = getNumPixels();
-
-  MasterTileMessage_FB_Depth *depth = nullptr;
-  if (hasDepthBuffer && msg->command & MASTER_TILE_HAS_DEPTH) {
-    depth = reinterpret_cast<MasterTileMessage_FB_Depth *>(msg);
-  }
-
-  MasterTileMessage_FB_Depth_Aux *aux = nullptr;
-  if (msg->command & MASTER_TILE_HAS_AUX)
-    aux = reinterpret_cast<MasterTileMessage_FB_Depth_Aux *>(msg);
-
-  uint32 *pidBuf = nullptr;
-  uint32 *gidBuf = nullptr;
-  uint32 *iidBuf = nullptr;
-  // TODO: Make the rest of the tile more dynamically sized and use a buffer
-  // cursor style to get the pointers to the individual tile components
-  if (msg->command & MASTER_TILE_HAS_ID) {
-    // The ID buffer data comes at the end of the tile message
-    uint8 *data = reinterpret_cast<uint8 *>(msg);
-    if (!aux) {
-      if (depth) {
-        data += sizeof(MasterTileMessage_FB_Depth);
-      } else {
-        data += sizeof(MasterTileMessage_FB);
-      }
-    } else {
-      data += sizeof(MasterTileMessage_FB_Depth_Aux);
-    }
-    // All IDs are sent if any were requested, however we need to write only the
-    // ones that actually exist in the local FB since it doesn't allocate
-    // buffers for the non-existent channels
-    if (hasPrimitiveIDBuffer) {
-      pidBuf = reinterpret_cast<uint32 *>(data);
-    }
-    if (hasObjectIDBuffer) {
-      gidBuf = reinterpret_cast<uint32 *>(
-          data + sizeof(uint32) * TILE_SIZE * TILE_SIZE);
-    }
-    if (hasInstanceIDBuffer) {
-      iidBuf = reinterpret_cast<uint32 *>(
-          data + 2 * sizeof(uint32) * TILE_SIZE * TILE_SIZE);
-    }
-  }
 
   // TODO: Here we're just accessing the local fb on the host, but have it
   // allocated in USM. Will work, but maybe wasting some USM space?
@@ -473,29 +429,33 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB *msg)
       if (color) {
         color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
       }
-      if (depth) {
+      if (hasDepthBuffer) {
         (*localFBonMaster->depthBuffer)[iix + iiy * numPixels.x] =
-            depth->depth[ix + iy * TILE_SIZE];
+            msg->tile.z[ix + iy * TILE_SIZE];
       }
-      if (aux) {
-        if (hasNormalBuffer)
-          (*localFBonMaster->normalBuffer)[iix + iiy * numPixels.x] =
-              aux->normal[ix + iy * TILE_SIZE];
-        if (hasAlbedoBuffer)
-          (*localFBonMaster->albedoBuffer)[iix + iiy * numPixels.x] =
-              aux->albedo[ix + iy * TILE_SIZE];
-      }
-      if (pidBuf) {
+      if (hasPositionBuffer)
+        (*localFBonMaster->positionBuffer)[iix + iiy * numPixels.x] =
+            ((vec3f *)msg->tile.px)[ix + iy * TILE_SIZE];
+      if (hasFirstNormalBuffer)
+        (*localFBonMaster->firstNormalBuffer)[iix + iiy * numPixels.x] =
+            ((vec3f *)msg->tile.n1x)[ix + iy * TILE_SIZE];
+      if (hasNormalBuffer)
+        (*localFBonMaster->normalBuffer)[iix + iiy * numPixels.x] =
+            ((vec3f *)msg->tile.nx)[ix + iy * TILE_SIZE];
+      if (hasAlbedoBuffer)
+        (*localFBonMaster->albedoBuffer)[iix + iiy * numPixels.x] =
+            ((vec3f *)msg->tile.ar)[ix + iy * TILE_SIZE];
+      if (hasPrimitiveIDBuffer) {
         (*localFBonMaster->primitiveIDBuffer)[iix + iiy * numPixels.x] =
-            pidBuf[ix + iy * TILE_SIZE];
+            msg->tile.pid[ix + iy * TILE_SIZE];
       }
-      if (gidBuf) {
+      if (hasObjectIDBuffer) {
         (*localFBonMaster->objectIDBuffer)[iix + iiy * numPixels.x] =
-            gidBuf[ix + iy * TILE_SIZE];
+            msg->tile.gid[ix + iy * TILE_SIZE];
       }
-      if (iidBuf) {
+      if (hasInstanceIDBuffer) {
         (*localFBonMaster->instanceIDBuffer)[iix + iiy * numPixels.x] =
-            iidBuf[ix + iy * TILE_SIZE];
+            msg->tile.iid[ix + iy * TILE_SIZE];
       }
     }
   }
@@ -517,19 +477,9 @@ void DFB::tileIsFinished(LiveTileOperation *tile)
     DFB_writeTile((ispc::VaryingTile *)&tile->finished, &tile->color);
 
   auto msg = [&] {
-    MasterTileMessageBuilder msg(hasDepthBuffer,
-        hasNormalBuffer,
-        hasAlbedoBuffer,
-        hasIDBuf(),
-        tile->begin,
-        tile->error);
+    MasterTileMessageBuilder msg(tile->begin, tile->error);
     msg.setColor(tile->color);
-    msg.setDepth(tile->finished.z);
-    msg.setNormal((vec3f *)tile->finished.nx);
-    msg.setAlbedo((vec3f *)tile->finished.ar);
-    msg.setPrimitiveID(tile->finished.pid);
-    msg.setObjectID(tile->finished.gid);
-    msg.setInstanceID(tile->finished.iid);
+    msg.setTile(&tile->finished);
     return msg;
   };
 
@@ -643,8 +593,7 @@ void DFB::gatherFinalTiles()
   RKCOMMON_IF_TRACING_ENABLED(
       rkcommon::tracing::beginEvent("preGatherComputeStart", "DFB"));
 
-  const size_t tileSize = masterMsgSize(
-      hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer, hasIDBuf());
+  const size_t tileSize = sizeof(MasterTileMessage_FB);
 
   const int totalTilesExpected =
       std::accumulate(numTilesExpected.begin(), numTilesExpected.end(), 0);
@@ -835,10 +784,9 @@ void DFB::setTile(const ispc::Tile &tile)
 {
   auto *tileDesc = this->getTileDescFor(tile.region.lower);
 
-  // Note my tile, send to the owner
+  // Not my tile, send to the owner
   if (!tileDesc->mine()) {
-    auto msg = makeWriteTileMessage(
-        tile, hasNormalBuffer || hasAlbedoBuffer || hasIDBuf());
+    auto msg = makeWriteTileMessage(tile);
 
     int dstRank = tileDesc->ownerID;
     mpi::messaging::sendTo(dstRank, myId, msg);

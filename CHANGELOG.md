@@ -1,6 +1,17 @@
 Version History
 ---------------
 
+### Changes in v3.3.0:
+
+-   Add more framebuffer channels and options:
+    - Parameter `bool projectedDepth` to switch from euclidean to
+      projected distance for channel `OSP_FB_DEPTH` (often the distance
+      to the image plane, or simply depth)
+    - Channel `OSP_FB_FIRST_NORMAL` holds the world-space normal of the
+      *first* hit (as opposed to `OSP_FB_NORMAL`, which holds the normal
+      of the first *non-specular* hit for denoising)
+    - Channel `OSP_FB_POSITION` holds the world-space position of the first hit
+
 ### Changes in v3.2.0:
 
 -   Sampling improvements:

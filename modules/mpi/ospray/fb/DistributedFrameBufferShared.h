@@ -28,6 +28,10 @@ void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
     void *uniform _final,
     VaryingTile *uniform accum);
 
+void DFB_accumulateAOVTile(const VaryingTile *uniform tile,
+    void *uniform _final,
+    VaryingTile *uniform accum);
+
 export uniform float DFB_computeErrorForTile(
     const uniform int *uniform const size_, // vec2i
     const VaryingTile *uniform accum,

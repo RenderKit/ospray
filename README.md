@@ -3012,17 +3012,19 @@ The parameter `frameBufferChannels` specifies which channels the
 framebuffer holds, and can be combined together by bitwise OR from the
 values of `OSPFrameBufferChannel` listed in the table below.
 
-| Name                | Description                                                                                                                                |
-|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------|
-| OSP_FB_COLOR        | RGB color including alpha                                                                                                                  |
-| OSP_FB_DEPTH        | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float; for multiple samples per pixel their minimum is taken |
-| OSP_FB_ACCUM        | accumulation buffer for progressive refinement                                                                                             |
-| OSP_FB_VARIANCE     | for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering](#rendering)                                     |
-| OSP_FB_NORMAL       | accumulated world-space normal of the first non-specular hit, as vec3f                                                                     |
-| OSP_FB_ALBEDO       | accumulated material albedo (color without illumination) at the first non-specular hit, as vec3f                                           |
-| OSP_FB_ID_PRIMITIVE | primitive index of the first hit, as uint32                                                                                                |
-| OSP_FB_ID_OBJECT    | geometric/volumetric model `id`, if specified, or index in [group](#groups) of first hit, as uint32                                        |
-| OSP_FB_ID_INSTANCE  | user defined [instance](#instances) `id`, if specified, or instance index of first hit, as uint32                                          |
+| Name                | Description                                                                                                                                                                     |
+|:--------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSP_FB_COLOR        | RGB color including alpha                                                                                                                                                       |
+| OSP_FB_DEPTH        | distance to the camera, as linear 32 bit float; euclidean or projected distance is selected via parameter `projectedDepth`; for multiple samples per pixel the closest is taken |
+| OSP_FB_ACCUM        | accumulation buffer for progressive refinement                                                                                                                                  |
+| OSP_FB_VARIANCE     | for estimation of the current noise level if `OSP_FB_ACCUM` is also present, see [rendering](#rendering)                                                                        |
+| OSP_FB_FIRST_NORMAL | accumulated world-space normal of the *first* hit, as vec3f                                                                                                                     |
+| OSP_FB_NORMAL       | accumulated world-space normal of the first *non-specular* hit (for denoising), as vec3f                                                                                        |
+| OSP_FB_ALBEDO       | accumulated material albedo (color without illumination) at the first non-specular hit (for denoising), as vec3f                                                                |
+| OSP_FB_POSITION     | accumulated world-space position of the first hit, as vec3f                                                                                                                     |
+| OSP_FB_ID_PRIMITIVE | primitive index of the first hit, as uint32                                                                                                                                     |
+| OSP_FB_ID_OBJECT    | geometric/volumetric model `id`, if specified, or index in [group](#groups) of first hit, as uint32                                                                             |
+| OSP_FB_ID_INSTANCE  | user defined [instance](#instances) `id`, if specified, or instance index of first hit, as uint32                                                                               |
 
 Framebuffer channels constants (of type `OSPFrameBufferChannel`), naming
 optional information the framebuffer can store. These values can be
@@ -3094,10 +3096,11 @@ The framebuffer takes a list of pixel operations to be applied to the
 image in sequence as an `OSPData`. The pixel operations will be run in
 the order they are in the array.
 
-| Type                  | Name           | Description                                                                                                                                                                                                                  |
-|:----------------------|:---------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| OSPImageOperation\[\] | imageOperation | ordered sequence of image operations                                                                                                                                                                                         |
-| int                   | targetFrames   | anticipated number of frames that will be accumulated for progressive refinement, used renderers to generate a blue noise sampling pattern; should be a power of 2, is always 1 without `OSP_FB_ACCUM`; default 0 (disabled) |
+| Type                  | Name           | Description                                                                                                                                                                                                                                                                                                                              |
+|:----------------------|:---------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPImageOperation\[\] | imageOperation | ordered sequence of image operations                                                                                                                                                                                                                                                                                                     |
+| int                   | targetFrames   | anticipated number of frames that will be accumulated for progressive refinement, used renderers to generate a blue noise sampling pattern; should be a power of 2, is always 1 without `OSP_FB_ACCUM`; default 0 (disabled)                                                                                                             |
+| bool                  | projectedDepth | whether channel `OSP_FB_DEPTH` should hold the projected distance onto the main camera direction (which is the distance to the image plane for [perspective camera](#perspective-camera) and [orthographic camera](#orthographic-camera), can be negative for [panoramic camera](#panoramic-camera)), default false (euclidean distance) |
 
 Parameters accepted by the framebuffer.
 

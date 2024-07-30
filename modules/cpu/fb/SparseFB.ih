@@ -3,9 +3,10 @@
 
 #pragma once
 
-#include "fb/Tile.ih"
+#include "rkcommon/math/box.ih"
 // c++ shared
 #include "SparseFBShared.h"
+#include "TileShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
