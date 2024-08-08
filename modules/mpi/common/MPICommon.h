@@ -51,6 +51,7 @@ struct OSPRAY_MPI_COMMON_EXPORT Group
   /*! constructor. sets the 'comm', 'rank', and 'size' fields */
   Group(MPI_Comm initComm = MPI_COMM_NULL);
   Group(const Group &other);
+  Group &operator=(const Group &) = default;
 
   inline bool valid() const
   {

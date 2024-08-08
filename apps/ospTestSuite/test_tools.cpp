@@ -122,6 +122,7 @@ template <typename T>
 OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(const T *testImage,
     const T *baselineImage,
     const std::string &baselineName,
+    const bool writeImages,
     const float pixelConversionFactor)
 {
   bool notPerfect = false;
@@ -171,7 +172,7 @@ OsprayStatus OSPImageTools::compareImgWithBaselineTmpl(const T *testImage,
   }
 
   bool failed = meanError > errorRate;
-  if (failed) {
+  if (failed && writeImages) {
     writeImg(
         ospEnv->GetFailedDir() + "/" + imgName + "_baseline", baselineImage);
     writeImg(ospEnv->GetFailedDir() + "/" + imgName + "_rendered", testImage);
@@ -226,41 +227,59 @@ vec4f *loadPF4(std::string fileName, int &sizeX, int &sizeY)
 // compare the baseline image with the values form the framebuffer
 OsprayStatus OSPImageTools::compareImgWithBaseline(const void *testImage)
 {
-  std::string baselineName =
-      ospEnv->GetBaselineDir() + "/" + imgName + GetFileFormat();
+  const std::string baselineNameBase = ospEnv->GetBaselineDir() + "/" + imgName;
+  std::string nextCandidate = baselineNameBase + GetFileFormat();
+  int candidate = 0;
+  struct stat buffer; // for file check
   stbi_set_flip_vertically_on_load(true);
-
   int dataX, dataY, dataN;
   OsprayStatus compErr = OsprayStatus::Error;
-  if (GetFileFormat() == ".png") {
-    vec4uc *baselineImage = (vec4uc *)stbi_load(
-        baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
-    compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
-    if (compErr == OsprayStatus::Ok)
-      compErr = compareImgWithBaselineTmpl<vec4uc>(
-          (vec4uc *)testImage, baselineImage, baselineName);
-    if (baselineImage)
-      stbi_image_free(baselineImage);
-  } else if (GetFileFormat() == ".hdr") {
-    vec4f *baselineImage = (vec4f *)stbi_loadf(
-        baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
-    compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
-    if (compErr == OsprayStatus::Ok)
-      compErr = compareImgWithBaselineTmpl<vec4f>(
-          (vec4f *)testImage, baselineImage, baselineName, 255.0f);
-    if (baselineImage)
-      stbi_image_free(baselineImage);
-  } else if (GetFileFormat() == ".pfm") {
-    vec4f *baselineImage = loadPF4(baselineName, dataX, dataY);
-    compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
-    if (compErr == OsprayStatus::Ok)
-      compErr = compareImgWithBaselineTmpl<vec4f>(
-          (vec4f *)testImage, baselineImage, baselineName, 255.0f);
-    if (baselineImage)
-      delete[] baselineImage;
-  } else {
-    std::cerr << "Unsupported file format" << std::endl;
-    compErr = OsprayStatus::Error;
+  bool lastCandidate = false;
+
+  while (compErr != OsprayStatus::Ok && !lastCandidate) {
+    const std::string baselineName = nextCandidate;
+    // look ahead for a next candidate, otherwise write diff images on failure
+    nextCandidate =
+        baselineNameBase + "_v" + std::to_string(++candidate) + GetFileFormat();
+    lastCandidate = stat(nextCandidate.c_str(), &buffer) == -1;
+
+    if (GetFileFormat() == ".png") {
+      vec4uc *baselineImage = (vec4uc *)stbi_load(
+          baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
+      compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
+      if (compErr == OsprayStatus::Ok)
+        compErr = compareImgWithBaselineTmpl<vec4uc>(
+            (vec4uc *)testImage, baselineImage, baselineName, lastCandidate);
+      if (baselineImage)
+        stbi_image_free(baselineImage);
+    } else if (GetFileFormat() == ".hdr") {
+      vec4f *baselineImage = (vec4f *)stbi_loadf(
+          baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
+      compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
+      if (compErr == OsprayStatus::Ok)
+        compErr = compareImgWithBaselineTmpl<vec4f>((vec4f *)testImage,
+            baselineImage,
+            baselineName,
+            lastCandidate,
+            255.0f);
+      if (baselineImage)
+        stbi_image_free(baselineImage);
+    } else if (GetFileFormat() == ".pfm") {
+      vec4f *baselineImage = loadPF4(baselineName, dataX, dataY);
+      compErr = verifyBaselineImage(dataX, dataY, baselineImage, baselineName);
+      if (compErr == OsprayStatus::Ok)
+        compErr = compareImgWithBaselineTmpl<vec4f>((vec4f *)testImage,
+            baselineImage,
+            baselineName,
+            lastCandidate,
+            255.0f);
+      if (baselineImage)
+        delete[] baselineImage;
+    } else {
+      std::cerr << "Unsupported file format" << std::endl;
+      compErr = OsprayStatus::Error;
+    }
   }
+
   return compErr;
 }

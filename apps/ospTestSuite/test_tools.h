@@ -71,6 +71,7 @@ class OSPImageTools
   OsprayStatus compareImgWithBaselineTmpl(const T *testImage,
       const T *baselineImage,
       const std::string &baselineName,
+      const bool writeImages,
       const float pixelConversionFactor = 1.0f);
 
  public:

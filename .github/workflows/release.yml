@@ -207,7 +207,7 @@ jobs:
         module load cmake/3.15.2
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE
       artifact-in: release-linux
 
   test-rocky-mpi-cpu:
@@ -220,7 +220,7 @@ jobs:
         module load mpi/mpich-x86_64
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX SKIP_CPU TEST_MPI
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE SKIP_CPU TEST_MPI
       artifact-in: release-linux
 
   test-ubuntu-oidnsycl:
@@ -241,7 +241,7 @@ jobs:
         export OIDN_VERBOSE=2
         mkdir build_regression_tests
         cd build_regression_tests
-        cmake -G Ninja -D OSPRAY_TEST_ISA=AVX2 $GITHUB_WORKSPACE/test_image_data
+        cmake -G Ninja $GITHUB_WORKSPACE/test_image_data
         cmake --build . --target ospray_test_data
         ospTestSuite --baseline-dir=regression_test_baseline --gtest_filter="DenoiserOp.DenoiserOp"
       artifact-in: release-linux
@@ -255,7 +255,7 @@ jobs:
         tar -xzf build_release/*.gz
         export OIDN_VERBOSE=2
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE
       artifact-in: release-linux
 
   test-ubuntu-mpi-cpu:
@@ -272,7 +272,7 @@ jobs:
         ln -s /usr/lib/x86_64-linux-gnu/libmpichcxx.so.12 $OSPDIR/lib/libmpicxx.so.12
         export OIDN_VERBOSE=2
         export PATH=$OSPDIR/bin:$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX SKIP_CPU TEST_MPI
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE SKIP_CPU TEST_MPI
       artifact-in: release-linux
 
   test-ubuntu-dg2:
@@ -356,7 +356,7 @@ jobs:
         tar -xzf build_release/*.gz
         export OIDN_VERBOSE=2
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE
       artifact-in: release-linux-arm
 
   test-ubuntu-mpi-cpu-arm:
@@ -368,7 +368,7 @@ jobs:
         tar -xzf build_release/*.gz
         export OIDN_VERBOSE=2
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX SKIP_CPU TEST_MPI
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE SKIP_CPU TEST_MPI
       artifact-in: release-linux-arm
 
   test-osx-avx2:
@@ -379,7 +379,7 @@ jobs:
       cmd: |
         unzip build_release/*.zip
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX2
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE
       artifact-in: release-osx
 
   test-osx-avx512:
@@ -390,7 +390,7 @@ jobs:
       cmd: |
         unzip build_release/*.zip
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE
       artifact-in: release-osx
 
   test-osx-arm:
@@ -401,7 +401,7 @@ jobs:
       cmd: |
         unzip build_release/*.zip
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
-        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE
       artifact-in: release-osx-arm
 
   test-osx-signing:
@@ -452,7 +452,7 @@ jobs:
         Expand-Archive build_release/*.zip -DestinationPath .
         if ($LastExitCode) { $exitCode++ }
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
-        scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX
+        scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE
         if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: release-windows
@@ -467,7 +467,7 @@ jobs:
         Expand-Archive build_release/*.zip -DestinationPath .
         if ($LastExitCode) { $exitCode++ }
         $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
-        scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX SKIP_CPU TEST_MPI
+        scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE SKIP_CPU TEST_MPI
         if ($LastExitCode) { $exitCode++ }
         exit $exitCode
       artifact-in: release-windows
@@ -489,7 +489,7 @@ jobs:
         $env:OIDN_VERBOSE="2"
         md build_regression_tests
         cd build_regression_tests
-        cmake -G Ninja -D OSPRAY_TEST_ISA=AVX2 $env:GITHUB_WORKSPACE\test_image_data
+        cmake -G Ninja $env:GITHUB_WORKSPACE\test_image_data
         if ($LastExitCode) { $exitCode++ }
         cmake --build . --config Release --target ospray_test_data
         if ($LastExitCode) { $exitCode++ }

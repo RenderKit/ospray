@@ -1,11 +1,10 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-# to run:  ./run_tests.ps1 <path to ospray source> <reference images ISA> [SKIP_CPU] [TEST_MPI] [TEST_MULTIDEVICE]
+# to run:  ./run_tests.ps1 <path to ospray source> [SKIP_CPU] [TEST_MPI] [TEST_MULTIDEVICE]
 # a new folder is created called build_regression_tests with results
 
 $osprayDir=$args[0]
-$testISA=$args[1]
 
 $testCPU = $TRUE
 $testMPI = $FALSE
@@ -28,9 +27,9 @@ cd build_regression_tests
 $exitCode = 0
 
 # try Ninja first
-cmake -G Ninja -D OSPRAY_TEST_ISA=$testISA $osprayDir/test_image_data
+cmake -G Ninja $osprayDir/test_image_data
 if ($LastExitCode) {
-  cmake -D OSPRAY_TEST_ISA=$testISA $osprayDir/test_image_data
+  cmake $osprayDir/test_image_data
   if ($LastExitCode) { $exitCode++ }
 }
 cmake --build . --config Release --target ospray_test_data

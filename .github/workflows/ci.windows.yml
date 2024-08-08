@@ -54,7 +54,7 @@ jobs:
       runs-on: '"avx2"'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX2
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE"
       artifact-in: build-windows-msvc15
       artifact-out: test-windows-msvc15-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -67,7 +67,7 @@ jobs:
       runs-on: '"avx512"'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX512SKX
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE"
       artifact-in: build-windows-msvc15
       artifact-out: test-windows-msvc15-avx512
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -80,7 +80,7 @@ jobs:
       runs-on: '["avx2", "mpi"]'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX2 TEST_MULTIDEVICE TEST_MPI
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" TEST_MULTIDEVICE TEST_MPI
       artifact-in: build-windows-msvc16-mpi_and_md
       artifact-out: test-windows-msvc16-mpi_and_md-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -94,7 +94,7 @@ jobs:
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         echo $env:Path
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX512SKX TEST_MULTIDEVICE TEST_MPI
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" TEST_MULTIDEVICE TEST_MPI
       artifact-in: build-windows-msvc16-mpi_and_md
       artifact-out: test-windows-msvc16-mpi_and_md-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -107,7 +107,7 @@ jobs:
       runs-on: '"avx512"'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX512SKX
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE"
       artifact-in: build-windows-msvc17
       artifact-out: test-windows-msvc17-avx512
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*

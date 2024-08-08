@@ -27,9 +27,9 @@ cd build_regression_tests
 $exitCode = 0
 
 # try Ninja first
-cmake -G Ninja -D OSPRAY_TEST_ISA=AVX512SKX $osprayDir/test_image_data
+cmake -G Ninja $osprayDir/test_image_data
 if ($LastExitCode) {
-  cmake -D OSPRAY_TEST_ISA=AVX512SKX $osprayDir/test_image_data
+  cmake $osprayDir/test_image_data
   if ($LastExitCode) { $exitCode++ }
 }
 cmake --build . --config Release --target ospray_test_data

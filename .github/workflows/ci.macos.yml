@@ -56,7 +56,7 @@ jobs:
       runs-on: '["x86_64", "avx2", "build"]'
       cmd: |
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MULTIDEVICE
+        scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" TEST_MULTIDEVICE
       artifact-in: build-osx-clang
       artifact-out: test-osx-clang
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -69,7 +69,7 @@ jobs:
       runs-on: '["arm", "build"]'
       cmd: |
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        scripts/tests/run_tests.sh "$GITHUB_WORKSPACE"
       artifact-in: build-osx-arm
       artifact-out: test-osx-arm
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -82,7 +82,7 @@ jobs:
       runs-on: '["arm", "build"]'
       cmd: |
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        scripts/tests/run_tests.sh "$GITHUB_WORKSPACE"
       artifact-in: build-osx-x64
       artifact-out: test-osx-x64
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*

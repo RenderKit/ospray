@@ -43,7 +43,7 @@ cd build_regression_tests
 
 exitCode=0
 
-cmake -D OSPRAY_TEST_ISA=AVX512SKX "${SOURCEDIR}/test_image_data"
+cmake "${SOURCEDIR}/test_image_data"
 let exitCode+=$?
 export CMAKE_BUILD_PARALLEL_LEVEL=32
 cmake --build . --target ospray_test_data

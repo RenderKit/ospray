@@ -76,7 +76,7 @@ jobs:
       image: archlinux:latest
       runs-on: '"avx512"'
       cmd: |
-        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE"
       artifact-in: build-linux-debug-all
       artifact-out: test-linux-debug-all
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -88,7 +88,7 @@ jobs:
   #   script:
   #     - module load impi
   #     - module load gnu
-  #     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MPI TEST_MULTIDEVICE
+  #     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" TEST_MPI TEST_MULTIDEVICE
   #   env:
   #     needs: build-mpi-cluster
   #   needs: ${{ env.needs }}
@@ -100,7 +100,7 @@ jobs:
       runs-on: '"avx2"'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX2
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE"
       artifact-in: build-windows-debug-all
       artifact-out: test-windows-debug-all-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
