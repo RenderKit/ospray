@@ -35,7 +35,7 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
   static memory::IntrusivePtr<Device> current;
 
   Device() = default;
-  virtual ~Device() override = default;
+  virtual ~Device() override;
 
   static Device *createDevice(const char *type);
 

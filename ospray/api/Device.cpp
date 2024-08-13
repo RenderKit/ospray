@@ -47,6 +47,12 @@ Device *Device::createInstance(const char *type)
 memory::IntrusivePtr<Device> Device::current;
 uint32_t Device::logLevel = OSP_LOG_NONE;
 
+Device::~Device()
+{
+  // Terminate all worker threads
+  tasking::shutdownTaskingSystem();
+}
+
 Device *Device::createDevice(const char *type)
 {
   // NOTE(jda) - If a user is manually creating the device (i.e. not using
