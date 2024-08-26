@@ -127,7 +127,7 @@ tmp/compilation_web.md: prerequisites.md ../scripts/superbuild/README.md compila
 
 tmp/changelog.md: filter-sectionnumbers.py ../CHANGELOG.md
 	$(PANDOC) --top-level-division=chapter --filter $+ -o $@
-	echo -e '\nFor the complete history of changes have a look at the [CHANGELOG](https://github.com/ospray/ospray/blob/master/CHANGELOG.md).' >> $@
+	echo -e '\nFor the complete history of changes have a look at the [CHANGELOG](https://github.com/RenderKit/ospray/blob/master/CHANGELOG.md).' >> $@
 
 www/index.html: teaser.html overview.md tmp/changelog.md
 www/tutorials.html: tutorials.md

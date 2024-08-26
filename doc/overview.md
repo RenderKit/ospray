@@ -40,10 +40,10 @@ OSPRay is under active development, and though we do our best to
 guarantee stable release versions a certain number of bugs,
 as-yet-missing features, inconsistencies, or any other issues are still
 possible. For any such requests or findings please use [OSPRay's GitHub
-Issue Tracker](https://github.com/ospray/OSPRay/issues) (or, if you
+Issue Tracker](https://github.com/RenderKit/OSPRay/issues) (or, if you
 should happen to have a fix for it, you can also send us a pull
 request).
 
 To receive release announcements simply ["Watch" the OSPRay
-repository](https://github.com/ospray/OSPRay) on GitHub.
+repository](https://github.com/RenderKit/OSPRay) on GitHub.
 

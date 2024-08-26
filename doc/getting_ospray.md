@@ -41,22 +41,22 @@ using the superbuild (see [Building and Finding OSPRay](#building-and-finding-os
 
 For Linux we provide OSPRay precompiled for 64\ bit for x86_64
 (including the GPU module) and AArch64 architectures as a TGZ archives:  
-[ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz)  
-[ospray-<OSPRAY_VERSION>.aarch64.linux.tar.gz](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.aarch64.linux.tar.gz)  
+[ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz](https://github.com/RenderKit/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz)  
+[ospray-<OSPRAY_VERSION>.aarch64.linux.tar.gz](https://github.com/RenderKit/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.aarch64.linux.tar.gz)  
 
 
 For Mac OS\ X we provide OSPRay as a ZIP archives for x86_64 and ARM64
 architectures:  
-[ospray-<OSPRAY_VERSION>.x86_64.macosx.zip](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.macosx.zip)  
-[ospray-<OSPRAY_VERSION>.arm64.macosx.zip](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.arm64.macosx.zip)
+[ospray-<OSPRAY_VERSION>.x86_64.macosx.zip](https://github.com/RenderKit/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.macosx.zip)  
+[ospray-<OSPRAY_VERSION>.arm64.macosx.zip](https://github.com/RenderKit/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.arm64.macosx.zip)
 
 For Windows we provide OSPRay binaries precompiled for 64\ bit
 (including the GPU module) as an MSI installer as well as a ZIP archive:  
-[ospray-<OSPRAY_VERSION>.x86_64.windows.msi](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.windows.msi)  
-[ospray-<OSPRAY_VERSION>.x86_64.windows.zip](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.windows.zip)  
+[ospray-<OSPRAY_VERSION>.x86_64.windows.msi](https://github.com/RenderKit/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.windows.msi)  
+[ospray-<OSPRAY_VERSION>.x86_64.windows.zip](https://github.com/RenderKit/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.windows.zip)  
 
 The source code of the latest OSPRay version can be downloaded here:  
-[ospray-<OSPRAY_VERSION>.zip](https://github.com/ospray/OSPRay/archive/v<OSPRAY_VERSION>.zip)  
-[ospray-<OSPRAY_VERSION>.tar.gz](https://github.com/ospray/OSPRay/archive/v<OSPRAY_VERSION>.tar.gz)
+[ospray-<OSPRAY_VERSION>.zip](https://github.com/RenderKit/OSPRay/archive/v<OSPRAY_VERSION>.zip)  
+[ospray-<OSPRAY_VERSION>.tar.gz](https://github.com/RenderKit/OSPRay/archive/v<OSPRAY_VERSION>.tar.gz)
 
-You can also access [previous OSPRay releases](https://github.com/ospray/OSPRay/releases).
+You can also access [previous OSPRay releases](https://github.com/RenderKit/OSPRay/releases).

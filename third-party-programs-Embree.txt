@@ -22,7 +22,7 @@ license terms are listed below.
      Copyright Intel
 
 1.2. Intel(R) Open Image Denoise (OIDN)
-     https://github.com/OpenImageDenoise/oidn
+     https://github.com/RenderKit/oidn
      Copyright Intel
 
                                  Apache License

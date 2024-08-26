@@ -15,7 +15,7 @@ endif()
 if (BUILD_OPENVKL_FROM_SOURCE)
   string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" OPENVKL_ARCHIVE ${OPENVKL_VERSION})
   set(OPENVKL_BRANCH "${OPENVKL_ARCHIVE}" CACHE STRING "Which branch of OpenVKL to build" )
-  set(OPENVKL_URL "https://github.com/openvkl/openvkl/archive/${OPENVKL_ARCHIVE}.zip" CACHE STRING "Location to clone OpenVKL source from")
+  set(OPENVKL_URL "https://github.com/RenderKit/openvkl/archive/${OPENVKL_ARCHIVE}.zip" CACHE STRING "Location to clone OpenVKL source from")
   
   string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${OPENVKL_URL})
   if (ZIP_FILENAME)
@@ -77,7 +77,7 @@ else()
     set(OPENVKL_OSSUFFIX "sycl.x86_64.linux.tar.gz")
   endif()
 
-  set(OPENVKL_URL "https://github.com/openvkl/openvkl/releases/download/v${OPENVKL_VERSION}/openvkl-${OPENVKL_VERSION}${OPENVKL_TAG}.${OPENVKL_OSSUFFIX}")
+  set(OPENVKL_URL "https://github.com/RenderKit/openvkl/releases/download/v${OPENVKL_VERSION}/openvkl-${OPENVKL_VERSION}${OPENVKL_TAG}.${OPENVKL_OSSUFFIX}")
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
     DOWNLOAD_DIR ${COMPONENT_NAME}

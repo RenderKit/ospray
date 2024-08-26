@@ -13,7 +13,7 @@ if (RKCOMMON_HASH)
 endif()
 
 string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" RKCOMMON_ARCHIVE ${RKCOMMON_VERSION})
-set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_ARCHIVE}.tar.gz"
+set(RKCOMMON_URL "https://github.com/RenderKit/rkcommon/archive/${RKCOMMON_ARCHIVE}.tar.gz"
   CACHE STRING "Location to get rkcommon source from")
 if (${RKCOMMON_URL} MATCHES ".*\.tar\.gz$")
   set(RKCOMMON_CLONE_URL URL ${RKCOMMON_URL})

@@ -23,11 +23,11 @@ post](https://blog.kitware.com/virtual-tour-and-high-quality-visualization-with-
 HdOSPRay
 --------
 HdOSPRay is a rendering plugin for the Hydra rendering layer in USD.
-For more information see the project's [page on GitHub](https://github.com/ospray/hdospray).
+For more information see the project's [page on GitHub](https://github.com/RenderKit/hdospray).
 
 OSPRay Studio
 --------
-[Studio](https://github.com/ospray/ospray_studio) is the
+[Studio](https://github.com/RenderKit/ospray_studio) is the
     OSPRay team's lightweight visualization application used to showcase
     the latest features of OSPRay. 
 

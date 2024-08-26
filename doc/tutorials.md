@@ -6,15 +6,15 @@ ospTutorial
 
 A minimal working example demonstrating how to use OSPRay can be found
 at
-[`apps/tutorials/ospTutorial.c`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.c)^[A
+[`apps/tutorials/ospTutorial.c`](https://github.com/RenderKit/ospray/blob/master/apps/ospTutorial/ospTutorial.c)^[A
 C++ version that uses the C++ convenience wrappers of OSPRay's C99 API
 via
-[`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
+[`include/ospray/ospray_cpp.h`](https://github.com/RenderKit/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
 is available at
-[`apps/tutorials/ospTutorial.cpp`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).].
+[`apps/tutorials/ospTutorial.cpp`](https://github.com/RenderKit/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).].
 
 An example of building `ospTutorial.c` with CMake can be found in
-[`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray).
+[`apps/tutorials/ospTutorialFindospray/`](https://github.com/RenderKit/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray).
 
 To build the tutorial on Linux, build it in a build directory with
 
@@ -43,7 +43,7 @@ ospExamples
 -----------
 
 Apart from tutorials, `OSPRay` comes with a C++ app called
-[`ospExamples`](https://github.com/ospray/ospray/tree/master/apps/ospExamples)
+[`ospExamples`](https://github.com/RenderKit/ospray/tree/master/apps/ospExamples)
 which is an elaborate easy-to-use tutorial, with a single interface to
 try various `OSPRay` features. It is aimed at providing users with
 multiple simple scenes composed of basic geometry types, lights, volumes
@@ -56,7 +56,7 @@ necessary to render an interactive scene. The scene is rendered on a
 manipulate the scene at runtime.
 
 The application is located in
-[`apps/ospExamples/`](https://github.com/ospray/ospray/tree/master/apps/ospExamples)
+[`apps/ospExamples/`](https://github.com/RenderKit/ospray/tree/master/apps/ospExamples)
 directory and can be built with CMake. It can be run from the build
 directory via:
 ```
@@ -71,7 +71,7 @@ The command line parameter is optional however.
 Different scenes can be selected from the `scenes` dropdown and each
 scene corresponds to an instance of a special `detail::Builder` struct.
 Example builders are located in
-[`apps/common/ospray_testing/builders/`](https://github.com/ospray/ospray/tree/master/apps/common/ospray_testing/builders).
+[`apps/common/ospray_testing/builders/`](https://github.com/RenderKit/ospray/tree/master/apps/common/ospray_testing/builders).
 These builders provide a usage guide for the OSPRay scene hierarchy and
 OSPRay API in the form of `cpp` wrappers. They instantiate and manage
 objects for the specific scene like `cpp::Geometry`, `cpp::Volume`,
@@ -103,15 +103,15 @@ ospMPIDistribTutorial
 
 A minimal working example demonstrating how to use OSPRay for rendering
 distributed data can be found at
-[`modules/mpi/tutorials/ospMPIDistribTutorial.c`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.c)^[A
+[`modules/mpi/tutorials/ospMPIDistribTutorial.c`](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.c)^[A
 C++ version that uses the C++ convenience wrappers of OSPRay's C99 API
 via
-[`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
+[`include/ospray/ospray_cpp.h`](https://github.com/RenderKit/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
 is available at
-[`modules/mpi/tutorials/ospMPIDistribTutorial.cpp`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.cpp).].
+[`modules/mpi/tutorials/ospMPIDistribTutorial.cpp`](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.cpp).].
 
 The compilation process via CMake is the similar to
-[`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray),
+[`apps/tutorials/ospTutorialFindospray/`](https://github.com/RenderKit/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray),
 with the addition of finding and linking MPI.
 
 To build the tutorial on Linux, build it in a build directory with

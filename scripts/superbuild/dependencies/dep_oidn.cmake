@@ -14,9 +14,9 @@ endif()
 
 if (BUILD_OIDN_FROM_SOURCE)
   if(${OIDN_VERSION} MATCHES "(^[0-9]+\.[0-9]+\.[0-9]+$)")
-    set(OIDN_DEFAULT_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${OIDN_VERSION}/oidn-${OIDN_VERSION}.src.tar.gz")
+    set(OIDN_DEFAULT_URL "https://github.com/RenderKit/oidn/releases/download/v${OIDN_VERSION}/oidn-${OIDN_VERSION}.src.tar.gz")
   else()
-    set(OIDN_DEFAULT_URL "https://www.github.com/OpenImageDenoise/oidn.git")
+    set(OIDN_DEFAULT_URL "https://www.github.com/RenderKit/oidn.git")
   endif()
     set(OIDN_URL ${OIDN_DEFAULT_URL} CACHE STRING "Location to get OpenImageDenoise source from")
   if (${OIDN_URL} MATCHES ".*\.src\.tar\.gz$")
@@ -73,7 +73,7 @@ else()
   else()
     set(OIDN_OSSUFFIX "x86_64.linux.tar.gz")
   endif()
-  set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${OIDN_VERSION}/oidn-${OIDN_VERSION}.${OIDN_OSSUFFIX}")
+  set(OIDN_URL "https://github.com/RenderKit/oidn/releases/download/v${OIDN_VERSION}/oidn-${OIDN_VERSION}.${OIDN_OSSUFFIX}")
 
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}

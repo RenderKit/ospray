@@ -25,7 +25,7 @@ laptops, to workstations, to compute nodes in HPC systems.
 OSPRay internally builds on top of Intel
 [Embree](https://www.embree.org/), Intel [Open
 VKL](https://www.openvkl.org/), and Intel [Open Image
-Denoise](https://openimagedenoise.github.io/). The CPU implementation is
+Denoise](https://www.openimagedenoise.org/). The CPU implementation is
 based on Intel [ISPC (Implicit SPMD Program
 Compiler)](https://ispc.github.io/) and fully exploits modern
 instruction sets like Intel SSE4, AVX, AVX2, AVX-512 and NEON to achieve
@@ -48,18 +48,18 @@ OSPRay is under active development, and though we do our best to
 guarantee stable release versions a certain number of bugs,
 as-yet-missing features, inconsistencies, or any other issues are still
 possible. For any such requests or findings please use [OSPRay’s GitHub
-Issue Tracker](https://github.com/ospray/OSPRay/issues) (or, if you
+Issue Tracker](https://github.com/RenderKit/OSPRay/issues) (or, if you
 should happen to have a fix for it, you can also send us a pull
 request).
 
 To receive release announcements simply [“Watch” the OSPRay
-repository](https://github.com/ospray/OSPRay) on GitHub.
+repository](https://github.com/RenderKit/OSPRay) on GitHub.
 
 Building and Finding OSPRay
 ===========================
 
 The latest OSPRay sources are always available at the [OSPRay GitHub
-repository](http://github.com/ospray/ospray). The default `master`
+repository](http://github.com/RenderKit/ospray). The default `master`
 branch should always point to the latest bugfix release.
 
 Prerequisites
@@ -71,7 +71,7 @@ before you can build OSPRay you need the following prerequisites:
 - You can clone the latest OSPRay sources via:
 
   ``` sh
-  git clone https://github.com/ospray/ospray.git
+  git clone https://github.com/RenderKit/ospray.git
   ```
 
 - To build OSPRay you need [CMake](http://www.cmake.org), any form of
@@ -87,7 +87,7 @@ before you can build OSPRay you need the following prerequisites:
   CMake its location can be hinted with the variable `ISPC_EXECUTABLE`.
 
 - OSPRay builds on top of the [Intel Rendering Toolkit (Render Kit)
-  common library (rkcommon)](https://www.github.com/ospray/rkcommon).
+  common library (rkcommon)](https://www.github.com/RenderKit/rkcommon).
   The library provides abstractions for tasking, aligned memory
   allocation, vector math types, among others. For users who also need
   to build rkcommon, we recommend the default the Intel [Threading
@@ -111,8 +111,8 @@ before you can build OSPRay you need the following prerequisites:
 - OSPRay also provides an optional module implementing the `denoiser`
   image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
   module requires Intel [Open Image
-  Denoise](https://openimagedenoise.github.io/) in version 2.3.0 or
-  newer. You may need to hint the location of the library with the CMake
+  Denoise](https://www.openimagedenoise.org/) in version 2.3.0 or newer.
+  You may need to hint the location of the library with the CMake
   variable `OpenImageDenoise_DIR`.
 
 - For the optional MPI modules (enabled by `OSPRAY_MODULE_MPI`), which
@@ -153,7 +153,7 @@ Under Windows please directly use the appropriate installers for
 [CMake](https://cmake.org/download/),
 [TBB](https://github.com/oneapi-src/oneTBB/releases),
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
-version) and [Embree](https://github.com/embree/embree/releases/).
+version) and [Embree](https://github.com/RenderKit/embree/releases/).
 
 ### Additional Prerequisites for GPU Build
 
@@ -3558,7 +3558,7 @@ shipping data out to the workers. When a parallel file system is
 available, this can improve data load times. Image-parallel rendering is
 selected by specifying the same data on each rank, and using any of the
 existing local renderers (e.g., `scivis`, `pathtracer`). See
-[ospMPIDistribTutorialReplicated](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialReplicated.cpp)
+[ospMPIDistribTutorialReplicated](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialReplicated.cpp)
 for an example.
 
 #### Data Parallel Rendering in the MPI Distributed Device
@@ -3579,7 +3579,7 @@ regions out a set of regions (the `region` parameter) can pass as a
 parameter to the `OSPWorld` being rendered. Each rank can specify one or
 more non-overlapping `box3f`’s which bound the portions of its local
 data which it is responsible for rendering. See the
-[ospMPIDistribTutorialVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialVolume.cpp)
+[ospMPIDistribTutorialVolume](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialVolume.cpp)
 for an example.
 
 Finally, the MPI distributed device also supports hybrid-parallel
@@ -3588,7 +3588,7 @@ each shared piece of data the rendering work will be assigned
 image-parallel among the ranks. Partially-shared regions are determined
 by finding those ranks specifying data with the same bounds (matching
 regions) and merging them. See the
-[ospMPIDistribTutorialPartialRepl](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialPartialRepl.cpp)
+[ospMPIDistribTutorialPartialRepl](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialPartialRepl.cpp)
 for an example.
 
 #### Picking on Distributed Data in the MPI Distributed Device
@@ -3641,10 +3641,10 @@ ospTutorial
 
 A minimal working example demonstrating how to use OSPRay can be found
 at
-[`apps/tutorials/ospTutorial.c`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.c)[^9].
+[`apps/tutorials/ospTutorial.c`](https://github.com/RenderKit/ospray/blob/master/apps/ospTutorial/ospTutorial.c)[^9].
 
 An example of building `ospTutorial.c` with CMake can be found in
-[`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray).
+[`apps/tutorials/ospTutorialFindospray/`](https://github.com/RenderKit/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray).
 
 To build the tutorial on Linux, build it in a build directory with
 
@@ -3677,7 +3677,7 @@ ospExamples
 -----------
 
 Apart from tutorials, `OSPRay` comes with a C++ app called
-[`ospExamples`](https://github.com/ospray/ospray/tree/master/apps/ospExamples)
+[`ospExamples`](https://github.com/RenderKit/ospray/tree/master/apps/ospExamples)
 which is an elaborate easy-to-use tutorial, with a single interface to
 try various `OSPRay` features. It is aimed at providing users with
 multiple simple scenes composed of basic geometry types, lights, volumes
@@ -3690,7 +3690,7 @@ necessary to render an interactive scene. The scene is rendered on a
 manipulate the scene at runtime.
 
 The application is located in
-[`apps/ospExamples/`](https://github.com/ospray/ospray/tree/master/apps/ospExamples)
+[`apps/ospExamples/`](https://github.com/RenderKit/ospray/tree/master/apps/ospExamples)
 directory and can be built with CMake. It can be run from the build
 directory via:
 
@@ -3713,7 +3713,7 @@ default <code>boxes</code> scene.</figcaption>
 Different scenes can be selected from the `scenes` dropdown and each
 scene corresponds to an instance of a special `detail::Builder` struct.
 Example builders are located in
-[`apps/common/ospray_testing/builders/`](https://github.com/ospray/ospray/tree/master/apps/common/ospray_testing/builders).
+[`apps/common/ospray_testing/builders/`](https://github.com/RenderKit/ospray/tree/master/apps/common/ospray_testing/builders).
 These builders provide a usage guide for the OSPRay scene hierarchy and
 OSPRay API in the form of `cpp` wrappers. They instantiate and manage
 objects for the specific scene like `cpp::Geometry`, `cpp::Volume`,
@@ -3751,10 +3751,10 @@ ospMPIDistribTutorial
 
 A minimal working example demonstrating how to use OSPRay for rendering
 distributed data can be found at
-[`modules/mpi/tutorials/ospMPIDistribTutorial.c`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.c)[^10].
+[`modules/mpi/tutorials/ospMPIDistribTutorial.c`](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.c)[^10].
 
 The compilation process via CMake is the similar to
-[`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray),
+[`apps/tutorials/ospTutorialFindospray/`](https://github.com/RenderKit/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray),
 with the addition of finding and linking MPI.
 
 To build the tutorial on Linux, build it in a build directory with
@@ -3909,12 +3909,12 @@ loading of a large model by leveraging a parallel file system.
 
 [^9]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via
-    [`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
+    [`include/ospray/ospray_cpp.h`](https://github.com/RenderKit/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
     is available at
-    [`apps/tutorials/ospTutorial.cpp`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).
+    [`apps/tutorials/ospTutorial.cpp`](https://github.com/RenderKit/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).
 
 [^10]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via
-    [`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
+    [`include/ospray/ospray_cpp.h`](https://github.com/RenderKit/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
     is available at
-    [`modules/mpi/tutorials/ospMPIDistribTutorial.cpp`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.cpp).
+    [`modules/mpi/tutorials/ospMPIDistribTutorial.cpp`](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.cpp).

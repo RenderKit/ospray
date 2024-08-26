@@ -2,7 +2,7 @@ Building and Finding OSPRay
 ===========================
 
 The latest OSPRay sources are always available at the [OSPRay GitHub
-repository](http://github.com/ospray/ospray). The default `master`
+repository](http://github.com/RenderKit/ospray). The default `master`
 branch should always point to the latest bugfix release.
 
 Prerequisites
@@ -13,7 +13,7 @@ before you can build OSPRay you need the following prerequisites:
 
 -   You can clone the latest OSPRay sources via:
 
-        git clone https://github.com/ospray/ospray.git
+        git clone https://github.com/RenderKit/ospray.git
 
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
     C++11 compiler (we recommend using GCC, but also support Clang,
@@ -27,7 +27,7 @@ before you can build OSPRay you need the following prerequisites:
     If ISPC is not found by CMake its location can be hinted with the
     variable `ISPC_EXECUTABLE`.
 -   OSPRay builds on top of the [Intel Rendering Toolkit (Render Kit) common
-    library (rkcommon)](https://www.github.com/ospray/rkcommon). The
+    library (rkcommon)](https://www.github.com/RenderKit/rkcommon). The
     library provides abstractions for tasking, aligned memory
     allocation, vector math types, among others. For users who also need
     to build rkcommon, we recommend the default the Intel [Threading
@@ -81,7 +81,7 @@ Under Windows please directly use the appropriate installers for
 [CMake](https://cmake.org/download/),
 [TBB](https://github.com/oneapi-src/oneTBB/releases),
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
-version) and [Embree](https://github.com/embree/embree/releases/).
+version) and [Embree](https://github.com/RenderKit/embree/releases/).
 
 ### Additional Prerequisites for GPU Build {-}
 

@@ -3609,7 +3609,7 @@ shipping data out to the workers. When a parallel file system is
 available, this can improve data load times. Image-parallel rendering is
 selected by specifying the same data on each rank, and using any of the
 existing local renderers (e.g., `scivis`, `pathtracer`). See
-[ospMPIDistribTutorialReplicated](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialReplicated.cpp)
+[ospMPIDistribTutorialReplicated](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialReplicated.cpp)
 for an example.
 
 #### Data Parallel Rendering in the MPI Distributed Device
@@ -3630,7 +3630,7 @@ regions out a set of regions (the `region` parameter) can pass as a
 parameter to the `OSPWorld` being rendered. Each rank can specify one or
 more non-overlapping `box3f`'s which bound the portions of its local
 data which it is responsible for rendering. See the
-[ospMPIDistribTutorialVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialVolume.cpp)
+[ospMPIDistribTutorialVolume](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialVolume.cpp)
 for an example.
 
 Finally, the MPI distributed device also supports hybrid-parallel
@@ -3639,7 +3639,7 @@ each shared piece of data the rendering work will be assigned
 image-parallel among the ranks. Partially-shared regions are determined
 by finding those ranks specifying data with the same bounds (matching
 regions) and merging them. See the
-[ospMPIDistribTutorialPartialRepl](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialPartialRepl.cpp)
+[ospMPIDistribTutorialPartialRepl](https://github.com/RenderKit/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialPartialRepl.cpp)
 for an example.
 
 #### Picking on Distributed Data in the MPI Distributed Device {-}

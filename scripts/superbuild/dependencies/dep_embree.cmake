@@ -14,7 +14,7 @@ endif()
 
 if (BUILD_EMBREE_FROM_SOURCE)
   string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
-  set(EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_ARCHIVE}.tar.gz"
+  set(EMBREE_URL "https://github.com/RenderKit/embree/archive/${EMBREE_ARCHIVE}.tar.gz"
     CACHE STRING "Location to get Embree source from")
   if (${EMBREE_URL} MATCHES ".*\.tar\.gz$")
     set(EMBREE_CLONE_URL URL ${EMBREE_URL})
@@ -81,7 +81,7 @@ else()
       set(EMBREE_URL_HASH URL_HASH SHA256=${EMBREE_SYCL_HASH})
     endif()
   endif()
-  set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${EMBREE_VERSION}/embree-${EMBREE_VERSION}${EMBREE_TAG}.${EMBREE_OSSUFFIX}")
+  set(EMBREE_URL "https://github.com/RenderKit/embree/releases/download/v${EMBREE_VERSION}/embree-${EMBREE_VERSION}${EMBREE_TAG}.${EMBREE_OSSUFFIX}")
 
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
