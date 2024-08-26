@@ -110,9 +110,9 @@ else()
   mark_as_advanced(FORCE ISPC_VERSION)
 endif()
 
-set(RKCOMMON_VERSION "1.14.0" CACHE STRING "Which version of rkcommon to build?")
-if (RKCOMMON_VERSION STREQUAL "1.14.0")
-  set(RKCOMMON_HASH "5aef75afc8d4fccf9e70df4cbdf29a1b28b39ee51b5588b94b83a14c6a166d83")
+set(RKCOMMON_VERSION "1.14.1" CACHE STRING "Which version of rkcommon to build?")
+if (RKCOMMON_VERSION STREQUAL "1.14.1")
+  set(RKCOMMON_HASH "39f69a9434cf8ad3d3d7c8413f47395f6d693b415559a178c391e4833721ebf3")
 endif()
 
 option(DOWNLOAD_TBB "Download TBB or use the one found in the system environment?" ON)
