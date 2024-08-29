@@ -1,0 +1,29 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "common/OSPCommon.ih"
+#include "ospray/OSPEnums.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL void Texture2D_setTexel(const uniform OSPTextureFormat fmt,
+    void *uniform data,
+    const uint32 idx,
+    const vec4f value);
+
+SYCL_EXTERNAL vec4f Texture2D_getTexel(
+    const uniform OSPTextureFormat fmt, const void *data, const uint32 idx);
+
+struct Vec4fPack
+{
+  vec4f v1;
+  vec4f v2;
+  vec4f v3;
+  vec4f v4;
+};
+SYCL_EXTERNAL Vec4fPack Texture2D_getTexel4(
+    const uniform OSPTextureFormat fmt, const void *data, const vec4i idx);
+
+OSPRAY_END_ISPC_NAMESPACE

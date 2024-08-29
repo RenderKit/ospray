@@ -8,6 +8,19 @@
 
 namespace OSPRayTestScenes {
 
+inline uint16_t float_to_half(const float v)
+{
+  uint32_t f = *(const uint32_t *)&v;
+  uint16_t sign = (f >> 16) & 0x8000;
+  if (f == 0.0f)
+    return sign;
+  int32_t exponent = (f >> 23) - 112;
+  if (exponent <= 0)
+    return sign;
+  uint16_t mantissa = (f >> 13) & 0x3ff;
+  return sign | ((exponent & 0x1f) << 10) | mantissa;
+}
+
 Texture2D::Texture2D()
 {
   rendererType = "pathtracer";
@@ -17,130 +30,190 @@ Texture2D::Texture2D()
 void Texture2D::SetUp()
 {
   Base::SetUp();
-  camera.setParam("position", vec3f(4.f, 3.f, 0.f));
+  camera.setParam("position", vec3f(3.f, 3.f, 0.f));
   // flip image to have origin in upper left corner, plus mirror
   camera.setParam("imageStart", vec2f(1.f, 1.f));
   camera.setParam("imageEnd", vec2f(0.f, 0.f));
   auto params = GetParam();
   OSPTextureFilter filter = std::get<0>(params);
 
-  // create (4*2) x 5 grid
-  constexpr int cols = 8;
-  constexpr int rows = 5;
-  std::vector<vec3f> vertex;
-  std::vector<vec2f> texcoord;
-  rkcommon::index_sequence_2D iidx(vec2i(cols, rows));
-  // Generate each quad, each needs its own vertex coordinates w/ unique
-  // texcoords when we're testing w/ texture coordinates on
-  for (auto i : iidx) {
-    const int idx_start = vertex.size();
-    vertex.push_back(vec3f(i.x, i.y * 1.2f, 5.3f));
-    vertex.push_back(vec3f(i.x + 1.f, i.y * 1.2f, 5.3f));
-    vertex.push_back(vec3f(i.x + 1.f, (i.y + 1.f) * 1.2f, 5.3f));
-    vertex.push_back(vec3f(i.x, (i.y + 1.f) * 1.2f, 5.3f));
+  enum TexType
+  {
+    ttFloat,
+    ttHalf,
+    ttUShort,
+    ttUChar,
+    ttMax
+  };
 
-    texcoord.push_back(vec2f(0.f, 0.f));
-    texcoord.push_back(vec2f(1.f, 0.f));
-    texcoord.push_back(vec2f(1.f, 1.f));
-    texcoord.push_back(vec2f(0.f, 1.f));
+  struct TexData
+  {
+    TexData(vec2ui r, bool normal = false) : res(r), is2d(r), normalMap(normal)
+    {}
+
+    void setData(TexType t, const void *d, uint32_t s)
+    {
+      data[t] = d;
+      stride[t] = s;
+    }
+
+    bool normalMap;
+    vec2ui res;
+    rkcommon::index_sequence_2D is2d;
+    const void *data[ttMax];
+    uint32_t stride[ttMax];
+  };
+
+  // Prepare empty texture data
+  TexData tdEmpty(vec2ui(1, 1));
+  std::vector<vec4f> emptyDataFloat(tdEmpty.res.product());
+  tdEmpty.setData(ttFloat, emptyDataFloat.data(), sizeof(vec4f));
+
+  // Prepare color texture data
+  TexData tdColor(vec2ui(16, 16));
+  std::vector<vec4f> colorDataFloat(tdColor.res.product());
+  std::vector<vec4us> colorDataHalf(tdColor.res.product());
+  std::vector<vec4us> colorDataUShort(tdColor.res.product());
+  std::vector<vec4uc> colorDataUChar(tdColor.res.product());
+  {
+    // Iterate through all texels
+    for (vec2ui i : tdColor.is2d) {
+      uint32_t iFlat = tdColor.is2d.flatten(i);
+      vec4f v = vec4f(i.x / float(tdColor.res.x - 1),
+          i.y / float(tdColor.res.y - 1),
+          1.f - (i.x + i.y) / float(tdColor.res.x + tdColor.res.y - 2),
+          i.y / float(tdColor.res.y - 1));
+      colorDataFloat[iFlat] = v;
+      colorDataHalf[iFlat] = vec4us(float_to_half(v.x),
+          float_to_half(v.y),
+          float_to_half(v.z),
+          float_to_half(v.w));
+      colorDataUShort[iFlat] =
+          vec4us(65535 * v.x, 65535 * v.y, 65535 * v.z, 65535 * v.w);
+      colorDataUChar[iFlat] =
+          vec4uc(255 * v.x, 255 * v.y, 255 * v.z, 255 * v.w);
+    }
+
+    tdColor.setData(ttFloat, colorDataFloat.data(), sizeof(vec4f));
+    tdColor.setData(ttHalf, colorDataHalf.data(), sizeof(vec4us));
+    tdColor.setData(ttUShort, colorDataUShort.data(), sizeof(vec4us));
+    tdColor.setData(ttUChar, colorDataUChar.data(), sizeof(vec4uc));
   }
+
+  // Prepare normal texture data
+  TexData tdNormal(vec2ui(31, 33), true);
+  std::vector<vec3f> normalDataFloat(tdNormal.res.product());
+  std::vector<vec3us> normalDataHalf(tdNormal.res.product());
+  std::vector<vec3us> normalDataUShort(tdNormal.res.product());
+  std::vector<vec3uc> normalDataUChar(tdNormal.res.product());
+  {
+    // Iterate through all texels
+    for (vec2ui i : tdNormal.is2d) {
+      uint32_t iFlat = tdNormal.is2d.flatten(i);
+      vec2f uv = (vec2f(i) / (tdNormal.res - 1)) * 2.0f - 1.f;
+
+      float dSqrt = uv.x * uv.x + uv.y * uv.y;
+      vec3f v;
+      if (dSqrt > 1.f)
+        v = vec3f(0, 0, 1);
+      else
+        v = normalize(vec3f(uv.x, uv.y, sqrt(1.f - dSqrt)));
+
+      v = .5f * (v + 1.f);
+      normalDataFloat[iFlat] = v;
+      normalDataHalf[iFlat] =
+          vec3us(float_to_half(v.x), float_to_half(v.y), float_to_half(v.z));
+      normalDataUShort[iFlat] = vec3us(65535 * v.x, 65535 * v.y, 65535 * v.z);
+      normalDataUChar[iFlat] = vec3uc(255 * v.x, 255 * v.y, 255 * v.z);
+    }
+
+    tdNormal.setData(ttFloat, normalDataFloat.data(), sizeof(vec3f));
+    tdNormal.setData(ttHalf, normalDataHalf.data(), sizeof(vec3us));
+    tdNormal.setData(ttUShort, normalDataUShort.data(), sizeof(vec3us));
+    tdNormal.setData(ttUChar, normalDataUChar.data(), sizeof(vec3uc));
+  }
+
+  // Define textures to test
+  struct TexParams
+  {
+    OSPTextureFormat format;
+    OSPDataType type;
+    TexData &texData;
+    TexType texType;
+  };
+  std::vector<TexParams> texParams = {
+      {{OSP_TEXTURE_R8, OSP_UCHAR, tdColor, ttUChar},
+          {OSP_TEXTURE_RA8, OSP_VEC2UC, tdColor, ttUChar},
+          {OSP_TEXTURE_RGB8, OSP_VEC3UC, tdColor, ttUChar},
+          {OSP_TEXTURE_RGBA8, OSP_VEC4UC, tdColor, ttUChar},
+          {OSP_TEXTURE_RGB8, OSP_VEC3UC, tdNormal, ttUChar},
+          {OSP_TEXTURE_R16, OSP_USHORT, tdColor, ttUShort},
+          {OSP_TEXTURE_RA16, OSP_VEC2US, tdColor, ttUShort},
+          {OSP_TEXTURE_RGB16, OSP_VEC3US, tdColor, ttUShort},
+          {OSP_TEXTURE_RGBA16, OSP_VEC4US, tdColor, ttUShort},
+          {OSP_TEXTURE_RGB16, OSP_VEC3US, tdNormal, ttUShort},
+          {OSP_TEXTURE_L8, OSP_UCHAR, tdColor, ttUChar},
+          {OSP_TEXTURE_LA8, OSP_VEC2UC, tdColor, ttUChar},
+          {OSP_TEXTURE_SRGB, OSP_VEC3UC, tdColor, ttUChar},
+          {OSP_TEXTURE_SRGBA, OSP_VEC4UC, tdColor, ttUChar},
+          {OSP_TEXTURE_RGBA32F, OSP_VEC4F, tdEmpty, ttFloat}, // empty slot
+          {OSP_TEXTURE_R32F, OSP_FLOAT, tdColor, ttFloat},
+          {OSP_TEXTURE_RA32F, OSP_VEC2F, tdColor, ttFloat},
+          {OSP_TEXTURE_RGB32F, OSP_VEC3F, tdColor, ttFloat},
+          {OSP_TEXTURE_RGBA32F, OSP_VEC4F, tdColor, ttFloat},
+          {OSP_TEXTURE_RGB32F, OSP_VEC3F, tdNormal, ttFloat},
+          {OSP_TEXTURE_R16F, OSP_USHORT, tdColor, ttHalf},
+          {OSP_TEXTURE_RA16F, OSP_VEC2US, tdColor, ttHalf},
+          {OSP_TEXTURE_RGB16F, OSP_VEC3US, tdColor, ttHalf},
+          {OSP_TEXTURE_RGBA16F, OSP_VEC4US, tdColor, ttHalf},
+          {OSP_TEXTURE_RGB16F, OSP_VEC3US, tdNormal, ttHalf}}};
+
+  // Create a mesh out of quads, enough to fit all defined textures
+  constexpr int quadsWidth = 5;
+  constexpr int quadsHeight = 5;
+  rkcommon::index_sequence_2D quadsIdx(vec2ui(quadsWidth, quadsHeight));
   cpp::Geometry mesh("mesh");
-  mesh.setParam("vertex.position", cpp::CopiedData(vertex));
-  if (std::get<3>(params)) {
-    mesh.setParam("vertex.texcoord", cpp::CopiedData(texcoord));
+  {
+    std::vector<vec3f> vertex;
+    std::vector<vec2f> texcoord;
+    // Generate each quad, each needs its own vertex coordinates w/ unique
+    // texcoords when we're testing w/ texture coordinates on
+    for (auto i : quadsIdx) {
+      const int idx_start = vertex.size();
+      constexpr float spacing = 1.22f;
+      constexpr float size = 1.1f;
+      vertex.push_back(vec3f(i.x * spacing, i.y * spacing, 5.3f));
+      vertex.push_back(vec3f(i.x * spacing + size, i.y * spacing, 5.3f));
+      vertex.push_back(vec3f(i.x * spacing + size, i.y * spacing + size, 5.3f));
+      vertex.push_back(vec3f(i.x * spacing, i.y * spacing + size, 5.3f));
+
+      texcoord.push_back(vec2f(0.f, 0.f));
+      texcoord.push_back(vec2f(1.f, 0.f));
+      texcoord.push_back(vec2f(1.f, 1.f));
+      texcoord.push_back(vec2f(0.f, 1.f));
+    }
+    mesh.setParam("vertex.position", cpp::CopiedData(vertex));
+    if (std::get<3>(params)) {
+      mesh.setParam("vertex.texcoord", cpp::CopiedData(texcoord));
+    }
+    mesh.setParam("quadSoup", true);
+    mesh.commit();
   }
-  mesh.setParam("quadSoup", true);
-  mesh.commit();
-
-  // create textures:
-  // columns=#channels, rows=type=[byte, byte, float, short, half]
-  std::array<OSPTextureFormat, 4 *rows> format = {OSP_TEXTURE_R8,
-      OSP_TEXTURE_RA8,
-      OSP_TEXTURE_RGB8,
-      OSP_TEXTURE_RGBA8,
-
-      OSP_TEXTURE_L8,
-      OSP_TEXTURE_LA8,
-      OSP_TEXTURE_SRGB,
-      OSP_TEXTURE_SRGBA,
-
-      OSP_TEXTURE_R32F,
-      OSP_TEXTURE_RA32F,
-      OSP_TEXTURE_RGB32F,
-      OSP_TEXTURE_RGBA32F,
-
-      OSP_TEXTURE_R16,
-      OSP_TEXTURE_RA16,
-      OSP_TEXTURE_RGB16,
-      OSP_TEXTURE_RGBA16,
-
-      OSP_TEXTURE_R16F,
-      OSP_TEXTURE_RA16F,
-      OSP_TEXTURE_RGB16F,
-      OSP_TEXTURE_RGBA16F};
-
-  std::array<OSPDataType, 4 *rows> eltype = {OSP_UCHAR,
-      OSP_VEC2UC,
-      OSP_VEC3UC,
-      OSP_VEC4UC,
-
-      OSP_UCHAR,
-      OSP_VEC2UC,
-      OSP_VEC3UC,
-      OSP_VEC4UC,
-
-      OSP_FLOAT,
-      OSP_VEC2F,
-      OSP_VEC3F,
-      OSP_VEC4F,
-
-      OSP_USHORT,
-      OSP_VEC2US,
-      OSP_VEC3US,
-      OSP_VEC4US,
-
-      OSP_USHORT,
-      OSP_VEC2US,
-      OSP_VEC3US,
-      OSP_VEC4US};
-
-  std::array<vec4uc, 15> dbyte;
-  std::array<vec4us, 15> dshort;
-  std::array<vec4f, 15> dfloat;
-  std::array<vec4us, 15> dhalf;
-  rkcommon::index_sequence_2D didx(vec2i(3, 5));
-  for (auto idx : didx) {
-    auto i = didx.flatten(idx);
-    // the center texel should be 127 / 32767 / 0.5, to test normal maps
-    dbyte[i] = vec4uc(idx.x * 80 + 47, idx.y * 56 + 15, 204, i * 15 + 40);
-    dshort[i] = vec4us(
-        idx.x * 20480 + 12287, idx.y * 14336 + 4095, 52428, i * 3932 + 9830);
-    dfloat[i] = vec4f(idx.x * 0.3125f + 0.1875f,
-        idx.y * 0.21875f + 0.0625f,
-        0.8f,
-        i * 0.06f + 0.15f);
-  }
-  // float to half conversion
-  uint32_t *pf = (uint32_t *)dfloat.data();
-  uint16_t *ph = (uint16_t *)dhalf.data();
-  for (int i = 0; i < 4 * 15; i++, pf++, ph++)
-    *ph = (((*pf >> 23) - 112) << 10) | ((*pf >> 13) & 0x3ff);
-
-  std::array<void *, rows> addr = {
-      dbyte.data(), dbyte.data(), dfloat.data(), dshort.data(), dhalf.data()};
-  std::array<int, rows> stride = {4, 4, 16, 8, 8};
 
   cpp::GeometricModel model(mesh);
-  std::array<cpp::Material, cols * rows> material;
-  for (auto idx : iidx) {
-    auto i = iidx.flatten(idx);
-    auto fmt = format[i / 2];
-    auto eltp = eltype[i / 2];
+  std::array<cpp::Material, quadsWidth * quadsHeight> material;
+  for (uint32_t i = 0; i < texParams.size(); i++) {
+    TexParams &tp = texParams[i];
+    TexData &td = tp.texData;
     cpp::Texture tex("texture2d");
-    tex.setParam("format", fmt);
+    tex.setParam("format", tp.format);
     tex.setParam("filter", filter);
-    auto tmp = ospNewSharedData(addr[idx.y], eltp, 3, stride[idx.y], 5);
-    auto data = ospNewData(eltp, 3, 5);
+    auto tmp = ospNewSharedData(td.data[tp.texType],
+        tp.type,
+        td.res.x,
+        td.stride[tp.texType],
+        td.res.y);
+    auto data = ospNewData(tp.type, td.res.x, td.res.y);
     ospCopyData(tmp, data);
     ospRelease(tmp);
     tex.setParam("data", data);
@@ -148,7 +221,10 @@ void Texture2D::SetUp()
     ospRelease(data);
     cpp::Material mat("obj");
     mat.setParam("kd", vec3f(0.8));
-    mat.setParam(i & 1 ? "map_bump" : "map_kd", tex);
+    if (td.normalMap)
+      mat.setParam("map_bump", tex);
+    else
+      mat.setParam("map_kd", tex);
     mat.commit();
     material[i] = mat;
   }
@@ -611,7 +687,7 @@ INSTANTIATE_TEST_SUITE_P(AppearanceMipMap,
     Texture2D,
     ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_LINEAR,
                            OSP_TEXTURE_FILTER_NEAREST),
-        ::testing::Values(6.0f),
+        ::testing::Values(4.0f),
         ::testing::Bool(),
         ::testing::Values(false)));
 

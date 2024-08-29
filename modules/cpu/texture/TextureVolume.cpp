@@ -30,8 +30,6 @@ void TextureVolume::commit()
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.get =
       reinterpret_cast<ispc::Texture_get>(ispc::TextureVolume_get_addr());
-  getSh()->super.getNormal =
-      reinterpret_cast<ispc::Texture_getN>(ispc::TextureVolume_getN_addr());
 #endif
 }
 

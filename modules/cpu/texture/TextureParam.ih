@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "Texture.ih"
 #include "common/OSPCommon.ih"
 #include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/vec.ih"
@@ -14,16 +13,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct DifferentialGeometry;
 
-SYCL_EXTERNAL __noinline float get1f(const uniform TextureParam uniform &tp,
-    const varying DifferentialGeometry &dg);
-
-SYCL_EXTERNAL __noinline vec3f get3f(const uniform TextureParam uniform &tp,
-    const varying DifferentialGeometry &dg);
-
 SYCL_EXTERNAL __noinline vec4f get4f(const uniform TextureParam uniform &tp,
-    const varying DifferentialGeometry &dg);
-
-SYCL_EXTERNAL __noinline vec3f getNormal(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg);
 
 inline uniform bool valid(const uniform TextureParam uniform &tex)
@@ -33,7 +23,14 @@ inline uniform bool valid(const uniform TextureParam uniform &tex)
 
 inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
 {
-  return hasAlpha(tex.ptr);
+  return (tex.ptr == NULL) ? false : tex.ptr->hasAlpha;
+}
+
+inline float get1f(const uniform TextureParam uniform &tp,
+    const varying DifferentialGeometry &dg)
+{
+  const vec4f res = get4f(tp, dg);
+  return res.x;
 }
 
 inline float get1f(const uniform TextureParam uniform &tp,
@@ -44,6 +41,12 @@ inline float get1f(const uniform TextureParam uniform &tp,
     return defaultValue;
 
   return get1f(tp, dg);
+}
+
+inline vec3f get3f(const uniform TextureParam uniform &tp,
+    const varying DifferentialGeometry &dg)
+{
+  return make_vec3f(get4f(tp, dg));
 }
 
 inline vec3f get3f(const uniform TextureParam uniform &tp,
@@ -64,6 +67,12 @@ inline vec4f get4f(const uniform TextureParam uniform &tp,
     return defaultValue;
 
   return get4f(tp, dg);
+}
+
+inline vec3f getNormal(const uniform TextureParam uniform &tp,
+    const varying DifferentialGeometry &dg)
+{
+  return get3f(tp, dg) * 2.f - 1.f;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

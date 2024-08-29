@@ -1,17 +1,9 @@
 // Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma once
+#include "Texture2DFormats.ih"
 
-#include "common/OSPCommon.ih"
-#include "rkcommon/math/vec.ih"
-
-OSPRAY_BEGIN_ISPC_NAMESPACE
-
-// helpers
-//////////////////////////////////////////////////////////////////////////////
-
-#define __foreach_fetcher(FCT)                                                 \
+#define __foreach_format(FCT)                                                  \
   FCT(RGBA8);                                                                  \
   FCT(SRGBA);                                                                  \
   FCT(RGBA32F);                                                                \
@@ -32,6 +24,11 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
   FCT(RGB16F);                                                                 \
   FCT(RA16F);                                                                  \
   FCT(R16F)
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+// helpers
+//////////////////////////////////////////////////////////////////////////////
 
 #define BYTE2FLOAT (1.f / 255.f)
 #define SHORT2FLOAT (1.f / 65535.f)
@@ -389,4 +386,177 @@ inline vec4f getTexel_R16F(const void *data, const uint32 idx)
 
 #undef BYTE2FLOAT
 #undef SHORT2FLOAT
+
+// setTexel
+//////////////////////////////////////////////////////////////////////////////
+
+#define __define_set_texel_case(FMT)                                           \
+  case OSP_TEXTURE_##FMT:                                                      \
+    setTexel_##FMT(data, idx, value);                                          \
+    break;
+
+SYCL_EXTERNAL void Texture2D_setTexel(const uniform OSPTextureFormat fmt,
+    void *uniform data,
+    const uint32 idx,
+    const vec4f value)
+{
+#ifndef OSPRAY_TARGET_SYCL
+  assert(data);
+  switch (fmt) {
+    __foreach_format(__define_set_texel_case);
+  default:
+    break;
+  }
+#endif
+}
+
+// getTexel
+//////////////////////////////////////////////////////////////////////////////
+
+#define __define_get_texel_case(FMT)                                           \
+  case OSP_TEXTURE_##FMT:                                                      \
+    return getTexel_##FMT(data, idx);
+
+SYCL_EXTERNAL vec4f Texture2D_getTexel(
+    const uniform OSPTextureFormat fmt, const void *data, const uint32 idx)
+{
+  assert(data);
+  switch (fmt) {
+    __foreach_format(__define_get_texel_case);
+  default:
+    return make_vec4f(0.f, 0.f, 0.f, 1.f);
+  }
+}
+
+// getTexel4
+//////////////////////////////////////////////////////////////////////////////
+
+#define __define_get_texel4_case(FMT)                                          \
+  case OSP_TEXTURE_##FMT:                                                      \
+    vp.v1 = getTexel_##FMT(data, idx.x);                                       \
+    vp.v2 = getTexel_##FMT(data, idx.y);                                       \
+    vp.v3 = getTexel_##FMT(data, idx.z);                                       \
+    vp.v4 = getTexel_##FMT(data, idx.w);                                       \
+    return vp;
+
+SYCL_EXTERNAL Vec4fPack Texture2D_getTexel4(
+    const uniform OSPTextureFormat fmt, const void *data, const vec4i idx)
+{
+  assert(data);
+  Vec4fPack vp;
+  switch (fmt) {
+    __foreach_format(__define_get_texel4_case);
+  default:
+    vp.v1 = vp.v2 = vp.v3 = vp.v4 = make_vec4f(0.f, 0.f, 0.f, 1.f);
+    return vp;
+  }
+}
+
+// Poor mans unit tests
+//////////////////////////////////////////////////////////////////////////////
+
+#ifdef OSPRAY_UNITTEST
+
+uniform size_t channels(OSPTextureFormat format)
+{
+  switch (format) {
+  case OSP_TEXTURE_RGBA8:
+  case OSP_TEXTURE_SRGBA:
+  case OSP_TEXTURE_RGBA32F:
+  case OSP_TEXTURE_RGBA16:
+  case OSP_TEXTURE_RGBA16F:
+    return 4;
+  case OSP_TEXTURE_RGB8:
+  case OSP_TEXTURE_SRGB:
+  case OSP_TEXTURE_RGB32F:
+  case OSP_TEXTURE_RGB16:
+  case OSP_TEXTURE_RGB16F:
+    return 3;
+  case OSP_TEXTURE_RA32F:
+  case OSP_TEXTURE_RA8:
+  case OSP_TEXTURE_LA8:
+  case OSP_TEXTURE_RA16:
+  case OSP_TEXTURE_RA16F:
+    return 2;
+  case OSP_TEXTURE_R8:
+  case OSP_TEXTURE_L8:
+  case OSP_TEXTURE_R32F:
+  case OSP_TEXTURE_R16:
+  case OSP_TEXTURE_R16F:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+uniform bool hdr(OSPTextureFormat format)
+{
+  switch (format) {
+  case OSP_TEXTURE_RGBA32F:
+  case OSP_TEXTURE_RGBA16F:
+  case OSP_TEXTURE_RGB32F:
+  case OSP_TEXTURE_RGB16F:
+  case OSP_TEXTURE_RA32F:
+  case OSP_TEXTURE_RA16F:
+  case OSP_TEXTURE_R32F:
+  case OSP_TEXTURE_R16F:
+    return true;
+  default:
+    return false;
+  }
+}
+
+#define define_texAccessor_consistency(FMT)                                    \
+  {                                                                            \
+    setTexel_##FMT(&data, programIndex, testIn);                               \
+    const vec4f testOut = getTexel_##FMT(&data, programIndex);                 \
+    const uniform int ch = channels(OSP_TEXTURE_##FMT);                        \
+    const uniform bool alpha = ch == 2 || ch == 4;                             \
+    const uniform bool hd = hdr(OSP_TEXTURE_##FMT);                            \
+    const uniform bool lm = OSP_TEXTURE_##FMT == OSP_TEXTURE_LA8               \
+        || OSP_TEXTURE_##FMT == OSP_TEXTURE_L8;                                \
+    if (ch == 0)                                                               \
+      print("Invalid format " #FMT "\n");                                      \
+    if (abs(testIn.x - testOut.x) > 1e-2f && (hd || testOut.x != 1.0f)) {      \
+      print("Failed ch 1 and format " #FMT " % %\n", testIn.x, testOut.x);     \
+      success = false;                                                         \
+    }                                                                          \
+    if (abs(testIn.y - testOut.y) > 1e-2f && (hd || testOut.y != 1.0f)         \
+        && (ch > 2 || testOut.y != 0.0f) && (!lm || testOut.y != testOut.x)) { \
+      print("Failed ch 2 and format " #FMT " % %\n", testIn.y, testOut.y);     \
+      success = false;                                                         \
+    }                                                                          \
+    if (abs(testIn.z - testOut.z) > 1e-2f && (hd || testOut.z != 1.0f)         \
+        && (ch > 2 || testOut.z != 0.0f) && (!lm || testOut.z != testOut.x)) { \
+      print("Failed ch 3 and format " #FMT " % %\n", testIn.z, testOut.z);     \
+      success = false;                                                         \
+    }                                                                          \
+    if (abs(testIn.w - testOut.w) > 1e-2f                                      \
+        && (hd && alpha || testOut.w != 1.0f)) {                               \
+      print("Failed ch 4 and format " #FMT " % %\n", testIn.w, testOut.w);     \
+      success = false;                                                         \
+    }                                                                          \
+  }                                                                            \
+  struct swallow_semicolon
+
+bool checkTexAcc(const vec4f testIn)
+{
+  bool success = true;
+  vec4f data; // largest format
+
+  __foreach_format(define_texAccessor_consistency);
+
+  return success;
+}
+
+export uniform bool checkTextureAccessorConsistency()
+{
+  bool success = true;
+  success &= checkTexAcc(make_vec4f(programIndex * 0.15f));
+  success &= checkTexAcc(make_vec4f(0.4f + programIndex * 0.027f));
+  success &= checkTexAcc(make_vec4f(0.01f, 0.91f, 0.37f, 0.5f));
+  return all(success);
+}
+#endif
+
 OSPRAY_END_ISPC_NAMESPACE

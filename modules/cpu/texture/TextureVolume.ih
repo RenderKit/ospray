@@ -4,17 +4,12 @@
 
 #pragma once
 
-#include "Texture.ih"
-
-#include "TextureVolumeShared.h"
-
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL vec4f TextureVolume_get(
-    const uniform Texture *uniform self, const DifferentialGeometry &dg);
+struct TextureVolume;
 
-SYCL_EXTERNAL vec3f TextureVolume_getNormal(
-    const uniform Texture *uniform self, const DifferentialGeometry &dg);
+SYCL_EXTERNAL vec4f TextureVolume_get(
+    const uniform TextureVolume *uniform self, const vec3f &P);
 
 OSPRAY_END_ISPC_NAMESPACE
 

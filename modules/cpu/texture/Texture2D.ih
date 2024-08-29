@@ -3,17 +3,17 @@
 
 #pragma once
 
-#include "Texture.ih"
-
+#include "common/OSPCommon.ih"
+#include "rkcommon/math/vec.ih"
+// c++ shared
 #include "Texture2DShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL vec4f Texture2D_get(
-    const uniform Texture *uniform self, const DifferentialGeometry &dg);
-
-SYCL_EXTERNAL vec3f Texture2D_getNormal(
-    const uniform Texture *uniform self, const DifferentialGeometry &dg);
+SYCL_EXTERNAL __noinline vec4f Texture2D_get(
+    const uniform Texture2D *uniform self,
+    const vec2f &st,
+    const float pixelFootprint);
 
 // XXX won't work with MIPmapping: clean implementation with clamping on integer
 // coords needed then
@@ -24,64 +24,26 @@ inline vec2f clamp2edge(const uniform Texture2D *uniform self, const vec2f p)
 }
 
 inline float get1f(const uniform Texture2D *uniform self,
-    const varying DifferentialGeometry &dg)
+    const vec2f &st,
+    const float pixelFootprint = flt_min)
 {
-  return get1f(&self->super, dg);
+  vec4f ret = Texture2D_get(self, st, pixelFootprint);
+  return ret.x;
 }
 
 inline vec3f get3f(const uniform Texture2D *uniform self,
-    const varying DifferentialGeometry &dg)
+    const vec2f &st,
+    const float pixelFootprint = flt_min)
 {
-  return get3f(&self->super, dg);
+  vec4f ret = Texture2D_get(self, st, pixelFootprint);
+  return make_vec3f(ret);
 }
 
 inline vec4f get4f(const uniform Texture2D *uniform self,
-    const varying DifferentialGeometry &dg)
+    const vec2f &st,
+    const float pixelFootprint = flt_min)
 {
-  return get4f(&self->super, dg);
+  return Texture2D_get(self, st, pixelFootprint);
 }
 
-inline vec3f getNormal(const uniform Texture2D *uniform self,
-    const varying DifferentialGeometry &dg)
-{
-  return getNormal(&self->super, dg);
-}
-
-inline float get1f(const uniform Texture2D *uniform self,
-    const varying DifferentialGeometry &dg,
-    const varying float defaultValue)
-{
-  return get1f(&self->super, dg, defaultValue);
-}
-
-inline vec3f get3f(const uniform Texture2D *uniform self,
-    const varying DifferentialGeometry &dg,
-    const varying vec3f defaultValue)
-{
-  return get3f(&self->super, dg, defaultValue);
-}
-
-inline vec4f get4f(const uniform Texture2D *uniform self,
-    const varying DifferentialGeometry &dg,
-    const varying vec4f defaultValue)
-{
-  return get4f(&self->super, dg, defaultValue);
-}
-
-#if 0 // crashes ISPC!
-inline DifferentialGeometry dgFromTexCoord(const varying vec2f &c)
-{
-  DifferentialGeometry dg;
-  dg.primID = -1;
-  dg.st = c;
-  return dg;
-}
-#else
-inline void initDgFromTexCoord(DifferentialGeometry &dg, const varying vec2f &c)
-{
-  dg.primID = -1;
-  dg.st = c;
-  dg.pixelFootprint = flt_min;
-}
-#endif
 OSPRAY_END_ISPC_NAMESPACE

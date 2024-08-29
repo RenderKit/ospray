@@ -200,6 +200,7 @@ set(OSPRAY_KERNEL_SOURCES
   render/materials/Mix.ispc
 
   texture/TextureDispatch.ispc
+  texture/Texture2DFormats.ispc
   texture/Texture2D.ispc
   texture/TextureParam.ispc
 )
@@ -506,6 +507,7 @@ if (OSPRAY_MODULE_GPU)
     ${OSPRAY_BCKND_SYCL_SOURCES}
   )
   ispc_target_add_sources(ospray_module_gpu
+    texture/Texture2DFormats.ispc
     texture/MipMapGeneration.ispc
   )
 

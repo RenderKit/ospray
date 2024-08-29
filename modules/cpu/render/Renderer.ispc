@@ -24,12 +24,7 @@ SYCL_EXTERNAL vec4f Renderer_getBackground(const Renderer *uniform self,
   if (!self->backplate || !(ff.other & FFO_TEXTURE_IN_RENDERER))
     return self->bgColor;
 
-  // TODO: Now for GPU making a whole DifferentialGeometry object
-  // just to set up the texture coords we want to sample for the background
-  // seems very wasteful
-  DifferentialGeometry lookup;
-  initDgFromTexCoord(lookup, clamp2edge(self->backplate, screenPos));
-  return get4f(self->backplate, lookup);
+  return get4f(self->backplate, clamp2edge(self->backplate, screenPos));
 }
 
 SYCL_EXTERNAL float Renderer_getMaxDepth(const Renderer *uniform self,
@@ -40,9 +35,7 @@ SYCL_EXTERNAL float Renderer_getMaxDepth(const Renderer *uniform self,
   if (!self->maxDepthTexture || !(ff.other & FFO_TEXTURE_IN_RENDERER))
     return inf;
 
-  DifferentialGeometry lookup;
-  initDgFromTexCoord(lookup, screenPos);
-  return max(0.f, get1f(self->maxDepthTexture, lookup));
+  return max(0.f, get1f(self->maxDepthTexture, screenPos));
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////

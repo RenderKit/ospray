@@ -109,7 +109,9 @@ SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
   res.dist = dist - max(as.epsilon, calcEpsilon(as.pos, dist)) * rcosd;
 
   DifferentialGeometry texDg;
-  initDgFromTexCoord(texDg, as.st);
+  texDg.primID = -1;
+  texDg.st = as.st;
+  texDg.pixelFootprint = flt_min;
   texDg.P = as.pos;
   texDg.Ns = as.normal;
   texDg.Ng = as.normal;

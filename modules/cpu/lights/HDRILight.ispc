@@ -42,9 +42,7 @@ inline Light_SampleRes Sample(const HDRILight *uniform self,
 
   // clamp2edge for theta for tex lookup, to prevent light leaks at the poles
   sample2d.uv.y = clamp(sample2d.uv.y, halfTexel.y, 1.0f - halfTexel.y);
-  DifferentialGeometry lookup;
-  initDgFromTexCoord(lookup, sample2d.uv);
-  res.weight = get3f(self->map, lookup) * self->radianceScale / res.pdf;
+  res.weight = get3f(self->map, sample2d.uv) * self->radianceScale / res.pdf;
 
   return res;
 }
@@ -102,9 +100,7 @@ inline Light_EvalRes Eval(const HDRILight *uniform self,
       rcp(make_vec2f(self->map->size.x, self->map->size.y)) * 0.5f;
   const vec2f uvc = make_vec2f(u, clamp(v, halfTexel.y, 1.0f - halfTexel.y));
 
-  DifferentialGeometry lookup;
-  initDgFromTexCoord(lookup, uvc);
-  res.radiance = get3f(self->map, lookup) * self->radianceScale;
+  res.radiance = get3f(self->map, uvc) * self->radianceScale;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
   vec2f uv = uvc + halfTexel;
@@ -180,9 +176,7 @@ task
 #endif
     const vec2f coord = make_vec2f(x * rcpSize.x, fy);
     // using bilinear filtering is indeed what we want
-    DifferentialGeometry lookup;
-    initDgFromTexCoord(lookup, coord);
-    const vec3f col = get3f(map, lookup);
+    const vec3f col = get3f(map, coord);
     importance[y * width + x] = sinTheta * luminance(col);
   }
   row_importance[y] = Distribution1D_create(width, importance + y * width);
