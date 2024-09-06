@@ -106,7 +106,7 @@ SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
 #endif
 }
 
-SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
+SYCL_EXTERNAL void Material_dispatch_selectNextMedium(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     Medium &currentMedium,
@@ -127,8 +127,7 @@ SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
   }
 }
 
-SYCL_EXTERNAL __noinline vec3f Material_dispatch_getEmission(
-    const Material *uniform self,
+SYCL_EXTERNAL vec3f Material_dispatch_getEmission(const Material *uniform self,
     const varying DifferentialGeometry &dg,
     const uniform FeatureFlagsHandler &ffh)
 {
