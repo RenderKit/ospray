@@ -219,6 +219,16 @@ struct DeviceAllocator
   T *allocate(std::size_t n, const void *hint = 0);
   void deallocate(T *p, std::size_t n);
 
+  // For performance reasons do not call constructors and destructors,
+  // but beware that all manipulations of the container data have to be done
+  // manually with memcpy/memset functions
+  template <typename U, typename... Args>
+  void construct(U *, Args &&...)
+  {}
+  template <typename U>
+  void destroy(U *)
+  {}
+
   // Check if it is the same allocator
   bool operator==(const DeviceAllocator &other) const;
   bool operator!=(const DeviceAllocator &other) const;
@@ -436,19 +446,30 @@ template <typename T>
 BufferDeviceShadowed<T>::BufferDeviceShadowed(
     Device &device, T *ptr, const std::vector<T> &v)
     : std::vector<T, DeviceAllocator<T>>(
-        v.begin(), v.end(), DeviceAllocator<T>(device, Alloc::Host)),
+          DeviceAllocator<T>(device, Alloc::Host)),
       device(device),
       devPtr(ptr)
-{}
+{
+  std::vector<T, DeviceAllocator<T>>::resize(
+      v.size()); // TODO: since C++14 use vector(count, allocator) constructor
+  std::memcpy(std::vector<T, DeviceAllocator<T>>::data(),
+      v.data(),
+      v.size() * sizeof(T));
+}
 
 template <typename T>
 BufferDeviceShadowed<T>::BufferDeviceShadowed(
     Device &device, T *ptr, T *data, std::size_t count)
     : std::vector<T, DeviceAllocator<T>>(
-        data, data + count, DeviceAllocator<T>(device, Alloc::Host)),
+          DeviceAllocator<T>(device, Alloc::Host)),
       device(device),
       devPtr(ptr)
-{}
+{
+  std::vector<T, DeviceAllocator<T>>::resize(
+      count); // TODO: since C++14 use vector(count, allocator) constructor
+  std::memcpy(
+      std::vector<T, DeviceAllocator<T>>::data(), data, count * sizeof(T));
+}
 
 template <typename T>
 Device &BufferDeviceShadowed<T>::getDevice() const
@@ -535,14 +556,25 @@ BufferShared<T>::BufferShared(Device &device, std::size_t count)
 template <typename T>
 BufferShared<T>::BufferShared(Device &device, const std::vector<T> &v)
     : std::vector<T, DeviceAllocator<T>>(
-        v.begin(), v.end(), DeviceAllocator<T>(device, Alloc::Shared))
-{}
+          DeviceAllocator<T>(device, Alloc::Shared))
+{
+  std::vector<T, DeviceAllocator<T>>::resize(
+      v.size()); // TODO: since C++14 use vector(count, allocator) constructor
+  std::memcpy(std::vector<T, DeviceAllocator<T>>::data(),
+      v.data(),
+      v.size() * sizeof(T));
+}
 
 template <typename T>
 BufferShared<T>::BufferShared(Device &device, const T *data, std::size_t count)
     : std::vector<T, DeviceAllocator<T>>(
-        data, data + count, DeviceAllocator<T>(device, Alloc::Shared))
-{}
+          DeviceAllocator<T>(device, Alloc::Shared))
+{
+  std::vector<T, DeviceAllocator<T>>::resize(
+      count); // TODO: since C++14 use vector(count, allocator) constructor
+  std::memcpy(
+      std::vector<T, DeviceAllocator<T>>::data(), data, count * sizeof(T));
+}
 
 template <typename T>
 inline Device &BufferShared<T>::getDevice() const
