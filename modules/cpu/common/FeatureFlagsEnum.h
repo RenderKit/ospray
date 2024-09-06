@@ -15,6 +15,7 @@
 
 #ifdef __cplusplus
 #include <cstdint>
+#include <iostream> // for debug prints
 #include <type_traits>
 namespace ospray {
 #endif // __cplusplus
@@ -206,6 +207,166 @@ inline FeatureFlags &operator|=(FeatureFlags &a, const FeatureFlags &b)
 #endif
   a.other |= b.other;
   return a;
+}
+
+inline void printFfg(uint32_t flags)
+{
+  if (flags == FFG_NONE) {
+    std::cout << "FFG_NONE" << std::endl;
+    return;
+  }
+
+  if (flags & FFG_MOTION_BLUR)
+    std::cout << "FFG_MOTION_BLUR" << std::endl;
+  if (flags & FFG_TRIANGLE)
+    std::cout << "FFG_TRIANGLE" << std::endl;
+  if (flags & FFG_QUAD)
+    std::cout << "FFG_QUAD" << std::endl;
+  if (flags & FFG_GRID)
+    std::cout << "FFG_GRID" << std::endl;
+  if (flags & FFG_SUBDIVISION)
+    std::cout << "FFG_SUBDIVISION" << std::endl;
+
+  if (flags & FFG_CONE_LINEAR_CURVE)
+    std::cout << "FFG_CONE_LINEAR_CURVE" << std::endl;
+  if (flags & FFG_ROUND_LINEAR_CURVE)
+    std::cout << "FFG_ROUND_LINEAR_CURVE" << std::endl;
+  if (flags & FFG_FLAT_LINEAR_CURVE)
+    std::cout << "FFG_FLAT_LINEAR_CURVE" << std::endl;
+  if (flags & FFG_LINEAR_CURVE)
+    std::cout << "FFG_LINEAR_CURVE" << std::endl;
+
+  if (flags & FFG_ROUND_BEZIER_CURVE)
+    std::cout << "FFG_ROUND_BEZIER_CURVE" << std::endl;
+  if (flags & FFG_FLAT_BEZIER_CURVE)
+    std::cout << "FFG_FLAT_BEZIER_CURVE" << std::endl;
+  if (flags & FFG_NORMAL_ORIENTED_BEZIER_CURVE)
+    std::cout << "FFG_NORMAL_ORIENTED_BEZIER_CURVE" << std::endl;
+  if (flags & FFG_BEZIER_CURVE)
+    std::cout << "FFG_BEZIER_CURVE" << std::endl;
+
+  if (flags & FFG_ROUND_BSPLINE_CURVE)
+    std::cout << "FFG_ROUND_BSPLINE_CURVE" << std::endl;
+  if (flags & FFG_FLAT_BSPLINE_CURVE)
+    std::cout << "FFG_FLAT_BSPLINE_CURVE" << std::endl;
+  if (flags & FFG_NORMAL_ORIENTED_BSPLINE_CURVE)
+    std::cout << "FFG_NORMAL_ORIENTED_BSPLINE_CURVE" << std::endl;
+  if (flags & FFG_BSPLINE_CURVE)
+    std::cout << "FFG_BSPLINE_CURVE" << std::endl;
+
+  if (flags & FFG_ROUND_HERMITE_CURVE)
+    std::cout << "FFG_ROUND_HERMITE_CURVE" << std::endl;
+  if (flags & FFG_FLAT_HERMITE_CURVE)
+    std::cout << "FFG_FLAT_HERMITE_CURVE" << std::endl;
+  if (flags & FFG_NORMAL_ORIENTED_HERMITE_CURVE)
+    std::cout << "FFG_NORMAL_ORIENTED_HERMITE_CURVE" << std::endl;
+  if (flags & FFG_HERMITE_CURVE)
+    std::cout << "FFG_HERMITE_CURVE" << std::endl;
+
+  if (flags & FFG_ROUND_CATMULL_ROM_CURVE)
+    std::cout << "FFG_ROUND_CATMULL_ROM_CURVE" << std::endl;
+  if (flags & FFG_FLAT_CATMULL_ROM_CURVE)
+    std::cout << "FFG_FLAT_CATMULL_ROM_CURVE" << std::endl;
+  if (flags & FFG_NORMAL_ORIENTED_CATMULL_ROM_CURVE)
+    std::cout << "FFG_NORMAL_ORIENTED_CATMULL_ROM_CURVE" << std::endl;
+  if (flags & FFG_CATMULL_ROM_CURVE)
+    std::cout << "FFG_CATMULL_ROM_CURVE" << std::endl;
+
+  if (flags & FFG_SPHERE)
+    std::cout << "FFG_SPHERE" << std::endl;
+  if (flags & FFG_DISC_POINT)
+    std::cout << "FFG_DISC_POINT" << std::endl;
+  if (flags & FFG_ORIENTED_DISC_POINT)
+    std::cout << "FFG_ORIENTED_DISC_POINT" << std::endl;
+
+  if (flags & FFG_SPHERES)
+    std::cout << "FFG_SPHERES" << std::endl;
+
+  if (flags & FFG_CURVES)
+    std::cout << "FFG_CURVES" << std::endl;
+
+  // OSPRay specific flags
+  if (flags & FFG_BOX)
+    std::cout << "FFG_BOX" << std::endl;
+  if (flags & FFG_PLANE)
+    std::cout << "FFG_PLANE" << std::endl;
+  if (flags & FFG_ISOSURFACE)
+    std::cout << "FFG_ISOSURFACE" << std::endl;
+}
+
+inline void printFfo(uint32_t flags)
+{
+  if (flags == FFO_NONE) {
+    std::cout << "FFO_NONE" << std::endl;
+    return;
+  }
+
+  if (flags & FFO_FB_LOCAL)
+    std::cout << "FFO_FB_LOCAL" << std::endl;
+  if (flags & FFO_FB_SPARSE)
+    std::cout << "FFO_FB_SPARSE" << std::endl;
+
+  if (flags & FFO_CAMERA_PERSPECTIVE)
+    std::cout << "FFO_CAMERA_PERSPECTIVE" << std::endl;
+  if (flags & FFO_CAMERA_ORTHOGRAPHIC)
+    std::cout << "FFO_CAMERA_ORTHOGRAPHIC" << std::endl;
+  if (flags & FFO_CAMERA_PANORAMIC)
+    std::cout << "FFO_CAMERA_PANORAMIC" << std::endl;
+
+  if (flags & FFO_LIGHT_AMBIENT)
+    std::cout << "FFO_LIGHT_AMBIENT" << std::endl;
+  if (flags & FFO_LIGHT_CYLINDER)
+    std::cout << "FFO_LIGHT_CYLINDER" << std::endl;
+  if (flags & FFO_LIGHT_DIRECTIONAL)
+    std::cout << "FFO_LIGHT_DIRECTIONAL" << std::endl;
+  if (flags & FFO_LIGHT_HDRI)
+    std::cout << "FFO_LIGHT_HDRI" << std::endl;
+  if (flags & FFO_LIGHT_POINT)
+    std::cout << "FFO_LIGHT_POINT" << std::endl;
+  if (flags & FFO_LIGHT_QUAD)
+    std::cout << "FFO_LIGHT_QUAD" << std::endl;
+  if (flags & FFO_LIGHT_SPOT)
+    std::cout << "FFO_LIGHT_SPOT" << std::endl;
+  if (flags & FFO_LIGHT_GEOMETRY)
+    std::cout << "FFO_LIGHT_GEOMETRY" << std::endl;
+
+  if (flags & FFO_MATERIAL_ALLOY)
+    std::cout << "FFO_MATERIAL_ALLOY" << std::endl;
+  if (flags & FFO_MATERIAL_CARPAINT)
+    std::cout << "FFO_MATERIAL_CARPAINT" << std::endl;
+  if (flags & FFO_MATERIAL_GLASS)
+    std::cout << "FFO_MATERIAL_GLASS" << std::endl;
+  if (flags & FFO_MATERIAL_LUMINOUS)
+    std::cout << "FFO_MATERIAL_LUMINOUS" << std::endl;
+  if (flags & FFO_MATERIAL_METAL)
+    std::cout << "FFO_MATERIAL_METAL" << std::endl;
+  if (flags & FFO_MATERIAL_METALLICPAINT)
+    std::cout << "FFO_MATERIAL_METALLICPAINT" << std::endl;
+  if (flags & FFO_MATERIAL_MIX)
+    std::cout << "FFO_MATERIAL_MIX" << std::endl;
+  if (flags & FFO_MATERIAL_OBJ)
+    std::cout << "FFO_MATERIAL_OBJ" << std::endl;
+  if (flags & FFO_MATERIAL_PLASTIC)
+    std::cout << "FFO_MATERIAL_PLASTIC" << std::endl;
+  if (flags & FFO_MATERIAL_PRINCIPLED)
+    std::cout << "FFO_MATERIAL_PRINCIPLED" << std::endl;
+  if (flags & FFO_MATERIAL_THINGLASS)
+    std::cout << "FFO_MATERIAL_THINGLASS" << std::endl;
+  if (flags & FFO_MATERIAL_VELVET)
+    std::cout << "FFO_MATERIAL_VELVET" << std::endl;
+
+  if (flags & FFO_TEXTURE_IN_MATERIAL)
+    std::cout << "FFO_TEXTURE_IN_MATERIAL" << std::endl;
+  if (flags & FFO_TEXTURE_IN_RENDERER)
+    std::cout << "FFO_TEXTURE_IN_RENDERER" << std::endl;
+
+  if (flags & FFO_VOLUME_IN_SCENE)
+    std::cout << "FFO_VOLUME_IN_SCENE" << std::endl;
+  if (flags & FFO_VOLUME_SCIVIS_SHADING)
+    std::cout << "FFO_VOLUME_SCIVIS_SHADING" << std::endl;
+
+  if (flags & FFO_CAMERA_MOTION_BLUR)
+    std::cout << "FFO_CAMERA_MOTION_BLUR" << std::endl;
 }
 #endif
 
