@@ -374,7 +374,7 @@ jobs:
       artifact-in: build-ubuntu2204-arm
       artifact-out: test-ubuntu2204-arm
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      #artifact-on-failure: true
+      artifact-on-failure: true
 
   test-tutorials:
     needs: build-centos8
