@@ -85,7 +85,7 @@ void Isosurfaces::commit()
 
 size_t Isosurfaces::numPrimitives() const
 {
-  return isovaluesData->size();
+  return isovaluesData ? isovaluesData->size() : 0;
 }
 
 } // namespace ospray

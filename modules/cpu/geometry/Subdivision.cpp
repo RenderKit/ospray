@@ -175,7 +175,7 @@ void Subdivision::commit()
 
 size_t Subdivision::numPrimitives() const
 {
-  return facesData->size();
+  return facesData ? facesData->size() : 0;
 }
 
 } // namespace ospray

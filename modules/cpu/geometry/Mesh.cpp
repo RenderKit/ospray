@@ -205,7 +205,7 @@ void Mesh::commit()
 
 size_t Mesh::numPrimitives() const
 {
-  return indexData->size();
+  return indexData ? indexData->size() : 0;
 }
 
 } // namespace ospray

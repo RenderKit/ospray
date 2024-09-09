@@ -46,7 +46,9 @@ void BilinearPatches::commit()
 
 size_t BilinearPatches::numPrimitives() const
 {
-  return patchesData->size() * sizeOf(patchesData->type) / sizeof(ispc::Patch);
+  return patchesData
+      ? patchesData->size() * sizeOf(patchesData->type) / sizeof(ispc::Patch)
+      : 0;
 }
 
 } // namespace blp

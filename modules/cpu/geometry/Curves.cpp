@@ -167,7 +167,7 @@ void Curves::commit()
 
 size_t Curves::numPrimitives() const
 {
-  return indexData->size();
+  return indexData ? indexData->size() : 0;
 }
 
 void Curves::createEmbreeGeometry()
