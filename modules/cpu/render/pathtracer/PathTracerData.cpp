@@ -128,7 +128,7 @@ void PathTracerData::generateGeometryLights(const World &world,
     auto geometries = instance->group->geometricModels.ptr;
 
     if (!geometries)
-      return;
+      continue;
 
     for (auto &&model : *geometries) {
       if (model->hasEmissiveMaterials(renderer.materialData)) {
