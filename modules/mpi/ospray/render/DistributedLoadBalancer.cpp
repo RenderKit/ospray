@@ -334,7 +334,7 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
   auto OSPRAY_STATIC_BALANCER =
       utility::getEnvVar<int>("OSPRAY_STATIC_BALANCER");
 
-  enableStaticBalancer = OSPRAY_STATIC_BALANCER.value_or(0);
+  enableStaticBalancer = OSPRAY_STATIC_BALANCER.value_or(1);
 
   RKCOMMON_IF_TRACING_ENABLED(
       rkcommon::tracing::beginEvent("renderFrameReplicated", "DistributedLB"));
