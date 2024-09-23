@@ -308,7 +308,8 @@ SYCL_EXTERNAL const varying BSDF *uniform Principled_getBSDF(
     }
 
     // conductor base
-    const float conductor = metallic * specular;
+    const float conductor =
+        metallic * (self->specularMetallic ? specular : 1.0f);
     if (conductor > EPS) {
       const vec3f edgeColor = clamp(
           self->edgeColor * get3f(self->edgeColorMap, dg, make_vec3f(1.f)));

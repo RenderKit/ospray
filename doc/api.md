@@ -1977,6 +1977,8 @@ listed in the table below.
 
   float  specular                   1  specular reflection/transmission weight in [0–1]
 
+  bool   specularMetallic        true  whether specular influences metallic
+
   float  ior                        1  dielectric index of refraction
 
   float  transmission               0  specular transmission weight in [0–1]

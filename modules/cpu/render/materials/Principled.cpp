@@ -39,6 +39,7 @@ void Principled::commit()
   metallic = getMaterialParam1f("metallic", 0.f);
   diffuse = getMaterialParam1f("diffuse", 1.f);
   specular = getMaterialParam1f("specular", 1.f);
+  bool specularMetallic = getParam<bool>("specularMetallic", true);
   ior = getMaterialParam1f("ior", 1.f);
   transmission = getMaterialParam1f("transmission", 0.f);
   transmissionColor = getMaterialParam3f("transmissionColor", vec3f(1.f));
@@ -88,6 +89,7 @@ void Principled::commit()
   getSh()->diffuse = diffuse.factor;
   getSh()->diffuseMap = diffuse.tex;
   getSh()->specular = specular.factor;
+  getSh()->specularMetallic = specularMetallic;
   getSh()->specularMap = specular.tex;
   getSh()->ior = ior.factor;
   getSh()->iorMap = ior.tex;

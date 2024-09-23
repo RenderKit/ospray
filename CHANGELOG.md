@@ -12,6 +12,9 @@ Version History
       of the first *non-specular* hit for denoising)
     - Channel `OSP_FB_POSITION` holds the world-space position of the first hit
 -   Improved sampling of layered materials
+-   New parameter `specularMetallic` for the Principled material to
+    optionally disable the incluence of `specular` to metallicness,
+    improving compatibility with glTF `KHR_materials_specular`
 
 ### Changes in v3.2.0:
 

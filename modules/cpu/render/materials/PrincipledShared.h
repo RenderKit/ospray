@@ -32,6 +32,7 @@ struct Principled
   // specular weight in [0, 1]
   float specular;
   TextureParam specularMap;
+  bool specularMetallic;
 
   // index of refraction
   float ior;
@@ -132,6 +133,7 @@ struct Principled
         metallic(0.f),
         diffuse(1.f),
         specular(1.f),
+        specularMetallic(true),
         ior(1.f),
         transmission(0.f),
         transmissionColor(1.f),
