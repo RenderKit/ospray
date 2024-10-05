@@ -68,6 +68,7 @@ class GLFWOSPRayWindow
   bool showUnstructuredCells{false};
 
   OSPFrameBufferChannel showFBChannel{OSP_FB_COLOR};
+  bool showFBAlpha{false};
 
   // GLFW window instance
   GLFWwindow *glfwWindow = nullptr;

@@ -58,6 +58,7 @@ static const std::vector<std::string> g_scenes = {"boxes_lit",
     "vdb_volume",
     "vdb_volume_packed",
     "instancing",
+    "mip_map_textures",
     "test_pt_alloy_roughness",
     "test_pt_carpaint",
     "test_pt_glass",
@@ -98,6 +99,7 @@ static const std::vector<std::string> g_pixelFilterTypes = {
     "point", "box", "gaussian", "mitchell", "blackmanHarris"};
 
 static const std::vector<std::string> g_AOVs = {"color",
+    "alpha",
     "depth",
     "projectedDepth",
     "position",
@@ -109,6 +111,7 @@ static const std::vector<std::string> g_AOVs = {"color",
     "instID"};
 
 static const std::vector<OSPFrameBufferChannel> g_AOVs_FB = {OSP_FB_COLOR,
+    OSP_FB_COLOR,
     OSP_FB_DEPTH,
     OSP_FB_DEPTH,
     OSP_FB_POSITION,
@@ -147,6 +150,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(
 
   if (denoiserAvailable) {
     denoiser = cpp::ImageOperation("denoiser");
+    denoiser.setParam("denoiseAlpha", true);
     denoiserEnabled = denoiserGPUAvail;
     updateFrameOpsNextFrame = denoiserEnabled;
   }
@@ -472,24 +476,30 @@ void GLFWOSPRayWindow::display()
         for (int i = 0; i < windowSize.x * windowSize.y * 3; i++)
           fFb[i] = std::abs(fb[i]);
       }
+      if (showFBAlpha)
+        for (int i = 0; i < windowSize.x * windowSize.y; i++) {
+          const float alpha(fb[i * 4 + 3]);
+          // negative in red, >1 "overexposed" in green
+          fFb[i * 3 + 0] = alpha < 0.0f ? 1.0f : alpha > 1.0f ? 0.0f : alpha;
+          fFb[i * 3 + 1] = alpha < 0.0f ? 0.0f : alpha;
+          fFb[i * 3 + 2] = alpha < 0.0f || alpha > 1.0f ? 0.0f : alpha;
+        }
       if (fbChannel == OSP_FB_ALBEDO)
         fFb = fb;
 
       glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+      const bool rgba = fbChannel == OSP_FB_COLOR && !showFBAlpha;
       glTexImage2D(GL_TEXTURE_2D,
           0,
-          fbChannel == OSP_FB_DEPTH
-              ? GL_DEPTH_COMPONENT
-              : (fbChannel == OSP_FB_COLOR ? GL_RGBA32F : GL_RGB32F),
+          fbChannel == OSP_FB_DEPTH ? GL_DEPTH_COMPONENT
+                                    : (rgba ? GL_RGBA32F : GL_RGB32F),
           windowSize.x,
           windowSize.y,
           0,
-          fbChannel == OSP_FB_DEPTH
-              ? GL_DEPTH_COMPONENT
-              : (fbChannel == OSP_FB_COLOR ? GL_RGBA : GL_RGB),
+          fbChannel == OSP_FB_DEPTH ? GL_DEPTH_COMPONENT
+                                    : (rgba ? GL_RGBA : GL_RGB),
           GL_FLOAT,
-          fbChannel == OSP_FB_DEPTH ? depthFb.data()
-                                    : (fbChannel == OSP_FB_COLOR ? fb : fFb));
+          fbChannel == OSP_FB_DEPTH ? depthFb.data() : (rgba ? fb : fFb));
 
       framebuffer.unmap(fb);
     } else
@@ -657,6 +667,7 @@ void GLFWOSPRayWindow::buildUI()
           g_AOVs.size())) {
     const auto &aovStr = g_AOVs[whichAOV];
     showFBChannel = g_AOVs_FB[whichAOV];
+    showFBAlpha = aovStr == "alpha";
     if (showFBChannel == OSP_FB_DEPTH) {
       framebuffer.setParam("projectedDepth", aovStr == "projectedDepth");
       addObjectToCommit(framebuffer.handle());

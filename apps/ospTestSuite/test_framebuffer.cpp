@@ -187,7 +187,7 @@ void MiscBuffer::PerformRenderTest()
         const float d = abs(framebuffer_data[i]) - 1.7f;
         if (d > 0.0f)
           col = vec3f(sqrt(0.28f * d));
-        if (framebuffer_data[i] < 0) // neative depth in red
+        if (framebuffer_data[i] < 0) // negative depth in red
           col.y = col.z = 0.0f;
       } else
         col = (channel == OSP_FB_POSITION ? 0.3f : 1.0f)
