@@ -114,7 +114,7 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
         device.getDRTDevice(), numPixels);
 
   // Create color conversion FrameOp if needed
-  if ((hasColorBuffer) && (getColorBufferFormat() != OSP_FB_RGBA32F)) {
+  if (hasColorBuffer) {
     FrameBufferView fbv(getNumPixels(), colorBuffer->devicePtr());
     colorConversionFrameOp = rkcommon::make_unique<LiveColorConversionFrameOp>(
         device.getDRTDevice(), fbv, getColorBufferFormat());
@@ -221,12 +221,8 @@ void LocalFrameBuffer::commit()
     }
   }
 
-  // Create color conversion FrameOp if needed
-  colorConversionFrameOp.reset();
-  if (getColorBufferFormat() != OSP_FB_RGBA32F) {
-    colorConversionFrameOp = rkcommon::make_unique<LiveColorConversionFrameOp>(
-        device.getDRTDevice(), fbv, getColorBufferFormat());
-  }
+  colorConversionFrameOp = rkcommon::make_unique<LiveColorConversionFrameOp>(
+      device.getDRTDevice(), fbv, getColorBufferFormat());
 }
 
 vec2i LocalFrameBuffer::getNumRenderTasks() const

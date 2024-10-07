@@ -14,7 +14,7 @@ inline void ColorConversion_kernel(
   const LiveColorConversion *uniform self =
       (const LiveColorConversion *uniform)fbvSelf;
   const uint32 i = itemIndex.y * fbvSelf->viewDims.x + itemIndex.x;
-  vec4f v = fbvSelf->colorBufferInput[i];
+  const vec4f v = fbvSelf->colorBufferInput[i];
   switch (self->targetColorFormat) {
   case OSP_FB_RGBA8: {
     uint32 *uniform typedCB = (uint32 * uniform) self->convBuffer;
@@ -25,7 +25,9 @@ inline void ColorConversion_kernel(
     typedCB[i] = linear_to_srgba8(v);
   } break;
   case OSP_FB_RGBA32F: {
-    // Should never get here
+    vec4f *uniform typedCB = (vec4f * uniform) self->convBuffer;
+    const vec4f vc = max(v, make_vec4f(0.f));
+    typedCB[i] = make_vec4f(vc.x, vc.y, vc.z, min(vc.w, 1.f));
   } break;
   default:
     // Should never get here
