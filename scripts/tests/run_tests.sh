@@ -55,14 +55,6 @@ export CMAKE_BUILD_PARALLEL_LEVEL=32
 cmake --build . --target ospray_test_data
 let exitCode+=$?
 
-### Excluded tests
-##################
-# due to IEEE 754 uncompliant NaN handling on ARM NEON,
-# see https://github.com/ispc/ispc/issues/3048
-if [[ `uname -m` =~ arm|aarch ]] ; then
-  test_filters="TestShadowCatcher/ShadowCatcher.multipleLights/0"
-fi
-
 export OIDN_VERBOSE=2
 
 if [ $TEST_CPU ]; then

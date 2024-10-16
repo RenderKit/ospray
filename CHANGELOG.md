@@ -17,6 +17,9 @@ Version History
     improving compatibility with glTF `KHR_materials_specular`
 -   Improvements to and documentation of the pathtracer's Shadow Catcher
     feature (enabled via parameter `shadowCatcherPlane`)
+-   The new minimum versions of dependencies:
+    -    ISPCRT v1.25.0 (uses IEEE 754 compliant instructions on ARM for
+         min/max)
 
 ### Changes in v3.2.0:
 
