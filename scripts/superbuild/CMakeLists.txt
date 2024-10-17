@@ -87,7 +87,7 @@ endif()
 
 option(DOWNLOAD_ISPC "Download ISPC or use the one found in the system environment?" ON)
 if (DOWNLOAD_ISPC)
-  set(ISPC_VERSION "1.25.0" CACHE STRING "Which version of ISPC to download?")
+  set(ISPC_VERSION "1.25.1" CACHE STRING "Which version of ISPC to download?")
   mark_as_advanced(CLEAR ISPC_VERSION)
   if (ISPC_VERSION STREQUAL "1.25.0")
     if (APPLE)
