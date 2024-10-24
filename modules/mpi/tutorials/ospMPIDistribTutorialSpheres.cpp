@@ -94,16 +94,6 @@ int main(int argc, char **argv)
 
     // create OSPRay renderer
     cpp::Renderer renderer("mpiRaycast");
-
-    // create and setup an ambient light
-    std::array<cpp::Light, 2> lights = {
-        cpp::Light("ambient"), cpp::Light("distant")};
-    lights[0].commit();
-
-    lights[1].setParam("direction", vec3f(-1.f, -1.f, 0.5f));
-    lights[1].commit();
-
-    renderer.setParam("lights", cpp::CopiedData(lights));
     renderer.setParam("aoSamples", 1);
 
     // create a GLFW OSPRay window: this object will create and manage the
