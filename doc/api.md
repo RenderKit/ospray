@@ -832,11 +832,12 @@ the vertices and data values. Vertex ordering is the same as
 `VTK_PYRAMID`: four bottom vertices counterclockwise, then the top
 vertex.
 
-To maintain VTK data compatibility, the `index` array may be specified
-with cell sizes interleaved with vertex indices in the following format:
-$n, id_1, ..., id_n, m, id_1, ..., id_m$. This alternative `index` array
-layout can be enabled through the `indexPrefixed` flag (in which case,
-the `cell.type` parameter must be omitted).
+For backward compatibility with legacy vtkCellArray the `index` array
+can also be specified with cell sizes interleaved with vertex indices in
+the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$. This
+alternative `index` array layout can be enabled through the
+`indexPrefixed` flag (in which case, the `cell.type` parameter must be
+omitted).
 
   ------------------- ------------------ --------  ---------------------------------------
   Type                Name                Default  Description
@@ -850,9 +851,9 @@ the `cell.type` parameter must be omitted).
                                                    vertex array(s)) that form cells
 
   bool                indexPrefixed          false indicates that the `index` array is
-                                                   compatible to VTK, where the indices of
-                                                   each cell are prefixed with the number
-                                                   of vertices
+                                                   compatible to legacy vtkCellArray,
+                                                   where the indices of each cell are
+                                                   prefixed with the number of vertices
 
   uint32[] / uint64[] cell.index                   [data] array of locations (into the
                                                    index array), specifying the first index
