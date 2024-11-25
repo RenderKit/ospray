@@ -164,7 +164,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(
 
   glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-#ifdef __APPLE_
+#ifdef __APPLE__
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   const char *glslVersion = "#version 150";
