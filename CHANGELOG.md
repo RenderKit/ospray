@@ -21,6 +21,7 @@ Version History
 -   Bug fixes
     -   Find geometry lights after first empty instance
     -   Segfault when `numPrimitives()` is called before `commit()`
+    -   Initialization of OpenGL on OSX
 
 ### Changes in v3.2.0:
 
