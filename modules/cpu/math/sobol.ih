@@ -30,19 +30,30 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 #ifdef OSPRAY_TARGET_SYCL
 #include "sobol.inl"
 #else
-extern const uniform unsigned int Sobol_revMatrices[4 * 32];
+extern const uniform unsigned int Sobol_revMatrices[3 * 32];
 extern const uniform unsigned int Sobol_matrices[5 * 52];
 #endif
+
+// compute component 1 of the Sobol'-sequence (count starting from 0)
+// Ahmed, "An Implementation Algorithm of 2D Sobol Sequence Fast, Elegant, and
+// Compact", EGSR 2024, https://doi.org/10.2312/sr.20241147
+inline uint32 Sobol_revSample1(uint32 v)
+{
+  v ^= v << 16;
+  v ^= (v & 0x00FF00FF) << 8;
+  v ^= (v & 0x0F0F0F0F) << 4;
+  v ^= (v & 0x33333333) << 2;
+  v ^= (v & 0x55555555) << 1;
+  return reverseBits(v);
+}
 
 // compute components 1 and 2 of the Sobol'-sequence (count starting from 0)
 inline vec2ui Sobol_revSample2(uint32 revIndex)
 {
-  vec2ui result = make_vec2ui(0);
-  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 4) {
-    if (revIndex & 0x80000000u) {
-      result.x ^= Sobol_revMatrices[i];
-      result.y ^= Sobol_revMatrices[i + 1];
-    }
+  vec2ui result = make_vec2ui(Sobol_revSample1(revIndex), 0);
+  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 3) {
+    if (revIndex & 0x80000000u)
+      result.y ^= Sobol_revMatrices[i];
   }
 
   return result;
@@ -51,12 +62,11 @@ inline vec2ui Sobol_revSample2(uint32 revIndex)
 // compute components 1 to 3 of the Sobol'-sequence (count starting from 0)
 inline vec3ui Sobol_revSample3(uint32 revIndex)
 {
-  vec3ui result = make_vec3ui(0);
-  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 4) {
+  vec3ui result = make_vec3ui(Sobol_revSample1(revIndex), 0, 0);
+  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 3) {
     if (revIndex & 0x80000000u) {
-      result.x ^= Sobol_revMatrices[i];
-      result.y ^= Sobol_revMatrices[i + 1];
-      result.z ^= Sobol_revMatrices[i + 2];
+      result.y ^= Sobol_revMatrices[i];
+      result.z ^= Sobol_revMatrices[i + 1];
     }
   }
 
@@ -66,13 +76,12 @@ inline vec3ui Sobol_revSample3(uint32 revIndex)
 // compute components 1 to 4 of the Sobol'-sequence (count starting from 0)
 inline vec4ui Sobol_revSample4(uint32 revIndex)
 {
-  vec4ui result = make_vec4ui(0);
-  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 4) {
+  vec4ui result = make_vec4ui(Sobol_revSample1(revIndex), 0, 0, 0);
+  for (uniform uint32 i = 0; revIndex; revIndex <<= 1, i += 3) {
     if (revIndex & 0x80000000u) {
-      result.x ^= Sobol_revMatrices[i];
-      result.y ^= Sobol_revMatrices[i + 1];
-      result.z ^= Sobol_revMatrices[i + 2];
-      result.w ^= Sobol_revMatrices[i + 3];
+      result.y ^= Sobol_revMatrices[i];
+      result.z ^= Sobol_revMatrices[i + 1];
+      result.w ^= Sobol_revMatrices[i + 2];
     }
   }
 
