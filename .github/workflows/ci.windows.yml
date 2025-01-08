@@ -112,3 +112,15 @@ jobs:
       artifact-out: test-windows-msvc17-avx512
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
+
+  test-find-ospray:
+    needs: build-windows-msvc17
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      cmd: |
+        md buildtut
+        cd buildtut
+        $env:ospray_DIR=(Get-ChildItem $env:GITHUB_WORKSPACE\build\install\ospray\lib\cmake\ospray-* | Select-Object -Expand FullName)
+        cmake ..\apps\ospTutorial\ospTutorialFindospray
+        cmake --build .
+      artifact-in: build-windows-msvc17

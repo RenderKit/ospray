@@ -196,6 +196,12 @@ set_target_properties(ospray::ospray PROPERTIES
 set_target_properties(ospray::ospray_module_cpu PROPERTIES
   INTERFACE_LINK_LIBRARIES "ospray::ospray;${OPENVKL_LIBRARY};${EMBREE_LIBRARY}")
 
+# https://gitlab.kitware.com/cmake/cmake/-/issues/18837
+if (MSVC AND (MSVC_VERSION GREATER_EQUAL 1914))
+  set_property(TARGET ospray::ospray APPEND PROPERTY
+    INTERFACE_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>")
+endif()
+
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})
 

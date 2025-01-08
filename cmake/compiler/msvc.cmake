@@ -2,6 +2,9 @@
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMMON_CXX_FLAGS "/EHsc /MP /GR /bigobj")
+if (MSVC_VERSION GREATER_EQUAL 1914)
+  string(APPEND COMMON_CXX_FLAGS " /Zc:__cplusplus")
+endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${COMMON_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}        ${COMMON_CXX_FLAGS} /Ox /fp:fast /Oi /Gy ")

@@ -98,6 +98,7 @@ TEST(Enums, VKLUnstructuredCellType)
   ASSERT_EQ(OSP_HEXAHEDRON, VKL_HEXAHEDRON);
   ASSERT_EQ(OSP_WEDGE, VKL_WEDGE);
   ASSERT_EQ(OSP_PYRAMID, VKL_PYRAMID);
+  ASSERT_EQ(sizeof(OSPUnstructuredCellType), 1); // must fit in uint8
 }
 
 TEST(Enums, VKLAMRMethod)
