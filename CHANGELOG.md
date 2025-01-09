@@ -4,34 +4,38 @@ Version History
 ### Changes in v3.3.0:
 
 -   Add more framebuffer channels and options:
-    - Parameter `bool projectedDepth` to switch from euclidean to
-      projected distance for channel `OSP_FB_DEPTH` (often the distance
-      to the image plane, or simply depth)
-    - Channel `OSP_FB_FIRST_NORMAL` holds the world-space normal of the
-      *first* hit (as opposed to `OSP_FB_NORMAL`, which holds the normal
-      of the first *non-specular* hit for denoising)
-    - Channel `OSP_FB_POSITION` holds the world-space position of the first hit
+    -   Parameter `bool projectedDepth` to switch from euclidean to
+        projected distance for channel `OSP_FB_DEPTH` (often the
+        distance to the image plane, or simply depth)
+    -   Channel `OSP_FB_FIRST_NORMAL` holds the world-space normal of
+        the *first* hit (as opposed to `OSP_FB_NORMAL`, which holds the
+        normal of the first *non-specular* hit for denoising)
+    -   Channel `OSP_FB_POSITION` holds the world-space position of the
+        first hit
 -   Improved sampling of layered materials
 -   New parameter `specularMetallic` for the Principled material to
     optionally disable the incluence of `specular` to metallicness,
     improving compatibility with glTF `KHR_materials_specular`
 -   Improvements to and documentation of the pathtracer's Shadow Catcher
     feature (enabled via parameter `shadowCatcherPlane`)
+-   Bug fixes
+    -   Find geometry lights after first empty instance
+    -   Segfault when `numPrimitives()` is called before `commit()`
 
 ### Changes in v3.2.0:
 
 -   Sampling improvements:
-      - Better performance (lower rendering time and faster convergence)
-      - More pleasing blue noise enabled when the total number of frames
+    -   Better performance (lower rendering time and faster convergence)
+    -   More pleasing blue noise enabled when the total number of frames
         to be accumulated is known in advance and set as the
         `targetFrames` parameter at the framebuffer
-      - Note a maximum of 64k samples is supported
+    -   Note a maximum of 64k samples is supported
 -   Improved `denoiser` image operation:
-      - User-controlled quality levels via parameter `quality`
-      - Optionally denoise alpha channel as well, enabled via
-        parameter `denoiseAlpha`
--   Support half-precision (16\ bit float) texture formats
-    `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32\ bit
+    -   User-controlled quality levels via parameter `quality`
+    -   Optionally denoise alpha channel as well, enabled via parameter
+        `denoiseAlpha`
+-   Support half-precision (16 bit float) texture formats
+    `OSP_TEXTURE_[RGBA16F|RGB16F|RA16F|R16F]` and two-channel 32 bit
     float textures `OSP_TEXTURE_RA32F`
 -   New parameter `limitIndirectLightSamples` for the `pathtracer` which
     limits the number of light samples after the first non-specular
@@ -40,22 +44,23 @@ Version History
     additional memory per texture needed cannot be spared, applications
     can disable the generation of MIP maps with device parameter
     `disableMipMapGeneration`
--   The backplate (background texture) is now always sampled at the pixel
-    center and thus not blurred by the pixel filter anymore
+-   The backplate (background texture) is now always sampled at the
+    pixel center and thus not blurred by the pixel filter anymore
 -   Avoid color bleeding across eye-subimages when stereo rendering
 -   Superbuild uses binary packages of Open VKL
 -   Removed Intel ISPCRT dependency (ISPC compiler is still needed):
     -   oneAPI Level Zero Loader is no longer necessary
-    -   `zeContext` and `zeDevice`device parameters are no longer supported
-    -   `ispcrtContext` and `ispcrtDevice`device parameters are no longer
+    -   `zeContext` and `zeDevice`device parameters are no longer
         supported
+    -   `ispcrtContext` and `ispcrtDevice`device parameters are no
+        longer supported
 -   Clarify the size of `OSP_BOOL` to be 1 byte
 -   Fix artifacts occasionally appearing with `gpu` device
 -   The new minimum versions of dependencies:
-    -    Embree v4.3.3 (better error reporting)
-    -    Open Image Denoise v2.3 (better image quality with `HIGH`
-         quality mode, added `FAST` quality mode)
-    -    rkcommon v1.14.0
+    -   Embree v4.3.3 (better error reporting)
+    -   Open Image Denoise v2.3 (better image quality with `HIGH`
+        quality mode, added `FAST` quality mode)
+    -   rkcommon v1.14.0
 
 ### Changes in v3.1.0:
 
@@ -73,13 +78,13 @@ Version History
 -   Fix empty image on Windows when `focusDistance=0`
 -   Fix missing SDK headers for `ISPCDevice*`
 -   The new minimum versions of dependencies:
-    -    Embree v4.3.1
-    -    Open VKL v2.0.1
-    -    Open Image Denoise v2.2 (better quality with fine details,
-         support AArch64 CPU on Linux)
-    -    ISPCRT v1.23.0 (uses environment variable `ISPCRT_GPU_DRIVER`
-         to select GPU to run on when multiple (i)GPUs are present)
-    -    rkcommon v1.13.0 (fixes crash using GPU and emissive geometry)
+    -   Embree v4.3.1
+    -   Open VKL v2.0.1
+    -   Open Image Denoise v2.2 (better quality with fine details,
+        support AArch64 CPU on Linux)
+    -   ISPCRT v1.23.0 (uses environment variable `ISPCRT_GPU_DRIVER` to
+        select GPU to run on when multiple (i)GPUs are present)
+    -   rkcommon v1.13.0 (fixes crash using GPU and emissive geometry)
 
 ### Changes in v3.0.0:
 
@@ -88,7 +93,7 @@ Version History
     Implementation is based on the [SYCL](https://www.khronos.org/sycl/)
     cross-platform programming language implemented by [Intel oneAPI
     Data Parallel C++
-    (DPC++)](https://www.intel.com/content/www/us/en/developer/tools/oneapi/data-parallel-c-plus-plus.html).  
+    (DPC++)](https://www.intel.com/content/www/us/en/developer/tools/oneapi/data-parallel-c-plus-plus.html).\
     Note that the following features are not implemented yet or are not
     working correctly on the new `gpu` device:
     -   Multiple volumes in the scene
@@ -129,14 +134,14 @@ Version History
 -   Fix crash in HDRI light
 -   Fix link order for Debug build on Windows
 -   The new minimum versions of dependencies:
-    -    Embree v4.3.0
-    -    Open VKL v2.0.0
-    -    Open Image Denoise v2.1.0
-    -    ISPC v1.21.1
-    -    rkcommon v1.12.0
+    -   Embree v4.3.0
+    -   Open VKL v2.0.0
+    -   Open Image Denoise v2.1.0
+    -   ISPC v1.21.1
+    -   rkcommon v1.12.0
 -   Breaking API changes
     -   Renamed `OSP_TEXTURE_FILTER_BILINEAR` to
-        `OSP_TEXTURE_FILTER_LINEAR ` and
+        `OSP_TEXTURE_FILTER_LINEAR` and
         `OSP_VOLUME_FILTER_TRI[LINEAR|CUBIC]` to
         `OSP_VOLUME_FILTER_[LINEAR|CUBIC]`
     -   Most enums now use storage type `uint32`
@@ -154,7 +159,6 @@ Version History
         -   `spot` light with `intensityDistribution`:
             `intensityQuantity` other than
             `OSP_INTENSITY_QUANTITY_SCALE`
-
 
 ### Changes in v2.12.0:
 
@@ -181,9 +185,9 @@ Version History
 -   Support for volume rendering (and thus the dependency to Open VKL)
     can now be compile-time controlled via CMake variable
     `OSPRAY_ENABLE_VOLUMES`
--   OSPRay's MPI modules have been split up and renamed, the `mpiOffload`
-    device is now in the `mpi_offload` module, while the `mpiDistributed`
-    device is now in the `mpi_distributed_cpu` module
+-   OSPRay's MPI modules have been split up and renamed, the
+    `mpiOffload` device is now in the `mpi_offload` module, while the
+    `mpiDistributed` device is now in the `mpi_distributed_cpu` module
 -   Add native support for spheres via Embree, which requires the
     positions and radius of the spheres to be interleaved in memory; if
     this is not the case, OSPRay will internally create a copy of the
@@ -241,7 +245,7 @@ Version History
         the `cellCentered` parameter (vertex-centered remains the
         default)
     -   Particle volumes ignore particles with zero radius
--   Add support for dynamic load balancing in MPI Offload device 
+-   Add support for dynamic load balancing in MPI Offload device
 -   Support for photometric lights (e.g., IES or EULUMDAT) also for
     `sphere` and `quad` lights. When setting `intensityDistribution`,
     other values for `intensityQuantity` than
@@ -354,7 +358,7 @@ Version History
         for VDB volume
     -   Fixed artifacts for isosurfaces of unstructured volumes
     -   Performance improvements for isosurfaces when multiple isovalues
-        are selected 
+        are selected
     -   Better, adaptive sampling of AMR volumes
 -   The `mpiOffload` and `mpiDistributed` devices now support picking.
     Picking in the distributed device will return the globally closest
@@ -386,13 +390,13 @@ Version History
     interpretation and conversion of the `intensity` into a radiative
     quantity
 -   OSPRay now requires minimum Open VKL v0.12.0 to bring the following
-    improvements: 
+    improvements:
     -   Better default sampling rate for scaled volumes, improving
         performance
     -   Higher robustness for axis-aligned rays
--   Removed limit on the number of volumes (both overlapped and separate)
-    that a ray can intersect while rendering. Now it is limited by
-    available memory only.
+-   Removed limit on the number of volumes (both overlapped and
+    separate) that a ray can intersect while rendering. Now it is
+    limited by available memory only.
 -   Move to OIDN v1.3.0 to bring the following improvements:
     -   Improved denoising quality (sharpness of fine details, fewer
         noisy artifacts)
@@ -401,7 +405,7 @@ Version History
     geometry/volume objects rebound using an object parameter
 -   Fix light leaking artifacts at poles of HDRI (and Sun-Sky) light
 -   Add sRGB conversion to `ospExamples` such that the color of the
-    widget for `backgroundColor` actually matches 
+    widget for `backgroundColor` actually matches
 -   Dropping support for MSVC14, new minimum compiler on Windows is
     MSVC15 (Visual Studio 2017)
 
@@ -411,7 +415,7 @@ Version History
     background is seen through refractive objects like glass, by
     enabling `backgroundRefraction`
 -   OSPRay now requires minimum Open VKL v0.11.0 to bring the following
-    improvements: 
+    improvements:
     -   Improved rendering performance of VDB volumes
     -   Added support for configurable iterator depth via the
         `maxIteratorDepth` parameters for unstructured and particle
@@ -451,8 +455,8 @@ Version History
 -   Added support for data arrays with a stride between voxels in
     volumes
 -   Application thread waiting for finished image via `ospWait`
-    participates in rendering, increasing CPU utilization; via
-    rkcommon v1.5.0
+    participates in rendering, increasing CPU utilization; via rkcommon
+    v1.5.0
 -   Added `ospray_cpp` compatibility headers for C++ wrappers to
     understand rkcommon and glm short vector types
     -   For rkcommon, include `ospray/ospray_cpp/ext/rkcommon.h`
@@ -577,9 +581,9 @@ Version History
 -   Fix issue where OSPRay always loaded the ISPC module, even if not
     required
 -   Fixes for MPI module
-    - Fix member variable type for bcast
-    - Fix incorrect data size computation in `offload` device
-    - Fix large data chunking support for MPI Bcast
+    -   Fix member variable type for bcast
+    -   Fix incorrect data size computation in `offload` device
+    -   Fix large data chunking support for MPI Bcast
 -   OSPRay now requires minimum Open VKL v0.9.0
 
 ### Changes in v2.0.1:
@@ -608,16 +612,16 @@ Version History
 ### Changes in v2.0.0:
 
 -   New major revision of OSPRay brings API breaking improvements over
-    v1.x. See [doc/ospray2_porting_guide.md] for a deeper description of
-    migrating from v1.x to v2.0 and the latest
-    [API documentation](README.md#ospray-api)
-    -   `ospRenderFrame` now takes all participating objects as
-        function parameters instead of setting some as renderer params
+    v1.x. See \[doc/ospray2_porting_guide.md\] for a deeper description
+    of migrating from v1.x to v2.0 and the latest [API
+    documentation](README.md#ospray-api)
+    -   `ospRenderFrame` now takes all participating objects as function
+        parameters instead of setting some as renderer params
     -   `ospRenderFrame` is now asynchronous, where the task is managed
         through a returned `OSPFuture` handle
-    -   The hierarchy of objects in a scene are now more granular to
-        aid in scene construction flexibility and reduce potential
-        object duplication
+    -   The hierarchy of objects in a scene are now more granular to aid
+        in scene construction flexibility and reduce potential object
+        duplication
     -   Type-specific parameter setting functions have been consolidated
         into a single `ospSetParam` API call
     -   C++ wrappers found in `ospray_cpp.h` now automatically track
@@ -633,8 +637,8 @@ Version History
     -   All utility functions are implemented in terms of the core API
         found in `ospray.h`, therefore they are compatible with any
         device backend
--   Introduction of new Intel® Open Volume Kernel Library (Open VKL)
-    for greatly enhanced volume sampling and rendering features and
+-   Introduction of new Intel® Open Volume Kernel Library (Open VKL) for
+    greatly enhanced volume sampling and rendering features and
     performance
 -   Added direct support for Intel® Open Image Denoise as an optional
     module, which adds a `denoiser` type to `ospNewImageOperation`
@@ -643,8 +647,8 @@ Version History
     and OSPRay itself
     -   Found in `scripts/superbuild`
     -   See documentation for more details and example usage
--   The `ospcommon` library now lives as a stand alone repository and
-    is required to build OSPRay
+-   The `ospcommon` library now lives as a stand alone repository and is
+    required to build OSPRay
 -   The MPI module is now a separate repository, which also contains all
     MPI distributed rendering documentation
 -   Log levels are now controlled with enums and named strings (where
@@ -671,11 +675,12 @@ Version History
 -   Introduction of new `boxes` geometry type
 -   Expansion of information returned by `ospPick`
 -   Addition of API to query version information at runtime
--   Curves now supports both, per vertex varying radii as in `vec4f[]
-    vertex.position_radius` and constant radius for the geometry with
-    `float radius`. It uses `OSP_ROUND` type and `OSP_LINEAR` basis by
-    default to create the connected segments of constant radius. For per
-    vertex varying radii curves it uses Embree curves.
+-   Curves now supports both, per vertex varying radii as in
+    `vec4f[]     vertex.position_radius` and constant radius for the
+    geometry with `float radius`. It uses `OSP_ROUND` type and
+    `OSP_LINEAR` basis by default to create the connected segments of
+    constant radius. For per vertex varying radii curves it uses Embree
+    curves.
 -   Add new Embree curve type `OSP_CATMULL_ROM` for curves
 -   Minimum required Embree version is now 3.7.0
 -   Removal of `cylinders` and `streamlines` geometry, use `curves`
@@ -713,15 +718,16 @@ Version History
         `ospray::mpi::TileOperation`, respectively. See the
         `ospray::mpi::DistributedRaycastRenderer` for an example to
         start from.
-    -   The MPI Offload device can now communicate over sockets, allowing
-        for remote rendering on clusters in the listen/connect mode
+    -   The MPI Offload device can now communicate over sockets,
+        allowing for remote rendering on clusters in the listen/connect
+        mode
     -   Data and commands are now sent asynchronously to the MPI workers
         in the Offload device, overlapping better with application work.
         The number of data copies performed has also been significantly
         reduced, and should improve load times
     -   The MPI Distributed device will now infer the rank's local data
-        bounds based on the volumes and geometry specified if no bounding
-        boxes are specified
+        bounds based on the volumes and geometry specified if no
+        bounding boxes are specified
     -   When specifying custom bounds on each rank IDs are no longer
         required, and ranks sharing data will be determined by finding
         any specifying the same bounding boxes. This will also be done
@@ -862,8 +868,8 @@ Version History
 
 ### Changes in v1.6.0:
 
--   Updated ispc device to use Embree3 (minimum required Embree
-    version is 3.1)
+-   Updated ispc device to use Embree3 (minimum required Embree version
+    is 3.1)
 -   Added new `ospShutdown()` API function to aid in correctness and
     determinism of OSPRay API cleanup
 -   Added "`Principled`" and "`CarPaint"` materials to the path tracer
@@ -943,9 +949,9 @@ Version History
     -   Fixed a crash in MPI mode when creating lights without a
         renderer
     -   Fixed an issue with camera lens samples not initialized when
-        `spp` <= 0
-    -   Fixed an issue in `ospExampleViewer` when specifying multiple data
-        files
+        `spp` \<= 0
+    -   Fixed an issue in `ospExampleViewer` when specifying multiple
+        data files
 -   The C99 tutorial is now indicated as the default; the C++ wrappers
     do not change the semantics of the API (memory management) so the
     C99 version should be considered first when learning the API
@@ -1079,8 +1085,8 @@ Version History
     -   Devices can be created and set current, creating an alternative
         method for initializing the API
     -   New API functions for committing parameters on Devices
--   Removed support for the first generation Intel® Xeon Phi™ coprocessor
-    (codename Knights Corner)
+-   Removed support for the first generation Intel® Xeon Phi™
+    coprocessor (codename Knights Corner)
 -   Other minor improvements, updates, and bug fixes
     -   Updated Embree required version to v2.13.0 for added features
         and performance
@@ -1130,14 +1136,15 @@ Version History
     Xeon Phi coprocessor (codename Knights Corner)
     -   Future major and minor releases will be upgraded to the latest
         version of Embree, which no longer supports Knights Corner
-    -   Depending on user feedback, patch releases are still made to
-        fix bugs
+    -   Depending on user feedback, patch releases are still made to fix
+        bugs
 -   Enhanced output statistics in `ospBenchmark` application
 -   Many fixes to the OSPRay SDK
     -   Improved CMake detection of compile-time enabled features
     -   Now distribute OSPRay configuration and ISPC CMake macros
     -   Improved SDK support on Windows
--   OSPRay library can now be compiled with `-Wall` and `-Wextra` enabled
+-   OSPRay library can now be compiled with `-Wall` and `-Wextra`
+    enabled
     -   Tested with GCC v5.3.1 and Clang v3.8
     -   Sample applications and modules have not been fixed yet, thus
         applications which build OSPRay as a CMake subproject should
@@ -1205,9 +1212,9 @@ Version History
 -   Added new tasking options: `Cilk`, `Internal`, and `Debug`
     -   Provides more ways for OSPRay to interact with calling
         application tasking systems
-        - `Cilk`: Use Intel® Cilk™ Plus language extensions (icc only)
-        - `Internal`: Use hand written OSPRay tasking system
-        - `Debug`: All tasks are run in serial (useful for debugging)
+        -   `Cilk`: Use Intel® Cilk™ Plus language extensions (icc only)
+        -   `Internal`: Use hand written OSPRay tasking system
+        -   `Debug`: All tasks are run in serial (useful for debugging)
     -   In most cases, Intel Threading Building Blocks (Intel `TBB`)
         remains the fastest option
 -   Added support for adaptive accumulation and stopping
@@ -1264,7 +1271,8 @@ Version History
         renderer
     -   Updated default renderer to be "ao1" in ospModelViewer
     -   Trianglemesh `postIntersect` shading is now 64-bit safe
-    -   Texture2D has been reworked, with many improvements and bug fixes
+    -   Texture2D has been reworked, with many improvements and bug
+        fixes
     -   Fixed bug where MPI device would freeze while rendering frames
         with Intel TBB
     -   Updates to CMake with better error messages when Intel TBB is
@@ -1372,14 +1380,14 @@ changes.
         `gridSpacing` parameters
     -   New `shared_structured_volume` volume type that allows voxel
         data to be provided by applications through a shared data buffer
-    -   New API call to set (sub-)regions of volume data (`ospSetRegion()`)
+    -   New API call to set (sub-)regions of volume data
+        (`ospSetRegion()`)
 -   Added a subsampling-mode, enabled with a negative `spp` parameter;
     the first frame after scene changes is rendered with reduced
     resolution, increasing interactivity
 -   Added multi-target ISA support: OSPRay will now select the
     appropriate ISA at runtime
--   Added support for the Stanford SEP file format to the seismic
-    module
+-   Added support for the Stanford SEP file format to the seismic module
 -   Added `--osp:numthreads <n>` command line option to restrict the
     number of threads OSPRay creates
 -   Various bug fixes, cleanups and documentation updates throughout the
