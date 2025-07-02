@@ -53,7 +53,7 @@ BUILD_OSPRAY_MODULE_MPI
     distributed parallel rendering on multiple nodes.
 
 BUILD_GPU_SUPPORT
-:   enables beta GPU support, fetching the SYCL variants of the
+:   enables GPU support, fetching the SYCL variants of the
     dependencies and builds `OSPRAY_MODULE_GPU`
 
 BUILD_TBB_FROM_SOURCE

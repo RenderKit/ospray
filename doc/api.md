@@ -3388,8 +3388,8 @@ The CPU module is implicitly loaded and the `cpu` device is
 automatically used if no other options are specified.
 
 
-GPU (Beta)
----------
+GPU
+----
 
 To use the GPU for rendering load the `gpu` module and select the `gpu`
 device:
@@ -3442,11 +3442,9 @@ correctly on the GPU device:
 
 - Multiple volumes in the scene
 - Clipping
-- Motion blur
 - Subdivision surfaces
 - Progress reporting via `ospGetProgress` or canceling the frame via `ospCancel`
 - Picking via `ospPick`
-- Adaptive accumulation via `OSP_FB_VARIANCE` and `varianceThreshold`
 - Framebuffer channels `OSP_FB_ID_*` (id buffers)
 - Experimental support for shared device-only data, works only for
   `structuredRegular` volume

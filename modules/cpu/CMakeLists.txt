@@ -6,7 +6,7 @@ mark_as_advanced(OSPRAY_MODULE_CPU)
 
 cmake_dependent_option(
   OSPRAY_MODULE_GPU
-  "Build the GPU module (beta)"
+  "Build the GPU module"
   OFF
   EMBREE_SYCL_SUPPORT
   OFF
