@@ -28,6 +28,7 @@ struct OSPRAY_SDK_INTERFACE Curves
   Ref<const DataT<vec4f>> tangentData;
   Ref<const DataT<vec4f>> colorData;
   Ref<const DataT<vec2f>> texcoordData;
+  std::vector<uint8_t> capData;
 
   RTCGeometryType embreeCurveType{(RTCGeometryType)-1};
 

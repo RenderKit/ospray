@@ -15,11 +15,10 @@ struct Spheres
   Data1D sphere;
   Data1D texcoord;
   Data1D normalData;
-  float global_radius;
   OSPSphereType sphereType;
 
 #ifdef __cplusplus
-  Spheres() : global_radius(.01f)
+  Spheres()
   {
     super.type = GEOMETRY_TYPE_SPHERES;
   }

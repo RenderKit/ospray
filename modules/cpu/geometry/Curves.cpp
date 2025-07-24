@@ -189,6 +189,12 @@ void Curves::createEmbreeGeometry()
     setEmbreeGeometryBuffer(
         embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, texcoordData, 1);
   }
+  capData.clear();
+  if (curveType == OSP_DISJOINT) {
+    // disable caps to get always open cones/cylinders
+    capData.resize(numPrimitives(), RTC_CURVE_FLAG_NEIGHBOR_LEFT | RTC_CURVE_FLAG_NEIGHBOR_RIGHT);
+    setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_FLAGS, capData);
+  }
 
   rtcCommitGeometry(embreeGeometry);
 }

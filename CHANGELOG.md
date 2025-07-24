@@ -24,6 +24,8 @@ Version History
     -   Find geometry lights after first empty instance
     -   Segfault when `numPrimitives()` is called before `commit()`
     -   Initialization of OpenGL on OSX
+    -   `OSP_DISJOINT` curves had disks at the end of the first and last
+        cone/cylinder
 
 ### Changes in v3.2.0:
 
