@@ -49,6 +49,7 @@ Version History
         min/max, performance improvements, bug fixes)
     -   rkcommon v1.15.4 (set DEPENDENTLOADFLAG also on the Windows
         binaries built with Clang/SYCL)
+    -   CMake v3.10
 
 ### Changes in v3.2.0:
 

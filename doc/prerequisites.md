@@ -15,7 +15,8 @@ before you can build OSPRay you need the following prerequisites:
 
         git clone https://github.com/RenderKit/ospray.git
 
--   To build OSPRay you need [CMake](http://www.cmake.org), any form of
+-   To build OSPRay you need [CMake](http://www.cmake.org) version 3.10
+    or higher, any form of
     C++11 compiler (we recommend using GCC, but also support Clang,
     MSVC, and [Intel® C++ Compiler
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
