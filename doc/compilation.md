@@ -91,7 +91,7 @@ Finding an OSPRay Install with CMake
 Client applications using OSPRay can find it with CMake's
 `find_package()` command. For example,
 
-    find_package(ospray 3.0.0 REQUIRED)
+    find_package(ospray 3.3.0 REQUIRED)
 
 finds OSPRay via OSPRay's configuration file `osprayConfig.cmake`^[This
 file is usually in

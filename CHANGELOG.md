@@ -41,6 +41,7 @@ Version History
     -   ISPC v1.30.0 (uses IEEE 754 compliant instructions on ARM for
         min/max, performance improvements, bug fixes)
     -   rkcommon v1.15.2
+    -   CMake v3.10
 
 ### Changes in v3.2.0:
 
