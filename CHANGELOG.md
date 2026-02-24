@@ -26,6 +26,21 @@ Version History
     -   Initialization of OpenGL on OSX
     -   `OSP_DISJOINT` curves had disks at the end of the first and last
         cone/cylinder
+-   Update packaged Open Image Denoise v2.4.1 to bring the following
+    improvements:
+    -   Added Intel Panther Lake, BMG-G31, Wildcat Lake, Nova Lake, and
+        Crescent Island GPU support
+    -   Added Intel AMX-FP16 support, dramatically improving performance
+        on Intel Granite Rapids CPUs
+    -   Improved performance for Intel Lunar Lake and Battlemage GPUs
+    -   Added NVIDIA Blackwell GPU support
+    -   Added AMD RDNA 3.5, RDNA 4, and GFX1152 GPU support, extended
+        RDNA 2 support
+    -   Improved performance for AMD RDNA 3 GPUs
+-   The new minimum versions of dependencies:
+    -   ISPC v1.30.0 (uses IEEE 754 compliant instructions on ARM for
+        min/max, performance improvements, bug fixes)
+    -   rkcommon v1.15.2
 
 ### Changes in v3.2.0:
 

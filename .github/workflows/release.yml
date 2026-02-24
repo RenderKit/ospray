@@ -44,7 +44,6 @@ jobs:
       image: rockylinux:8
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        module load cmake/3.25.3
         module load mpi/mpich-x86_64
         export CC=clang
         export CXX=clang++
@@ -103,6 +102,7 @@ jobs:
     with:
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/dpcpp.env
+      msvc-version: 2022
       cmd: |
         $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
         # disable warnings which lead to excessively large log files
@@ -127,7 +127,6 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
     with:
-      coverity: true
       project: OSPRay
       prebuild: >
         module load impi/latest &&
@@ -204,7 +203,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake/3.15.2
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE
@@ -216,7 +214,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake/3.15.2
         module load mpi/mpich-x86_64
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
@@ -234,7 +231,6 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
       cmd: |
-        module load cmake/3.15.2
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         export OIDN_DEFAULT_DEVICE=sycl

@@ -91,17 +91,34 @@ if (OSPRAY_MODULE_GPU OR OSPRAY_MODULE_DENOISER)
   endif()
 
   if (WIN32)
-    file(GLOB SYCL_LIB LIST_DIRECTORIES FALSE
-      "${SYCL_DIR}/sycl?.dll"
-      "${SYCL_DIR}/pi_level_zero.dll"
-      "${SYCL_DIR}/pi_win_proxy_loader.dll"
-      "${SYCL_DIR}/win_proxy_loader.dll"
-    )
+    if(EXISTS "${SYCL_DIR}/../bin/pi_level_zero.dll")
+      file(GLOB SYCL_LIB LIST_DIRECTORIES FALSE
+        "${SYCL_DIR}/sycl?.dll"
+        "${SYCL_DIR}/pi_level_zero.dll"
+        "${SYCL_DIR}/pi_win_proxy_loader.dll"
+        "${SYCL_DIR}/win_proxy_loader.dll"
+      )
+    else()
+      file(GLOB SYCL_LIB LIST_DIRECTORIES FALSE
+        "${SYCL_DIR}/sycl?.dll"
+        "${SYCL_DIR}/ur_loader.dll"
+        "${SYCL_DIR}/ur_adapter_level_zero.dll"
+        "${SYCL_DIR}/ur_win_proxy_loader.dll"
+      )
+    endif()
   else()
-    file(GLOB SYCL_LIB LIST_DIRECTORIES FALSE
-      "${SYCL_DIR}/libsycl.so.?"
-      "${SYCL_DIR}/libpi_level_zero.so"
-    )
+    if(EXISTS "${SYCL_DIR}/libpi_level_zero.so")
+      file(GLOB SYCL_LIB LIST_DIRECTORIES FALSE
+        "${SYCL_DIR}/libsycl.so.?"
+        "${SYCL_DIR}/libpi_level_zero.so"
+      )
+    else()
+      file(GLOB SYCL_LIB LIST_DIRECTORIES FALSE
+        "${SYCL_DIR}/libsycl.so.?"
+        "${SYCL_DIR}/libur_loader.so"
+        "${SYCL_DIR}/libur_adapter_level_zero.so"
+      )
+    endif()
   endif()
   list(APPEND DEPENDENT_LIBS ${SYCL_LIB})
 endif()

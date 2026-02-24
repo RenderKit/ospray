@@ -200,6 +200,9 @@ set_target_properties(ospray::ospray_module_cpu PROPERTIES
 if (MSVC AND (MSVC_VERSION GREATER_EQUAL 1914))
   set_property(TARGET ospray::ospray APPEND PROPERTY
     INTERFACE_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>")
+  # defined __cplusplus messes with ISPC alignment macro, so we define it here as well
+  set_property(TARGET ospray::ospray APPEND PROPERTY
+    INTERFACE_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:CXX>:/D\"__ISPC_ALIGNED_STRUCT__(s)=struct __ISPC_ALIGN__(s)\">")
 endif()
 
 # Reset CMake module path to its state when this script was called.

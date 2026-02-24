@@ -68,11 +68,8 @@ jobs:
     secrets: inherit
     with:
       image: rockylinux:8
+      dpcpp-version: intel/2025.3
       cmd: |
-        module load cmake
-        module load intel/2022.1
-        export CC=icx
-        export CXX=icpx
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
         export CFLAGS=$CXXFLAGS
         export LDFLAGS="-static-intel"
@@ -86,7 +83,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake
         module load impi/2021.6
         scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
@@ -96,7 +92,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake
         module load mpi/mpich-x86_64
         scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-rocky8-mpi-mpich
@@ -108,7 +103,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake
         module load mpi/openmpi-x86_64
         scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
@@ -146,7 +140,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake/3.15.2
         module load mpi/mpich-x86_64
         scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
       artifact-out: build-rocky8-oidn-mpi
@@ -227,7 +220,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake
         module load mpi/mpich-x86_64
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" TEST_MPI
       artifact-in: build-rocky8-mpi-mpich
@@ -281,7 +273,6 @@ jobs:
       image: rockylinux:8
       runs-on: '"avx512"'
       cmd: |
-        module load cmake/3.15.2
         module load mpi/mpich-x86_64
         export OIDN_DEFAULT_DEVICE=cpu
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" TEST_MPI
@@ -296,7 +287,6 @@ jobs:
     with:
       image: centos:8
       cmd: |
-        module load cmake
         mkdir buildtut
         cd buildtut
         cmake -D ospray_DIR=`echo $GITHUB_WORKSPACE/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray
@@ -390,7 +380,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake/3.15.2
         module load mpi/mpich-x86_64
         scripts/tests/run_tutorials.sh TEST_MPI
       artifact-in: build-rocky8-oidn-mpi

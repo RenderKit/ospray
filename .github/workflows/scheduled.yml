@@ -44,7 +44,6 @@ jobs:
   #   with:
   #     runs-on: '["Cluster", "build"]'
   #   script:
-  #     - module load cmake
   #     - module load impi
   #     - module load gnu
   #     - scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
