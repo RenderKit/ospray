@@ -83,16 +83,3 @@ jobs:
       cmd: |
         scripts/tests/run-benchmarks.sh GPU
       artifact-in: build-linux
-
-  benchmark-pvc:
-    needs: build-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    secrets: inherit
-    with:
-      image: ubuntu:22.04
-      env-from-files: .github/workflows/gfx-ubuntu22.env
-      options: --device=/dev/dri:/dev/dri
-      runs-on: '"vis-perf-spr-pvc-01"'
-      cmd: |
-        scripts/tests/run-benchmarks.sh GPU
-      artifact-in: build-linux
