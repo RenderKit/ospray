@@ -24,8 +24,6 @@ jobs:
       image: ubuntu:22.04
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        export CC=clang
-        export CXX=clang++
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-ubuntu2204-mpi-dpcpp
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
@@ -51,7 +49,7 @@ jobs:
     secrets: inherit
     with:
       image: opensuse/leap:15.4
-      dpcpp-version: intel/2025.3
+      env-from-files: .github/workflows/icx-linux.env
       cmd: |
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON
 
@@ -62,9 +60,7 @@ jobs:
       image: rockylinux:8
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        module load mpi/mpich-x86_64
-        export CC=clang
-        export CXX=clang++
+        export PATH=/usr/lib64/mpich/bin:$PATH
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-rocky8-mpich-dpcpp
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt

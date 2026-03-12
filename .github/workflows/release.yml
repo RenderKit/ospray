@@ -44,9 +44,7 @@ jobs:
       image: rockylinux:8
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        module load mpi/mpich-x86_64
-        export CC=clang
-        export CXX=clang++
+        export PATH=/usr/lib64/mpich/bin:$PATH
         scripts/release/linux.sh
         cp build_release/*.gz $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
@@ -129,7 +127,6 @@ jobs:
     with:
       project: OSPRay
       prebuild: >
-        module load impi/latest &&
         echo "Configure dependencies" &&
         cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF &&
         echo "Build dependencies" &&
@@ -214,7 +211,8 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load mpi/mpich-x86_64
+        export PATH=/usr/lib64/mpich/bin:$PATH
+        export LD_LIBRARY_PATH=/usr/lib64/mpich/lib:$LD_LIBRARY_PATH
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE SKIP_CPU TEST_MPI

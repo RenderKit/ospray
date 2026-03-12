@@ -25,9 +25,6 @@ jobs:
       image: rockylinux:8.7
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        module load mpi/mpich-x86_64
-        export CC=clang
-        export CXX=clang++
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON
       artifact-out: build-linux
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt

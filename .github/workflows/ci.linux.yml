@@ -83,7 +83,7 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load impi/2021.6
+        export PATH=$STORAGE_PATH/packages/apps/intel/oneAPI/mpi/latest/bin:$PATH
         scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
   build-rocky8-mpi-mpich:
@@ -92,7 +92,7 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load mpi/mpich-x86_64
+        export PATH=/usr/lib64/mpich/bin:$PATH
         scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
       artifact-out: build-rocky8-mpi-mpich
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
@@ -103,7 +103,7 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load mpi/openmpi-x86_64
+        export PATH=/usr/lib64/openmpi/bin:$PATH
         scripts/build/linux.sh -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF -DTBB_VERSION=2021.9.0
 
   build-centos8:
@@ -122,7 +122,7 @@ jobs:
     with:
       image: centos:8
       cmd: |
-        module load mpi/mpich-x86_64
+        export PATH=/usr/lib64/mpich/bin:$PATH
         scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
   build-centos8-mpi-openmpi:
@@ -131,7 +131,7 @@ jobs:
     with:
       image: centos:8
       cmd: |
-        module load mpi/openmpi-x86_64
+        export PATH=/usr/lib64/openmpi/bin:$PATH
         scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
   build-rocky8-oidn-mpi:
@@ -140,7 +140,7 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load mpi/mpich-x86_64
+        export PATH=/usr/lib64/mpich/bin:$PATH
         scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
       artifact-out: build-rocky8-oidn-mpi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
@@ -220,7 +220,8 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load mpi/mpich-x86_64
+        export PATH=/usr/lib64/mpich/bin:$PATH
+        export LD_LIBRARY_PATH=/usr/lib64/mpich/lib:$LD_LIBRARY_PATH
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" TEST_MPI
       artifact-in: build-rocky8-mpi-mpich
       artifact-out: test-rocky8-gcc-mpi-mpich-avx2
@@ -273,7 +274,8 @@ jobs:
       image: rockylinux:8
       runs-on: '"avx512"'
       cmd: |
-        module load mpi/mpich-x86_64
+        export PATH=/usr/lib64/mpich/bin:$PATH
+        export LD_LIBRARY_PATH=/usr/lib64/mpich/lib:$LD_LIBRARY_PATH
         export OIDN_DEFAULT_DEVICE=cpu
         PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" TEST_MPI
       artifact-in: build-rocky8-oidn-mpi
@@ -380,7 +382,8 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load mpi/mpich-x86_64
+        export PATH=/usr/lib64/mpich/bin:$PATH
+        export LD_LIBRARY_PATH=/usr/lib64/mpich/lib:$LD_LIBRARY_PATH
         scripts/tests/run_tutorials.sh TEST_MPI
       artifact-in: build-rocky8-oidn-mpi
 
