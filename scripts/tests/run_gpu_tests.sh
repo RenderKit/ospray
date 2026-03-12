@@ -87,6 +87,12 @@ test_filters+=":Primitive/IDBuffer.*"
 # Different noise
 test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/1"
 
+# XXX AMR until VKL fix for #34
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/18"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/19"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/20"
+
+
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
 export SYCL_CACHE_PERSISTENT=1
 export OIDN_VERBOSE=2

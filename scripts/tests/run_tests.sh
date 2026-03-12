@@ -55,6 +55,13 @@ export CMAKE_BUILD_PARALLEL_LEVEL=32
 cmake --build . --target ospray_test_data
 let exitCode+=$?
 
+### temporary disable tests
+# XXX AMR until VKL fix for #34
+test_filters="TestScenesVolumes/FromOsprayTesting.test_scenes/18"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/19"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/20"
+
+
 export OIDN_VERBOSE=2
 
 if [ $TEST_CPU ]; then
