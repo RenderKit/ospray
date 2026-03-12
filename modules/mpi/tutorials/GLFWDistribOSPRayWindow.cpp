@@ -4,6 +4,7 @@
 #include "GLFWDistribOSPRayWindow.h"
 #include <mpi.h>
 #include <ospray/ospray_util.h>
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
 #include "imgui.h"
@@ -289,7 +290,7 @@ void GLFWDistribOSPRayWindow::motion(const vec2f &position)
 void GLFWDistribOSPRayWindow::display()
 {
   // clock used to compute frame rate
-  static auto displayStart = std::chrono::high_resolution_clock::now();
+  static auto displayStart = std::chrono::steady_clock::now();
 
   if (showUi && uiCallback) {
     ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
@@ -305,8 +306,8 @@ void GLFWDistribOSPRayWindow::display()
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
     // display frame rate in window title
-    auto displayEnd = std::chrono::high_resolution_clock::now();
-    auto durationMilliseconds =
+    const auto displayEnd = std::chrono::steady_clock::now();
+    const auto durationMilliseconds =
         std::chrono::duration_cast<std::chrono::milliseconds>(
             displayEnd - displayStart);
 
@@ -331,7 +332,7 @@ void GLFWDistribOSPRayWindow::display()
     framebuffer.unmap(fb);
 
     // Start new frame and reset frame timing interval start
-    displayStart = std::chrono::high_resolution_clock::now();
+    displayStart = std::chrono::steady_clock::now();
     firstFrame = false;
   }
 
