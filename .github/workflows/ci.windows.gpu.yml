@@ -53,7 +53,20 @@ jobs:
 
 ### TEST JOBS ###
 
-  dpcpp-test:
+  cpu-dpcpp-test:
+    needs: dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
+    with:
+      cmd: |
+        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE"
+      artifact-in: build-windows-dpcpp
+      artifact-out: test-windows-dpcpp-cpu
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  dg2-dpcpp-test:
     needs: dpcpp-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
@@ -65,7 +78,39 @@ jobs:
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE"
       artifact-in: build-windows-dpcpp
-      artifact-out: test-windows-dpcpp
+      artifact-out: test-windows-dpcpp-dg2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  bmg-dpcpp-test:
+    needs: dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      runs-on: '"bmg"'
+      env-from-files: .github/workflows/gfx-windows.env
+      cmd: |
+        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
+        scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE"
+      artifact-in: build-windows-dpcpp
+      artifact-out: test-windows-dpcpp-bmg
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  lnl-dpcpp-test:
+    needs: dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      runs-on: '"lnl"'
+      env-from-files: .github/workflows/gfx-windows.env
+      cmd: |
+        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
+        scripts\tests\run_gpu_tests.ps1 "$env:GITHUB_WORKSPACE"
+      artifact-in: build-windows-dpcpp
+      artifact-out: test-windows-dpcpp-lnl
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
@@ -92,7 +137,7 @@ jobs:
     secrets: inherit
     with:
       timeout-minutes: 100
-      runs-on: '"dg2"'
+      runs-on: '"lnl"'
       env-from-files: .github/workflows/icx-windows.env .github/workflows/gfx-windows.env
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"

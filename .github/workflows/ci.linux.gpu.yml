@@ -69,6 +69,20 @@ jobs:
 
 ### TEST JOBS ###
 
+  dpcpp-cpu-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-dpcpp-cpu
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_tests.sh "$GITHUB_WORKSPACE"
+
   dpcpp-dg2-ubu22-test:
     needs: ubu22-mpi-dpcpp-build
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -81,6 +95,42 @@ jobs:
       runs-on: '"dg2"'
       artifact-in: build-ubuntu2204-mpi-dpcpp
       artifact-out: test-ubuntu2204-dpcpp-dg2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
+  dpcpp-bmg-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"bmg"'
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-dpcpp-bmg
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
+  dpcpp-lnl-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"lnl"'
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-dpcpp-lnl
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
