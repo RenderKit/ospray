@@ -57,15 +57,17 @@ void Camera::commit()
       embreeGeometry = rtcNewGeometry(
           getISPCDevice().getEmbreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
       embreeScene = rtcNewScene(getISPCDevice().getEmbreeDevice());
+      rtcSetGeometryInstancedScene(embreeGeometry, embreeScene); // dummy
       rtcAttachGeometryByID(embreeScene, embreeGeometry, 0);
     }
 
     motionTransform.setEmbreeTransform(embreeGeometry);
+    rtcCommitScene(embreeScene);
+    getSh()->traversable = rtcGetSceneTraversable(embreeScene);
 
     if (shutter.lower == shutter.upper || !motionTransform.motionBlur) {
       // directly interpolate to single shutter time
-      rtcGetGeometryTransformFromScene(embreeScene,
-          0,
+      rtcGetGeometryTransform(embreeGeometry,
           shutter.lower,
           RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
           &motionTransform.transform);
@@ -76,8 +78,7 @@ void Camera::commit()
   if (motionTransform.motionBlur) {
     // use main direction at center of shutter time
     affine3f middleTransform;
-    rtcGetGeometryTransformFromScene(embreeScene,
-        0,
+    rtcGetGeometryTransform(embreeGeometry,
         shutter.center(),
         RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
         &middleTransform);
@@ -109,7 +110,6 @@ void Camera::commit()
   getSh()->subImage.upper = imageEnd;
   getSh()->shutter = shutter;
   getSh()->motionBlur = motionTransform.motionBlur;
-  getSh()->scene = embreeScene;
   getSh()->globalShutter = shutterType == OSP_SHUTTER_GLOBAL;
   getSh()->rollingShutterHorizontal = (shutterType == OSP_SHUTTER_ROLLING_RIGHT
       || shutterType == OSP_SHUTTER_ROLLING_LEFT);

@@ -16,14 +16,14 @@ struct DistributedWorld
   box3f *localRegions;
   int numLocalRegions;
   int numRegions;
-  RTCScene regionScene;
+  RTCTraversable regionTraversable;
 
 #ifdef __cplusplus
   DistributedWorld()
       : localRegions(nullptr),
         numLocalRegions(0),
         numRegions(0),
-        regionScene(nullptr)
+        regionTraversable(nullptr)
   {}
 };
 } // namespace ispc

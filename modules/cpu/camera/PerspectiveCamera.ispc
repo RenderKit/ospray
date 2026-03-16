@@ -89,8 +89,8 @@ SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
   const float time = Camera_shutterTime(_self, screen, sample.time);
 
   AffineSpace3f xfm;
-  rtcGetGeometryTransformFromScene(
-      self->super.scene, 0, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+  rtcGetGeometryTransformFromTraversable(
+      self->super.traversable, 0, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
 
   vec3f org = xfmPoint(xfm, self->org);
   vec3f dir = normalize(xfmVector(xfm, self->dir_00));

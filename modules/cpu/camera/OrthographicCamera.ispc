@@ -28,8 +28,11 @@ SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
   const uniform FeatureFlagsOther ffo = getFeatureFlagsOther(ffh);
   if (self->super.motionBlur && (ffo & FFO_CAMERA_MOTION_BLUR)) {
     AffineSpace3f xfm;
-    rtcGetGeometryTransformFromScene(
-        self->super.scene, 0, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+    rtcGetGeometryTransformFromTraversable(self->super.traversable,
+        0,
+        time,
+        RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+        &xfm);
 
     // we cannot just transform the final org & dir, because interpolated
     // transforms can scale (even if original transforms are without scale)
