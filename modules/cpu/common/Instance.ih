@@ -23,8 +23,11 @@ inline uniform AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const uniform float time)
 {
   uniform AffineSpace3f xfm;
-  rtcGetGeometryTransformFromScene(
-      self->scene, self->geomID, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+  rtcGetGeometryTransformFromTraversable(self->traversable,
+      self->geomID,
+      time,
+      RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+      &xfm);
 
   return xfm;
 }
@@ -34,8 +37,11 @@ inline AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const float time)
 {
   AffineSpace3f xfm;
-  rtcGetGeometryTransformFromScene(
-      self->scene, self->geomID, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+  rtcGetGeometryTransformFromTraversable(self->traversable,
+      self->geomID,
+      time,
+      RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+      &xfm);
 
   return xfm;
 }

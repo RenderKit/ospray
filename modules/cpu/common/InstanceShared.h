@@ -13,8 +13,8 @@ struct Instance
 {
   Group *group;
 
-  // Scene and geomID are used to call rtcGetGeometryTransformFromScene only
-  RTCScene scene;
+  // traversable and geomID are only for rtcGetGeometryTransformFromTraversable
+  RTCTraversable traversable;
   unsigned int geomID;
 
   AffineSpace3f xfm;
@@ -26,7 +26,7 @@ struct Instance
 #ifdef __cplusplus
   Instance()
       : group(nullptr),
-        scene(nullptr),
+        traversable(nullptr),
         geomID(0),
         xfm(one),
         rcp_xfm(one),

@@ -55,11 +55,9 @@ void Instance::setEmbreeGeom(RTCScene scene, unsigned int geomID)
 {
   RTCGeometry geom = rtcGetGeometry(scene, geomID);
   motionTransform.setEmbreeTransform(geom);
-  getSh()->scene = scene;
   getSh()->geomID = geomID;
   if (getSh()->motionBlur) {
-    rtcGetGeometryTransformFromScene(scene,
-        geomID,
+    rtcGetGeometryTransform(geom,
         .5f,
         RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
         &getSh()->xfm); // for SciVis

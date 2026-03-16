@@ -31,7 +31,7 @@ inline void traceGeometryRay(const World *uniform world,
     const uniform FeatureFlagsHandler &ffh)
 {
   // Skip if no geometries scene
-  if (!world->embreeSceneHandleGeometries)
+  if (!world->embreeTraversableHandleGeometries)
     return;
 
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
@@ -46,7 +46,7 @@ inline void traceGeometryRay(const World *uniform world,
   intersectArgs.feature_mask = (uniform RTCFeatureFlags)(
       (ff.geometry & ~FFG_OSPRAY_MASK) | RTC_FEATURE_FLAG_INSTANCE);
 
-  rtcIntersectV(world->embreeSceneHandleGeometries,
+  rtcTraversableIntersectV(world->embreeTraversableHandleGeometries,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
 }
@@ -56,7 +56,7 @@ inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeInterval &interval)
 {
   initVolumeInterval(interval);
-  if (!world->embreeSceneHandleVolumes)
+  if (!world->embreeTraversableHandleVolumes)
     return;
 
   VolumeIntervals intervals;
@@ -80,7 +80,7 @@ inline void traceVolumeRay(
   intersectArgs.feature_mask = RTC_FEATURE_FLAG_INSTANCE
       | RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS;
 
-  rtcIntersectV(world->embreeSceneHandleVolumes,
+  rtcTraversableIntersectV(world->embreeTraversableHandleVolumes,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
 
@@ -101,7 +101,7 @@ inline void traceVolumeRay(
 inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeIntervals &intervals)
 {
-  if (!world->embreeSceneHandleVolumes)
+  if (!world->embreeTraversableHandleVolumes)
     return;
 
   uniform RayQueryContextVolume context;
@@ -114,7 +114,7 @@ inline void traceVolumeRay(
   intersectArgs.feature_mask = RTC_FEATURE_FLAG_INSTANCE
       | RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS;
 
-  rtcIntersectV(world->embreeSceneHandleVolumes,
+  rtcTraversableIntersectV(world->embreeTraversableHandleVolumes,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
 
@@ -156,7 +156,7 @@ inline void traceClippingRay(const World *uniform world,
   return;
 #else
   // A scene with clipping geometries has to exist
-  if (!world->embreeSceneHandleClippers) {
+  if (!world->embreeTraversableHandleClippers) {
     rayIntervals.intervals[0] = make_box1f(ray.t0, ray.t);
     rayIntervals.count = 1;
     return;
@@ -184,7 +184,7 @@ inline void traceClippingRay(const World *uniform world,
   // even distant intersections affect visibility of close objects
   float origT = ray.t;
   ray.t = inf;
-  rtcIntersectV(world->embreeSceneHandleClippers,
+  rtcTraversableIntersectV(world->embreeTraversableHandleClippers,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
   ray.t = origT;
@@ -294,7 +294,7 @@ inline void traceRay(const World *uniform world,
   traceGeometryRay(world, ray, ffh);
 #else
   // Fast path if no clipping geometry
-  if (!world->embreeSceneHandleClippers) {
+  if (!world->embreeTraversableHandleClippers) {
     traceGeometryRay(world, ray, ffh);
     return;
   }
@@ -313,7 +313,7 @@ inline bool isOccludedNoClipping(const World *uniform world,
     const uniform FeatureFlagsHandler &ffh)
 {
   // Skip if no geometries scene
-  if (!world->embreeSceneHandleGeometries)
+  if (!world->embreeTraversableHandleGeometries)
     return false;
   const uniform FeatureFlags ff = getFeatureFlags(ffh);
 
@@ -327,7 +327,7 @@ inline bool isOccludedNoClipping(const World *uniform world,
   occludedArgs.feature_mask = (uniform RTCFeatureFlags)(
       (ff.geometry & ~FFG_OSPRAY_MASK) | RTC_FEATURE_FLAG_INSTANCE);
 
-  rtcOccludedV(world->embreeSceneHandleGeometries,
+  rtcTraversableOccludedV(world->embreeTraversableHandleGeometries,
       (varying RTCRay * uniform) & ray,
       &occludedArgs);
 
@@ -363,7 +363,7 @@ inline bool isOccluded(const World *uniform world,
   return isOccludedNoClipping(world, ray, ffh);
 #else
   // Fast path if no clipping geometry
-  if (!world->embreeSceneHandleClippers) {
+  if (!world->embreeTraversableHandleClippers) {
     return isOccludedNoClipping(world, ray, ffh);
   }
 

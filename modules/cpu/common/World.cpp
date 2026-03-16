@@ -34,12 +34,14 @@ static void addGeometryInstance(RTCScene &scene,
   rtcReleaseGeometry(eInst);
 }
 
-static void freeAndNullifyEmbreeScene(RTCScene &scene)
+static void freeAndNullifyEmbreeScene(
+    RTCScene &scene, RTCTraversable &traversable)
 {
   if (scene)
     rtcReleaseScene(scene);
 
   scene = nullptr;
+  traversable = nullptr;
 }
 
 // World definitions ////////////////////////////////////////////////////////
@@ -47,12 +49,15 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 World::~World()
 {
   // Release Embree scenes
-  freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleGeometries);
+  freeAndNullifyEmbreeScene(
+      embreeSceneHandleGeometries, getSh()->embreeTraversableHandleGeometries);
 #ifdef OSPRAY_ENABLE_VOLUMES
-  freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleVolumes);
+  freeAndNullifyEmbreeScene(
+      embreeSceneHandleVolumes, getSh()->embreeTraversableHandleVolumes);
 #endif
 #ifndef OSPRAY_TARGET_SYCL
-  freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleClippers);
+  freeAndNullifyEmbreeScene(
+      embreeSceneHandleClippers, getSh()->embreeTraversableHandleClippers);
 #endif
 }
 
@@ -69,20 +74,15 @@ std::string World::toString() const
 
 void World::commit()
 {
-  RTCScene &esGeom = getSh()->embreeSceneHandleGeometries;
+  RTCScene &esGeom = embreeSceneHandleGeometries;
+  freeAndNullifyEmbreeScene(esGeom, getSh()->embreeTraversableHandleGeometries);
 #ifdef OSPRAY_ENABLE_VOLUMES
-  RTCScene &esVol = getSh()->embreeSceneHandleVolumes;
+  RTCScene &esVol = embreeSceneHandleVolumes;
+  freeAndNullifyEmbreeScene(esVol, getSh()->embreeTraversableHandleVolumes);
 #endif
 #ifndef OSPRAY_TARGET_SYCL
-  RTCScene &esClip = getSh()->embreeSceneHandleClippers;
-#endif
-
-  freeAndNullifyEmbreeScene(esGeom);
-#ifdef OSPRAY_ENABLE_VOLUMES
-  freeAndNullifyEmbreeScene(esVol);
-#endif
-#ifndef OSPRAY_TARGET_SYCL
-  freeAndNullifyEmbreeScene(esClip);
+  RTCScene &esClip = embreeSceneHandleClippers;
+  freeAndNullifyEmbreeScene(esClip, getSh()->embreeTraversableHandleClippers);
 #endif
 
   scivisData = nullptr;
@@ -114,18 +114,13 @@ void World::commit()
 
   RTCDevice embreeDevice = getISPCDevice().getEmbreeDevice();
   if (instances) {
-    for (auto &&inst : *instances)
-#ifndef OSPRAY_TARGET_SYCL
-      if (inst->group->sceneClippers)
-        getSh()->numInvertedClippers += inst->group->numInvertedClippers;
-#endif
-
     // Create shared buffers for instance pointers
     instanceArray = devicert::make_buffer_shared_unique<ispc::Instance *>(
         getISPCDevice().getDRTDevice(),
         sizeof(ispc::Instance *) * numInstances);
     getSh()->instances = instanceArray->sharedPtr();
 
+    // Phase 1
     // Populate shared buffer with instance pointers,
     // create Embree instances
     featureFlags.reset();
@@ -144,6 +139,7 @@ void World::commit()
 #endif
 #ifndef OSPRAY_TARGET_SYCL
       if (inst->group->sceneClippers) {
+        getSh()->numInvertedClippers += inst->group->numInvertedClippers;
         addGeometryInstance(
             esClip, inst->group->sceneClippers, inst, embreeDevice, id);
       }
@@ -168,12 +164,14 @@ void World::commit()
     rtcSetSceneFlags(esGeom, static_cast<RTCSceneFlags>(sceneFlags));
     rtcSetSceneBuildQuality(esGeom, buildQuality);
     rtcCommitScene(esGeom);
+    getSh()->embreeTraversableHandleGeometries = rtcGetSceneTraversable(esGeom);
   }
 #ifdef OSPRAY_ENABLE_VOLUMES
   if (esVol) {
     rtcSetSceneFlags(esVol, static_cast<RTCSceneFlags>(sceneFlags));
     rtcSetSceneBuildQuality(esVol, buildQuality);
     rtcCommitScene(esVol);
+    getSh()->embreeTraversableHandleVolumes = rtcGetSceneTraversable(esVol);
   }
 #endif
 #ifndef OSPRAY_TARGET_SYCL
@@ -183,8 +181,27 @@ void World::commit()
             sceneFlags | RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS));
     rtcSetSceneBuildQuality(esClip, buildQuality);
     rtcCommitScene(esClip);
+    getSh()->embreeTraversableHandleClippers = rtcGetSceneTraversable(esClip);
   }
 #endif
+
+  if (instances) {
+    // Phase 2: set traversable at instances
+    // Note: the same instance transform is set in each scene, the instance
+    // only needs to access one for interpolation (thus fine to overwrite)
+    for (auto &&inst : *instances) {
+      if (inst->group->sceneGeometries)
+        inst->setEmbreeGeom(getSh()->embreeTraversableHandleGeometries);
+#ifdef OSPRAY_ENABLE_VOLUMES
+      if (inst->group->sceneVolumes)
+        inst->setEmbreeGeom(getSh()->embreeTraversableHandleVolumes);
+#endif
+#ifndef OSPRAY_TARGET_SYCL
+      if (inst->group->sceneClippers)
+        inst->setEmbreeGeom(getSh()->embreeTraversableHandleClippers);
+#endif
+    }
+  }
 }
 
 box3f World::getBounds() const
@@ -192,15 +209,14 @@ box3f World::getBounds() const
   box3f sceneBounds;
 
   box4f bounds; // NOTE(jda) - Embree expects box4f, NOT box3f...
-  if (getSh()->embreeSceneHandleGeometries) {
-    rtcGetSceneBounds(
-        getSh()->embreeSceneHandleGeometries, (RTCBounds *)&bounds);
+  if (embreeSceneHandleGeometries) {
+    rtcGetSceneBounds(embreeSceneHandleGeometries, (RTCBounds *)&bounds);
     sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
   }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-  if (getSh()->embreeSceneHandleVolumes) {
-    rtcGetSceneBounds(getSh()->embreeSceneHandleVolumes, (RTCBounds *)&bounds);
+  if (embreeSceneHandleVolumes) {
+    rtcGetSceneBounds(embreeSceneHandleVolumes, (RTCBounds *)&bounds);
     sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
   }
 #endif

@@ -47,7 +47,7 @@ struct Camera
   bool needTimeSample;
   bool rollingShutterHorizontal;
   float rollingShutterDuration;
-  RTCScene scene; // only to call rtcGetGeometryTransformFromScene
+  RTCTraversable traversable; // only for rtcGetGeometryTransformFromTraversable
 
 #ifdef __cplusplus
   Camera()
@@ -62,7 +62,7 @@ struct Camera
         needTimeSample(false),
         rollingShutterHorizontal(false),
         rollingShutterDuration(0.f),
-        scene(nullptr)
+        traversable(nullptr)
   {}
 };
 } // namespace ispc
