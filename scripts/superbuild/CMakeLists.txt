@@ -140,24 +140,42 @@ else()
   mark_as_advanced(FORCE BUILD_TBB_FROM_SOURCE)
 endif()
 
-option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" OFF)
-set(EMBREE_VERSION "4.3.3" CACHE STRING "Which version of Embree to build?")
-if (EMBREE_VERSION STREQUAL "4.3.3")
+# GPU support needs Embree built with the same DPC++ as OSPRay
+cmake_dependent_option(
+  BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?"
+  OFF
+  "NOT BUILD_GPU_SUPPORT"
+  ON
+)
+# XXX 4.4.1 only from source until v4.5: its release package uses lib64/, which
+# Open VKL cannot find, and its AVX512 support does not compile with MSVC 2019
+if (BUILD_GPU_SUPPORT) # implies BUILD_EMBREE_FROM_SOURCE
+  set(EMBREE_VERSION_DEFAULT "4.4.1")
+else()
+  set(EMBREE_VERSION_DEFAULT "4.4.0")
+endif()
+set(EMBREE_VERSION ${EMBREE_VERSION_DEFAULT} CACHE STRING
+  "Which version of Embree to build?")
+if (EMBREE_VERSION STREQUAL "4.4.1")
   if (BUILD_EMBREE_FROM_SOURCE)
-    set(EMBREE_HASH "8a3bc3c3e21aa209d9861a28f8ba93b2f82ed0dc93341dddac09f1f03c36ef2d")
+    set(EMBREE_HASH "dcf338cc61b636c871ccf370e673bfd380c5ecb71ce49ad50f28e1d4ec9995dc")
+  endif()
+elseif (EMBREE_VERSION STREQUAL "4.4.0")
+  if (BUILD_EMBREE_FROM_SOURCE)
+    set(EMBREE_HASH "acb517b0ea0f4b442235d5331b69f96192c28da6aca5d5dde0cbe40799638d5c")
   else()
     if (APPLE)
       if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
-        set(EMBREE_HASH "ee310bcd8480ed82f2be29289b9a811c83db6a36160c8afdcb61bb4de4d337df")
+        set(EMBREE_HASH "288a5bb1adc3d4cd0f86646008f4ac442b958b1635bf60cecff8f1b232e999a1")
       else()
-        set(EMBREE_HASH "98997523dfff8efd8120075f7feba00cfc765c992d758d9be12d56bfe6bec233")
+        set(EMBREE_HASH "435b4ef3421eb75cf41a41438d44b760f4d86c24124e0b9a0ed9d85adff54b4d")
       endif()
     elseif (WIN32)
-      set(EMBREE_HASH "d4c07f88df9f009dd84e4e9b9dcec32ad7d96f927bd88de00b721b0923d481a9")
-      set(EMBREE_SYCL_HASH "1675fd6907e4697400ce58942343fdf99fc4e6f0fa0b259d61755ae72aa9aa18")
+      set(EMBREE_HASH "d951e5e6bd295c54cdd66be9cdb44a4e8c42fb38a99f94f79305e48765fc3454")
+      set(EMBREE_SYCL_HASH "d2145cdc9c4fa038bbb708be35dae6e526547c53632c6a4a0facae5bf71815c0")
     else()
-      set(EMBREE_HASH "757e6e8b987d13ac34aa7c4c3657120fd54a78c2a1034e30dda5cd5df06f3cdd")
-      set(EMBREE_SYCL_HASH "9952f9f8fe103449e18084c8bd822a7e3130844c54abfd164f1ce36e46b92572")
+      set(EMBREE_HASH "cb3d4402537fc9165c76c3316b8953dcfea523cd1eaf588e2de7639864ee3c57")
+      set(EMBREE_SYCL_HASH "c67f7e7622584686778e0f84ab7370d810ac5aa020aee2a1c3ae58cea9462e6d")
     endif()
   endif()
 endif()

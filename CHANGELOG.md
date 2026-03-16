@@ -46,6 +46,7 @@ Version History
     -   Hardened validation of buffer sizes, image dimensions and
         weights blobs, fixing several integer overflows and crashes
 -   The new minimum versions of dependencies:
+    -   Embree v4.4.0 (switch to rtcTraversable* API)
     -   ISPC v1.30.0 (uses IEEE 754 compliant instructions on ARM for
         min/max, performance improvements, bug fixes)
     -   rkcommon v1.15.4 (set DEPENDENTLOADFLAG also on the Windows

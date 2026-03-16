@@ -24,6 +24,10 @@ struct OSPRAY_SDK_INTERFACE Instance
   box3f getBounds() const override;
 
   void setEmbreeGeom(RTCScene scene, unsigned int geomID);
+  void setEmbreeGeom(RTCTraversable traversable)
+  {
+    getSh()->traversable = traversable;
+  }
 
   Ref<Group> group;
   const Ref<Group> groupAPI;

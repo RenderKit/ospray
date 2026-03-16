@@ -17,6 +17,7 @@ Camera::~Camera()
   if (embreeGeometry) {
     rtcReleaseGeometry(embreeGeometry);
     rtcReleaseScene(embreeScene);
+    rtcReleaseScene(embreeDummyScene);
   }
 }
 
@@ -54,18 +55,22 @@ void Camera::commit()
   if (motionTransform.motionBlur || motionTransform.quaternion) {
     // create dummy RTCGeometry for transform interpolation or conversion
     if (!embreeGeometry) {
+      embreeDummyScene = rtcNewScene(getISPCDevice().getEmbreeDevice());
+      rtcCommitScene(embreeDummyScene);
       embreeGeometry = rtcNewGeometry(
           getISPCDevice().getEmbreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
+      rtcSetGeometryInstancedScene(embreeGeometry, embreeDummyScene);
       embreeScene = rtcNewScene(getISPCDevice().getEmbreeDevice());
       rtcAttachGeometryByID(embreeScene, embreeGeometry, 0);
     }
 
     motionTransform.setEmbreeTransform(embreeGeometry);
+    rtcCommitScene(embreeScene);
+    getSh()->traversable = rtcGetSceneTraversable(embreeScene);
 
     if (shutter.lower == shutter.upper || !motionTransform.motionBlur) {
       // directly interpolate to single shutter time
-      rtcGetGeometryTransformFromScene(embreeScene,
-          0,
+      rtcGetGeometryTransform(embreeGeometry,
           shutter.lower,
           RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
           &motionTransform.transform);
@@ -76,18 +81,20 @@ void Camera::commit()
   if (motionTransform.motionBlur) {
     // use main direction at center of shutter time
     affine3f middleTransform;
-    rtcGetGeometryTransformFromScene(embreeScene,
-        0,
+    rtcGetGeometryTransform(embreeGeometry,
         shutter.center(),
         RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
         &middleTransform);
     getSh()->direction = normalize(xfmVector(middleTransform, dir));
   } else {
     if (embreeGeometry) {
+      rtcReleaseScene(embreeDummyScene);
+      embreeDummyScene = nullptr;
       rtcReleaseGeometry(embreeGeometry);
       embreeGeometry = nullptr;
       rtcReleaseScene(embreeScene);
       embreeScene = nullptr;
+      getSh()->traversable = nullptr;
     }
 
     // apply transform right away
@@ -109,7 +116,6 @@ void Camera::commit()
   getSh()->subImage.upper = imageEnd;
   getSh()->shutter = shutter;
   getSh()->motionBlur = motionTransform.motionBlur;
-  getSh()->scene = embreeScene;
   getSh()->globalShutter = shutterType == OSP_SHUTTER_GLOBAL;
   getSh()->rollingShutterHorizontal = (shutterType == OSP_SHUTTER_ROLLING_RIGHT
       || shutterType == OSP_SHUTTER_ROLLING_LEFT);

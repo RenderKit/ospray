@@ -143,11 +143,11 @@ void setEmbreeGeometryBuffer(RTCGeometry geom,
       dataPtr->stride(),
       dataPtr->size());
 }
-// ... via an std::vector
-template <typename T>
+// ... via an std::vector (or BufferShared, which derives from it)
+template <typename T, typename Alloc>
 void setEmbreeGeometryBuffer(RTCGeometry geom,
     enum RTCBufferType type,
-    std::vector<T> &data,
+    std::vector<T, Alloc> &data,
     unsigned int slot = 0)
 {
   rtcSetSharedGeometryBuffer(geom,
