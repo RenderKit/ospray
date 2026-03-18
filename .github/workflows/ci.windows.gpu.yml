@@ -40,7 +40,7 @@ jobs:
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/icx-windows.env
       msvc-version: 2022
-      ocloc-version: oneAPI/ocloc/2025.0
+      ocloc-version: oneAPI/ocloc/2025.3
       cmd: |
         # disable warnings which lead to excessively large log files
         $env:CXXFLAGS = '-w'

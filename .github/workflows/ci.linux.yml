@@ -68,7 +68,7 @@ jobs:
     secrets: inherit
     with:
       image: rockylinux:8
-      dpcpp-version: intel/2025.3
+      env-from-files: .github/workflows/icx-linux.env
       cmd: |
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
         export CFLAGS=$CXXFLAGS
