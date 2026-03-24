@@ -5,7 +5,10 @@
 #include "Texture2DFormats.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
-
+#ifdef OSPRAY_TARGET_SYCL
+using half = sycl::half;
+namespace syclexp = sycl::ext::oneapi::experimental;
+#endif
 // TODO tiling
 
 // Texture coordinate utilities
@@ -136,6 +139,17 @@ inline vec4f Texture2D_bilinear_l(
 SYCL_EXTERNAL __noinline vec4f Texture2D_get(
     const Texture2D *uniform self, const vec2f &st, const float pixelFootprint)
 {
+ #ifdef OSPRAY_TARGET_SYCL
+  syclexp::sampled_image_handle handle;
+  handle.raw_handle = (syclexp::sampled_image_handle::raw_handle_type)self->data[0];
+
+  sycl::float4 res = syclexp::sample_mipmap<sycl::float4>(
+      handle,
+      sycl::float2{st.x, st.y},
+      0.f);
+
+  return make_vec4f(res.x(), res.y(), res.z(), res.w());
+#else
   int mipLevel = 0;
   float frac = 0.f;
   const uniform bool filter_nearest = self->filter & OSP_TEXTURE_FILTER_NEAREST;
@@ -145,15 +159,14 @@ SYCL_EXTERNAL __noinline vec4f Texture2D_get(
     mipLevel = min((int)lambda, self->maxLevel - 1);
     frac = min(lambda - mipLevel, 1.f);
   }
-
   vec4f t0 = filter_nearest ? Texture2D_nearest_l(self, st, mipLevel)
                             : Texture2D_bilinear_l(self, st, mipLevel);
   if (frac == 0.f)
     return t0;
-
   vec4f t1 = filter_nearest ? Texture2D_nearest_l(self, st, mipLevel + 1)
                             : Texture2D_bilinear_l(self, st, mipLevel + 1);
   return lerp(frac, t0, t1);
+#endif
 }
 
 export void *uniform Texture2D_get_addr(const uniform uint32 type)

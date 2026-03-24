@@ -104,7 +104,19 @@ struct OSPRAY_SDK_INTERFACE DeviceImpl : public Device
   void *getSyclDevicePtr() override;
   void *getSyclContextPtr() override;
   void *getSyclQueuePtr() override;
+  void *createImageMemHandle(void ** hostData,
+    const size_t width,
+    const size_t height,
+    const unsigned int numLevels,
+    const OSPTextureFormat format) override;
 
+  void freeImageMemHandle(void *handle) override;
+
+  void *createSampledImageHandle(void *imgMemHandle,
+      const OSPTextureFilter filter,
+      const vec2ui wrapMode) override;
+
+  void freeSampledImageHandle(void *handle) override;
  private:
   // Inner command classes
   class Command;

@@ -141,6 +141,15 @@ void Texture2D::commit()
   // Initialize ispc shared structure
   getSh()->set(
       size, dataPtr.data(), dataPtr.size() - 1, format, filter, wrapMode);
+
+  void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(
+    dataPtr.data(), size.x, size.y, dataPtr.size(), format);
+
+  void *sampledHandle = getISPCDevice().getDRTDevice().createSampledImageHandle(
+    imgMemHandle, filter, wrapMode);
+  
+  getSh()->data[0] = sampledHandle;
+  
 }
 
 } // namespace ospray

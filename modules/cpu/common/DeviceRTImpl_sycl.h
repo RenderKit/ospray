@@ -6,7 +6,7 @@
 #include "common/DeviceRT.h"
 
 #include <sycl/sycl.hpp>
-
+namespace syclexp = sycl::ext::oneapi::experimental;
 namespace ospray {
 namespace devicert {
 
@@ -43,6 +43,7 @@ struct OSPRAY_SDK_INTERFACE DeviceImpl : public Device
   DeviceImpl(bool debug);
   DeviceImpl(uint32_t deviceId, bool debug);
   DeviceImpl(void *devicePtr, void *contextPtr, bool debug);
+  ~DeviveImpl();
 
   // Allocate device memory
   void *deviceMalloc(std::size_t size) override;
@@ -89,7 +90,28 @@ struct OSPRAY_SDK_INTERFACE DeviceImpl : public Device
   void *getSyclContextPtr() override;
   void *getSyclQueuePtr() override;
 
+  void *createImageMemHandle(void ** hostData,
+    const size_t width,
+    const size_t height,
+    const unsigned int numLevels,
+    const OSPTextureFormat format) override;
+
+  void freeImageMemHandle(void *handle) override;
+
+  void *createSampledImageHandle(void *imgMemHandle,
+      const OSPTextureFilter filter,
+      const vec2ui wrapMode) override;
+
+  void freeSampledImageHandle(void *handle) override;
+
  private:
+
+ struct ImageMemEntry {
+    syclexp::image_mem_handle memHandle;
+    syclexp::image_descriptor desc;
+  };
+  std::unordered_map<void *, ImageMemEntry> imageMemCache;
+
   sycl::device device;
   sycl::context context;
   sycl::queue queue;
