@@ -43,7 +43,7 @@ struct OSPRAY_SDK_INTERFACE DeviceImpl : public Device
   DeviceImpl(bool debug);
   DeviceImpl(uint32_t deviceId, bool debug);
   DeviceImpl(void *devicePtr, void *contextPtr, bool debug);
-  ~DeviveImpl();
+  ~DeviceImpl();
 
   // Allocate device memory
   void *deviceMalloc(std::size_t size) override;

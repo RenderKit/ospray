@@ -141,7 +141,7 @@ SYCL_EXTERNAL __noinline vec4f Texture2D_get(
 {
  #ifdef OSPRAY_TARGET_SYCL
   syclexp::sampled_image_handle handle;
-  handle.raw_handle = (syclexp::sampled_image_handle::raw_handle_type)self->data[0];
+  handle.raw_handle = (syclexp::sampled_image_handle::raw_image_handle_type)self->data[0];
 
   sycl::float4 res = syclexp::sample_mipmap<sycl::float4>(
       handle,

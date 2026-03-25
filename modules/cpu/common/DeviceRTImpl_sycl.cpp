@@ -229,76 +229,76 @@ void *DeviceImpl::createImageMemHandle(void **hostData,
 {
   // Determine number of channels and channel data type based on the texture format
   size_t numChannels = 0;
-  syclexp::image_channel_type channelType;
+  sycl::image_channel_type channelType;
   
   switch (format) {
     case OSP_TEXTURE_RGBA8:
     case OSP_TEXTURE_SRGBA:
       numChannels = 4;
-      channelType = syclexp::image_channel_type::unorm_int8;
+      channelType = sycl::image_channel_type::unorm_int8;
     break;
     case OSP_TEXTURE_RGBA32F:
       numChannels = 4;
-      channelType = syclexp::image_channel_type::fp32;
+      channelType = sycl::image_channel_type::fp32;
       break;
     case OSP_TEXTURE_RGBA16:
       numChannels = 4;
-      channelType = syclexp::image_channel_type::unorm_int16;
+      channelType = sycl::image_channel_type::unorm_int16;
       break;
     case OSP_TEXTURE_RGBA16F:
       numChannels = 4;
-      channelType = syclexp::image_channel_type::fp16;
+      channelType = sycl::image_channel_type::fp16;
       break;
     case OSP_TEXTURE_RGB8:
     case OSP_TEXTURE_SRGB:
       numChannels = 3;
-      channelType = syclexp::image_channel_type::unorm_int8;
+      channelType = sycl::image_channel_type::unorm_int8;
       break;
     case OSP_TEXTURE_RGB32F:
       numChannels = 3;
-      channelType = syclexp::image_channel_type::fp32;
+      channelType = sycl::image_channel_type::fp32;
       break;
     case OSP_TEXTURE_RGB16:
       numChannels = 3;
-      channelType = syclexp::image_channel_type::unorm_int16;
+      channelType = sycl::image_channel_type::unorm_int16;
       break;
     case OSP_TEXTURE_RGB16F:
       numChannels = 3;
-      channelType = syclexp::image_channel_type::fp16;
+      channelType = sycl::image_channel_type::fp16;
       break;
     case OSP_TEXTURE_RA8:
     case OSP_TEXTURE_LA8:
       numChannels = 2;
-      channelType = syclexp::image_channel_type::unorm_int8;
+      channelType = sycl::image_channel_type::unorm_int8;
       break;
     case OSP_TEXTURE_RA32F:
       numChannels = 2;
-      channelType = syclexp::image_channel_type::fp32;
+      channelType = sycl::image_channel_type::fp32;
       break;
     case OSP_TEXTURE_RA16:
       numChannels = 2;
-      channelType = syclexp::image_channel_type::unorm_int16;
+      channelType = sycl::image_channel_type::unorm_int16;
       break;
     case OSP_TEXTURE_RA16F:
       numChannels = 2;
-      channelType = syclexp::image_channel_type::fp16;
+      channelType = sycl::image_channel_type::fp16;
       break;
     case OSP_TEXTURE_R8:
     case OSP_TEXTURE_L8:
       numChannels = 1;
-      channelType = syclexp::image_channel_type::unorm_int8;
+      channelType = sycl::image_channel_type::unorm_int8;
       break;
     case OSP_TEXTURE_R32F:
       numChannels = 1;
-      channelType = syclexp::image_channel_type::fp32;
+      channelType = sycl::image_channel_type::fp32;
       break;
     case OSP_TEXTURE_R16:
       numChannels = 1;
-      channelType = syclexp::image_channel_type::unorm_int16;
+      channelType = sycl::image_channel_type::unorm_int16;
       break;
     case OSP_TEXTURE_R16F:
       numChannels = 1;
-      channelType = syclexp::image_channel_type::fp16;
+      channelType = sycl::image_channel_type::fp16;
       break;
     default:
       throw std::runtime_error("Unsupported texture format for bindless images");
@@ -309,7 +309,7 @@ void *DeviceImpl::createImageMemHandle(void **hostData,
     {width, height},     // Dimensions
     numChannels,         // Channel count
     channelType,          // Channel data type
-    image_type::mipmap,   // Image type (using mipmap type to support multiple levels)
+    syclexp::image_type::mipmap,   // Image type (using mipmap type to support multiple levels)
     numLevels            // Number of mipmap levels   
   );
  
@@ -323,15 +323,15 @@ void *DeviceImpl::createImageMemHandle(void **hostData,
   
   imgMemEntry.desc = imgDesc;
   imgMemEntry.memHandle = memHandle;
-  imageMemCache[memHandle.raw_handle] = imgMemEntry;
+  imageMemCache[(void*)memHandle.raw_handle] = imgMemEntry;
   queue.wait_and_throw();
-  return key;
+  return (void*)memHandle.raw_handle;
 }
 
 void DeviceImpl::freeImageMemHandle(void *handle)
 {
   syclexp::image_mem_handle memHandle;
-  memHandle.raw_handle = handle;
+  memHandle.raw_handle = (syclexp::sampled_image_handle::raw_image_handle_type)handle;
   syclexp::free_image_mem(memHandle, syclexp::image_type::mipmap, queue);
   imageMemCache.erase(handle);
 }
@@ -370,7 +370,7 @@ void *DeviceImpl::createSampledImageHandle(
     syclexp::image_descriptor imgDesc = imageMemCache[imgMemHandlePtr].desc;
     //Rebuild the image handle from the pointer
     syclexp::image_mem_handle memHandle;
-    memHandle.raw_handle = imgMemHandlePtr;
+    memHandle.raw_handle = (syclexp::sampled_image_handle::raw_image_handle_type)imgMemHandlePtr;
 
     syclexp::sampled_image_handle sampledHandle =
         syclexp::create_image(memHandle, sampler, imgDesc, queue);
@@ -380,7 +380,7 @@ void *DeviceImpl::createSampledImageHandle(
 
 void DeviceImpl::freeSampledImageHandle(void *handle) {
     syclexp::sampled_image_handle sampledHandle;
-    sampledHandle.raw_handle = reinterpret_cast<syclexp::sampled_image_handle::raw_handle_type>(handle);
+    sampledHandle.raw_handle = reinterpret_cast<syclexp::sampled_image_handle::raw_image_handle_type>(handle);
     syclexp::destroy_image_handle(sampledHandle, queue);
 }
 
