@@ -45,8 +45,10 @@ Texture2D::~Texture2D()
   // If no one else is referencing the MIP map buffer (just this object and the
   // cache map), we need to remove it from the MIP map cache so the buffer will
   // be deleted as well
+#ifndef OSPRAY_TARGET_SYCL
   if (mipMapData && mipMapData.use_count() == 2)
     getISPCDevice().getMipMapCache().remove(texData->data());
+#endif
 }
 
 std::string Texture2D::toString() const
@@ -56,6 +58,7 @@ std::string Texture2D::toString() const
 
 void Texture2D::commit()
 {
+  std::cout<<"Texture2D::commit()"<<std::endl;
   texData = getParamObject<Data>("data");
 
   if (!texData || texData->numItems.z > 1) {
@@ -142,14 +145,16 @@ void Texture2D::commit()
   getSh()->set(
       size, dataPtr.data(), dataPtr.size() - 1, format, filter, wrapMode);
 
+    
+  // Create bindless image handle for GPU path (single level for now)
   void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(
-    dataPtr.data(), size.x, size.y, dataPtr.size(), format);
-
-  void *sampledHandle = getISPCDevice().getDRTDevice().createSampledImageHandle(
-    imgMemHandle, filter, wrapMode);
-  
-  getSh()->data[0] = sampledHandle;
-  
+      dataPtr.data(), size.x, size.y, 1, format);
+  if (imgMemHandle) {
+    void *sampledHandle = getISPCDevice().getDRTDevice().createSampledImageHandle(
+        imgMemHandle, filter, wrapMode);
+    if (sampledHandle)
+      getSh()->data[0] = sampledHandle;
+  }
 }
 
 } // namespace ospray

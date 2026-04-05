@@ -404,6 +404,7 @@ endif()
 
 
 if (OSPRAY_MODULE_GPU)
+  message("************* GPU *********************")
   if (WIN32)
     cmake_minimum_required(VERSION 3.25)
   else()

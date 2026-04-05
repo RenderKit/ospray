@@ -93,12 +93,14 @@ DeviceImpl::DeviceImpl(void *devicePtr, void *contextPtr, bool debug)
 }
 DeviceImpl::~DeviceImpl()
 {
-  for (auto &entry : imageMemCache) 
-  {
-      syclexp::free_image_mem(
-            entry.second.memHandle, syclexp::image_type::mipmap, queue);
-  }
-  imageMemCache.clear();
+
+    for (auto &entry : imageMemCache)
+      syclexp::free_image_mem(entry.second.memHandle, syclexp::image_type::standard, queue);
+    imageMemCache.clear();
+    for (auto &h : sampledHandleCache)
+      syclexp::destroy_image_handle(h, queue);
+    sampledHandleCache.clear();
+
 }
 void *DeviceImpl::deviceMalloc(std::size_t size)
 {
@@ -227,10 +229,25 @@ void *DeviceImpl::createImageMemHandle(void **hostData,
     const unsigned int numLevels,
     const OSPTextureFormat format)
 {
+  std::cout << "DeviceRTImpl_sycl::createImageMemHandle("
+            << "width=" << width << ", height=" << height
+            << ", numLevels=" << numLevels << ", format=" << format
+            << ")" << std::endl;
+  if (!hostData) {
+    std::cerr << "ERROR: createImageMemHandle hostData is null" << std::endl;
+    return nullptr;
+  }
+  for (unsigned int i = 0; i < numLevels; ++i) {
+    if (!hostData[i]) {
+      std::cerr << "ERROR: hostData[" << i << "] is null" << std::endl;
+      return nullptr;
+    }
+  }
+
   // Determine number of channels and channel data type based on the texture format
   size_t numChannels = 0;
   sycl::image_channel_type channelType;
-  
+
   switch (format) {
     case OSP_TEXTURE_RGBA8:
     case OSP_TEXTURE_SRGBA:
@@ -303,24 +320,17 @@ void *DeviceImpl::createImageMemHandle(void **hostData,
     default:
       throw std::runtime_error("Unsupported texture format for bindless images");
   }
-  ImageMemEntry imgMemEntry;
   // Construct the image descriptor.
   syclexp::image_descriptor imgDesc(
-    {width, height},     // Dimensions
-    numChannels,         // Channel count
-    channelType,          // Channel data type
-    syclexp::image_type::mipmap,   // Image type (using mipmap type to support multiple levels)
-    numLevels            // Number of mipmap levels   
-  );
- 
-  syclexp::image_mem_handle memHandle = syclexp::alloc_image_mem(imgDesc, queue); 
-  for (size_t i = 0; i < numLevels; i++) {
-      syclexp::image_mem_handle levelHandle =
-          syclexp::get_mip_level_mem_handle(memHandle, i, queue);
-      syclexp::image_descriptor levelDesc = imgDesc.get_mip_level_desc(i);
-      queue.ext_oneapi_copy(hostData[i], levelHandle, levelDesc);
-  }
-  
+    {width, height},
+    numChannels,
+    channelType,
+    syclexp::image_type::standard);
+
+  syclexp::image_mem_handle memHandle = syclexp::alloc_image_mem(imgDesc, queue);
+  queue.ext_oneapi_copy(hostData[0], memHandle, imgDesc);
+
+  ImageMemEntry imgMemEntry;
   imgMemEntry.desc = imgDesc;
   imgMemEntry.memHandle = memHandle;
   imageMemCache[(void*)memHandle.raw_handle] = imgMemEntry;
@@ -332,13 +342,14 @@ void DeviceImpl::freeImageMemHandle(void *handle)
 {
   syclexp::image_mem_handle memHandle;
   memHandle.raw_handle = (syclexp::sampled_image_handle::raw_image_handle_type)handle;
-  syclexp::free_image_mem(memHandle, syclexp::image_type::mipmap, queue);
+  syclexp::free_image_mem(memHandle, syclexp::image_type::standard, queue);
   imageMemCache.erase(handle);
 }
 
 void *DeviceImpl::createSampledImageHandle(
     void *imgMemHandlePtr, const OSPTextureFilter filter, const vec2ui wrapMode)
 {
+    std::cout<<"createSampledImageHandle "<<std::endl;
     sycl::addressing_mode addressingMode;
     switch (wrapMode.x) {
     case OSP_TEXTURE_WRAP_REPEAT:
@@ -374,7 +385,7 @@ void *DeviceImpl::createSampledImageHandle(
 
     syclexp::sampled_image_handle sampledHandle =
         syclexp::create_image(memHandle, sampler, imgDesc, queue);
-
+    sampledHandleCache.push_back(sampledHandle);
     return reinterpret_cast<void *>(sampledHandle.raw_handle);
 }
 

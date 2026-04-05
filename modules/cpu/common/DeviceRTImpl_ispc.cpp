@@ -381,20 +381,21 @@ void *DeviceImpl::getSyclQueuePtr()
   // SYCL not used
   return nullptr;
 }
-void *createImageMemHandle(void **hostData,
+void *DeviceImpl::createImageMemHandle(void **hostData,
     const size_t width,
     const size_t height,
     const unsigned int numLevels,
     const OSPTextureFormat format) 
 {
+  std::cout<<"Using DeviceImpl in DeviceRTImpl_ispc.cpp"<<std::endl;
   return nullptr;
 }
 
-void freeImageMemHandle(void *handle)  
+void DeviceImpl::freeImageMemHandle(void *handle)  
 {
   
 }
-void *createSampledImageHandle(
+void *DeviceImpl::createSampledImageHandle(
     void *imgMemHandlePtr,
     const OSPTextureFilter filter,
     const vec2ui wrapMode) 
@@ -402,7 +403,7 @@ void *createSampledImageHandle(
   return nullptr;
 }
 
-void freeSampledImageHandle(void *handle)  
+void DeviceImpl::freeSampledImageHandle(void *handle)  
 {
 
 }

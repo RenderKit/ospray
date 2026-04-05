@@ -140,14 +140,10 @@ SYCL_EXTERNAL __noinline vec4f Texture2D_get(
     const Texture2D *uniform self, const vec2f &st, const float pixelFootprint)
 {
  #ifdef OSPRAY_TARGET_SYCL
-  syclexp::sampled_image_handle handle;
-  handle.raw_handle = (syclexp::sampled_image_handle::raw_image_handle_type)self->data[0];
-
-  sycl::float4 res = syclexp::sample_mipmap<sycl::float4>(
-      handle,
-      sycl::float2{st.x, st.y},
-      0.f);
-
+ syclexp::sampled_image_handle handle(
+      (syclexp::sampled_image_handle::raw_image_handle_type)self->data[0]);
+  sycl::float4 res = syclexp::sample_image<sycl::float4>(
+      handle, sycl::float2{st.x, st.y});
   return make_vec4f(res.x(), res.y(), res.z(), res.w());
 #else
   int mipLevel = 0;

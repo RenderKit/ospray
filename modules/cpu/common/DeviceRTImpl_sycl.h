@@ -111,7 +111,7 @@ struct OSPRAY_SDK_INTERFACE DeviceImpl : public Device
     syclexp::image_descriptor desc;
   };
   std::unordered_map<void *, ImageMemEntry> imageMemCache;
-
+  std::vector<syclexp::sampled_image_handle> sampledHandleCache;
   sycl::device device;
   sycl::context context;
   sycl::queue queue;
