@@ -229,10 +229,10 @@ void *DeviceImpl::createImageMemHandle(void **hostData,
     const unsigned int numLevels,
     const OSPTextureFormat format)
 {
-  std::cout << "DeviceRTImpl_sycl::createImageMemHandle("
-            << "width=" << width << ", height=" << height
-            << ", numLevels=" << numLevels << ", format=" << format
-            << ")" << std::endl;
+  // std::cout << "DeviceRTImpl_sycl::createImageMemHandle("
+  //           << "width=" << width << ", height=" << height
+  //           << ", numLevels=" << numLevels << ", format=" << format
+  //           << ")" << std::endl;
   if (!hostData) {
     std::cerr << "ERROR: createImageMemHandle hostData is null" << std::endl;
     return nullptr;
@@ -349,7 +349,7 @@ void DeviceImpl::freeImageMemHandle(void *handle)
 void *DeviceImpl::createSampledImageHandle(
     void *imgMemHandlePtr, const OSPTextureFilter filter, const vec2ui wrapMode)
 {
-    std::cout<<"createSampledImageHandle "<<std::endl;
+    //std::cout<<"createSampledImageHandle "<<std::endl;
     sycl::addressing_mode addressingMode;
     switch (wrapMode.x) {
     case OSP_TEXTURE_WRAP_REPEAT:

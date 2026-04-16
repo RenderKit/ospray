@@ -147,14 +147,22 @@ void Texture2D::commit()
 
     
   // Create bindless image handle for GPU path (single level for now)
-  void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(
-      dataPtr.data(), size.x, size.y, 1, format);
-  if (imgMemHandle) {
-    void *sampledHandle = getISPCDevice().getDRTDevice().createSampledImageHandle(
-        imgMemHandle, filter, wrapMode);
-    if (sampledHandle)
-      getSh()->data[0] = sampledHandle;
+  size_t levelWidth = size.x;
+  size_t levelHeight = size.y;
+  const unsigned int numLevels = static_cast<unsigned int>(dataPtr.size());
+  for (unsigned int i = 0; i < numLevels; ++i) {
+    void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(&dataPtr[i], levelWidth, levelHeight, 1, format);
+    if (imgMemHandle) {
+        void *sampledHandle = getISPCDevice().getDRTDevice().createSampledImageHandle(imgMemHandle, filter, wrapMode);
+        if (sampledHandle){
+           getSh()->data[i] = sampledHandle;
+        }
+           
+    }
+    levelWidth = std::max(levelWidth / 2, size_t(1));
+    levelHeight = std::max(levelHeight / 2, size_t(1));
   }
+
 }
 
 } // namespace ospray

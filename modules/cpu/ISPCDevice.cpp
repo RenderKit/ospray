@@ -256,9 +256,6 @@ void ISPCDevice::commit()
     embreeDevice = rtcNewSYCLDevice(
         *static_cast<sycl::context *>(drtDevice->getSyclContextPtr()),
         generateEmbreeDeviceCfg(*this).c_str());
-    std::cerr << "JUAN DEBUG: embreeDevice=" << embreeDevice << std::endl;
-  std::cerr << "JUAN DEBUG: error=" << rtcGetDeviceError(embreeDevice) << std::endl;
-  std::cerr << "JUAN DEBUG: msg=" << rtcGetDeviceLastErrorMessage(embreeDevice) << std::endl;
     rtcSetDeviceSYCLDevice(embreeDevice,
         *static_cast<sycl::device *>(drtDevice->getSyclDevicePtr()));
 #else
