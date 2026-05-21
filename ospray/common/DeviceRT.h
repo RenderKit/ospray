@@ -191,7 +191,6 @@ struct OSPRAY_CORE_INTERFACE Device
   virtual void *createImageMemHandle(void **hostData,
     const size_t width,
     const size_t height,
-    const unsigned int numLevels,
     const OSPTextureFormat format
   ) = 0;
   

@@ -107,7 +107,6 @@ struct OSPRAY_SDK_INTERFACE DeviceImpl : public Device
   void *createImageMemHandle(void ** hostData,
     const size_t width,
     const size_t height,
-    const unsigned int numLevels,
     const OSPTextureFormat format) override;
 
   void freeImageMemHandle(void *handle) override;

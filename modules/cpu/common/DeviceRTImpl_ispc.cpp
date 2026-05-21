@@ -384,7 +384,6 @@ void *DeviceImpl::getSyclQueuePtr()
 void *DeviceImpl::createImageMemHandle(void **hostData,
     const size_t width,
     const size_t height,
-    const unsigned int numLevels,
     const OSPTextureFormat format) 
 {
   std::cout<<"Using DeviceImpl in DeviceRTImpl_ispc.cpp"<<std::endl;

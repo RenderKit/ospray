@@ -42,10 +42,14 @@ namespace ospray {
 
 Texture2D::~Texture2D()
 {
-  // If no one else is referencing the MIP map buffer (just this object and the
-  // cache map), we need to remove it from the MIP map cache so the buffer will
-  // be deleted as well
-#ifndef OSPRAY_TARGET_SYCL
+#ifdef OSPRAY_TARGET_SYCL
+  for (int i = 0; i <=  getSh()->maxLevel; ++i) {
+    if (getSh()->data[i]) {
+      getISPCDevice().getDRTDevice().freeSampledImageHandle(getSh()->data[i]);
+      getSh()->data[i] = nullptr;
+    }
+  }
+#else
   if (mipMapData && mipMapData.use_count() == 2)
     getISPCDevice().getMipMapCache().remove(texData->data());
 #endif
@@ -58,7 +62,6 @@ std::string Texture2D::toString() const
 
 void Texture2D::commit()
 {
-  std::cout<<"Texture2D::commit()"<<std::endl;
   texData = getParamObject<Data>("data");
 
   if (!texData || texData->numItems.z > 1) {
@@ -151,7 +154,7 @@ void Texture2D::commit()
   size_t levelHeight = size.y;
   const unsigned int numLevels = static_cast<unsigned int>(dataPtr.size());
   for (unsigned int i = 0; i < numLevels; ++i) {
-    void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(&dataPtr[i], levelWidth, levelHeight, 1, format);
+    void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(&dataPtr[i], levelWidth, levelHeight, format);
     if (imgMemHandle) {
         void *sampledHandle = getISPCDevice().getDRTDevice().createSampledImageHandle(imgMemHandle, filter, wrapMode);
         if (sampledHandle){

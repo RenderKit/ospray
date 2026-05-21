@@ -93,7 +93,6 @@ struct OSPRAY_SDK_INTERFACE DeviceImpl : public Device
   void *createImageMemHandle(void ** hostData,
     const size_t width,
     const size_t height,
-    const unsigned int numLevels,
     const OSPTextureFormat format) override;
 
   void freeImageMemHandle(void *handle) override;
@@ -105,16 +104,26 @@ struct OSPRAY_SDK_INTERFACE DeviceImpl : public Device
   void freeSampledImageHandle(void *handle) override;
 
  private:
-
- struct ImageMemEntry {
-    syclexp::image_mem_handle memHandle;
-    syclexp::image_descriptor desc;
+  //Setting the image format properly  
+  struct ImageFormatInfo {
+    size_t numChannels;
+    sycl::image_channel_type channelType;
+    std::shared_ptr<void> expandedData; 
   };
-  std::unordered_map<void *, ImageMemEntry> imageMemCache;
-  std::vector<syclexp::sampled_image_handle> sampledHandleCache;
+  //Keep track to release all properly
+  struct TextureHandles {
+      syclexp::image_mem_handle imgMem;
+      syclexp::sampled_image_handle sampled;
+      syclexp::image_descriptor desc;
+  };
+  std::unordered_map<void*, TextureHandles> textureCache;
+  std::unordered_map<void*, syclexp::image_descriptor> pendingImageDesc;
+
   sycl::device device;
   sycl::context context;
   sycl::queue queue;
+
+  ImageFormatInfo getImageFormatInfo(void* srcData, size_t width, size_t height, OSPTextureFormat format);
 };
 
 /////////////////////////////////////////////////////////////////////
