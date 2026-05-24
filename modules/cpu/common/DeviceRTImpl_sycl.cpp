@@ -340,10 +340,8 @@ DeviceImpl::ImageFormatInfo DeviceImpl::getImageFormatInfo(void* srcData, size_t
     {
       info.numChannels = 4;
       info.channelType = sycl::image_channel_type::unorm_int8;
-
       uint8_t* expanded = new uint8_t[numPixels * 4];
       uint8_t* src = static_cast<uint8_t*>(srcData);  
-      // 2. Populate the array exactly as you did before
       for (size_t p = 0; p < numPixels; ++p) {
         expanded[p * 4 + 0] = src[p * 3 + 0];
         expanded[p * 4 + 1] = src[p * 3 + 1];
