@@ -35,6 +35,18 @@ void makeAMR(const std::vector<float> &in,
         "do not have a single brick at the root...");
   }
 
+  // disjoint brick->coarse-cell mapping, avoids write races on nextLevel
+  if (blockSize % refinementLevel != 0) {
+    throw std::runtime_error(
+        "blockSize must be an exact multiple of refinementLevel");
+  }
+
+  // no padding needed, so the finest level matches the input exactly
+  if (inGridDims.x % minWidth != 0 || inGridDims.y % minWidth != 0
+      || inGridDims.z % minWidth != 0) {
+    throw std::runtime_error("input dims must be exact multiples of minWidth");
+  }
+
   vec3i finestLevelSize = vec3i(minWidth);
   while (finestLevelSize.x < inGridDims.x)
     finestLevelSize.x += minWidth;
@@ -43,20 +55,19 @@ void makeAMR(const std::vector<float> &in,
   while (finestLevelSize.z < inGridDims.z)
     finestLevelSize.z += minWidth;
 
-  // create container for current level so we don't use in
-  std::vector<float> &currentLevel = const_cast<std::vector<float> &>(in);
+  // read pointer for the current level; starts at in (no copy), then reseats
+  const float *currentLevel = in.data();
+  // backing store for currentLevel once we descend below the finest level
+  std::vector<float> currentLevelStore;
 
-  size_t numWritten = 0;
-  size_t numRemoved = 0;
   std::mutex fileMutex;
 
   // create and write the bricks
   vec3i levelSize = finestLevelSize;
   for (int level = numLevels - 1; level >= 0; --level) {
     const vec3i nextLevelSize = levelSize / refinementLevel;
-    // create container for next level down
-    std::vector<float> nextLevel =
-        std::vector<float>(nextLevelSize.product(), 0);
+    // container for next level down
+    std::vector<float> nextLevel(nextLevelSize.product(), 0);
 
     const vec3i numBricks = levelSize / blockSize;
     rkcommon::tasking::parallel_for(numBricks.product(), [&](int brickIdx) {
@@ -80,11 +91,11 @@ void makeAMR(const std::vector<float> &in,
         for (int iy = box.lower.y; iy <= box.upper.y; iy++) {
           for (int ix = box.lower.x; ix <= box.upper.x; ix++) {
             const size_t thisLevelCoord =
-                ix + levelSize.y * (iy + iz * levelSize.z);
+                ix + levelSize.x * (iy + iz * levelSize.y);
             const size_t nextLevelCoord = ix / refinementLevel
-                + nextLevelSize.y
+                + nextLevelSize.x
                     * (iy / refinementLevel
-                        + iz / refinementLevel * nextLevelSize.z);
+                        + iz / refinementLevel * nextLevelSize.y);
             // get the actual data at current coordinates
             const float v = currentLevel[thisLevelCoord];
             // insert the data into the current brick
@@ -97,22 +108,19 @@ void makeAMR(const std::vector<float> &in,
         }
       }
 
-      std::lock_guard<std::mutex> lock(fileMutex);
-      if ((level > 0) && ((brickRange.upper - brickRange.lower) <= threshold)) {
-        numRemoved++;
-      } else {
+      if (level == 0 || (brickRange.upper - brickRange.lower > threshold)) {
+        std::lock_guard<std::mutex> lock(fileMutex);
         blockBounds.push_back(box);
         refinementLevels.push_back(level);
         cellWidths.resize(std::max(cellWidths.size(), (size_t)level + 1));
         cellWidths[level] = dt;
-        brickData.push_back(data);
-        numWritten++;
+        brickData.push_back(std::move(data));
       }
     }); // end parallel for
-    currentLevel = nextLevel;
+    // reseat currentLevel onto the level we just produced
+    currentLevelStore = std::move(nextLevel);
+    currentLevel = currentLevelStore.data();
     levelSize = nextLevelSize;
-    numWritten = 0;
-    numRemoved = 0;
   } // end for loop on levels
 }
 
