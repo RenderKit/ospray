@@ -42,14 +42,13 @@ namespace ospray {
 
 Texture2D::~Texture2D()
 {
-#ifdef OSPRAY_TARGET_SYCL
-  for (int i = 0; i <=  getSh()->maxLevel; ++i) {
+  for (int i = 0; i <= getSh()->maxLevel; ++i) {
     if (getSh()->data[i]) {
       getISPCDevice().getDRTDevice().freeSampledImageHandle(getSh()->data[i]);
       getSh()->data[i] = nullptr;
     }
   }
-#else
+#ifndef OSPRAY_TARGET_SYCL
   if (mipMapData && mipMapData.use_count() == 2)
     getISPCDevice().getMipMapCache().remove(texData->data());
 #endif
@@ -148,24 +147,33 @@ void Texture2D::commit()
   getSh()->set(
       size, dataPtr.data(), dataPtr.size() - 1, format, filter, wrapMode);
 
-    
-  // Create bindless image handle for GPU path (single level for now)
+// Create bindless image handle for GPU path (single level for now)
+#ifdef OSPRAY_TARGET_SYCL
+  // Free existing handles before re-creating
+  for (int i = 0; i <= getSh()->maxLevel; ++i) {
+    if (getSh()->data[i]) {
+      getISPCDevice().getDRTDevice().freeSampledImageHandle(getSh()->data[i]);
+      getSh()->data[i] = nullptr;
+    }
+  }
   size_t levelWidth = size.x;
   size_t levelHeight = size.y;
   const unsigned int numLevels = static_cast<unsigned int>(dataPtr.size());
   for (unsigned int i = 0; i < numLevels; ++i) {
-    void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(&dataPtr[i], levelWidth, levelHeight, format);
+    void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(
+        &dataPtr[i], levelWidth, levelHeight, format);
     if (imgMemHandle) {
-        void *sampledHandle = getISPCDevice().getDRTDevice().createSampledImageHandle(imgMemHandle, filter, wrapMode);
-        if (sampledHandle){
-           getSh()->data[i] = sampledHandle;
-        }
-           
+      void *sampledHandle =
+          getISPCDevice().getDRTDevice().createSampledImageHandle(
+              imgMemHandle, filter, wrapMode);
+      if (sampledHandle) {
+        getSh()->data[i] = sampledHandle;
+      }
     }
     levelWidth = std::max(levelWidth / 2, size_t(1));
     levelHeight = std::max(levelHeight / 2, size_t(1));
   }
-
+#endif
 }
 
 } // namespace ospray

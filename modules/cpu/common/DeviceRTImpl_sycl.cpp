@@ -256,28 +256,38 @@ void DeviceImpl::freeImageMemHandle(void *handle)
 void *DeviceImpl::createSampledImageHandle(
     void *imgMemHandlePtr, const OSPTextureFilter filter, const vec2ui wrapMode)
 {
-    //std::cout<<"createSampledImageHandle "<<std::endl;
-    sycl::addressing_mode addressingMode;
+    sycl::addressing_mode addressingModeX;
     switch (wrapMode.x) {
     case OSP_TEXTURE_WRAP_REPEAT:
-        addressingMode = sycl::addressing_mode::repeat;
+        addressingModeX = sycl::addressing_mode::repeat;
         break;
     case OSP_TEXTURE_WRAP_MIRRORED_REPEAT:
-        addressingMode = sycl::addressing_mode::mirrored_repeat;
+        addressingModeX = sycl::addressing_mode::mirrored_repeat;
         break;
     case OSP_TEXTURE_WRAP_CLAMP_TO_EDGE:
-        addressingMode = sycl::addressing_mode::clamp_to_edge;
+        addressingModeX = sycl::addressing_mode::clamp_to_edge;
         break;
     default:
-        addressingMode = sycl::addressing_mode::repeat;
+        addressingModeX = sycl::addressing_mode::repeat;
     }
-
+    sycl::addressing_mode addressingModeY;
+    switch (wrapMode.y) {
+    case OSP_TEXTURE_WRAP_REPEAT:
+        addressingModeY = sycl::addressing_mode::repeat; break;
+    case OSP_TEXTURE_WRAP_MIRRORED_REPEAT:
+        addressingModeY = sycl::addressing_mode::mirrored_repeat; break;
+    case OSP_TEXTURE_WRAP_CLAMP_TO_EDGE:
+        addressingModeY = sycl::addressing_mode::clamp_to_edge; break;
+    default:
+        addressingModeY = sycl::addressing_mode::repeat;
+    }
     sycl::filtering_mode filteringMode = (filter == OSP_TEXTURE_FILTER_NEAREST)
         ? sycl::filtering_mode::nearest
         : sycl::filtering_mode::linear;
-
+    sycl::addressing_mode addrModes[3] = {
+    addressingModeX, addressingModeY, sycl::addressing_mode::repeat};
     syclexp::bindless_image_sampler sampler(
-        addressingMode,
+        addrModes,
         sycl::coordinate_normalization_mode::normalized,
         filteringMode,
         filteringMode,

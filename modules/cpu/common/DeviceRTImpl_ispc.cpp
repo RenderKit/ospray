@@ -386,8 +386,7 @@ void *DeviceImpl::createImageMemHandle(void **hostData,
     const size_t height,
     const OSPTextureFormat format) 
 {
-  std::cout<<"Using DeviceImpl in DeviceRTImpl_ispc.cpp"<<std::endl;
-  return nullptr;
+    return nullptr;
 }
 
 void DeviceImpl::freeImageMemHandle(void *handle)  
