@@ -28,6 +28,7 @@ Version History
     -   `OSP_DISJOINT` curves had disks at the end of the first and last
         cone/cylinder
     -   Enum size on Windows with older MSVC
+    -   Crash on GPU with multiple volumes
 -   Update packaged Open Image Denoise v2.5.1 to bring the following
     improvements:
     -   Added Intel AMX-FP16 support and significantly improved

@@ -61,15 +61,13 @@ $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/4"
 $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/5"
 $test_filters+=":TestScenesVolumesStrictParams/FromOsprayTesting.*"
 # Requires non-overlapping multiple volume support on GPU
-$test_filters+=":ObjectInstance/IDBuffer.*"
+$test_filters+=":*/IDBuffer.*"
 # Instancing test includes multiple volumes
 $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/24"
 $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/25"
 $test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/26"
 # 'mix' material not supported on GPU (not practical to implement without fn ptr)
 $test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/8"
-# Crashing FIXME
-$test_filters+=":Primitive/IDBuffer.*"
 # Different noise
 $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/1"
 

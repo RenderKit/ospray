@@ -47,8 +47,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
         (varying VolumeIntervals * uniform) ctx->intervals;
 
 #ifndef OSPRAY_TARGET_SYCL
-    // Grow TLS pool if needed, note that we cannot grow it on the GPU b/c no
-    // dymanic memory. With SYCL we just take the first hit found
+    // Grow TLS pool if needed
     uniform unsigned int numNeeded =
         reduce_max(vIntervals->numVolumeIntervals) + 1;
     if (numNeeded > vIntervals->numAllocated) {
@@ -59,8 +58,11 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
 
     varying VolumeInterval *varying vInterval = (varying VolumeInterval
         * varying)(vIntervals->intervals + vIntervals->numVolumeIntervals);
+    vIntervals->numVolumeIntervals++;
 #else
+    // we cannot grow it on the GPU b/c no dynamic memory: we just take the hit found
     varying VolumeInterval *uniform vInterval = vIntervals->intervals;
+    vIntervals->numVolumeIntervals = 1;
 #endif
 
     vInterval->primID = 0;
@@ -68,7 +70,6 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
     vInterval->instID = args->context->instID[0];
     vInterval->interval.lower = t_min;
     vInterval->interval.upper = t_max;
-    vIntervals->numVolumeIntervals++;
   }
 }
 
