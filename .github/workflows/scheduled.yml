@@ -40,16 +40,6 @@ jobs:
       artifact-out: build-linux-debug-all
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  # build-mpi-cluster:
-  #   with:
-  #     runs-on: '["Cluster", "build"]'
-  #   script:
-  #     - module load cmake
-  #     - module load impi
-  #     - module load gnu
-  #     - scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
-  #   <<: *build_artifacts
-
   build-windows-debug-all:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
@@ -81,17 +71,6 @@ jobs:
       artifact-out: test-linux-debug-all
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
-
-  # test-mpi-cluster:
-  #   <<: *test_job_unix_avx512skx
-  #   tags: [cluster]
-  #   script:
-  #     - module load impi
-  #     - module load gnu
-  #     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" TEST_MPI TEST_MULTIDEVICE
-  #   env:
-  #     needs: build-mpi-cluster
-  #   needs: ${{ env.needs }}
 
   test-windows-debug-all:
     needs: build-windows-debug-all

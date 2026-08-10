@@ -46,49 +46,33 @@ SUBSUITE_NAME="BoxesAO"
 SUBSUITE_REGEX="^boxes"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-# wait to insert contexts (which will be reused for all subsequent benchmark runs)
-# until first benchmark successfully finishes.
-benny insert code_context "${PROJECT_NAME}" ${SOURCE_ROOT} --save-json code_context.json
-benny insert run_context ${BENNY_SYSTEM_TOKEN} ./code_context.json --save-json run_context.json
-
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-
-# subsequent subsuite runs...
-
 SUBSUITE_NAME="CornellBoxSPP"
 SUBSUITE_REGEX="^cornell_box"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="GravitySpheresVolumeDIM"
 SUBSUITE_REGEX="^gravity_spheres_volume"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="PerlinNoiseVolumes"
 SUBSUITE_REGEX="^perlin_noise_volumes"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="ParticleVolumes"
 SUBSUITE_REGEX="^particle_volume"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="UnstructuredVolumes"
 SUBSUITE_REGEX="^unstructured_volume"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="Clipping"
 SUBSUITE_REGEX="^clip"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="Other"
 SUBSUITE_REGEX="^(random_spheres|streamlines|planes|vdb_volume|gravity_spheres_amr)"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 ###################
 # Microbenchmarks #
@@ -99,4 +83,3 @@ SUITE_NAME="Microbenchmarks"
 SUBSUITE_NAME="Setup"
 SUBSUITE_REGEX="^setup"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json

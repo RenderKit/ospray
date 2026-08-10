@@ -21,7 +21,7 @@ before you can build OSPRay you need the following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools.
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.23.0 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.30.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
     If ISPC is not found by CMake its location can be hinted with the
@@ -88,7 +88,7 @@ version) and [Embree](https://github.com/RenderKit/embree/releases/).
 To build OSPRay's GPU module you need
 
 -   a SYCL compiler, either the open source [oneAPI DPC++ Compiler
-    2023-10-26](https://github.com/intel/llvm/releases/tag/nightly-2023-10-26)
+    v7.1.0](https://github.com/intel/llvm/releases/tag/v7.1.0)
     or the latest [Intel oneAPI DPC++/C++
-    Compiler](https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#dpcpp-cpp)
+    Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler-download.html)
 -   a recent [CMake](http://www.cmake.org), version 3.25.3 or higher

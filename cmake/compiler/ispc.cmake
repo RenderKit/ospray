@@ -20,7 +20,7 @@ endmacro ()
 ###############################################################################
 
 ## Find ISPC ##
-find_program(ISPC_EXECUTABLE ispc HINTS ${ISPC_DIR_HINT} DOC "Path to the ISPC executable.")
+find_program(ISPC_EXECUTABLE ispc DOC "Path to the ISPC executable.")
 if (NOT ISPC_EXECUTABLE)
   message(FATAL_ERROR "Could not find ISPC. Exiting.")
 else()
@@ -29,6 +29,9 @@ else()
                   OUTPUT_VARIABLE ISPC_INFO)
   string(REGEX MATCH "(.*), ([0-9]*\.[0-9]*\.[0-9]*[a-z]*) (.*)" _ ${ISPC_INFO})
   set(ISPC_VERSION ${CMAKE_MATCH_2})
+  if (ISPC_VERSION VERSION_LESS ISPC_VERSION_REQUIRED)
+    message(FATAL_ERROR "Need at least version ${ISPC_VERSION_REQUIRED} of Intel SPMD Compiler (ISPC).")
+  endif()
   message(STATUS "Found ISPC v${ISPC_VERSION}: ${ISPC_EXECUTABLE}")
   # Execute "ispc --help" and parse supported archs
   execute_process(COMMAND ${ISPC_EXECUTABLE} "--help"

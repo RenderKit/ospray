@@ -23,6 +23,7 @@ jobs:
     with:
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/dpcpp.env
+      msvc-version: 2022
       cmd: |
         $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
         # disable warnings which lead to excessively large log files
@@ -38,7 +39,8 @@ jobs:
     with:
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/icx-windows.env
-      ocloc-version: 77a13ae6-6100-4ddc-b069-0086ff44730c/ocloc_win_101.5082
+      msvc-version: 2022
+      ocloc-version: oneAPI/ocloc/2025.0
       cmd: |
         # disable warnings which lead to excessively large log files
         $env:CXXFLAGS = '-w'

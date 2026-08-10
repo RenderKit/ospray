@@ -11,14 +11,16 @@ endif()
 # Google Test follows the "Live Head" philosophy and therefore recommends
 # using the latest commit to 'master' 
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip"
-  URL_HASH "SHA256=1f357c27ca988c3f7c6b4bf68a9395005ac6761f034046e9dde0896e3aba00e4"
+  URL "https://github.com/google/googletest/archive/refs/tags/v1.18.0.zip"
+  URL_HASH "SHA256=63b9c77751a5b8f492486005f67533fdc58682b67476fcb91650be5958d5195a"
 
 #   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""
 
   CMAKE_ARGS
     -Dgtest_force_shared_crt=ON
+    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
