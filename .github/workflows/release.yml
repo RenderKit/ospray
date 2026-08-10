@@ -28,7 +28,7 @@ jobs:
       image: ospray/pandoc/latex:2.19.2
       cmd: |
         cd doc
-        git clone --depth 1 -b release-3.3.x https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/documentation.graphics.renderkit.ospray-website.git ospray-doc
+        git clone --depth 1 -b release-3.3.x https://github.com/intel-innersource/documentation.graphics.renderkit.ospray-website.git ospray-doc
         make pdf
         make checklinks
       artifact-out: pdf
@@ -44,10 +44,7 @@ jobs:
       image: rockylinux:8
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        module load cmake/3.25.3
-        module load mpi/mpich-x86_64
-        export CC=clang
-        export CXX=clang++
+        export PATH=/usr/lib64/mpich/bin:$PATH
         scripts/release/linux.sh
         cp build_release/*.gz $STORAGE_PATH/packages/renderkit/ || true
       artifact-in: pdf
@@ -103,6 +100,7 @@ jobs:
     with:
       runs-on: '["build", "mpi"]'
       env-from-files: .github/workflows/dpcpp.env
+      msvc-version: 2022
       cmd: |
         $env:SYCL_BUNDLE_ROOT = $env:DPCPP_ROOT
         # disable warnings which lead to excessively large log files
@@ -127,10 +125,8 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
     with:
-      coverity: true
       project: OSPRay
       prebuild: >
-        module load impi/latest &&
         echo "Configure dependencies" &&
         cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF -DBUILD_ISA_AVX512=OFF &&
         echo "Build dependencies" &&
@@ -204,7 +200,6 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake/3.15.2
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE
@@ -216,8 +211,8 @@ jobs:
     with:
       image: rockylinux:8
       cmd: |
-        module load cmake/3.15.2
-        module load mpi/mpich-x86_64
+        export PATH=/usr/lib64/mpich/bin:$PATH
+        export LD_LIBRARY_PATH=/usr/lib64/mpich/lib:$LD_LIBRARY_PATH
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE SKIP_CPU TEST_MPI
@@ -234,7 +229,6 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       runs-on: '"dg2"'
       cmd: |
-        module load cmake/3.15.2
         tar -xzf build_release/*.gz
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         export OIDN_DEFAULT_DEVICE=sycl

@@ -10,13 +10,15 @@ else()
 endif()
 
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/snappy/archive/refs/tags/1.2.1.tar.gz"
-  URL_HASH "SHA256=736aeb64d86566d2236ddffa2865ee5d7a82d26c9016b36218fcc27ea4f09f86"
+  URL "https://github.com/google/snappy/archive/refs/tags/1.2.2.tar.gz"
+  URL_HASH "SHA256=90f74bc1fbf78a6c56b3c4a082a05103b3a56bb17bca1a27e052ea11723292dc"
 
   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""
 
   CMAKE_ARGS
+    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     -DBUILD_SHARED_LIBS:BOOL=OFF

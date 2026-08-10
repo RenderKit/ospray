@@ -32,7 +32,7 @@ jobs:
     with:
       runs-on: '["build", "mpi"]'
       cmd: |
-        scripts\build\win.ps1 -G "Visual Studio 16 2019" -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+        scripts\build\win.ps1 -G "Visual Studio 16 2019" -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_OIDN_FROM_SOURCE=ON # OIDN pre-built with incompatible VS2022
       artifact-out: build-windows-msvc16-mpi_and_md
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 

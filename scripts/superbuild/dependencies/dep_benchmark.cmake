@@ -10,8 +10,8 @@ else()
 endif()
 
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/benchmark/archive/refs/tags/v1.9.0.tar.gz"
-  URL_HASH "SHA256=35a77f46cc782b16fac8d3b107fbfbb37dcd645f7c28eee19f3b8e0758b48994"
+  URL "https://github.com/google/benchmark/archive/refs/tags/v1.9.5.tar.gz"
+  URL_HASH "SHA256=9631341c82bac4a288bef951f8b26b41f69021794184ece969f8473977eaa340"
 
   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""
@@ -19,6 +19,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   DEPENDS gtest
 
   CMAKE_ARGS
+    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} # benchmark is a C++ project
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
     -DBENCHMARK_ENABLE_TESTING=OFF
