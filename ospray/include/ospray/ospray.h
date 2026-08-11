@@ -4,7 +4,7 @@
 #pragma once
 
 #ifndef NULL
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
 #define NULL nullptr
 #else
 #define NULL 0
