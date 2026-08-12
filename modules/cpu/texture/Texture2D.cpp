@@ -48,10 +48,8 @@ Texture2D::~Texture2D()
       getSh()->data[i] = nullptr;
     }
   }
-#ifndef OSPRAY_TARGET_SYCL
   if (mipMapData && mipMapData.use_count() == 2)
     getISPCDevice().getMipMapCache().remove(texData->data());
-#endif
 }
 
 std::string Texture2D::toString() const
@@ -148,7 +146,6 @@ void Texture2D::commit()
       size, dataPtr.data(), dataPtr.size() - 1, format, filter, wrapMode);
 
 // Create bindless image handle for GPU path (single level for now)
-#ifdef OSPRAY_TARGET_SYCL
   // Free existing handles before re-creating
   for (int i = 0; i <= getSh()->maxLevel; ++i) {
     if (getSh()->data[i]) {
@@ -173,7 +170,6 @@ void Texture2D::commit()
     levelWidth = std::max(levelWidth / 2, size_t(1));
     levelHeight = std::max(levelHeight / 2, size_t(1));
   }
-#endif
 }
 
 } // namespace ospray
