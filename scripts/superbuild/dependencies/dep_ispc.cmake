@@ -16,7 +16,7 @@ else()
   if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
     set(ISPC_OSSUFFIX "linux.aarch64.tar.gz")
   else()
-    set(ISPC_OSSUFFIX "linux-oneapi.tar.gz")
+    set(ISPC_OSSUFFIX "linux.tar.gz")
   endif()
 endif()
 

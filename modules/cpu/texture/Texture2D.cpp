@@ -42,9 +42,12 @@ namespace ospray {
 
 Texture2D::~Texture2D()
 {
-  // If no one else is referencing the MIP map buffer (just this object and the
-  // cache map), we need to remove it from the MIP map cache so the buffer will
-  // be deleted as well
+  for (int i = 0; i <= getSh()->maxLevel; ++i) {
+    if (getSh()->data[i]) {
+      getISPCDevice().getDRTDevice().freeSampledImageHandle(getSh()->data[i]);
+      getSh()->data[i] = nullptr;
+    }
+  }
   if (mipMapData && mipMapData.use_count() == 2)
     getISPCDevice().getMipMapCache().remove(texData->data());
 }
@@ -141,6 +144,32 @@ void Texture2D::commit()
   // Initialize ispc shared structure
   getSh()->set(
       size, dataPtr.data(), dataPtr.size() - 1, format, filter, wrapMode);
+
+// Create bindless image handle for GPU path (single level for now)
+  // Free existing handles before re-creating
+  for (int i = 0; i <= getSh()->maxLevel; ++i) {
+    if (getSh()->data[i]) {
+      getISPCDevice().getDRTDevice().freeSampledImageHandle(getSh()->data[i]);
+      getSh()->data[i] = nullptr;
+    }
+  }
+  size_t levelWidth = size.x;
+  size_t levelHeight = size.y;
+  const unsigned int numLevels = static_cast<unsigned int>(dataPtr.size());
+  for (unsigned int i = 0; i < numLevels; ++i) {
+    void *imgMemHandle = getISPCDevice().getDRTDevice().createImageMemHandle(
+        &dataPtr[i], levelWidth, levelHeight, format);
+    if (imgMemHandle) {
+      void *sampledHandle =
+          getISPCDevice().getDRTDevice().createSampledImageHandle(
+              imgMemHandle, filter, wrapMode);
+      if (sampledHandle) {
+        getSh()->data[i] = sampledHandle;
+      }
+    }
+    levelWidth = std::max(levelWidth / 2, size_t(1));
+    levelHeight = std::max(levelHeight / 2, size_t(1));
+  }
 }
 
 } // namespace ospray

@@ -187,7 +187,19 @@ struct OSPRAY_CORE_INTERFACE Device
   virtual void *getSyclDevicePtr() = 0;
   virtual void *getSyclContextPtr() = 0;
   virtual void *getSyclQueuePtr() = 0;
-
+  // For bindless image support:
+  virtual void *createImageMemHandle(void **hostData,
+    const size_t width,
+    const size_t height,
+    const OSPTextureFormat format
+  ) = 0;
+  
+  //Receives what comes from createImageMemHandle and creates a handle for the sampled image
+  virtual void *createSampledImageHandle(void *imgMemHandle,
+    const OSPTextureFilter filter,
+    const vec2ui wrapMode) = 0;
+  virtual void freeImageMemHandle(void *handle) = 0;
+  virtual void freeSampledImageHandle(void *handle) = 0;
   // Check if device is in debug mode
   bool isDebug() const;
 

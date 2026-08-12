@@ -163,7 +163,7 @@ task
 
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-        if (world->regionScene) {
+        if (world->regionTraversable) {
           uniform RayQueryContextRegion context;
           rtcInitRayQueryContext(&context.ectx);
           context.ffh = &ffh;
@@ -181,7 +181,7 @@ task
                   | RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS);
           intersectArgs.context = &context.ectx;
 
-          rtcIntersectV(world->regionScene,
+          rtcTraversableIntersectV(world->regionTraversable,
               (varying RTCRayHit * uniform) & screenSample.ray,
               &intersectArgs);
         }

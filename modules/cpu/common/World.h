@@ -34,6 +34,14 @@ struct OSPRAY_SDK_INTERFACE World
 
   // Data members //
 
+  RTCScene embreeSceneHandleGeometries{nullptr};
+#ifdef OSPRAY_ENABLE_VOLUMES
+  RTCScene embreeSceneHandleVolumes{nullptr};
+#endif
+#ifndef OSPRAY_TARGET_SYCL
+  RTCScene embreeSceneHandleClippers{nullptr};
+#endif
+
   Ref<const DataT<Instance *>> instances;
   Ref<const DataT<Light *>> lights;
 

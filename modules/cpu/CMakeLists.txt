@@ -404,6 +404,7 @@ endif()
 
 
 if (OSPRAY_MODULE_GPU)
+  message("************* GPU *********************")
   if (WIN32)
     cmake_minimum_required(VERSION 3.25)
   else()
@@ -472,8 +473,8 @@ if (OSPRAY_MODULE_GPU)
     varying=
     unmasked=
     export=
-    rtcIntersectV=rtcIntersect1
-    rtcOccludedV=rtcOccluded1
+    rtcTraversableIntersectV=rtcTraversableIntersect1
+    rtcTraversableOccludedV=rtcTraversableOccluded1
     rtcInterpolateV1=rtcInterpolate1
     vklComputeSampleV=vklComputeSample
     vklComputeGradientV=vklComputeGradient

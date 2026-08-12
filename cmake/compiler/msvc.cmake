@@ -3,7 +3,8 @@
 
 set(COMMON_CXX_FLAGS "/EHsc /MP /GR /bigobj")
 if (MSVC_VERSION GREATER_EQUAL 1914)
-  string(APPEND COMMON_CXX_FLAGS " /Zc:__cplusplus")
+  # defined __cplusplus messes with ISPC alignment macro, so we define it here as well
+  string(APPEND COMMON_CXX_FLAGS " /Zc:__cplusplus /D\"__ISPC_ALIGNED_STRUCT__(s)=struct __ISPC_ALIGN__(s)\"")
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${COMMON_CXX_FLAGS}")

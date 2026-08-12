@@ -24,9 +24,6 @@ jobs:
       image: ubuntu:22.04
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-ubuntu2204-mpi-dpcpp
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
@@ -38,8 +35,10 @@ jobs:
     with:
       image: ubuntu:22.04
       env-from-files: .github/workflows/icx-linux.env .github/workflows/gfx-ubuntu22.env # OIDN AOT needs ocloc
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"dg2"'
       cmd: |
-        module load cmake/3.25.3
+        unset no_proxy && unset NO_PROXY && apt update -y && apt install -y intel-ocloc # for OIDN AOT
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_OIDN_FROM_SOURCE=ON
       artifact-out: build-ubuntu2204-mpi-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
@@ -49,10 +48,9 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
-      image: opensuse/leap:15.3
+      image: opensuse/leap:15.4
       env-from-files: .github/workflows/icx-linux.env
       cmd: |
-        module load cmake/3.25.3
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON
 
   rocky8-mpich-dpcpp-build:
@@ -62,10 +60,7 @@ jobs:
       image: rockylinux:8
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        module load cmake/3.25.3
-        module load mpi/mpich-x86_64
-        export CC=clang
-        export CXX=clang++
+        export PATH=/usr/lib64/mpich/bin:$PATH
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-rocky8-mpich-dpcpp
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
@@ -73,6 +68,20 @@ jobs:
 
 
 ### TEST JOBS ###
+
+  dpcpp-cpu-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-dpcpp-cpu
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_tests.sh "$GITHUB_WORKSPACE"
 
   dpcpp-dg2-ubu22-test:
     needs: ubu22-mpi-dpcpp-build
@@ -89,7 +98,42 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
-        module load cmake/3.25.3
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
+  dpcpp-bmg-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"bmg"'
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-dpcpp-bmg
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
+  dpcpp-lnl-ubu22-test:
+    needs: ubu22-mpi-dpcpp-build
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      timeout-minutes: 100
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/gfx-ubuntu22.env
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '"lnl"'
+      artifact-in: build-ubuntu2204-mpi-dpcpp
+      artifact-out: test-ubuntu2204-dpcpp-lnl
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
@@ -108,7 +152,6 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
-        module load cmake/3.25.3
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
@@ -127,7 +170,6 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
-        module load cmake/3.25.3
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" SKIP_GPU TEST_MPI
 
@@ -146,7 +188,6 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
       cmd: |
-        module load cmake/3.25.3
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" SKIP_GPU TEST_MULTIDEVICE
 

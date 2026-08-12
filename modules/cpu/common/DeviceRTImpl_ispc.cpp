@@ -381,6 +381,29 @@ void *DeviceImpl::getSyclQueuePtr()
   // SYCL not used
   return nullptr;
 }
+void *DeviceImpl::createImageMemHandle(void **hostData,
+    const size_t width,
+    const size_t height,
+    const OSPTextureFormat format) 
+{
+    return nullptr;
+}
 
+void DeviceImpl::freeImageMemHandle(void *handle)  
+{
+  
+}
+void *DeviceImpl::createSampledImageHandle(
+    void *imgMemHandlePtr,
+    const OSPTextureFilter filter,
+    const vec2ui wrapMode) 
+{
+  return nullptr;
+}
+
+void DeviceImpl::freeSampledImageHandle(void *handle)  
+{
+
+}
 } // namespace devicert
 } // namespace ospray

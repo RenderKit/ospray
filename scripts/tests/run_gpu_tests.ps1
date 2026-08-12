@@ -73,6 +73,12 @@ $test_filters+=":Primitive/IDBuffer.*"
 # Different noise
 $test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/1"
 
+# XXX AMR until VKL fix for #34
+$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/18"
+$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/19"
+$test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/20"
+
+
 # Artifacts, Windows only (driver?)
 $test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/4"
 $test_filters+=":TestScenesPtMaterials/FromOsprayTesting.test_scenes/5"

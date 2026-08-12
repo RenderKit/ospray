@@ -5,7 +5,10 @@
 #include "Texture2DFormats.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
-
+#ifdef OSPRAY_TARGET_SYCL
+using half = sycl::half;
+namespace syclexp = sycl::ext::oneapi::experimental;
+#endif
 // TODO tiling
 
 // Texture coordinate utilities
@@ -132,27 +135,64 @@ inline vec4f Texture2D_bilinear_l(
   const Vec4fPack vp = Texture2D_getTexel4(self->format, data, idx);
   return bilerp(cs.frac, vp.v1, vp.v2, vp.v3, vp.v4);
 }
-
+#ifdef OSPRAY_TARGET_SYCL
+inline sycl::float4 fixChannelFormat(sycl::float4 s, OSPTextureFormat format)
+{
+  if (format == OSP_TEXTURE_L8 || format == OSP_TEXTURE_LA8)
+    s.x() = srgb_to_linear(s.x());
+  if (format == OSP_TEXTURE_SRGB || format == OSP_TEXTURE_SRGBA) {
+    s.x() = srgb_to_linear(s.x());
+    s.y() = srgb_to_linear(s.y());
+    s.z() = srgb_to_linear(s.z());
+  }
+  if (format == OSP_TEXTURE_R8 || format == OSP_TEXTURE_L8
+      || format == OSP_TEXTURE_R32F || format == OSP_TEXTURE_R16
+      || format == OSP_TEXTURE_R16F) {
+    return sycl::float4(s.x(), s.x(), s.x(), 1.f);
+  } else if (format == OSP_TEXTURE_RA8 || format == OSP_TEXTURE_LA8
+      || format == OSP_TEXTURE_RA16 || format == OSP_TEXTURE_RA32F
+      || format == OSP_TEXTURE_RA16F) {
+    return sycl::float4(s.x(), s.x(), s.x(), s.y());
+  }
+  return s;
+}
+#endif
+inline vec4f Texture2D_sample_level(const Texture2D *uniform self,
+    const vec2f &st,
+    const int level,
+    const uniform bool filter_nearest)
+{
+#ifdef OSPRAY_TARGET_SYCL
+  syclexp::sampled_image_handle handle(
+      (syclexp::sampled_image_handle::raw_image_handle_type)self->data[level]);
+  sycl::float4 s =
+      syclexp::sample_image<sycl::float4>(handle, sycl::float2{st.x, st.y});
+  s = fixChannelFormat(s, self->format);
+  return make_vec4f(s.x(), s.y(), s.z(), s.w());
+#else
+  return filter_nearest ? Texture2D_nearest_l(self, st, level)
+                        : Texture2D_bilinear_l(self, st, level);
+#endif
+}
 SYCL_EXTERNAL __noinline vec4f Texture2D_get(
     const Texture2D *uniform self, const vec2f &st, const float pixelFootprint)
 {
-  int mipLevel = 0;
-  float frac = 0.f;
   const uniform bool filter_nearest = self->filter & OSP_TEXTURE_FILTER_NEAREST;
+  int level0 = 0;
+  float frac = 0.f;
+
   if (self->maxLevel) {
     const float lambda =
         max(0.f, calcLambda(pixelFootprint, self->size, filter_nearest));
-    mipLevel = min((int)lambda, self->maxLevel - 1);
-    frac = min(lambda - mipLevel, 1.f);
+    level0 = min((int)lambda, self->maxLevel - 1);
+    frac = min(lambda - (float)level0, 1.f);
   }
 
-  vec4f t0 = filter_nearest ? Texture2D_nearest_l(self, st, mipLevel)
-                            : Texture2D_bilinear_l(self, st, mipLevel);
+  vec4f t0 = Texture2D_sample_level(self, st, level0, filter_nearest);
   if (frac == 0.f)
     return t0;
 
-  vec4f t1 = filter_nearest ? Texture2D_nearest_l(self, st, mipLevel + 1)
-                            : Texture2D_bilinear_l(self, st, mipLevel + 1);
+  vec4f t1 = Texture2D_sample_level(self, st, level0 + 1, filter_nearest);
   return lerp(frac, t0, t1);
 }
 
