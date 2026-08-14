@@ -182,17 +182,10 @@ endif()
 
 option(BUILD_OPENVKL "Build Open VKL as a part of the superbuild." ON)
 if (BUILD_OPENVKL)
+  # XXX "devel" and from source for AMR fix until v2.0.3
   set(OPENVKL_VERSION "devel" CACHE STRING "Which version of OpenVKL to build?")
   mark_as_advanced(CLEAR OPENVKL_VERSION)
-  # XXX need to build VKL from source when installing in single directory,
-  # otherwise its packaged, stale Embree will overwrite the already installed
-  # new Embree
-  cmake_dependent_option(
-    BUILD_OPENVKL_FROM_SOURCE "Build OpenVKL or use pre-built version?"
-    ON #XXX OFF
-    "INSTALL_IN_SEPARATE_DIRECTORIES OR NOT INSTALL_DEPENDENCIES"
-    ON
-  )
+  option(BUILD_OPENVKL_FROM_SOURCE "Build OpenVKL or use pre-built version?" ON)
   mark_as_advanced(CLEAR BUILD_OPENVKL_FROM_SOURCE)
   if (OPENVKL_VERSION STREQUAL "2.0.2")
     if (BUILD_OPENVKL_FROM_SOURCE)
