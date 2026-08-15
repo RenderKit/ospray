@@ -20,6 +20,7 @@ Version History
     improving compatibility with glTF `KHR_materials_specular`
 -   Improvements to and documentation of the pathtracer's Shadow Catcher
     feature (enabled via parameter `shadowCatcherPlane`)
+-   Set DEPENDENTLOADFLAG also on the Windows binaries built with Clang/SYCL
 -   Bug fixes
     -   Find geometry lights after first empty instance
     -   Segfault when `numPrimitives()` is called before `commit()`
