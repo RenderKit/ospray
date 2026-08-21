@@ -169,12 +169,8 @@ ISPCDevice::ISPCDevice(std::unique_ptr<devicert::Device> device) : ISPCDevice()
 
 ISPCDevice::~ISPCDevice()
 {
-  try {
-    if (embreeDevice) {
-      rtcReleaseDevice(embreeDevice);
-    }
-  } catch (...) {
-    // silently move on, sometimes a pthread mutex lock fails in Embree
+  if (embreeDevice) {
+    rtcReleaseDevice(embreeDevice);
   }
 
 #ifdef OSPRAY_ENABLE_VOLUMES

@@ -103,7 +103,7 @@ int main(int argc, char **argv)
     cmdArg.push_back(argv[i]);
 
   ospInit(&argc, (const char **)argv);
-  std::atexit(ospShutdown);
+  std::atexit(ospShutdown); // benchmark lib may exit()
 
   auto DIR = utility::getEnvVar<std::string>("OSPRAY_BENCHMARK_IMG_DIR");
   BaseFixture::dumpFinalImageDir = DIR.value_or("");
@@ -112,6 +112,9 @@ int main(int argc, char **argv)
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))
     return 1;
   ::benchmark::RunSpecifiedBenchmarks();
+
+
+  ospShutdown(); // too late with atexit(): reloaded Embree destructs before
 
 #ifdef _WIN32
   if (waitForKey) {
