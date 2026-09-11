@@ -13,7 +13,7 @@ namespace ospray {
 #endif
 
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {

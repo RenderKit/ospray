@@ -5,9 +5,13 @@
 
 #pragma once
 
+#ifdef __cplusplus
+#include <cstdint>
+#endif
+
 // Log levels which can be set on a device via "logLevel" parameter
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -19,7 +23,7 @@ typedef enum
 } OSPLogLevel;
 
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -32,7 +36,7 @@ typedef enum
 
 // An enum type that represensts the different data types represented in OSPRay
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -165,7 +169,7 @@ typedef enum
 
 // OSPRay format constants for Texture creation
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -195,7 +199,7 @@ typedef enum
 
 // Filter modes that can be set on 'texture2d' type OSPTexture
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -205,7 +209,7 @@ typedef enum
 
 // Wrap modes that can be set on 'texture2d' type OSPTexture
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -216,7 +220,7 @@ typedef enum
 
 // Error codes returned by various API and callback functions
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -235,7 +239,7 @@ typedef enum
 
 // OSPRay format constants for Frame Buffer creation
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -248,7 +252,7 @@ typedef enum
 
 // OSPRay channel constants for Frame Buffer (can be OR'ed together)
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -267,7 +271,7 @@ typedef enum
 
 // OSPRay events which can be waited on via ospWait()
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -281,7 +285,7 @@ typedef enum
 // OSPRay cell types definition for unstructured volumes, values are set to
 // match VTK
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint8_t
 #endif
 {
@@ -294,7 +298,7 @@ typedef enum
 
 // OSPRay camera stereo image modes
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -307,7 +311,7 @@ typedef enum
 } OSPStereoMode;
 
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -320,7 +324,7 @@ typedef enum
 } OSPShutterType;
 
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -332,7 +336,7 @@ typedef enum
 } OSPCurveType;
 
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -343,7 +347,7 @@ typedef enum
 } OSPSphereType;
 
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -356,7 +360,7 @@ typedef enum
 } OSPCurveBasis;
 
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -369,7 +373,7 @@ typedef enum
 
 // AMR Volume rendering methods
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -380,7 +384,7 @@ typedef enum
 
 // Filter modes for VDB and structured volumes, compatible with VKL
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -391,7 +395,7 @@ typedef enum
 
 // VDB node data format
 typedef enum
-#if __cplusplus > 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -401,7 +405,7 @@ typedef enum
 
 // OSPRay pixel filter types
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -414,7 +418,7 @@ typedef enum
 
 // OSPRay light quantity types
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {
@@ -428,7 +432,7 @@ typedef enum
 
 // OSPRay quality levels (used for denoiser), same values as OIDN
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {

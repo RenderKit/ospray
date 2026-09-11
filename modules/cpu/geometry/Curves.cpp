@@ -10,6 +10,7 @@
 #include "geometry/Curves_ispc.h"
 #endif
 // std
+#include <algorithm>
 #include <map>
 
 namespace ospray {
@@ -189,11 +190,16 @@ void Curves::createEmbreeGeometry()
     setEmbreeGeometryBuffer(
         embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, texcoordData, 1);
   }
-  capData.clear();
+  capData.reset();
   if (curveType == OSP_DISJOINT) {
-    // disable caps to get always open cones/cylinders
-    capData.resize(numPrimitives(), RTC_CURVE_FLAG_NEIGHBOR_LEFT | RTC_CURVE_FLAG_NEIGHBOR_RIGHT);
-    setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_FLAGS, capData);
+    // disable caps to get always open cones/cylinders; Embree reads the flags
+    // during traversal, thus they need to be in device accessible memory
+    capData = devicert::make_buffer_shared_unique<uint8_t>(
+        getISPCDevice().getDRTDevice(), numPrimitives());
+    std::fill(capData->begin(),
+        capData->end(),
+        RTC_CURVE_FLAG_NEIGHBOR_LEFT | RTC_CURVE_FLAG_NEIGHBOR_RIGHT);
+    setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_FLAGS, *capData);
   }
 
   rtcCommitGeometry(embreeGeometry);

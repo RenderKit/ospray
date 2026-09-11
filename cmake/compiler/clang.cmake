@@ -64,3 +64,8 @@ set(CMAKE_CXX_FLAGS "${OSPRAY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
 if (APPLE)
   set(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.9 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.9 features
 endif()
+
+if (WIN32) # also DPC++ used via clang++, see dpcpp.cmake
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Xlinker /DEPENDENTLOADFLAG:0x2000")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Xlinker /DEPENDENTLOADFLAG:0x2000")
+endif()

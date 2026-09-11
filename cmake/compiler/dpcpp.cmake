@@ -8,6 +8,13 @@ set(OSPRAY_COMPILER_NEEDS_X_CPP TRUE)
 get_filename_component(SYCL_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME_WE)
 if (WIN32 AND (SYCL_COMPILER_NAME STREQUAL "icx" OR SYCL_COMPILER_NAME STREQUAL "icpx"))
   include(msvc) # icx on Windows behaves like msvc
+  foreach(FLAG
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_RELEASE
+    CMAKE_CXX_FLAGS_RELWITHDEBINFO
+  )
+    string(REPLACE "/MP" "" ${FLAG} ${${FLAG}}) # /MP is not supported by icx for offloading
+  endforeach()
   set(CMAKE_CXX_FLAGS "/fp:precise ${CMAKE_CXX_FLAGS}")
   set(OSPRAY_COMPILER_NEEDS_X_CPP FALSE) # icx on Win does not support "-x"
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /Qoption,link,/DEPENDENTLOADFLAG:0x2000")

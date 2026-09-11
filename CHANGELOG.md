@@ -20,12 +20,40 @@ Version History
     improving compatibility with glTF `KHR_materials_specular`
 -   Improvements to and documentation of the pathtracer's Shadow Catcher
     feature (enabled via parameter `shadowCatcherPlane`)
+-   Set DEPENDENTLOADFLAG also on the Windows binaries built with Clang/SYCL
 -   Bug fixes
     -   Find geometry lights after first empty instance
     -   Segfault when `numPrimitives()` is called before `commit()`
     -   Initialization of OpenGL on OSX
     -   `OSP_DISJOINT` curves had disks at the end of the first and last
         cone/cylinder
+    -   Enum size on Windows with older MSVC
+    -   Crash on GPU with multiple volumes
+-   Update packaged Open Image Denoise v2.5.1 to bring the following
+    improvements:
+    -   Added Intel AMX-FP16 support and significantly improved
+        performance and reduced memory usage on Intel GPUs with XMX
+        support (e.g., Lunar Lake and Battlemage) and on CPUs with
+        AMX-FP16 support (e.g., Granite Rapids)
+    -   Added Intel Panther Lake, BMG-G31, Wildcat Lake, Nova Lake, and
+        Crescent Island GPU support
+    -   Added NVIDIA Blackwell GPU support
+    -   Added AMD RDNA 3.5, RDNA 4, and GFX1152 GPU support, extended
+        RDNA 2 support and improved performance for RDNA 3 GPUs
+    -   Fixed corrupted output on Apple M5 Pro/Max GPUs using Metal
+    -   Fixed a crash caused by over-releasing the MTLDevice, which
+        could occur after creating and destroying multiple devices
+    -   Fixed device detection failure or crash on Windows if some old
+        Intel integrated GPU drivers are installed
+    -   Hardened validation of buffer sizes, image dimensions and
+        weights blobs, fixing several integer overflows and crashes
+-   The new minimum versions of dependencies:
+    -   Embree v4.4.0 (switch to rtcTraversable* API)
+    -   ISPC v1.30.0 (uses IEEE 754 compliant instructions on ARM for
+        min/max, performance improvements, bug fixes)
+    -   rkcommon v1.15.4 (set DEPENDENTLOADFLAG also on the Windows
+        binaries built with Clang/SYCL)
+    -   CMake v3.10
 
 ### Changes in v3.2.0:
 

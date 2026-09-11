@@ -25,10 +25,6 @@ jobs:
       image: rockylinux:8.7
       env-from-files: .github/workflows/dpcpp.env
       cmd: |
-        module load cmake/3.25.3
-        module load mpi/mpich-x86_64
-        export CC=clang
-        export CXX=clang++
         scripts/build/linux.sh -DBUILD_GPU_SUPPORT=ON
       artifact-out: build-linux
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
@@ -41,7 +37,6 @@ jobs:
     secrets: inherit
     with:
       runs-on: '"vis-perf-x8280-1"'
-      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh
       artifact-in: build-linux
@@ -52,7 +47,6 @@ jobs:
     secrets: inherit
     with:
       runs-on: '"vis-perf-x8380-1"'
-      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh
       artifact-in: build-linux
@@ -63,7 +57,6 @@ jobs:
     secrets: inherit
     with:
       runs-on: '"vis-perf-a3970x-1"'
-      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh
       artifact-in: build-linux
@@ -74,7 +67,6 @@ jobs:
     secrets: inherit
     with:
       runs-on: '"vis-perf-i9-12900k-1"'
-      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh
       artifact-in: build-linux
@@ -88,21 +80,6 @@ jobs:
       env-from-files: .github/workflows/gfx-ubuntu22.env
       options: --device=/dev/dri:/dev/dri
       runs-on: '"vis-perf-dg2-01"'
-      setup-benny: true
-      cmd: |
-        scripts/tests/run-benchmarks.sh GPU
-      artifact-in: build-linux
-
-  benchmark-pvc:
-    needs: build-linux
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    secrets: inherit
-    with:
-      image: ubuntu:22.04
-      env-from-files: .github/workflows/gfx-ubuntu22.env
-      options: --device=/dev/dri:/dev/dri
-      runs-on: '"vis-perf-spr-pvc-01"'
-      setup-benny: true
       cmd: |
         scripts/tests/run-benchmarks.sh GPU
       artifact-in: build-linux

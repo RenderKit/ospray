@@ -93,9 +93,11 @@ else()
     ${EMBREE_URL_HASH}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
-    INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory
-      <SOURCE_DIR>/
-      ${COMPONENT_PATH}
+    INSTALL_COMMAND "${CMAKE_COMMAND}"
+      -DSRC=<SOURCE_DIR>
+      -DDST=${COMPONENT_PATH}
+      -DMANIFEST=<BINARY_DIR>/install_manifest.txt
+      -P ${CMAKE_CURRENT_LIST_DIR}/package_install.cmake
     BUILD_ALWAYS OFF
   )
 

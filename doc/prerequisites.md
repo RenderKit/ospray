@@ -15,13 +15,14 @@ before you can build OSPRay you need the following prerequisites:
 
         git clone https://github.com/RenderKit/ospray.git
 
--   To build OSPRay you need [CMake](http://www.cmake.org), any form of
+-   To build OSPRay you need [CMake](http://www.cmake.org) version 3.10
+    or higher, any form of
     C++11 compiler (we recommend using GCC, but also support Clang,
     MSVC, and [Intel® C++ Compiler
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools.
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.23.0 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.30.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
     If ISPC is not found by CMake its location can be hinted with the
@@ -37,7 +38,7 @@ before you can build OSPRay you need the following prerequisites:
     be built from source as part of the [superbuild](#cmake-superbuild).
     Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
     to `OpenMP` or `Internal`.
--   OSPRay also heavily uses Intel [Embree], installing version 4.3.3
+-   OSPRay also heavily uses Intel [Embree], installing version 4.4.0
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
 -   OSPRay supports volume rendering (enabled by default via

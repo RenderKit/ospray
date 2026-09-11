@@ -40,21 +40,11 @@ jobs:
       artifact-out: build-linux-debug-all
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  # build-mpi-cluster:
-  #   with:
-  #     runs-on: '["Cluster", "build"]'
-  #   script:
-  #     - module load cmake
-  #     - module load impi
-  #     - module load gnu
-  #     - scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
-  #   <<: *build_artifacts
-
   build-windows-debug-all:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      runs-on: '["build", "NAS", "mpi"]'
+      runs-on: '["build", "mpi", "x86_64"]'
       cmd: |
         scripts\build\win.ps1 -G "Visual Studio 17 2022" -buildType Debug -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OPENVKL_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF -DBUILD_OIDN=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-windows-debug-all
@@ -64,6 +54,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
+      runs-on: '["build", "x86_64"]'
       cmd: |
         scripts\build\win.ps1 -G "Visual Studio 17 2022" -DBUILD_ISA_AVX=OFF -DOSPRAY_BUILD_ISA=AVX2 -DBUILD_OPENVKL=OFF
 
@@ -81,17 +72,6 @@ jobs:
       artifact-out: test-linux-debug-all
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
-
-  # test-mpi-cluster:
-  #   <<: *test_job_unix_avx512skx
-  #   tags: [cluster]
-  #   script:
-  #     - module load impi
-  #     - module load gnu
-  #     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" TEST_MPI TEST_MULTIDEVICE
-  #   env:
-  #     needs: build-mpi-cluster
-  #   needs: ${{ env.needs }}
 
   test-windows-debug-all:
     needs: build-windows-debug-all

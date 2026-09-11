@@ -13,6 +13,11 @@ if (OSPRAY_ZIP_MODE)
     # on per target basis:
     #set_TARGET_PROPERTIES(apps INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib")
     #set_TARGET_PROPERTIES(libs INSTALL_RPATH "$ORIGIN")
+    if (NOT WIN32)
+      # unlike DT_RUNPATH, DT_RPATH also covers deps of dlopened libs (UR adapters)
+      set(CMAKE_EXE_LINKER_FLAGS
+          "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags")
+    endif()
   endif()
 else()
   set(CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR})

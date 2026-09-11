@@ -23,6 +23,9 @@ DistributedWorld::DistributedWorld(api::ISPCDevice &device)
 
 DistributedWorld::~DistributedWorld()
 {
+  if (regionScene)
+    rtcReleaseScene(regionScene);
+
   MPI_Comm_free(&mpiGroup.comm);
 }
 
@@ -59,19 +62,17 @@ void DistributedWorld::commit()
     // either for data-parallel rendering or to switch to replicated
     // rendering
     box3f localBounds;
-    if (getSh()->super.embreeSceneHandleGeometries) {
+    if (embreeSceneHandleGeometries) {
       box4f b;
-      rtcGetSceneBounds(
-          getSh()->super.embreeSceneHandleGeometries, (RTCBounds *)&b);
+      rtcGetSceneBounds(embreeSceneHandleGeometries, (RTCBounds *)&b);
       localBounds.extend(box3f(vec3f(b.lower.x, b.lower.y, b.lower.z),
           vec3f(b.upper.x, b.upper.y, b.upper.z)));
     }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    if (getSh()->super.embreeSceneHandleVolumes) {
+    if (embreeSceneHandleVolumes) {
       box4f b;
-      rtcGetSceneBounds(
-          getSh()->super.embreeSceneHandleVolumes, (RTCBounds *)&b);
+      rtcGetSceneBounds(embreeSceneHandleVolumes, (RTCBounds *)&b);
       localBounds.extend(box3f(vec3f(b.lower.x, b.lower.y, b.lower.z),
           vec3f(b.upper.x, b.upper.y, b.upper.z)));
     }
@@ -120,7 +121,8 @@ void DistributedWorld::commit()
   getSh()->localRegions = myRegions.data();
   getSh()->numLocalRegions = myRegions.size();
   getSh()->numRegions = allRegions.size();
-  getSh()->regionScene = regionScene;
+  getSh()->regionTraversable =
+      regionScene ? rtcGetSceneTraversable(regionScene) : nullptr;
 }
 
 void DistributedWorld::exchangeRegions()

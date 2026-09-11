@@ -17,22 +17,13 @@ jobs:
 
 ### BUILD JOBS ###
 
-  build-windows-msvc15:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-    secrets: inherit
-    with:
-      cmd: |
-        scripts\build\win.ps1 -G "Visual Studio 15 2017 Win64"
-      artifact-out: build-windows-msvc15
-      artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
-
   build-windows-msvc16-mpi_and_md:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      runs-on: '["build", "mpi"]'
+      runs-on: '["build", "mpi", "x86_64"]'
       cmd: |
-        scripts\build\win.ps1 -G "Visual Studio 16 2019" -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+        scripts\build\win.ps1 -G "Visual Studio 16 2019" -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON -DBUILD_OIDN_FROM_SOURCE=ON # OIDN pre-built with incompatible VS2022
       artifact-out: build-windows-msvc16-mpi_and_md
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
@@ -40,49 +31,26 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
+      runs-on: '["build", "x86_64"]'
       cmd: |
         scripts\build\win.ps1 -G "Visual Studio 17 2022"
       artifact-out: build-windows-msvc17
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
 
+# TODO add msvc18
+
 ### TEST JOBS ###
-
-  test-windows-msvc15-avx2:
-    needs: build-windows-msvc15
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-    with:
-      runs-on: '"avx2"'
-      cmd: |
-        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE"
-      artifact-in: build-windows-msvc15
-      artifact-out: test-windows-msvc15-avx2
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
-
-  test-windows-msvc15-avx512skx:
-    needs: build-windows-msvc15
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-    with:
-      runs-on: '"avx512"'
-      cmd: |
-        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE"
-      artifact-in: build-windows-msvc15
-      artifact-out: test-windows-msvc15-avx512
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
 
   test-windows-msvc16-avx2:
     needs: build-windows-msvc16-mpi_and_md
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '["avx2", "mpi"]'
+      runs-on: '"avx2"'
       cmd: |
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
-        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" TEST_MULTIDEVICE TEST_MPI
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" TEST_MULTIDEVICE
       artifact-in: build-windows-msvc16-mpi_and_md
-      artifact-out: test-windows-msvc16-mpi_and_md-avx2
+      artifact-out: test-windows-msvc16-md-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
@@ -117,6 +85,7 @@ jobs:
     needs: build-windows-msvc17
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      runs-on: '["build", "x86_64"]'
       cmd: |
         md buildtut
         cd buildtut

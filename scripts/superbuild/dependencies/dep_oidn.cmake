@@ -35,6 +35,7 @@ if (BUILD_OIDN_FROM_SOURCE)
     ${OIDN_CLONE_URL}
     ${OIDN_URL_HASH}
     GIT_SHALLOW ON
+    GIT_SUBMODULES weights # CUDA & HIP externals are large and unused
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -85,9 +86,11 @@ else()
     ${OIDN_URL_HASH}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
-    INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory
-      <SOURCE_DIR>/
-      ${COMPONENT_PATH}
+    INSTALL_COMMAND "${CMAKE_COMMAND}"
+      -DSRC=<SOURCE_DIR>
+      -DDST=${COMPONENT_PATH}
+      -DMANIFEST=<BINARY_DIR>/install_manifest.txt
+      -P ${CMAKE_CURRENT_LIST_DIR}/package_install.cmake
     BUILD_ALWAYS OFF
   )
 endif()

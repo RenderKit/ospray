@@ -17,12 +17,12 @@ struct World
   Instance **instances;
   int32 numInvertedClippers;
 
-  RTCScene embreeSceneHandleGeometries;
+  RTCTraversable embreeTraversableHandleGeometries;
 #ifdef OSPRAY_ENABLE_VOLUMES
-  RTCScene embreeSceneHandleVolumes;
+  RTCTraversable embreeTraversableHandleVolumes;
 #endif
 #ifndef OSPRAY_TARGET_SYCL
-  RTCScene embreeSceneHandleClippers;
+  RTCTraversable embreeTraversableHandleClippers;
 #endif
 
   SciVisData *scivisData;
@@ -32,12 +32,12 @@ struct World
   World()
       : instances(nullptr),
         numInvertedClippers(0),
-        embreeSceneHandleGeometries(nullptr),
+        embreeTraversableHandleGeometries(nullptr),
 #ifdef OSPRAY_ENABLE_VOLUMES
-        embreeSceneHandleVolumes(nullptr),
+        embreeTraversableHandleVolumes(nullptr),
 #endif
 #ifndef OSPRAY_TARGET_SYCL
-        embreeSceneHandleClippers(nullptr),
+        embreeTraversableHandleClippers(nullptr),
 #endif
         scivisData(nullptr),
         pathtracerData(nullptr)

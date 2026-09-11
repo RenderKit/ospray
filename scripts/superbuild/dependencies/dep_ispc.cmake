@@ -16,7 +16,7 @@ else()
   if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
     set(ISPC_OSSUFFIX "linux.aarch64.tar.gz")
   else()
-    set(ISPC_OSSUFFIX "linux-oneapi.tar.gz")
+    set(ISPC_OSSUFFIX "linux.tar.gz")
   endif()
 endif()
 
@@ -39,5 +39,8 @@ ExternalProject_Add(${COMPONENT_NAME}
   BUILD_COMMAND ""
   INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     <SOURCE_DIR>/bin/ispc${CMAKE_EXECUTABLE_SUFFIX} ${ISPC_PATH}
+  # ispc locates its stdlib headers (e.g. amx.isph) relative to the executable
+  COMMAND "${CMAKE_COMMAND}" -E copy_directory
+    <SOURCE_DIR>/include ${COMPONENT_PATH}/include
   BUILD_ALWAYS OFF
 )
