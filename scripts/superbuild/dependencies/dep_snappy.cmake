@@ -25,6 +25,10 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DSNAPPY_BUILD_TESTS:BOOL=OFF
     -DSNAPPY_BUILD_BENCHMARKS:BOOL=OFF
     -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
+    # linked into several of our libraries, keep the copies apart (ASan
+    # reports an odr-violation on snappy::Sink's vtable otherwise)
+    -DCMAKE_CXX_VISIBILITY_PRESET:STRING=hidden
+    -DCMAKE_VISIBILITY_INLINES_HIDDEN:BOOL=ON
     -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
 )
 

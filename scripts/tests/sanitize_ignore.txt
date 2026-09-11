@@ -1,0 +1,10 @@
+# Ignore TBB memory leaks as TBB worker threads may terminate after
+# the main thread
+leak:libtbb
+
+# Open MPI and its dependencies allocate per-process state in MPI_Init_thread
+# and never free it; the workers are torn down by prterun, not by MPI_Finalize
+leak:libmpi
+leak:libopen-pal
+leak:libpmix
+leak:libevent_core

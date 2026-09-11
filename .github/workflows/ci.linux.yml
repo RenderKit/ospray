@@ -423,6 +423,10 @@ jobs:
         export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/tbb/lib/intel64/gcc4.8:$GITHUB_WORKSPACE/build/install/embree/lib:$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
         export TBB_ENABLE_SANITIZERS=1
+        # Open MPI binary-patches mmap, which under ASan ends in SIGILL
+        export OMPI_MCA_memory=^patcher
+        export OMPI_MCA_opal_common_ucx_opal_mem_hooks=0
         export ASAN_OPTIONS=intercept_tls_get_addr=0 # WA google/sanitizers#1322
+        export LSAN_OPTIONS=suppressions=$GITHUB_WORKSPACE/scripts/tests/sanitize_ignore.txt
         OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 scripts/tests/run_tests.sh $GITHUB_WORKSPACE SKIP_CPU TEST_MPI
       artifact-in: build-linux-debug
