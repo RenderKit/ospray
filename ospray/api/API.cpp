@@ -15,6 +15,14 @@
 #include <process.h> // for getpid
 #endif
 
+#if defined(__SANITIZE_ADDRESS__)
+#define OSPRAY_ADDRESS_SANITIZER
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define OSPRAY_ADDRESS_SANITIZER
+#endif
+#endif
+
 using ospray::api::currentDevice;
 using ospray::api::Device;
 using ospray::api::deviceIsSet;
@@ -164,7 +172,11 @@ OSPRAY_CATCH_END(0)
 extern "C" void ospShutdown() OSPRAY_CATCH_BEGIN
 {
   Device::current = nullptr;
+#ifndef OSPRAY_ADDRESS_SANITIZER
+  // unloading the modules unmaps their code, which the sanitizers still need
+  // at exit to name the frames of whatever they report
   LibraryRepository::cleanupInstance();
+#endif
 }
 OSPRAY_CATCH_END()
 
