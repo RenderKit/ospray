@@ -53,6 +53,7 @@ struct OSPRAY_SDK_INTERFACE Camera
 
  private:
   RTCGeometry embreeGeometry{nullptr};
+  RTCScene embreeDummyScene{nullptr}; // needed to commit embreeGeometry
   MotionTransform motionTransform;
   FeatureFlagsOther featureFlags{FFO_NONE};
 };

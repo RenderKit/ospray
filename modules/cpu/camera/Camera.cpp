@@ -15,8 +15,10 @@ Camera::Camera(api::ISPCDevice &device, const FeatureFlagsOther featureFlags)
 
 Camera::~Camera()
 {
-  if (embreeGeometry)
+  if (embreeGeometry) {
     rtcReleaseGeometry(embreeGeometry);
+    rtcReleaseScene(embreeDummyScene);
+  }
 }
 
 std::string Camera::toString() const
@@ -52,9 +54,13 @@ void Camera::commit()
 
   if (motionTransform.motionBlur || motionTransform.quaternion) {
     // create dummy RTCGeometry for transform interpolation or conversion
-    if (!embreeGeometry)
+    if (!embreeGeometry) {
+      embreeDummyScene = rtcNewScene(getISPCDevice().getEmbreeDevice());
+      rtcCommitScene(embreeDummyScene);
       embreeGeometry = rtcNewGeometry(
           getISPCDevice().getEmbreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
+      rtcSetGeometryInstancedScene(embreeGeometry, embreeDummyScene);
+    }
 
     motionTransform.setEmbreeTransform(embreeGeometry);
 
@@ -70,6 +76,8 @@ void Camera::commit()
 
   if (!motionTransform.motionBlur) {
     if (embreeGeometry) {
+      rtcReleaseScene(embreeDummyScene);
+      embreeDummyScene = nullptr;
       rtcReleaseGeometry(embreeGeometry);
       embreeGeometry = nullptr;
     }

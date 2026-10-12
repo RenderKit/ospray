@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v2.12.1:
+
+-   Support Embree v4.4 (also used by superbuild), minimum is v4.2 now
+
+
 ### Changes in v2.12.0:
 
 -   Support denoising on the GPU with OIDN 2.0, which is the new minimum
