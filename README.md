@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.12.0 of Intel® OSPRay. For changes and new features
+This is release v2.12.1 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
